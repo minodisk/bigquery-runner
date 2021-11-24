@@ -1,4 +1,4 @@
-# vscode-bigquery
+# BigQuery Runner
 
 ![BigQuery icon](bigquery-icon.png)
 
@@ -32,7 +32,6 @@ The extension can be customized by modifying your `settings.json` file. The avai
 ```js
 "bigquery.keyFilename" = "" // the fully-qualified path to the service account file you downloaded - e.g. '/home/you/mykeyfile-1313ef.json'
 "bigquery.projectId" = "" // only needed if your key file is not in JSON format - e.g. 'funny-horse-1234'
-"bigquery.email" = "" // only needed if your key file is not in JSON format - e.g. 'you@example.com'
 "bigquery.useLegacySql" = false // use the legacy SQL language when making queries.
 "bigquery.maximumBytesBilled" = null // Unlimited
 "bigquery.location" = "US" // Defaults to "US"

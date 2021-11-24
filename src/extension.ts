@@ -56,9 +56,9 @@ export async function activate(ctx: vscode.ExtensionContext) {
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
     new Map<string, () => void>([
-      ["extension.runAsQuery", wrap(runAsQuery, config)],
-      ["extension.runSelectedAsQuery", wrap(runSelectedAsQuery, config)],
-      ["extension.dryRun", wrap(dryRun, config)],
+      ["bigquery-runner.runAsQuery", wrap(runAsQuery, config)],
+      ["bigquery-runner.runSelectedAsQuery", wrap(runSelectedAsQuery, config)],
+      ["bigquery-runner.dryRun", wrap(dryRun, config)],
     ]).forEach((action, name) => {
       ctx.subscriptions.push(vscode.commands.registerCommand(name, action));
     });
@@ -216,6 +216,9 @@ function writeResults(
   switch (format) {
     case "csv":
       toCSV(rows, (err?: Error, res?: string) => {
+        if (err) {
+          throw err;
+        }
         if (res) {
           output.appendLine(res);
         }
