@@ -16,19 +16,21 @@ This extension is great if you're exploring BigQuery and prefer VS Code's editin
 
 The BigQuery extension adds a number of commands to the command palette (Cmd/Ctrl+Shift+P).
 
-By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental variable (if set) and use the service account described in that JSON file. You can also explicitly set `bigquery.keyFilename` to the path of your [Service Account key file](https://cloud.google.com/docs/authentication/getting-started). Unless necessary, it's recommended that you scope this key to the [`roles.bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#permissions_and_roles) role, which is sufficient for querying and most related tasks.
+By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental variable (if set) and use the service account described in that JSON file. You can also explicitly set `bigqueryRunner.keyFilename` to the path of your [Service Account key file](https://cloud.google.com/docs/authentication/getting-started). Unless necessary, it's recommended that you scope this key to the [`roles.bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#permissions_and_roles) role, which is sufficient for querying and most related tasks.
 
 ## Optional Configuration
 
 The extension can be customized by modifying your `settings.json` file. The available configuration options, and their defaults, are below.
 
 ```js
-"bigquery.keyFilename" = "" // the fully-qualified path to the service account file you downloaded - e.g. '/home/you/mykeyfile-1313ef.json'
-"bigquery.projectId" = "" // only needed if your key file is not in JSON format - e.g. 'funny-horse-1234'
-"bigquery.useLegacySql" = false // use the legacy SQL language when making queries.
-"bigquery.maximumBytesBilled" = null // Unlimited
-"bigquery.location" = "US" // Defaults to "US"
-"bigquery.outputFormat" = "json" // "json", "csv"
+"bigqueryRunner.keyFilename" = "" // (Required) Full path to the a .json, .pem, or .p12 key downloaded from the Google Developers Console. If you provide a path to a JSON file, the projectId option is not necessary. NOTE: .pem and .p12 require you to specify the email option as well.
+"bigqueryRunner.projectId" = "" // (Optional) The project ID from the Google Developer's Console, e.g. 'grape-spaceship-123'. This is NOT needed if you are provide a key in JSON format
+"bigqueryRunner.location" = "US" // (Optional) The geographic location of the job. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.
+"bigqueryRunner.useLegacySql" = false // (Optional) Specifies whether to use BigQuery's legacy SQL dialect for this query. The default value is true. If set to false, the query will use BigQuery's standard SQL: https://cloud.google.com/bigquery/sql-reference/
+"bigqueryRunner.maximumBytesBilled" = null // (Optional) Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default.
+"bigqueryRunner.outputFormat" = "table" // (Optional) Controls the output format for query results. "table", "json", "csv"
+"bigqueryRunner.prettyPrintJSON" = true // (Optional) Pretty print JSON results when outputFormat is specified as json.
+"bigqueryRunner.preserveFocus" = true // (Optional) Preserve focus when opening output window.
 ```
 
 The majority of these settings are inherited from [`ClientConfig`](https://cloud.google.com/nodejs/docs/reference/bigquery/1.3.x/global#ClientConfig) in the underlying BigQuery client library.

@@ -2,7 +2,7 @@
   "name": "bigquery-runner",
   "displayName": "BigQuery Runner",
   "description": "An extension for querying Google Cloud Platform's BigQuery analytics datasets directly from VS Code.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "minodisk",
   "repository": {
     "type": "git",
@@ -18,73 +18,79 @@
   "main": "./out/extension.js",
   "icon": "bigquery-runner.png",
   "activationEvents": [
-    "onCommand:bigquery-runner.runAsQuery",
-    "onCommand:bigquery-runner.runSelectedAsQuery",
-    "onCommand:bigquery-runner.dryRun"
+    "onCommand:bigqueryRunner.runAsQuery",
+    "onCommand:bigqueryRunner.runSelectedAsQuery",
+    "onCommand:bigqueryRunner.dryRun"
   ],
   "contributes": {
     "commands": [
       {
-        "command": "bigquery-runner.runAsQuery",
+        "command": "bigqueryRunner.runAsQuery",
         "title": "BigQuery: Run as Query"
       },
       {
-        "command": "bigquery-runner.runSelectedAsQuery",
+        "command": "bigqueryRunner.runSelectedAsQuery",
         "title": "BigQuery: Run selected text as Query"
       },
       {
-        "command": "bigquery-runner.dryRun",
+        "command": "bigqueryRunner.dryRun",
         "title": "BigQuery: Run as Dry Run"
       }
     ],
     "configuration": {
       "type": "object",
-      "title": "BigQuery extension configuration",
+      "title": "BigQuery Runner",
       "properties": {
-        "bigquery.keyFilename": {
+        "bigqueryRunner.keyFilename": {
           "type": "string",
           "default": "",
-          "description": "Full path to the a .json, .pem, or .p12 key downloaded from the Google Developers Console. If you provide a path to a JSON file, the projectId option is not necessary. NOTE: .pem and .p12 require you to specify the email option as well."
+          "description": "(Required) Full path to the a .json, .pem, or .p12 key downloaded from the Google Developers Console. If you provide a path to a JSON file, the projectId option is not necessary. NOTE: .pem and .p12 require you to specify the email option as well."
         },
-        "bigquery.projectId": {
-          "type": "string",
-          "default": "",
+        "bigqueryRunner.projectId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
           "description": "(Optional) The project ID from the Google Developer's Console, e.g. 'grape-spaceship-123'. This is NOT needed if you are provide a key in JSON format"
         },
-        "bigquery.useLegacySql": {
-          "type": "boolean",
-          "default": false,
-          "description": "Specifies whether to use BigQuery's legacy SQL dialect for this query. The default value is false. If set to false, the query will use BigQuery's standard SQL: https://cloud.google.com/bigquery/sql-reference/"
-        },
-        "bigquery.location": {
+        "bigqueryRunner.location": {
           "type": "string",
           "default": "US",
-          "description": "The geographic location of the job. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location."
+          "description": "(Optional) The geographic location of the job. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location."
         },
-        "bigquery.maximumBytesBilled": {
-          "type": "string",
-          "default": "1000000000000",
-          "description": "Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default."
-        },
-        "bigquery.preserveFocus": {
+        "bigqueryRunner.useLegacySql": {
           "type": "boolean",
-          "default": true,
-          "description": "Preserve focus when opening output window."
+          "default": false,
+          "description": "(Optional) Specifies whether to use BigQuery's legacy SQL dialect for this query. The default value is true. If set to false, the query will use BigQuery's standard SQL: https://cloud.google.com/bigquery/sql-reference/"
         },
-        "bigquery.outputFormat": {
-          "type": "string",
-          "default": "json",
-          "enum": [
-            "json",
-            "csv",
-            "table"
+        "bigqueryRunner.maximumBytesBilled": {
+          "type": [
+            "string",
+            "null"
           ],
-          "description": "Controls the output format for query results."
+          "default": null,
+          "description": "(Optional) Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default."
         },
-        "bigquery.prettyPrintJSON": {
+        "bigqueryRunner.outputFormat": {
+          "type": "string",
+          "default": "table",
+          "enum": [
+            "table",
+            "json",
+            "csv"
+          ],
+          "description": "(Optional) Controls the output format for query results."
+        },
+        "bigqueryRunner.prettyPrintJSON": {
           "type": "boolean",
           "default": true,
-          "description": "Pretty print JSON results."
+          "description": "(Optional) Pretty print JSON results when outputFormat is specified as json."
+        },
+        "bigqueryRunner.preserveFocus": {
+          "type": "boolean",
+          "default": true,
+          "description": "(Optional) Preserve focus when opening output window."
         }
       }
     }

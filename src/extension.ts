@@ -28,19 +28,20 @@ type Output = {
 type Config = {
   keyFilename: string;
   projectId: string;
-  useLegacySql: boolean;
   location: string;
+  useLegacySql: boolean;
   maximumBytesBilled?: string;
-  preserveFocus: boolean;
   outputFormat: OutputFormat;
   prettyPrintJSON: boolean;
+  preserveFocus: boolean;
 };
 
 type OutputFormat = "json" | "csv" | "table";
 
 export async function activate(ctx: vscode.ExtensionContext) {
   try {
-    const configSection = "bigquery";
+    const output = vscode.window.createOutputChannel("BigQuery Runner");
+    const section = "bigqueryRunner";
     const config: Config = {
       keyFilename: "",
       projectId: "",
@@ -50,15 +51,18 @@ export async function activate(ctx: vscode.ExtensionContext) {
       outputFormat: "json",
       prettyPrintJSON: true,
     };
-    await readConfig(configSection, config);
+    await readConfig(section, config);
 
     // Register all available commands and their actions.
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
     new Map<string, () => void>([
-      ["bigquery-runner.runAsQuery", wrap(runAsQuery, config)],
-      ["bigquery-runner.runSelectedAsQuery", wrap(runSelectedAsQuery, config)],
-      ["bigquery-runner.dryRun", wrap(dryRun, config)],
+      [`${section}.runAsQuery`, wrap(runAsQuery, config, output)],
+      [
+        `${section}.runSelectedAsQuery`,
+        wrap(runSelectedAsQuery, config, output),
+      ],
+      [`${section}.dryRun`, wrap(dryRun, config, output)],
     ]).forEach((action, name) => {
       ctx.subscriptions.push(vscode.commands.registerCommand(name, action));
     });
@@ -67,11 +71,11 @@ export async function activate(ctx: vscode.ExtensionContext) {
     // have to reload the VS Code environment after a config update.
     ctx.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration(async (event) => {
-        if (!event.affectsConfiguration(configSection)) {
+        if (!event.affectsConfiguration(section)) {
           return;
         }
 
-        await readConfig(configSection, config);
+        await readConfig(section, config);
       })
     );
   } catch (err) {
@@ -102,14 +106,10 @@ async function readConfig(section: string, config: Config): Promise<void> {
 }
 
 function wrap(
-  fn: (
-    editor: vscode.TextEditor,
-    config: Config,
-    output: vscode.OutputChannel
-  ) => void,
-  config: Config
+  fn: (editor: vscode.TextEditor, config: Config, output: Output) => void,
+  config: Config,
+  output: Output
 ): () => void {
-  const output = vscode.window.createOutputChannel("BigQuery");
   return () => {
     try {
       if (!vscode.window.activeTextEditor) {
@@ -117,7 +117,7 @@ function wrap(
       }
       fn(vscode.window.activeTextEditor, config, output);
     } catch (err) {
-      vscode.window.showErrorMessage(`${err}`);
+      output.appendLine(`${err}`);
     }
   };
 }
@@ -133,7 +133,7 @@ function runAsQuery(
 function runSelectedAsQuery(
   textEditor: vscode.TextEditor,
   config: Config,
-  output: vscode.OutputChannel
+  output: Output
 ): void {
   query(getQueryText(textEditor, true), config, output);
 }
@@ -141,7 +141,7 @@ function runSelectedAsQuery(
 function dryRun(
   textEditor: vscode.TextEditor,
   config: Config,
-  output: vscode.OutputChannel
+  output: Output
 ): void {
   query(getQueryText(textEditor), config, output, true);
 }
@@ -177,12 +177,14 @@ async function query(
     }
     const jobIdMessage = `BigQuery job ID: ${job.id}`;
     if (isDryRun) {
-      vscode.window.showInformationMessage(`${jobIdMessage} (dry run)`);
+      output.show(config.preserveFocus);
+      output.appendLine(`${jobIdMessage} (dry run)`);
       let totalBytesProcessed = job.metadata.statistics.totalBytesProcessed;
       writeDryRunSummary(id, totalBytesProcessed, config, output);
       return null;
     }
-    vscode.window.showInformationMessage(jobIdMessage);
+    output.show(config.preserveFocus);
+    output.appendLine(jobIdMessage);
 
     try {
       const d = await job.getQueryResults({
