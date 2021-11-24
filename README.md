@@ -1,7 +1,5 @@
 # BigQuery Runner
 
-![BigQuery icon](bigquery-icon.png)
-
 A Visual Studio Code ("VS Code") extension that can query Google Cloud Platform's [BigQuery analytics database](https://cloud.google.com/bigquery/) from, and return results to, your editor. This extension allows you to:
 
 - Write SQL in VS Code and query BigQuery datasets directly
@@ -12,12 +10,7 @@ This extension is great if you're exploring BigQuery and prefer VS Code's editin
 
 ## Installing
 
-The package will be available on the VS Code Marketplace shortly, but in the meantime, you can install it manually:
-
-1. Download the latest pre-built release here: [vscode-bigquery-0.0.1.vsix](https://github.com/google/vscode-bigquery/releases/download/v0.0.1/vscode-bigquery-0.0.1.vsix)
-2. Open the Command Palette in VS Code (Ctrl/Cmd+Shift+P), and type "ext install" -> select "Extension: Install From VSIX..."
-3. Navigate to the folder where you saved the `.vsix` file, and select it.
-4. Reload VS Code when prompted.
+[BigQuery Runner \- Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
 
 ## Usage
 
