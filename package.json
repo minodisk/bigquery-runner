@@ -2,11 +2,11 @@
   "name": "bigquery-runner",
   "displayName": "BigQuery Runner",
   "description": "An extension for querying Google Cloud Platform's BigQuery analytics datasets directly from VS Code.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "minodisk",
   "repository": {
     "type": "git",
-    "url": "https://github.com/google/vscode-bigquery.git"
+    "url": "https://github.com/minodisk/bigquery-runner.git"
   },
   "homepage": "https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner",
   "engines": {
