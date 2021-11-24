@@ -74,7 +74,6 @@ export async function activate(ctx: vscode.ExtensionContext) {
         if (!event.affectsConfiguration(section)) {
           return;
         }
-
         await readConfig(section, config);
       })
     );
@@ -106,44 +105,49 @@ async function readConfig(section: string, config: Config): Promise<void> {
 }
 
 function wrap(
-  fn: (editor: vscode.TextEditor, config: Config, output: Output) => void,
+  fn: (
+    editor: vscode.TextEditor,
+    config: Config,
+    output: Output
+  ) => Promise<void>,
   config: Config,
   output: Output
 ): () => void {
-  return () => {
+  return async () => {
     try {
       if (!vscode.window.activeTextEditor) {
         throw new Error("no active text editor");
       }
-      fn(vscode.window.activeTextEditor, config, output);
+      await fn(vscode.window.activeTextEditor, config, output);
     } catch (err) {
-      output.appendLine(`${err}`);
+      output.show(config.preserveFocus);
+      output.appendLine(`Error: ${err}`);
     }
   };
 }
 
-function runAsQuery(
+async function runAsQuery(
   textEditor: vscode.TextEditor,
   config: Config,
   output: Output
-): void {
-  query(getQueryText(textEditor), config, output);
+): Promise<void> {
+  await query(getQueryText(textEditor), config, output);
 }
 
-function runSelectedAsQuery(
+async function runSelectedAsQuery(
   textEditor: vscode.TextEditor,
   config: Config,
   output: Output
-): void {
-  query(getQueryText(textEditor, true), config, output);
+): Promise<void> {
+  await query(getQueryText(textEditor, true), config, output);
 }
 
-function dryRun(
+async function dryRun(
   textEditor: vscode.TextEditor,
   config: Config,
   output: Output
-): void {
-  query(getQueryText(textEditor), config, output, true);
+): Promise<void> {
+  await query(getQueryText(textEditor), config, output, true);
 }
 
 /**
@@ -155,13 +159,15 @@ async function query(
   config: Config,
   output: Output,
   isDryRun?: boolean
-): Promise<any> {
-  let client = new BigQuery({
-    keyFilename: config.keyFilename,
-    projectId: config.projectId,
-  });
-
+): Promise<void> {
   try {
+    output.show(config.preserveFocus);
+    output.appendLine(`Start job`);
+
+    const client = new BigQuery({
+      keyFilename: config.keyFilename,
+      projectId: config.projectId,
+    });
     const data = await client.createQueryJob({
       query: queryText,
       location: config.location,
@@ -171,50 +177,38 @@ async function query(
     });
 
     const job = data[0];
-    const id = job.id;
-    if (!id) {
+    if (!job.id) {
       throw new Error(`no job ID`);
     }
-    const jobIdMessage = `BigQuery job ID: ${job.id}`;
+
     if (isDryRun) {
-      output.show(config.preserveFocus);
-      output.appendLine(`${jobIdMessage} (dry run)`);
       let totalBytesProcessed = job.metadata.statistics.totalBytesProcessed;
-      writeDryRunSummary(id, totalBytesProcessed, config, output);
-      return null;
+      output.show(config.preserveFocus);
+      output.appendLine(
+        `[${job.id}] Dry run result: Total bytes processed: ${totalBytesProcessed}`
+      );
+      return;
     }
     output.show(config.preserveFocus);
-    output.appendLine(jobIdMessage);
+    output.appendLine(`[${job.id}] Get job results: `);
 
     try {
-      const d = await job.getQueryResults({
+      const results = await job.getQueryResults({
         autoPaginate: true,
       });
-      if (d) {
-        writeResults(id, d[0], config, output);
-      }
-    } catch (err) {
       output.show(config.preserveFocus);
-      output.appendLine(`Failed to get results: ${err}`);
+      output.appendLine(`[${job.id}] Query results:`);
+      writeResults(results[0], config, output);
+    } catch (err) {
+      throw new Error(`failed to get results: ${err}`);
     }
   } catch (err) {
-    output.show(config.preserveFocus);
-    output.appendLine(`Failed to query BigQuery: ${err}`);
-    return null;
+    throw new Error(`failed to query: ${err}`);
   }
 }
 
-function writeResults(
-  jobId: string,
-  rows: Array<any>,
-  config: Config,
-  output: Output
-): void {
-  output.show(config.preserveFocus);
-  output.appendLine(`Results for job ${jobId}:`);
-
+function writeResults(rows: Array<any>, config: Config, output: Output): void {
   let format = config.outputFormat.toString().toLowerCase();
-
   switch (format) {
     case "csv":
       toCSV(rows, (err?: Error, res?: string) => {
@@ -225,10 +219,16 @@ function writeResults(
           output.appendLine(res);
         }
       });
-
       break;
     case "table":
-      output.appendLine(table(rows));
+      const t = new EasyTable();
+      rows.forEach((row) => {
+        tenderize(row).forEach((o) => {
+          Object.keys(o).forEach((key) => t.cell(key, o[key]));
+          t.newRow();
+        });
+      });
+      output.appendLine(t.toString());
       break;
     default:
       let spacing = config.prettyPrintJSON ? "  " : "";
@@ -240,50 +240,26 @@ function writeResults(
   }
 }
 
-export function table(rows: Array<any>): string {
-  const t = new EasyTable();
-  rows.forEach((row) => {
-    tenderize(row).forEach((o) => {
-      Object.keys(o).forEach((key) => t.cell(key, o[key]));
-      t.newRow();
-    });
-  });
-  return t.toString();
-}
-
-function writeDryRunSummary(
-  jobId: string,
-  numBytesProcessed: string,
-  config: Config,
-  output: Output
-) {
-  output.show(config.preserveFocus);
-  output.appendLine(`Results for job ${jobId} (dry run):`);
-  output.appendLine(`Total bytes processed: ${numBytesProcessed}`);
-  output.appendLine(``);
-}
-
 function getQueryText(
   editor: vscode.TextEditor,
   onlySelected?: boolean
 ): string {
   if (!editor) {
-    throw new Error("No active editor window was found");
+    throw new Error("no active editor window was found");
   }
 
   // Only return the selected text
   if (onlySelected) {
     let selection = editor.selection;
     if (selection.isEmpty) {
-      throw new Error("No text is currently selected");
+      throw new Error("no text is currently selected");
     }
-
     return editor.document.getText(selection).trim();
   }
 
   let text = editor.document.getText().trim();
   if (!text) {
-    throw new Error("The editor window is empty");
+    throw new Error("the editor window is empty");
   }
 
   return text;
