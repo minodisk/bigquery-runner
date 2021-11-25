@@ -57,11 +57,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
     new Map<string, () => void>([
-      [`${section}.runAsQuery`, wrap(runAsQuery, config, output)],
-      [
-        `${section}.runSelectedAsQuery`,
-        wrap(runSelectedAsQuery, config, output),
-      ],
+      [`${section}.run`, wrap(run, config, output)],
       [`${section}.dryRun`, wrap(dryRun, config, output)],
     ]).forEach((action, name) => {
       ctx.subscriptions.push(vscode.commands.registerCommand(name, action));
@@ -132,20 +128,12 @@ function wrap(
   };
 }
 
-async function runAsQuery(
+async function run(
   textEditor: vscode.TextEditor,
   config: Config,
   output: Output
 ): Promise<void> {
   await query(getQueryText(textEditor), config, output);
-}
-
-async function runSelectedAsQuery(
-  textEditor: vscode.TextEditor,
-  config: Config,
-  output: Output
-): Promise<void> {
-  await query(getQueryText(textEditor, true), config, output);
 }
 
 async function dryRun(
@@ -187,23 +175,22 @@ async function query(
     throw new Error(`no job ID`);
   }
 
-  output.show(config.preserveFocus);
-  output.appendLine(`Job ID: ${job.id}`);
-
   try {
+    output.show(config.preserveFocus);
     if (isDryRun) {
-      const { totalBytesProcessed } = job.metadata.statistics;
+      output.appendLine(`Dry run: ${job.id}`);
       output.appendLine(
-        `Dry run result: ${totalBytesProcessed} bytes processed`
+        `Result: ${job.metadata.statistics.totalBytesProcessed} bytes processed`
       );
       return;
     }
+    output.appendLine(`Run: ${job.id}`);
 
     const results = await job.getQueryResults({
       autoPaginate: true,
     });
     output.show(config.preserveFocus);
-    output.appendLine(`Results: ${results[0].length} rows`);
+    output.appendLine(`Result: ${results[0].length} rows`);
     writeResults(results[0], config, output);
   } catch (err) {
     throw new ErrorWithId(err, job.id);
@@ -243,26 +230,17 @@ function writeResults(rows: Array<any>, config: Config, output: Output): void {
   }
 }
 
-function getQueryText(
-  editor: vscode.TextEditor,
-  onlySelected?: boolean
-): string {
+function getQueryText(editor: vscode.TextEditor): string {
   if (!editor) {
     throw new Error("no active editor window was found");
   }
 
-  // Only return the selected text
-  if (onlySelected) {
-    let selection = editor.selection;
-    if (selection.isEmpty) {
-      throw new Error("no text is currently selected");
-    }
-    return editor.document.getText(selection).trim();
-  }
+  const text = editor.selection.isEmpty
+    ? editor.document.getText().trim()
+    : editor.document.getText(editor.selection).trim();
 
-  let text = editor.document.getText().trim();
   if (!text) {
-    throw new Error("the editor window is empty");
+    throw new Error("text is empty");
   }
 
   return text;

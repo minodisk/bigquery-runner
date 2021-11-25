@@ -18,6 +18,22 @@ The BigQuery extension adds a number of commands to the command palette (Cmd/Ctr
 
 By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental variable (if set) and use the service account described in that JSON file. You can also explicitly set `bigqueryRunner.keyFilename` to the path of your [Service Account key file](https://cloud.google.com/docs/authentication/getting-started). Unless necessary, it's recommended that you scope this key to the [`roles.bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#permissions_and_roles) role, which is sufficient for querying and most related tasks.
 
+## Commands
+
+### Run
+
+- command: `bigqueryRunner.run`
+- title: `BigQuery Runner: Run`
+
+Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
+
+### Dry Run
+
+- command: `bigqueryRunner.dryRun`
+- title: `BigQuery Runner: Dry Run`
+
+Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
+
 ## Optional Configuration
 
 The extension can be customized by modifying your `settings.json` file. The available configuration options, and their defaults, are below.

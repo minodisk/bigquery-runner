@@ -2,7 +2,7 @@
   "name": "bigquery-runner",
   "displayName": "BigQuery Runner",
   "description": "An extension for querying Google Cloud Platform's BigQuery analytics datasets directly from VS Code.",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "minodisk",
   "repository": {
     "type": "git",
@@ -18,23 +18,18 @@
   "main": "./out/extension.js",
   "icon": "bigquery-runner.png",
   "activationEvents": [
-    "onCommand:bigqueryRunner.runAsQuery",
-    "onCommand:bigqueryRunner.runSelectedAsQuery",
+    "onCommand:bigqueryRunner.run",
     "onCommand:bigqueryRunner.dryRun"
   ],
   "contributes": {
     "commands": [
       {
-        "command": "bigqueryRunner.runAsQuery",
-        "title": "BigQuery: Run as Query"
-      },
-      {
-        "command": "bigqueryRunner.runSelectedAsQuery",
-        "title": "BigQuery: Run selected text as Query"
+        "command": "bigqueryRunner.run",
+        "title": "BigQuery Runner: Run"
       },
       {
         "command": "bigqueryRunner.dryRun",
-        "title": "BigQuery: Run as Dry Run"
+        "title": "BigQuery Runner: Dry Run"
       }
     ],
     "configuration": {
