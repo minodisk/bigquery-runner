@@ -121,7 +121,13 @@ function wrap(
       await fn(vscode.window.activeTextEditor, config, output);
     } catch (err) {
       output.show(config.preserveFocus);
-      output.appendLine(`Error: ${err}`);
+      if (err instanceof ErrorWithId) {
+        output.appendLine(`${err} (${err.id})`);
+      } else {
+        output.appendLine(`${err}`);
+      }
+    } finally {
+      output.appendLine(``);
     }
   };
 }
@@ -150,6 +156,10 @@ async function dryRun(
   await query(getQueryText(textEditor), config, output, true);
 }
 
+class ErrorWithId {
+  constructor(public error: unknown, public id: string) {}
+}
+
 /**
  * @param queryText
  * @param isDryRun Defaults to False.
@@ -160,50 +170,43 @@ async function query(
   output: Output,
   isDryRun?: boolean
 ): Promise<void> {
+  const client = new BigQuery({
+    keyFilename: config.keyFilename,
+    projectId: config.projectId,
+  });
+  const data = await client.createQueryJob({
+    query: queryText,
+    location: config.location,
+    maximumBytesBilled: config.maximumBytesBilled,
+    useLegacySql: config.useLegacySql,
+    dryRun: !!isDryRun,
+  });
+
+  const job = data[0];
+  if (!job.id) {
+    throw new Error(`no job ID`);
+  }
+
+  output.show(config.preserveFocus);
+  output.appendLine(`Job ID: ${job.id}`);
+
   try {
-    output.show(config.preserveFocus);
-    output.appendLine(`Start job`);
-
-    const client = new BigQuery({
-      keyFilename: config.keyFilename,
-      projectId: config.projectId,
-    });
-    const data = await client.createQueryJob({
-      query: queryText,
-      location: config.location,
-      maximumBytesBilled: config.maximumBytesBilled,
-      useLegacySql: config.useLegacySql,
-      dryRun: !!isDryRun,
-    });
-
-    const job = data[0];
-    if (!job.id) {
-      throw new Error(`no job ID`);
-    }
-
     if (isDryRun) {
-      let totalBytesProcessed = job.metadata.statistics.totalBytesProcessed;
-      output.show(config.preserveFocus);
+      const { totalBytesProcessed } = job.metadata.statistics;
       output.appendLine(
-        `[${job.id}] Dry run result: Total bytes processed: ${totalBytesProcessed}`
+        `Dry run result: ${totalBytesProcessed} bytes processed`
       );
       return;
     }
-    output.show(config.preserveFocus);
-    output.appendLine(`[${job.id}] Get job results: `);
 
-    try {
-      const results = await job.getQueryResults({
-        autoPaginate: true,
-      });
-      output.show(config.preserveFocus);
-      output.appendLine(`[${job.id}] Query results:`);
-      writeResults(results[0], config, output);
-    } catch (err) {
-      throw new Error(`failed to get results: ${err}`);
-    }
+    const results = await job.getQueryResults({
+      autoPaginate: true,
+    });
+    output.show(config.preserveFocus);
+    output.appendLine(`Results: ${results[0].length} rows`);
+    writeResults(results[0], config, output);
   } catch (err) {
-    throw new Error(`failed to query: ${err}`);
+    throw new ErrorWithId(err, job.id);
   }
 }
 
@@ -228,7 +231,7 @@ function writeResults(rows: Array<any>, config: Config, output: Output): void {
           t.newRow();
         });
       });
-      output.appendLine(t.toString());
+      output.appendLine(t.toString().trimEnd());
       break;
     default:
       let spacing = config.prettyPrintJSON ? "  " : "";
