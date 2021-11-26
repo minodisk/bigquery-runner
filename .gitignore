@@ -2,6 +2,7 @@ out
 dist
 node_modules
 .vscode-test/
+.DS_Store
 *.vsix
 *.bq
 *.sql

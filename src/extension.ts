@@ -36,7 +36,7 @@ type Config = {
   preserveFocus: boolean;
 };
 
-type OutputFormat = "json" | "csv" | "table";
+type OutputFormat = "table" | "json" | "csv";
 
 export async function activate(ctx: vscode.ExtensionContext) {
   try {

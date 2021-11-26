@@ -1,5 +1,7 @@
 # BigQuery Runner
 
+![Screenshot of BiqQuery Runner](screenshot.png)
+
 A Visual Studio Code ("VS Code") extension that can query Google Cloud Platform's [BigQuery analytics database](https://cloud.google.com/bigquery/) from, and return results to, your editor. This extension allows you to:
 
 - Write SQL in VS Code and query BigQuery datasets directly
@@ -50,6 +52,18 @@ The extension can be customized by modifying your `settings.json` file. The avai
 ```
 
 The majority of these settings are inherited from [`ClientConfig`](https://cloud.google.com/nodejs/docs/reference/bigquery/1.3.x/global#ClientConfig) in the underlying BigQuery client library.
+
+## Recommended Setting
+
+It is recommended to set the settings in settings.json to avoid wrapping when outputting a table with a large number of fields.
+
+```json:settings.json
+{
+  "[Log]": {
+    "editor.wordWrap": "off"
+  }
+}
+```
 
 ## Contributing
 
