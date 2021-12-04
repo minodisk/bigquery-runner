@@ -46,8 +46,12 @@ The extension can be customized by modifying your `settings.json` file. The avai
 "bigqueryRunner.location" = "US" // (Optional) The geographic location of the job. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.
 "bigqueryRunner.useLegacySql" = false // (Optional) Specifies whether to use BigQuery's legacy SQL dialect for this query. The default value is true. If set to false, the query will use BigQuery's standard SQL: https://cloud.google.com/bigquery/sql-reference/
 "bigqueryRunner.maximumBytesBilled" = null // (Optional) Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default.
-"bigqueryRunner.outputFormat" = "table" // (Optional) Controls the output format for query results. "table", "json", "csv"
-"bigqueryRunner.prettyPrintJSON" = true // (Optional) Pretty print JSON results when outputFormat is specified as json.
+"bigqueryRunner.output.destination.type" = "output" // (Optional) Controls the output destination for query results.
+"bigqueryRunner.output.destination.file.path" = "." // (Optional) Controls the output file path for query results when output.type is specified as file.
+"bigqueryRunner.output.format.type" = "table" // (Optional) Controls the output format for query results. "table", "json", "csv"
+"bigqueryRunner.output.format.csv.header" = false // (Optional) Columns names are automatically discovered from the first record if it is provided as a literal object.
+"bigqueryRunner.output.format.csv.delimiter" = "," // (Optional) Set the delimiter between the fields of a record. It can be one or multiple characters. The default value is a comma `,`
+"bigqueryRunner.output.format.json.space" = null // (Optional) Pretty print JSON results when output.format.type is specified as json.
 "bigqueryRunner.preserveFocus" = true // (Optional) Preserve focus when opening output window.
 ```
 

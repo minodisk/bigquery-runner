@@ -7,3 +7,4 @@ node_modules
 *.bq
 *.sql
 *.bqsql
+test.*
