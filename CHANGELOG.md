@@ -6,7 +6,17 @@ All notable changes to the "bigquery-runner" extension will be documented in thi
 
 ### Added
 
-- Add an option to output to a file.
+- Added file export as an option.
+- Added header and delimiter options to CSV format.
+- Added space option to JSON format.
+
+### Changed
+
+- Changed the format of the option settings.
+
+### Removed
+
+- Removed JSON pretty option.
 
 ## [v0.0.8]
 
