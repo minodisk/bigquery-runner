@@ -13,6 +13,7 @@ All notable changes to the "bigquery-runner" extension will be documented in thi
 ### Changed
 
 - Changed the format of the option settings.
+- Changed CSV format to express deep structure.
 
 ### Removed
 
