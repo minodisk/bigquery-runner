@@ -2,6 +2,12 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.10]
+
+### Changed
+
+- Show output window when outputting error log.
+
 ## [v0.0.9]
 
 ### Added

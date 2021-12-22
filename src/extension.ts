@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-"use strict";
 import * as CSV from "csv-stringify";
+import deepmerge from "deepmerge";
 import EasyTable from "easy-table";
 import { flatten } from "flat";
 import { createWriteStream } from "fs";
+import mkdirp from "mkdirp";
+import { basename, extname, join } from "path";
 import { tenderize } from "tenderizer";
 import {
   commands,
@@ -27,9 +29,6 @@ import {
   workspace,
 } from "vscode";
 import { BigQuery, Job } from "@google-cloud/bigquery";
-import { basename, extname, join } from "path";
-import deepmerge from "deepmerge";
-import mkdirp from "mkdirp";
 
 type Writer = {
   path?: string;
@@ -129,35 +128,42 @@ function wrap({
   callback: (params: { editor: TextEditor; logger: Writer }) => Promise<void>;
 }): () => void {
   return async () => {
-    const logger = createLogger();
+    const logWriter = createLogWriter();
+    const errorWriter = createErrorWriter();
     try {
       if (!window.activeTextEditor) {
         throw new Error("no active text editor");
       }
       await callback({
         editor: window.activeTextEditor,
-        logger,
+        logger: logWriter,
       });
     } catch (err) {
       if (err instanceof ErrorWithId) {
-        logger.write(`${err.error} (${err.id})\n`);
+        errorWriter.write(`${err.error} (${err.id})\n`);
       } else {
-        logger.write(`${err}`);
+        errorWriter.write(`${err}\n`);
       }
-    } finally {
-      logger.write(`\n`);
     }
   };
 }
 
-function createLogger(): Writer {
+function createLogWriter(): Writer {
   return {
     write(chunk: string) {
       outputChannel.append(chunk);
     },
-    async close() {
-      outputChannel.dispose();
+    async close() {},
+  };
+}
+
+function createErrorWriter(): Writer {
+  return {
+    write(chunk: string) {
+      outputChannel.append(chunk);
+      outputChannel.show(true);
     },
+    async close() {},
   };
 }
 
