@@ -22,8 +22,13 @@ import { basename, extname, join } from "path";
 import { tenderize } from "tenderizer";
 import {
   commands,
+  Diagnostic,
+  DiagnosticCollection,
   ExtensionContext,
+  languages,
   OutputChannel,
+  Position,
+  Range,
   TextEditor,
   window,
   workspace,
@@ -78,12 +83,24 @@ class ErrorWithId {
 let config: Config;
 
 let outputChannel: OutputChannel;
+let diagnosticCollection: DiagnosticCollection;
 
 export async function activate(ctx: ExtensionContext) {
   try {
     outputChannel = window.createOutputChannel("BigQuery Runner");
+    ctx.subscriptions.push(outputChannel);
+
     const section = "bigqueryRunner";
     await updateConfig(section);
+
+    diagnosticCollection =
+      languages.createDiagnosticCollection("bigqueryRunner");
+    ctx.subscriptions.push(
+      diagnosticCollection,
+      workspace.onDidSaveTextDocument(() => {
+        diagnosticCollection.clear();
+      })
+    );
 
     // Register all available commands and their actions.
     // CommandMap describes a map of extension commands (defined in package.json)
@@ -95,9 +112,9 @@ export async function activate(ctx: ExtensionContext) {
       ctx.subscriptions.push(commands.registerCommand(name, action));
     });
 
-    // Listen for configuration changes and trigger an update, so that users don't
-    // have to reload the VS Code environment after a config update.
     ctx.subscriptions.push(
+      // Listen for configuration changes and trigger an update, so that users don't
+      // have to reload the VS Code environment after a config update.
       workspace.onDidChangeConfiguration(async (event) => {
         if (!event.affectsConfiguration(section)) {
           return;
@@ -174,9 +191,43 @@ async function run({
   editor: TextEditor;
   logger: Writer;
 }): Promise<void> {
-  const job = await createJob({
-    queryText: getQueryText(editor),
-  });
+  diagnosticCollection.clear();
+
+  let job!: Job;
+
+  try {
+    const queryText = getQueryText(editor);
+    job = await createJob({
+      queryText,
+    });
+  } catch (err) {
+    if (!(err instanceof Error)) {
+      throw err;
+    }
+    const { message } = err;
+    const rMessage = /^(.*?) at \[(\d+):(\d+)\]$/;
+    const res = rMessage.exec(message);
+    if (!res) {
+      throw err;
+    }
+    const [_, m, l, c] = res;
+    const line = Number(l) - 1;
+    const character = Number(c) - 1;
+    const range = editor.document.getWordRangeAtPosition(
+      new Position(line, character)
+    );
+    diagnosticCollection.set(editor.document.uri, [
+      new Diagnostic(
+        range ??
+          new Range(
+            new Position(line, character),
+            new Position(line, character + 1)
+          ),
+        m
+      ),
+    ]);
+  }
+
   try {
     const output = await createOutput({
       filename: editor.document.fileName,
@@ -278,10 +329,10 @@ function getQueryText(editor: TextEditor): string {
   }
 
   const text = editor.selection.isEmpty
-    ? editor.document.getText().trim()
-    : editor.document.getText(editor.selection).trim();
+    ? editor.document.getText()
+    : editor.document.getText(editor.selection);
 
-  if (!text) {
+  if (text.trim() === "") {
     throw new Error("text is empty");
   }
 

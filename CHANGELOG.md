@@ -2,6 +2,12 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.12]
+
+### Added
+
+- Mark the location of errors encountered during the execution of a query job in the editor.
+
 ## [v0.0.11]
 
 ### Changed

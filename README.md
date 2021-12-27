@@ -7,6 +7,8 @@ A Visual Studio Code ("VS Code") extension that can query Google Cloud Platform'
 - Write SQL in VS Code and query BigQuery datasets directly
 - Create queries from selected text
 - Capture results into VS Code window to manipulate them further
+- Mark the location of errors encountered during the execution of a query job in the editor
+  ![Mark the location of errors encountered during the execution of a query job in the editor](screenshot-error.png)
 
 This extension is great if you're exploring BigQuery and prefer VS Code's editing environment, or for cases where you're writing documentation (hint: use "Run selected text as query") and want to double check that the query is valid.
 
