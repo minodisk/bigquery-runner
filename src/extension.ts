@@ -326,6 +326,7 @@ async function createOutput({
         write(chunk: string) {
           outputChannel.show(true);
           outputChannel.append(chunk);
+          outputChannel.append("\n");
         },
         async close() {},
       };
