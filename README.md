@@ -1,4 +1,4 @@
-# BigQuery Runner
+# BigQuery Runner for Visual Studio Code
 
 ![Screenshot of BiqQuery Runner](screenshot.png)
 

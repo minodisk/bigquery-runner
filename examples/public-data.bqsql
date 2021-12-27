@@ -1,0 +1,8 @@
+select
+    en_label,
+    labels,
+    descriptions,
+from
+    `bigquery-public-data.wikipedia.wikidata`
+where
+    en_label = 'cherry'

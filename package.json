@@ -122,9 +122,9 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "debug": "run-s package:debug install:debug",
-    "package": "vsce package",
-    "package:debug": "vsce package -o ./bigquery-runner-debug.vsix",
-    "install:debug": "code --install-extension ./bigquery-runner-debug.vsix",
+    "package": "mkdirp dist && vsce package -o ./dist/",
+    "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
+    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
