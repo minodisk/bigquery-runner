@@ -48,10 +48,10 @@ type Config = {
   location: string;
   useLegacySql: boolean;
   maximumBytesBilled?: string;
-  dryRunOnSave: {
+  checkErrorOnSave: {
     enabled: boolean;
-    allowedLanguageIds: Array<string>;
-    allowedExtensions: Array<string>;
+    languageIds: Array<string>;
+    extensions: Array<string>;
   };
   output: {
     destination: {
@@ -144,7 +144,7 @@ async function checkError({
   diagnosticCollection: DiagnosticCollection;
   document: TextDocument;
 }): Promise<void> {
-  if (!config.dryRunOnSave.enabled) {
+  if (!config.checkErrorOnSave.enabled) {
     return;
   }
   if (!isBigQuery({ config, document })) {
@@ -166,8 +166,8 @@ function isBigQuery({
   document: TextDocument;
 }): boolean {
   return (
-    config.dryRunOnSave.allowedLanguageIds.includes(document.languageId) ||
-    config.dryRunOnSave.allowedExtensions.includes(extname(document.fileName))
+    config.checkErrorOnSave.languageIds.includes(document.languageId) ||
+    config.checkErrorOnSave.extensions.includes(extname(document.fileName))
   );
 }
 

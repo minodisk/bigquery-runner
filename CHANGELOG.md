@@ -2,6 +2,12 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.13]
+
+### Added
+
+- Added option to check for query errors when saving files.
+
 ## [v0.0.12]
 
 ### Added
