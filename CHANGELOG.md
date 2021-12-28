@@ -2,6 +2,12 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.14]
+
+### Changed
+
+- Changed screenshot for `checkErrorOnSave` option in README
+
 ## [v0.0.13]
 
 ### Added

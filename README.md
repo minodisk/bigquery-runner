@@ -75,7 +75,7 @@ Limits the bytes billed for this job. Queries that will have bytes billed beyond
 
 If set to true, do a dry run on file save to check for runtime errors in the query.
 
-![Screenshot of Runtime Error](runtime-error.gif)
+![Screenshot of check error on save](check-error-on-save.gif)
 
 ### `bigqueryRunner.checkErrorOnSave.languageIds`
 
