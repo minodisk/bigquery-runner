@@ -6,4 +6,4 @@ from
     )
     left join (
         select 1 as id, 'bar' as type
-    ) -- using(id)
+    )

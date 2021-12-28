@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { format as formatBytes } from "bytes";
 import * as CSV from "csv-stringify";
 import deepmerge from "deepmerge";
 import EasyTable from "easy-table";
@@ -100,8 +101,11 @@ export async function activate(ctx: ExtensionContext) {
       languages.createDiagnosticCollection("bigqueryRunner");
     ctx.subscriptions.push(
       diagnosticCollection,
+      workspace.onDidOpenTextDocument((document) =>
+        checkError({ config, diagnosticCollection, document })
+      ),
       workspace.onDidSaveTextDocument((document) =>
-        onDidSaveTextDocument({ config, diagnosticCollection, document })
+        checkError({ config, diagnosticCollection, document })
       )
     );
 
@@ -132,7 +136,7 @@ export async function activate(ctx: ExtensionContext) {
 
 export function deactivate() {}
 
-async function onDidSaveTextDocument({
+async function checkError({
   config,
   document,
 }: {
@@ -146,10 +150,11 @@ async function onDidSaveTextDocument({
   if (!isBigQuery({ config, document })) {
     return;
   }
+  const logger = createLogWriter();
   await dryRun({
     diagnosticCollection,
     document,
-    logger: createLogWriter(),
+    logger,
   });
 }
 
@@ -356,8 +361,17 @@ async function dryRun({
       queryText: getQueryText({ document, range }),
       dryRun: true,
     });
-    logger.write(`Dry run: ${job.id}
-Result: ${job.metadata.statistics.totalBytesProcessed} bytes processed\n`);
+    logger.write(`Dry run: ${job.id}\n`);
+    const { totalBytesProcessed } = job.metadata.statistics;
+    const bytes =
+      typeof totalBytesProcessed === "number"
+        ? totalBytesProcessed
+        : typeof totalBytesProcessed === "string"
+        ? parseInt(totalBytesProcessed, 10)
+        : undefined;
+    if (bytes !== undefined) {
+      logger.write(`Result: ${formatBytes(bytes)} processed\n`);
+    }
   } catch (err) {
     marker.mark(err);
   }
@@ -486,7 +500,9 @@ async function createOutput({
         write: (chunk) => stream.write(chunk),
         async close() {
           return new Promise((resolve, reject) => {
-            logger.write(`Total bytes written: ${stream.bytesWritten}bytes\n`);
+            logger.write(
+              `Total bytes written: ${formatBytes(stream.bytesWritten)}\n`
+            );
             stream.on("error", reject).on("finish", resolve).end();
           });
         },
