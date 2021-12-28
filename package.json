@@ -108,11 +108,6 @@
           ],
           "default": null,
           "description": "(Optional) Pretty print JSON results when output.format is specified as json."
-        },
-        "bigqueryRunner.preserveFocus": {
-          "type": "boolean",
-          "default": true,
-          "description": "(Optional) Preserve focus when opening output window."
         }
       }
     }

@@ -54,7 +54,6 @@ The extension can be customized by modifying your `settings.json` file. The avai
 "bigqueryRunner.output.format.csv.header" = false // (Optional) Columns names are automatically discovered from the first record if it is provided as a literal object.
 "bigqueryRunner.output.format.csv.delimiter" = "," // (Optional) Set the delimiter between the fields of a record. It can be one or multiple characters. The default value is a comma `,`
 "bigqueryRunner.output.format.json.space" = null // (Optional) Pretty print JSON results when output.format.type is specified as json.
-"bigqueryRunner.preserveFocus" = true // (Optional) Preserve focus when opening output window.
 ```
 
 The majority of these settings are inherited from [`ClientConfig`](https://cloud.google.com/nodejs/docs/reference/bigquery/1.3.x/global#ClientConfig) in the underlying BigQuery client library.

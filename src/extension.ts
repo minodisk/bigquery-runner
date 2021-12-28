@@ -29,6 +29,7 @@ import {
   OutputChannel,
   Position,
   Range,
+  TextDocument,
   TextEditor,
   window,
   workspace,
@@ -97,8 +98,8 @@ export async function activate(ctx: ExtensionContext) {
       languages.createDiagnosticCollection("bigqueryRunner");
     ctx.subscriptions.push(
       diagnosticCollection,
-      workspace.onDidSaveTextDocument(() => {
-        diagnosticCollection.clear();
+      workspace.onDidSaveTextDocument((document) => {
+        diagnosticCollection.delete(document.uri);
       })
     );
 
@@ -177,8 +178,8 @@ function createLogWriter(): Writer {
 function createErrorWriter(): Writer {
   return {
     write(chunk: string) {
-      outputChannel.append(chunk);
       outputChannel.show(true);
+      outputChannel.append(chunk);
     },
     async close() {},
   };
@@ -191,41 +192,21 @@ async function run({
   editor: TextEditor;
   logger: Writer;
 }): Promise<void> {
-  diagnosticCollection.clear();
+  const marker = createErrorMarker({
+    diagnosticCollection,
+    document: editor.document,
+  });
+  marker.clear();
 
   let job!: Job;
+  const queryText = getQueryText(editor);
 
   try {
-    const queryText = getQueryText(editor);
     job = await createJob({
       queryText,
     });
   } catch (err) {
-    if (!(err instanceof Error)) {
-      throw err;
-    }
-    const { message } = err;
-    const rMessage = /^(.*?) at \[(\d+):(\d+)\]$/;
-    const res = rMessage.exec(message);
-    if (!res) {
-      throw err;
-    }
-    const [_, m, l, c] = res;
-    const line = Number(l) - 1;
-    const character = Number(c) - 1;
-    const range = editor.document.getWordRangeAtPosition(
-      new Position(line, character)
-    );
-    diagnosticCollection.set(editor.document.uri, [
-      new Diagnostic(
-        range ??
-          new Range(
-            new Position(line, character),
-            new Position(line, character + 1)
-          ),
-        m
-      ),
-    ]);
+    marker.mark(err);
   }
 
   try {
@@ -315,12 +296,22 @@ async function dryRun({
   editor: TextEditor;
   logger: Writer;
 }): Promise<void> {
-  const job = await createJob({
-    queryText: getQueryText(editor),
-    dryRun: true,
+  const marker = createErrorMarker({
+    diagnosticCollection,
+    document: editor.document,
   });
-  logger.write(`Dry run: ${job.id}
+  marker.clear();
+
+  try {
+    const job = await createJob({
+      queryText: getQueryText(editor),
+      dryRun: true,
+    });
+    logger.write(`Dry run: ${job.id}
 Result: ${job.metadata.statistics.totalBytesProcessed} bytes processed\n`);
+  } catch (err) {
+    marker.mark(err);
+  }
 }
 
 function getQueryText(editor: TextEditor): string {
@@ -362,6 +353,48 @@ async function createJob({
     throw new Error(`no job ID`);
   }
   return job;
+}
+
+function createErrorMarker({
+  diagnosticCollection,
+  document,
+}: {
+  diagnosticCollection: DiagnosticCollection;
+  document: TextDocument;
+}) {
+  return {
+    clear() {
+      diagnosticCollection.delete(document.uri);
+    },
+    mark(err: any) {
+      if (!(err instanceof Error)) {
+        throw err;
+      }
+      const { message } = err;
+      const rMessage = /^(.*?) at \[(\d+):(\d+)\]$/;
+      const res = rMessage.exec(message);
+      if (!res) {
+        throw err;
+      }
+      const [_, m, l, c] = res;
+      const line = Number(l) - 1;
+      const character = Number(c) - 1;
+      const range = document.getWordRangeAtPosition(
+        new Position(line, character)
+      );
+      diagnosticCollection.set(document.uri, [
+        new Diagnostic(
+          range ??
+            new Range(
+              new Position(line, character),
+              new Position(line, character + 1)
+            ),
+          m
+        ),
+      ]);
+      throw err;
+    },
+  };
 }
 
 async function createOutput({
