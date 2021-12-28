@@ -10,5 +10,6 @@
   "typescript.tsc.autoDetect": "off",
 
   "bigqueryRunner.keyFilename": "/Users/minodisk/bigquery-runner-minodisk.json",
-  "bigqueryRunner.location": "US"
+  "bigqueryRunner.location": "US",
+  "bigqueryRunner.dryRunOnSave.enabled": true
 }

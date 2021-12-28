@@ -30,7 +30,6 @@ import {
   Position,
   Range,
   TextDocument,
-  TextEditor,
   window,
   workspace,
 } from "vscode";
@@ -48,6 +47,11 @@ type Config = {
   location: string;
   useLegacySql: boolean;
   maximumBytesBilled?: string;
+  dryRunOnSave: {
+    enabled: boolean;
+    allowedLanguageIds: Array<string>;
+    allowedExtensions: Array<string>;
+  };
   output: {
     destination: {
       type: OutputDestination;
@@ -66,7 +70,6 @@ type Config = {
       };
     };
   };
-  preserveFocus: boolean;
 };
 
 type OutputDestination = "output" | "file";
@@ -82,7 +85,6 @@ class ErrorWithId {
 }
 
 let config: Config;
-
 let outputChannel: OutputChannel;
 let diagnosticCollection: DiagnosticCollection;
 
@@ -98,9 +100,9 @@ export async function activate(ctx: ExtensionContext) {
       languages.createDiagnosticCollection("bigqueryRunner");
     ctx.subscriptions.push(
       diagnosticCollection,
-      workspace.onDidSaveTextDocument((document) => {
-        diagnosticCollection.delete(document.uri);
-      })
+      workspace.onDidSaveTextDocument((document) =>
+        onDidSaveTextDocument({ config, diagnosticCollection, document })
+      )
     );
 
     // Register all available commands and their actions.
@@ -128,8 +130,40 @@ export async function activate(ctx: ExtensionContext) {
   }
 }
 
-export function deactivate() {
-  outputChannel.dispose();
+export function deactivate() {}
+
+async function onDidSaveTextDocument({
+  config,
+  document,
+}: {
+  config: Config;
+  diagnosticCollection: DiagnosticCollection;
+  document: TextDocument;
+}): Promise<void> {
+  if (!config.dryRunOnSave.enabled) {
+    return;
+  }
+  if (!isBigQuery({ config, document })) {
+    return;
+  }
+  await dryRun({
+    diagnosticCollection,
+    document,
+    logger: createLogWriter(),
+  });
+}
+
+function isBigQuery({
+  config,
+  document,
+}: {
+  config: Config;
+  document: TextDocument;
+}): boolean {
+  return (
+    config.dryRunOnSave.allowedLanguageIds.includes(document.languageId) ||
+    config.dryRunOnSave.allowedExtensions.includes(extname(document.fileName))
+  );
 }
 
 async function updateConfig(section: string): Promise<void> {
@@ -143,7 +177,12 @@ async function updateConfig(section: string): Promise<void> {
 function wrap({
   callback,
 }: {
-  callback: (params: { editor: TextEditor; logger: Writer }) => Promise<void>;
+  callback: (params: {
+    diagnosticCollection: DiagnosticCollection;
+    document: TextDocument;
+    range?: Range;
+    logger: Writer;
+  }) => Promise<void>;
 }): () => void {
   return async () => {
     const logWriter = createLogWriter();
@@ -153,7 +192,9 @@ function wrap({
         throw new Error("no active text editor");
       }
       await callback({
-        editor: window.activeTextEditor,
+        diagnosticCollection,
+        document: window.activeTextEditor.document,
+        range: window.activeTextEditor.selection,
         logger: logWriter,
       });
     } catch (err) {
@@ -186,20 +227,24 @@ function createErrorWriter(): Writer {
 }
 
 async function run({
-  editor,
+  diagnosticCollection,
+  document,
+  range,
   logger,
 }: {
-  editor: TextEditor;
+  diagnosticCollection: DiagnosticCollection;
+  document: TextDocument;
+  range?: Range;
   logger: Writer;
 }): Promise<void> {
   const marker = createErrorMarker({
     diagnosticCollection,
-    document: editor.document,
+    document,
   });
   marker.clear();
 
   let job!: Job;
-  const queryText = getQueryText(editor);
+  const queryText = getQueryText({ document, range });
 
   try {
     job = await createJob({
@@ -211,7 +256,7 @@ async function run({
 
   try {
     const output = await createOutput({
-      filename: editor.document.fileName,
+      filename: document.fileName,
       logger,
     });
 
@@ -290,21 +335,25 @@ async function run({
 }
 
 async function dryRun({
-  editor,
+  diagnosticCollection,
+  document,
+  range,
   logger,
 }: {
-  editor: TextEditor;
+  diagnosticCollection: DiagnosticCollection;
+  document: TextDocument;
+  range?: Range;
   logger: Writer;
 }): Promise<void> {
   const marker = createErrorMarker({
     diagnosticCollection,
-    document: editor.document,
+    document,
   });
   marker.clear();
 
   try {
     const job = await createJob({
-      queryText: getQueryText(editor),
+      queryText: getQueryText({ document, range }),
       dryRun: true,
     });
     logger.write(`Dry run: ${job.id}
@@ -314,14 +363,14 @@ Result: ${job.metadata.statistics.totalBytesProcessed} bytes processed\n`);
   }
 }
 
-function getQueryText(editor: TextEditor): string {
-  if (!editor) {
-    throw new Error("no active editor window was found");
-  }
-
-  const text = editor.selection.isEmpty
-    ? editor.document.getText()
-    : editor.document.getText(editor.selection);
+function getQueryText({
+  document,
+  range,
+}: {
+  document: TextDocument;
+  range?: Range;
+}): string {
+  const text = range?.isEmpty ? document.getText() : document.getText(range);
 
   if (text.trim() === "") {
     throw new Error("text is empty");

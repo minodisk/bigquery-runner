@@ -18,6 +18,8 @@
   "main": "./out/extension.js",
   "icon": "bigquery-runner.png",
   "activationEvents": [
+    "onLanguage:bigquery",
+    "onLanguage:sql-bigquery",
     "onCommand:bigqueryRunner.run",
     "onCommand:bigqueryRunner.dryRun"
   ],
@@ -66,6 +68,28 @@
           ],
           "default": null,
           "description": "(Optional) Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default."
+        },
+        "bigqueryRunner.dryRunOnSave.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "(Optional) Control whether to run dryRun when the file is saved. If unspecified, this will be set to false."
+        },
+        "bigqueryRunner.dryRunOnSave.allowedLanguageIds": {
+          "type": "array",
+          "default": [
+            "bigquery",
+            "sql-bigquery"
+          ],
+          "description": "(Optional) List of languageId to run dryRun when dryRunOnSave.enabled is true."
+        },
+        "bigqueryRunner.dryRunOnSave.allowedExtensions": {
+          "type": "array",
+          "default": [
+            ".bqsql",
+            ".bqddl",
+            ".bqdml"
+          ],
+          "description": "(Optional) List of extensions to run dryRun when dryRunOnSave.enabled is true."
         },
         "bigqueryRunner.output.destination.type": {
           "type": "string",
