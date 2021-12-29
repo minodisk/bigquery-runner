@@ -27,7 +27,7 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
-![Screenshot of Run](run.gif)
+![Screenshot of Run](screenshots/run.gif)
 
 ### `BigQuery Runner: Dry Run`
 
@@ -35,7 +35,7 @@ Run the query with BigQuery and display the results. Run the query on the select
 
 Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
-![Screenshot of Dry Run](dry-run.gif)
+![Screenshot of Dry Run](screenshots/dry-run.gif)
 
 ## Configuration
 
@@ -69,25 +69,25 @@ Specifies whether to use BigQuery's legacy SQL dialect for this query. The defau
 
 Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default.
 
-### `bigqueryRunner.checkErrorOnSave.enabled`
+### `bigqueryRunner.validateOnSave.enabled`
 
 - default: `false`
 
-If set to true, do a dry run on file save to check for runtime errors in the query.
+If set to true, do a dry run on file save to validate for runtime errors in the query.
 
-![Screenshot of check error on save](check-error-on-save.gif)
+![Screenshot of validate on save](screenshots/validate-error-on-save.gif)
 
-### `bigqueryRunner.checkErrorOnSave.languageIds`
+### `bigqueryRunner.validateOnSave.languageIds`
 
 - default: `[ "bigquery", "sql-bigquery" ]`
 
-List of language IDs to be checked for errors when saving files.
+List of language IDs to be validated for errors when saving files.
 
-### `bigqueryRunner.checkErrorOnSave.extensions`
+### `bigqueryRunner.validateOnSave.extensions`
 
 - default: `[ ".bqsql", ".bqddl", ".bqdml" ]`
 
-List of file extensions to be checked for errors when saving files.
+List of file extensions to be validated for errors when saving files.
 
 ### `bigqueryRunner.output.destination.type`
 

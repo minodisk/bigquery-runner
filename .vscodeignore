@@ -3,7 +3,6 @@
 assets-src
 dist
 examples
-screenshots
 src
 .gitignore
 tsconfig.json

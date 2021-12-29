@@ -2,11 +2,18 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.15]
+
+### Changed
+
+- Rename option `checkErrorOnSave` to `validateOnSave`.
+- Changed to put a new line in the Output Channel for each execution.
+
 ## [v0.0.14]
 
 ### Changed
 
-- Changed screenshot for `checkErrorOnSave` option in README
+- Changed screenshot for `checkErrorOnSave` option in README.
 
 ## [v0.0.13]
 

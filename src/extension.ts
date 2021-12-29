@@ -48,7 +48,7 @@ type Config = {
   location: string;
   useLegacySql: boolean;
   maximumBytesBilled?: string;
-  checkErrorOnSave: {
+  validateOnSave: {
     enabled: boolean;
     languageIds: Array<string>;
     extensions: Array<string>;
@@ -96,7 +96,7 @@ export async function activate(ctx: ExtensionContext) {
     const diagnosticCollection = languages.createDiagnosticCollection(section);
     ctx.subscriptions.push(diagnosticCollection);
 
-    const configManager = createConfigManager({ section });
+    const configManager = createConfigManager(section);
     ctx.subscriptions.push(configManager);
 
     // Register all available commands and their actions.
@@ -105,8 +105,8 @@ export async function activate(ctx: ExtensionContext) {
     new Map<string, () => void>([
       [
         `${section}.run`,
-        wrap({
-          configManager,
+        wrapCallback({
+          config: configManager.get(),
           diagnosticCollection,
           outputChannel,
           callback: run,
@@ -114,8 +114,8 @@ export async function activate(ctx: ExtensionContext) {
       ],
       [
         `${section}.dryRun`,
-        wrap({
-          configManager,
+        wrapCallback({
+          config: configManager.get(),
           diagnosticCollection,
           outputChannel,
           callback: dryRun,
@@ -127,7 +127,7 @@ export async function activate(ctx: ExtensionContext) {
 
     ctx.subscriptions.push(
       workspace.onDidOpenTextDocument((document) =>
-        checkError({
+        validate({
           config: configManager.get(),
           diagnosticCollection,
           outputChannel,
@@ -135,7 +135,7 @@ export async function activate(ctx: ExtensionContext) {
         })
       ),
       workspace.onDidSaveTextDocument((document) =>
-        checkError({
+        validate({
           config: configManager.get(),
           diagnosticCollection,
           outputChannel,
@@ -158,7 +158,7 @@ export async function activate(ctx: ExtensionContext) {
 
 export function deactivate() {}
 
-function createConfigManager({ section }: { section: string }) {
+function createConfigManager(section: string) {
   let config = workspace.getConfiguration(section) as any as Config;
   return {
     get(): Config {
@@ -170,9 +170,8 @@ function createConfigManager({ section }: { section: string }) {
     dispose(): void {},
   };
 }
-type ConfigManager = ReturnType<typeof createConfigManager>;
 
-async function checkError({
+async function validate({
   config,
   diagnosticCollection,
   outputChannel,
@@ -183,19 +182,34 @@ async function checkError({
   outputChannel: OutputChannel;
   document: TextDocument;
 }): Promise<void> {
-  if (!config.checkErrorOnSave.enabled) {
-    return;
+  try {
+    if (!config.validateOnSave.enabled) {
+      return;
+    }
+    if (!isBigQuery({ config, document })) {
+      return;
+    }
+    outputChannel.appendLine(`Validate`);
+    await dryRun({
+      config,
+      errorMarker: createErrorMarker({ diagnosticCollection, document }),
+      outputChannel: {
+        ...outputChannel,
+        show(): void {
+          // do nothing
+        },
+      },
+      document,
+    });
+    outputChannel.appendLine("");
+  } catch (err) {
+    if (err instanceof ErrorWithId) {
+      outputChannel.appendLine(`${err.error} (${err.id})`);
+    } else {
+      outputChannel.appendLine(`${err}`);
+    }
+    outputChannel.appendLine("");
   }
-  if (!isBigQuery({ config, document })) {
-    return;
-  }
-  const logger = createLogWriter({ outputChannel });
-  await dryRun({
-    config,
-    diagnosticCollection,
-    document,
-    logger,
-  });
 }
 
 function isBigQuery({
@@ -206,101 +220,71 @@ function isBigQuery({
   document: TextDocument;
 }): boolean {
   return (
-    config.checkErrorOnSave.languageIds.includes(document.languageId) ||
-    config.checkErrorOnSave.extensions.includes(extname(document.fileName))
+    config.validateOnSave.languageIds.includes(document.languageId) ||
+    config.validateOnSave.extensions.includes(extname(document.fileName))
   );
 }
 
-function wrap({
-  configManager,
+function wrapCallback({
+  config,
   diagnosticCollection,
   outputChannel,
   callback,
 }: {
-  configManager: ConfigManager;
+  config: Config;
   diagnosticCollection: DiagnosticCollection;
   outputChannel: OutputChannel;
   callback: (params: {
     config: Config;
-    diagnosticCollection: DiagnosticCollection;
+    errorMarker: ErrorMarker;
     outputChannel: OutputChannel;
     document: TextDocument;
     range?: Range;
-    logger: Writer;
   }) => Promise<void>;
 }): () => void {
   return async () => {
-    const logWriter = createLogWriter({ outputChannel });
-    const errorWriter = createErrorWriter({ outputChannel });
     try {
       if (!window.activeTextEditor) {
         throw new Error("no active text editor");
       }
+      const { document, selection } = window.activeTextEditor;
       await callback({
-        config: configManager.get(),
-        diagnosticCollection,
+        config,
+        errorMarker: createErrorMarker({ diagnosticCollection, document }),
         outputChannel,
-        document: window.activeTextEditor.document,
-        range: window.activeTextEditor.selection,
-        logger: logWriter,
+        document,
+        range: selection,
       });
     } catch (err) {
-      if (err instanceof ErrorWithId) {
-        errorWriter.write(`${err.error} (${err.id})\n`);
-      } else {
-        errorWriter.write(`${err}\n`);
-      }
-    }
-  };
-}
-
-function createLogWriter({
-  outputChannel,
-}: {
-  outputChannel: OutputChannel;
-}): Writer {
-  return {
-    write(chunk: string) {
-      outputChannel.append(chunk);
-    },
-    async close() {},
-  };
-}
-
-function createErrorWriter({
-  outputChannel,
-}: {
-  outputChannel: OutputChannel;
-}): Writer {
-  return {
-    write(chunk: string) {
       outputChannel.show(true);
-      outputChannel.append(chunk);
-    },
-    async close() {},
+      if (err instanceof ErrorWithId) {
+        outputChannel.appendLine(`${err.error} (${err.id})`);
+      } else {
+        outputChannel.appendLine(`${err}`);
+      }
+    } finally {
+      outputChannel.appendLine("");
+    }
   };
 }
 
 async function run({
   config,
-  diagnosticCollection,
+  errorMarker,
   outputChannel,
   document,
   range,
-  logger,
 }: {
   config: Config;
-  diagnosticCollection: DiagnosticCollection;
+  errorMarker: ErrorMarker;
   outputChannel: OutputChannel;
   document: TextDocument;
   range?: Range;
-  logger: Writer;
 }): Promise<void> {
-  const marker = createErrorMarker({
-    diagnosticCollection,
-    document,
-  });
-  marker.clear();
+  outputChannel.show(true);
+  outputChannel.appendLine(`Run`);
+
+  errorMarker.clear();
 
   let job!: Job;
   const queryText = getQueryText({ document, range });
@@ -311,7 +295,7 @@ async function run({
       queryText,
     });
   } catch (err) {
-    marker.mark(err);
+    errorMarker.mark(err);
   }
 
   try {
@@ -319,15 +303,16 @@ async function run({
       config,
       outputChannel,
       filename: document.fileName,
-      logger,
     });
 
-    logger.write(`Run: ${job.id}\n`);
+    outputChannel.appendLine(`Job ID: ${job.id}`);
+
     const res = await job.getQueryResults({
       autoPaginate: true,
     });
     const [rows] = res;
-    logger.write(`Result: ${rows.length} rows\n`);
+
+    outputChannel.appendLine(`Result: ${rows.length} rows`);
 
     switch (config.output.format.type) {
       case "table":
@@ -398,30 +383,31 @@ async function run({
 
 async function dryRun({
   config,
-  diagnosticCollection,
+  errorMarker,
+  outputChannel,
   document,
   range,
-  logger,
 }: {
   config: Config;
-  diagnosticCollection: DiagnosticCollection;
+  errorMarker: ErrorMarker;
+  outputChannel: OutputChannel;
   document: TextDocument;
   range?: Range;
-  logger: Writer;
 }): Promise<void> {
-  const marker = createErrorMarker({
-    diagnosticCollection,
-    document,
-  });
-  marker.clear();
-
   try {
+    outputChannel.show(true);
+    outputChannel.appendLine(`Dry run`);
+
+    errorMarker.clear();
+
     const job = await createJob({
       config,
       queryText: getQueryText({ document, range }),
       dryRun: true,
     });
-    logger.write(`Dry run: ${job.id}\n`);
+
+    outputChannel.appendLine(`Job ID: ${job.id}`);
+
     const { totalBytesProcessed } = job.metadata.statistics;
     const bytes =
       typeof totalBytesProcessed === "number"
@@ -429,11 +415,12 @@ async function dryRun({
         : typeof totalBytesProcessed === "string"
         ? parseInt(totalBytesProcessed, 10)
         : undefined;
-    if (bytes !== undefined) {
-      logger.write(`Result: ${formatBytes(bytes)} processed\n`);
+    if (bytes === undefined) {
+      return;
     }
+    outputChannel.appendLine(`Result: ${formatBytes(bytes)} processed`);
   } catch (err) {
-    marker.mark(err);
+    errorMarker.mark(err);
   }
 }
 
@@ -521,25 +508,23 @@ function createErrorMarker({
     },
   };
 }
+type ErrorMarker = ReturnType<typeof createErrorMarker>;
 
 async function createOutput({
   config,
   outputChannel,
   filename,
-  logger,
 }: {
   config: Config;
   outputChannel: OutputChannel;
   filename: string;
-  logger: Writer;
 }): Promise<Writer> {
   switch (config.output.destination.type) {
     case "output":
       return {
         write(chunk: string) {
           outputChannel.show(true);
-          outputChannel.append(chunk);
-          outputChannel.append("\n");
+          outputChannel.appendLine(chunk);
         },
         async close() {},
       };
@@ -559,15 +544,15 @@ async function createOutput({
           config.output.format.type
         )}`
       );
-      logger.write(`Output to: ${path}\n`);
+      outputChannel.appendLine(`Output to: ${path}`);
       const stream = createWriteStream(path);
       return {
         path,
         write: (chunk) => stream.write(chunk),
         async close() {
           return new Promise((resolve, reject) => {
-            logger.write(
-              `Total bytes written: ${formatBytes(stream.bytesWritten)}\n`
+            outputChannel.appendLine(
+              `Total bytes written: ${formatBytes(stream.bytesWritten)}`
             );
             stream.on("error", reject).on("finish", resolve).end();
           });

@@ -69,27 +69,27 @@
           "default": null,
           "description": "(Optional) Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default."
         },
-        "bigqueryRunner.checkErrorOnSave.enabled": {
+        "bigqueryRunner.validateOnSave.enabled": {
           "type": "boolean",
           "default": false,
-          "description": "If set to true, do a dry run on file save to check for runtime errors in the query."
+          "description": "If set to true, do a dry run on file save to validate for runtime errors in the query."
         },
-        "bigqueryRunner.checkErrorOnSave.languageIds": {
+        "bigqueryRunner.validateOnSave.languageIds": {
           "type": "array",
           "default": [
             "bigquery",
             "sql-bigquery"
           ],
-          "description": "List of language IDs to be checked for errors when saving files."
+          "description": "List of language IDs to be validated for errors when saving files."
         },
-        "bigqueryRunner.checkErrorOnSave.extensions": {
+        "bigqueryRunner.validateOnSave.extensions": {
           "type": "array",
           "default": [
             ".bqsql",
             ".bqddl",
             ".bqdml"
           ],
-          "description": "List of file extensions to be checked for errors when saving files."
+          "description": "List of file extensions to be validated for errors when saving files."
         },
         "bigqueryRunner.output.destination.type": {
           "type": "string",
