@@ -14,8 +14,8 @@
 
 import { format as formatBytes } from "bytes";
 import * as CSV from "csv-stringify";
-import deepmerge from "deepmerge";
 import EasyTable from "easy-table";
+import deepmerge from "deepmerge";
 import { flatten } from "flat";
 import { createWriteStream } from "fs";
 import mkdirp from "mkdirp";
@@ -85,48 +85,70 @@ class ErrorWithId {
   constructor(public error: unknown, public id: string) {}
 }
 
-let config: Config;
-let outputChannel: OutputChannel;
-let diagnosticCollection: DiagnosticCollection;
-
 export async function activate(ctx: ExtensionContext) {
   try {
-    outputChannel = window.createOutputChannel("BigQuery Runner");
+    const title = "BigQuery Runner";
+    const section = "bigqueryRunner";
+
+    const outputChannel = window.createOutputChannel(title);
     ctx.subscriptions.push(outputChannel);
 
-    const section = "bigqueryRunner";
-    await updateConfig(section);
+    const diagnosticCollection = languages.createDiagnosticCollection(section);
+    ctx.subscriptions.push(diagnosticCollection);
 
-    diagnosticCollection =
-      languages.createDiagnosticCollection("bigqueryRunner");
-    ctx.subscriptions.push(
-      diagnosticCollection,
-      workspace.onDidOpenTextDocument((document) =>
-        checkError({ config, diagnosticCollection, document })
-      ),
-      workspace.onDidSaveTextDocument((document) =>
-        checkError({ config, diagnosticCollection, document })
-      )
-    );
+    const configManager = createConfigManager({ section });
+    ctx.subscriptions.push(configManager);
 
     // Register all available commands and their actions.
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
     new Map<string, () => void>([
-      [`${section}.run`, wrap({ callback: run })],
-      [`${section}.dryRun`, wrap({ callback: dryRun })],
+      [
+        `${section}.run`,
+        wrap({
+          configManager,
+          diagnosticCollection,
+          outputChannel,
+          callback: run,
+        }),
+      ],
+      [
+        `${section}.dryRun`,
+        wrap({
+          configManager,
+          diagnosticCollection,
+          outputChannel,
+          callback: dryRun,
+        }),
+      ],
     ]).forEach((action, name) => {
       ctx.subscriptions.push(commands.registerCommand(name, action));
     });
 
     ctx.subscriptions.push(
+      workspace.onDidOpenTextDocument((document) =>
+        checkError({
+          config: configManager.get(),
+          diagnosticCollection,
+          outputChannel,
+          document,
+        })
+      ),
+      workspace.onDidSaveTextDocument((document) =>
+        checkError({
+          config: configManager.get(),
+          diagnosticCollection,
+          outputChannel,
+          document,
+        })
+      ),
       // Listen for configuration changes and trigger an update, so that users don't
       // have to reload the VS Code environment after a config update.
-      workspace.onDidChangeConfiguration(async (event) => {
+      workspace.onDidChangeConfiguration((event) => {
         if (!event.affectsConfiguration(section)) {
           return;
         }
-        await updateConfig(section);
+        configManager.refresh();
       })
     );
   } catch (err) {
@@ -136,12 +158,29 @@ export async function activate(ctx: ExtensionContext) {
 
 export function deactivate() {}
 
+function createConfigManager({ section }: { section: string }) {
+  let config = workspace.getConfiguration(section) as any as Config;
+  return {
+    get(): Config {
+      return config;
+    },
+    refresh(): void {
+      config = deepmerge(config, workspace.getConfiguration(section));
+    },
+    dispose(): void {},
+  };
+}
+type ConfigManager = ReturnType<typeof createConfigManager>;
+
 async function checkError({
   config,
+  diagnosticCollection,
+  outputChannel,
   document,
 }: {
   config: Config;
   diagnosticCollection: DiagnosticCollection;
+  outputChannel: OutputChannel;
   document: TextDocument;
 }): Promise<void> {
   if (!config.checkErrorOnSave.enabled) {
@@ -150,8 +189,9 @@ async function checkError({
   if (!isBigQuery({ config, document })) {
     return;
   }
-  const logger = createLogWriter();
+  const logger = createLogWriter({ outputChannel });
   await dryRun({
+    config,
     diagnosticCollection,
     document,
     logger,
@@ -171,33 +211,35 @@ function isBigQuery({
   );
 }
 
-async function updateConfig(section: string): Promise<void> {
-  try {
-    config = deepmerge(config, workspace.getConfiguration(section));
-  } catch (e) {
-    throw new Error(`failed to read config: ${e}`);
-  }
-}
-
 function wrap({
+  configManager,
+  diagnosticCollection,
+  outputChannel,
   callback,
 }: {
+  configManager: ConfigManager;
+  diagnosticCollection: DiagnosticCollection;
+  outputChannel: OutputChannel;
   callback: (params: {
+    config: Config;
     diagnosticCollection: DiagnosticCollection;
+    outputChannel: OutputChannel;
     document: TextDocument;
     range?: Range;
     logger: Writer;
   }) => Promise<void>;
 }): () => void {
   return async () => {
-    const logWriter = createLogWriter();
-    const errorWriter = createErrorWriter();
+    const logWriter = createLogWriter({ outputChannel });
+    const errorWriter = createErrorWriter({ outputChannel });
     try {
       if (!window.activeTextEditor) {
         throw new Error("no active text editor");
       }
       await callback({
+        config: configManager.get(),
         diagnosticCollection,
+        outputChannel,
         document: window.activeTextEditor.document,
         range: window.activeTextEditor.selection,
         logger: logWriter,
@@ -212,7 +254,11 @@ function wrap({
   };
 }
 
-function createLogWriter(): Writer {
+function createLogWriter({
+  outputChannel,
+}: {
+  outputChannel: OutputChannel;
+}): Writer {
   return {
     write(chunk: string) {
       outputChannel.append(chunk);
@@ -221,7 +267,11 @@ function createLogWriter(): Writer {
   };
 }
 
-function createErrorWriter(): Writer {
+function createErrorWriter({
+  outputChannel,
+}: {
+  outputChannel: OutputChannel;
+}): Writer {
   return {
     write(chunk: string) {
       outputChannel.show(true);
@@ -232,12 +282,16 @@ function createErrorWriter(): Writer {
 }
 
 async function run({
+  config,
   diagnosticCollection,
+  outputChannel,
   document,
   range,
   logger,
 }: {
+  config: Config;
   diagnosticCollection: DiagnosticCollection;
+  outputChannel: OutputChannel;
   document: TextDocument;
   range?: Range;
   logger: Writer;
@@ -253,6 +307,7 @@ async function run({
 
   try {
     job = await createJob({
+      config,
       queryText,
     });
   } catch (err) {
@@ -261,6 +316,8 @@ async function run({
 
   try {
     const output = await createOutput({
+      config,
+      outputChannel,
       filename: document.fileName,
       logger,
     });
@@ -340,11 +397,13 @@ async function run({
 }
 
 async function dryRun({
+  config,
   diagnosticCollection,
   document,
   range,
   logger,
 }: {
+  config: Config;
   diagnosticCollection: DiagnosticCollection;
   document: TextDocument;
   range?: Range;
@@ -358,6 +417,7 @@ async function dryRun({
 
   try {
     const job = await createJob({
+      config,
       queryText: getQueryText({ document, range }),
       dryRun: true,
     });
@@ -394,9 +454,11 @@ function getQueryText({
 }
 
 async function createJob({
+  config,
   queryText,
   dryRun,
 }: {
+  config: Config;
   queryText: string;
   dryRun?: boolean;
 }): Promise<Job> {
@@ -461,9 +523,13 @@ function createErrorMarker({
 }
 
 async function createOutput({
+  config,
+  outputChannel,
   filename,
   logger,
 }: {
+  config: Config;
+  outputChannel: OutputChannel;
   filename: string;
   logger: Writer;
 }): Promise<Writer> {
