@@ -14,6 +14,10 @@ All notable changes to the "bigquery-runner" extension will be documented in thi
 
 - Added option to check for query errors when saving files.
 
+### Changed
+
+- Changed to add units to bytes output in logs.
+
 ## [v0.0.12]
 
 ### Added
