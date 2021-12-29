@@ -15,8 +15,8 @@
   "categories": [
     "Other"
   ],
-  "main": "./out/extension.js",
-  "icon": "bigquery-runner.png",
+  "main": "out/extension.js",
+  "icon": "assets/icon.png",
   "activationEvents": [
     "onLanguage:bigquery",
     "onLanguage:sql-bigquery",
@@ -145,7 +145,7 @@
     "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
     "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
+    "lint": "eslint 'src/**/*.ts'",
     "test": "node ./out/test/runTest.js"
   },
   "dependencies": {
@@ -172,6 +172,8 @@
     "@typescript-eslint/parser": "^5.4.0",
     "@vscode/test-electron": "^1.6.2",
     "eslint": "^8.1.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-unused-imports": "^2.0.0",
     "glob": "^7.1.7",
     "mocha": "^9.1.3",
     "npm-run-all": "^4.1.5",
