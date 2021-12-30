@@ -17,5 +17,5 @@
 
   "bigqueryRunner.keyFilename": "/Users/minodisk/bigquery-runner-minodisk.json",
   "bigqueryRunner.location": "US",
-  "bigqueryRunner.checkErrorOnSave.enabled": true
+  "bigqueryRunner.validateOnSave.enabled": true
 }
