@@ -75,10 +75,10 @@ type Config = {
 
 type OutputDestination = "output" | "file";
 
-const formats = ["table", "json", "csv"] as const;
+const formats = ["table", "markdown", "json", "csv"] as const;
 type OutputFormat = typeof formats[number];
 
-const extensions = [".txt", ".json", ".csv"] as const;
+const extensions = [".txt", ".md", ".json", ".csv"] as const;
 type OutputExtension = typeof extensions[number];
 
 class ErrorWithId {
@@ -106,7 +106,7 @@ export async function activate(ctx: ExtensionContext) {
       [
         `${section}.run`,
         wrapCallback({
-          config: configManager.get(),
+          configManager,
           diagnosticCollection,
           outputChannel,
           callback: run,
@@ -115,7 +115,7 @@ export async function activate(ctx: ExtensionContext) {
       [
         `${section}.dryRun`,
         wrapCallback({
-          config: configManager.get(),
+          configManager,
           diagnosticCollection,
           outputChannel,
           callback: dryRun,
@@ -170,6 +170,7 @@ function createConfigManager(section: string) {
     dispose(): void {},
   };
 }
+type ConfigManager = ReturnType<typeof createConfigManager>;
 
 async function validate({
   config,
@@ -226,12 +227,12 @@ function isBigQuery({
 }
 
 function wrapCallback({
-  config,
+  configManager,
   diagnosticCollection,
   outputChannel,
   callback,
 }: {
-  config: Config;
+  configManager: ConfigManager;
   diagnosticCollection: DiagnosticCollection;
   outputChannel: OutputChannel;
   callback: (params: {
@@ -249,7 +250,7 @@ function wrapCallback({
       }
       const { document, selection } = window.activeTextEditor;
       await callback({
-        config,
+        config: configManager.get(),
         errorMarker: createErrorMarker({ diagnosticCollection, document }),
         outputChannel,
         document,
@@ -324,6 +325,37 @@ async function run({
           });
         });
         output.write(t.toString().trimEnd());
+        output.close();
+        break;
+      case "markdown":
+        const keys = new Set<string>();
+        const rs = rows.flatMap((row) => {
+          const ts = tenderize(row);
+          ts.map((t) => {
+            Object.keys(t).forEach((key) => {
+              keys.add(key);
+            });
+          });
+          return ts;
+        });
+        const ks = Array.from(keys);
+        const m: Array<string> = [
+          `|${ks.join("|")}|`,
+          `|${ks.map(() => "---").join("|")}|`,
+          ...rs.map(
+            (r) =>
+              `|${ks
+                .map((key) => {
+                  if (!r[key]) {
+                    return "";
+                  }
+                  return `${r[key]}`.replace("\n", "<br/>");
+                })
+                .join("|")}|`
+          ),
+        ];
+        output.write(m.join("\n"));
+        output.close();
         break;
       case "json":
         rows.forEach((row) => {
@@ -335,6 +367,7 @@ async function run({
             )
           );
         });
+        output.close();
         break;
       case "csv":
         const structs = rows.flatMap((row) => tenderize(row));
@@ -349,6 +382,7 @@ async function run({
               }
               if (res) {
                 output.write(res);
+                output.close();
               }
               resolve();
             }
@@ -359,19 +393,19 @@ async function run({
         throw new Error(`Invalid output.format: ${config.output.format}`);
     }
 
-    if (output.path) {
-      const { path } = output;
-      const selection = await window.showInformationMessage(
-        `Ouput result to ${path}`,
-        "Open"
-      );
-      switch (selection) {
-        case "Open":
-          const textDocument = await workspace.openTextDocument(path);
-          window.showTextDocument(textDocument, 1, false);
-          break;
-      }
-    }
+    // if (output.path) {
+    //   const { path } = output;
+    //   const selection = await window.showInformationMessage(
+    //     `Ouput result to ${path}`,
+    //     "Open"
+    //   );
+    //   switch (selection) {
+    //     case "Open":
+    //       const textDocument = await workspace.openTextDocument(path);
+    //       window.showTextDocument(textDocument, 1, false);
+    //       break;
+    //   }
+    // }
   } catch (err) {
     if (job.id) {
       throw new ErrorWithId(err, job.id);

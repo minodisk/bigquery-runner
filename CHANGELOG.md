@@ -2,6 +2,12 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.16]
+
+### Added
+
+- Added markdown table format.
+
 ## [v0.0.15]
 
 ### Changed

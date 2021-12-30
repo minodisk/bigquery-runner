@@ -110,6 +110,7 @@
           "default": "table",
           "enum": [
             "table",
+            "markdown",
             "json",
             "csv"
           ],
@@ -138,7 +139,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "rm -rf out && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "debug": "run-s package:debug install:debug",
     "package": "mkdirp dist && vsce package -o ./dist/",

@@ -105,7 +105,7 @@ Controls the output file path for query results when output.type is specified as
 
 - default: `"table"`
 
-Controls the output format for query results. "table", "json", "csv"
+Controls the output format for query results. "table", "markdown", "json", "csv"
 
 ### `bigqueryRunner.output.format.csv.header`
 
