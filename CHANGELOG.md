@@ -2,6 +2,21 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.17]
+
+### Added
+
+- Added JSON format
+- Added JSON Lines format
+
+### Changed
+
+- Renamed validateOnSave option to verifyOnSave
+
+### Removed
+
+- Removed support for json space
+
 ## [v0.0.16]
 
 ### Added
