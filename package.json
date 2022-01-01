@@ -112,6 +112,7 @@
             "table",
             "markdown",
             "json",
+            "json-lines",
             "csv"
           ],
           "description": "(Optional) Controls the output format for query results."

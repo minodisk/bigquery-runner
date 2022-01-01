@@ -39,6 +39,7 @@ import { BigQuery, Job } from "@google-cloud/bigquery";
 type Writer = {
   path?: string;
   write: (chunk: string) => void;
+  writeLine: (chunk: string) => void;
   close(): Promise<void>;
 };
 
@@ -75,10 +76,10 @@ type Config = {
 
 type OutputDestination = "output" | "file";
 
-const formats = ["table", "markdown", "json", "csv"] as const;
+const formats = ["table", "markdown", "json-lines", "json", "csv"] as const;
 type OutputFormat = typeof formats[number];
 
-const extensions = [".txt", ".md", ".json", ".csv"] as const;
+const extensions = [".txt", ".md", ".jsonl", ".json", ".csv"] as const;
 type OutputExtension = typeof extensions[number];
 
 class ErrorWithId {
@@ -324,7 +325,7 @@ async function run({
             t.newRow();
           });
         });
-        output.write(t.toString().trimEnd());
+        output.writeLine(t.toString().trimEnd());
         output.close();
         break;
       case "markdown":
@@ -354,19 +355,23 @@ async function run({
                 .join("|")}|`
           ),
         ];
-        output.write(m.join("\n"));
+        output.writeLine(m.join("\n"));
+        output.close();
+        break;
+      case "json-lines":
+        rows.forEach((row) => {
+          output.writeLine(JSON.stringify(flatten(row, { safe: true })));
+        });
         output.close();
         break;
       case "json":
-        rows.forEach((row) => {
+        output.write("[");
+        rows.forEach((row, i) => {
           output.write(
-            JSON.stringify(
-              flatten(row, { safe: true }),
-              null,
-              config.output.format.json.space
-            )
+            (i === 0 ? "" : ",") + JSON.stringify(flatten(row, { safe: true }))
           );
         });
+        output.writeLine("]");
         output.close();
         break;
       case "csv":
@@ -381,7 +386,7 @@ async function run({
                 return;
               }
               if (res) {
-                output.write(res);
+                output.writeLine(res);
                 output.close();
               }
               resolve();
@@ -392,20 +397,6 @@ async function run({
       default:
         throw new Error(`Invalid output.format: ${config.output.format}`);
     }
-
-    // if (output.path) {
-    //   const { path } = output;
-    //   const selection = await window.showInformationMessage(
-    //     `Ouput result to ${path}`,
-    //     "Open"
-    //   );
-    //   switch (selection) {
-    //     case "Open":
-    //       const textDocument = await workspace.openTextDocument(path);
-    //       window.showTextDocument(textDocument, 1, false);
-    //       break;
-    //   }
-    // }
   } catch (err) {
     if (job.id) {
       throw new ErrorWithId(err, job.id);
@@ -558,6 +549,10 @@ async function createOutput({
       return {
         write(chunk: string) {
           outputChannel.show(true);
+          outputChannel.append(chunk);
+        },
+        writeLine(chunk: string) {
+          outputChannel.show(true);
           outputChannel.appendLine(chunk);
         },
         async close() {},
@@ -583,6 +578,7 @@ async function createOutput({
       return {
         path,
         write: (chunk) => stream.write(chunk),
+        writeLine: (chunk) => stream.write(chunk + "\n"),
         async close() {
           return new Promise((resolve, reject) => {
             outputChannel.appendLine(
