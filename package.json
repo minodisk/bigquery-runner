@@ -126,14 +126,6 @@
           "type": "string",
           "default": ",",
           "description": "Set the delimiter between the fields of a record. It can be one or multiple characters. The default value is a comma `,`"
-        },
-        "bigqueryRunner.output.format.json.space": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "(Optional) Pretty print JSON results when output.format is specified as json."
         }
       }
     }
