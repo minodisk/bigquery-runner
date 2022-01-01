@@ -49,7 +49,7 @@ type Config = {
   location: string;
   useLegacySql: boolean;
   maximumBytesBilled?: string;
-  validateOnSave: {
+  verifyOnSave: {
     enabled: boolean;
     languageIds: Array<string>;
     extensions: Array<string>;
@@ -128,7 +128,7 @@ export async function activate(ctx: ExtensionContext) {
 
     ctx.subscriptions.push(
       workspace.onDidOpenTextDocument((document) =>
-        validate({
+        verify({
           config: configManager.get(),
           diagnosticCollection,
           outputChannel,
@@ -136,7 +136,7 @@ export async function activate(ctx: ExtensionContext) {
         })
       ),
       workspace.onDidSaveTextDocument((document) =>
-        validate({
+        verify({
           config: configManager.get(),
           diagnosticCollection,
           outputChannel,
@@ -173,7 +173,7 @@ function createConfigManager(section: string) {
 }
 type ConfigManager = ReturnType<typeof createConfigManager>;
 
-async function validate({
+async function verify({
   config,
   diagnosticCollection,
   outputChannel,
@@ -185,7 +185,7 @@ async function validate({
   document: TextDocument;
 }): Promise<void> {
   try {
-    if (!config.validateOnSave.enabled) {
+    if (!config.verifyOnSave.enabled) {
       return;
     }
     if (!isBigQuery({ config, document })) {
@@ -222,8 +222,8 @@ function isBigQuery({
   document: TextDocument;
 }): boolean {
   return (
-    config.validateOnSave.languageIds.includes(document.languageId) ||
-    config.validateOnSave.extensions.includes(extname(document.fileName))
+    config.verifyOnSave.languageIds.includes(document.languageId) ||
+    config.verifyOnSave.extensions.includes(extname(document.fileName))
   );
 }
 
@@ -386,7 +386,7 @@ async function run({
                 return;
               }
               if (res) {
-                output.writeLine(res);
+                output.write(res);
                 output.close();
               }
               resolve();
