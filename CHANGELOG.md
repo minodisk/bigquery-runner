@@ -2,6 +2,12 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.18]
+
+### Changed
+
+- Changed the message to correctly state that the amount of data to be read by dry run has been estimated.
+
 ## [v0.0.17]
 
 ### Added
