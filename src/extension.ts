@@ -443,7 +443,9 @@ async function dryRun({
     if (bytes === undefined) {
       return;
     }
-    outputChannel.appendLine(`Result: ${formatBytes(bytes)} processed`);
+    outputChannel.appendLine(
+      `Result: ${formatBytes(bytes)} estimated to be read`
+    );
   } catch (err) {
     errorMarker.mark(err);
   }
