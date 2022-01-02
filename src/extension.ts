@@ -37,38 +37,38 @@ import {
 import { BigQuery, Job } from "@google-cloud/bigquery";
 
 type Writer = {
-  path?: string;
-  write: (chunk: string) => void;
-  writeLine: (chunk: string) => void;
-  close(): Promise<void>;
+  readonly path?: string;
+  readonly write: (chunk: string) => void;
+  readonly writeLine: (chunk: string) => void;
+  readonly close: () => Promise<void>;
 };
 
 type Config = {
-  keyFilename: string;
-  projectId: string;
-  location: string;
-  useLegacySql: boolean;
-  maximumBytesBilled?: string;
-  verifyOnSave: {
-    enabled: boolean;
-    languageIds: Array<string>;
-    extensions: Array<string>;
+  readonly keyFilename: string;
+  readonly projectId: string;
+  readonly location: string;
+  readonly useLegacySql: boolean;
+  readonly maximumBytesBilled?: string;
+  readonly verifyOnSave: {
+    readonly enabled: boolean;
+    readonly languageIds: Array<string>;
+    readonly extensions: Array<string>;
   };
-  output: {
-    destination: {
-      type: OutputDestination;
-      file: {
-        path: string;
+  readonly output: {
+    readonly destination: {
+      readonly type: OutputDestination;
+      readonly file: {
+        readonly path: string;
       };
     };
-    format: {
-      type: OutputFormat;
-      csv: {
-        header: boolean;
-        delimiter: string;
+    readonly format: {
+      readonly type: OutputFormat;
+      readonly csv: {
+        readonly header: boolean;
+        readonly delimiter: string;
       };
-      json: {
-        space?: string;
+      readonly json: {
+        readonly space?: string;
       };
     };
   };
@@ -179,10 +179,10 @@ async function verify({
   outputChannel,
   document,
 }: {
-  config: Config;
-  diagnosticCollection: DiagnosticCollection;
-  outputChannel: OutputChannel;
-  document: TextDocument;
+  readonly config: Config;
+  readonly diagnosticCollection: DiagnosticCollection;
+  readonly outputChannel: OutputChannel;
+  readonly document: TextDocument;
 }): Promise<void> {
   try {
     if (!config.verifyOnSave.enabled) {
@@ -218,8 +218,8 @@ function isBigQuery({
   config,
   document,
 }: {
-  config: Config;
-  document: TextDocument;
+  readonly config: Config;
+  readonly document: TextDocument;
 }): boolean {
   return (
     config.verifyOnSave.languageIds.includes(document.languageId) ||
@@ -233,15 +233,15 @@ function wrapCallback({
   outputChannel,
   callback,
 }: {
-  configManager: ConfigManager;
-  diagnosticCollection: DiagnosticCollection;
-  outputChannel: OutputChannel;
-  callback: (params: {
-    config: Config;
-    errorMarker: ErrorMarker;
-    outputChannel: OutputChannel;
-    document: TextDocument;
-    range?: Range;
+  readonly configManager: ConfigManager;
+  readonly diagnosticCollection: DiagnosticCollection;
+  readonly outputChannel: OutputChannel;
+  readonly callback: (params: {
+    readonly config: Config;
+    readonly errorMarker: ErrorMarker;
+    readonly outputChannel: OutputChannel;
+    readonly document: TextDocument;
+    readonly range?: Range;
   }) => Promise<void>;
 }): () => void {
   return async () => {
@@ -277,11 +277,11 @@ async function run({
   document,
   range,
 }: {
-  config: Config;
-  errorMarker: ErrorMarker;
-  outputChannel: OutputChannel;
-  document: TextDocument;
-  range?: Range;
+  readonly config: Config;
+  readonly errorMarker: ErrorMarker;
+  readonly outputChannel: OutputChannel;
+  readonly document: TextDocument;
+  readonly range?: Range;
 }): Promise<void> {
   outputChannel.show(true);
   outputChannel.appendLine(`Run`);
@@ -413,11 +413,11 @@ async function dryRun({
   document,
   range,
 }: {
-  config: Config;
-  errorMarker: ErrorMarker;
-  outputChannel: OutputChannel;
-  document: TextDocument;
-  range?: Range;
+  readonly config: Config;
+  readonly errorMarker: ErrorMarker;
+  readonly outputChannel: OutputChannel;
+  readonly document: TextDocument;
+  readonly range?: Range;
 }): Promise<void> {
   try {
     outputChannel.show(true);
@@ -455,8 +455,8 @@ function getQueryText({
   document,
   range,
 }: {
-  document: TextDocument;
-  range?: Range;
+  readonly document: TextDocument;
+  readonly range?: Range;
 }): string {
   const text = range?.isEmpty ? document.getText() : document.getText(range);
 
@@ -472,9 +472,9 @@ async function createJob({
   queryText,
   dryRun,
 }: {
-  config: Config;
-  queryText: string;
-  dryRun?: boolean;
+  readonly config: Config;
+  readonly queryText: string;
+  readonly dryRun?: boolean;
 }): Promise<Job> {
   const client = new BigQuery({
     keyFilename: config.keyFilename,
@@ -498,8 +498,8 @@ function createErrorMarker({
   diagnosticCollection,
   document,
 }: {
-  diagnosticCollection: DiagnosticCollection;
-  document: TextDocument;
+  readonly diagnosticCollection: DiagnosticCollection;
+  readonly document: TextDocument;
 }) {
   return {
     clear() {
@@ -542,9 +542,9 @@ async function createOutput({
   outputChannel,
   filename,
 }: {
-  config: Config;
-  outputChannel: OutputChannel;
-  filename: string;
+  readonly config: Config;
+  readonly outputChannel: OutputChannel;
+  readonly filename: string;
 }): Promise<Writer> {
   switch (config.output.destination.type) {
     case "output":
