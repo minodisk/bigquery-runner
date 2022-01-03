@@ -135,6 +135,14 @@ export async function activate(ctx: ExtensionContext) {
           document,
         })
       ),
+      workspace.onDidChangeTextDocument(({ document }) => {
+        verify({
+          config: configManager.get(),
+          diagnosticCollection,
+          outputChannel,
+          document,
+        });
+      }),
       workspace.onDidSaveTextDocument((document) =>
         verify({
           config: configManager.get(),
@@ -286,16 +294,14 @@ async function run({
   outputChannel.show(true);
   outputChannel.appendLine(`Run`);
 
-  errorMarker.clear();
-
   let job!: Job;
-  const queryText = getQueryText({ document, range });
-
   try {
+    errorMarker.clear();
     job = await createJob({
       config,
-      queryText,
+      queryText: getQueryText({ document, range }),
     });
+    errorMarker.clear();
   } catch (err) {
     errorMarker.mark(err);
   }
@@ -419,36 +425,37 @@ async function dryRun({
   readonly document: TextDocument;
   readonly range?: Range;
 }): Promise<void> {
+  outputChannel.show(true);
+  outputChannel.appendLine(`Dry run`);
+
+  let job!: Job;
   try {
-    outputChannel.show(true);
-    outputChannel.appendLine(`Dry run`);
-
     errorMarker.clear();
-
-    const job = await createJob({
+    job = await createJob({
       config,
       queryText: getQueryText({ document, range }),
       dryRun: true,
     });
-
-    outputChannel.appendLine(`Job ID: ${job.id}`);
-
-    const { totalBytesProcessed } = job.metadata.statistics;
-    const bytes =
-      typeof totalBytesProcessed === "number"
-        ? totalBytesProcessed
-        : typeof totalBytesProcessed === "string"
-        ? parseInt(totalBytesProcessed, 10)
-        : undefined;
-    if (bytes === undefined) {
-      return;
-    }
-    outputChannel.appendLine(
-      `Result: ${formatBytes(bytes)} estimated to be read`
-    );
+    errorMarker.clear();
   } catch (err) {
     errorMarker.mark(err);
   }
+
+  outputChannel.appendLine(`Job ID: ${job.id}`);
+
+  const { totalBytesProcessed } = job.metadata.statistics;
+  const bytes =
+    typeof totalBytesProcessed === "number"
+      ? totalBytesProcessed
+      : typeof totalBytesProcessed === "string"
+      ? parseInt(totalBytesProcessed, 10)
+      : undefined;
+  if (bytes === undefined) {
+    return;
+  }
+  outputChannel.appendLine(
+    `Result: ${formatBytes(bytes)} estimated to be read`
+  );
 }
 
 function getQueryText({
