@@ -2,6 +2,12 @@
 
 All notable changes to the "bigquery-runner" extension will be documented in this file.
 
+## [v0.0.19]
+
+### Added
+
+- Verify correct query when changing text.
+
 ## [v0.0.18]
 
 ### Changed

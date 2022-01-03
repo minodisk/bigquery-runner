@@ -10,7 +10,7 @@
   },
   "homepage": "https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner",
   "engines": {
-    "vscode": "^1.62.0"
+    "vscode": "^1.63.2"
   },
   "categories": [
     "Other"
@@ -137,7 +137,7 @@
     "debug": "run-s package:debug install:debug",
     "package": "mkdirp dist && vsce package -o ./dist/",
     "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
-    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
+    "install:debug": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint 'src/**/*.ts'",
     "test": "node ./out/test/runTest.js"
@@ -161,7 +161,7 @@
     "@types/mkdirp": "^1.0.2",
     "@types/mocha": "^9.0.0",
     "@types/node": "14.x",
-    "@types/vscode": "^1.62.0",
+    "@types/vscode": "^1.63.0",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "@vscode/test-electron": "^1.6.2",

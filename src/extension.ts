@@ -27,7 +27,7 @@ import {
   DiagnosticCollection,
   ExtensionContext,
   languages,
-  OutputChannel,
+  OutputChannel as OrigOutputChannel,
   Position,
   Range,
   TextDocument,
@@ -74,6 +74,20 @@ type Config = {
   };
 };
 
+type OutputChannel = Pick<
+  OrigOutputChannel,
+  "append" | "appendLine" | "show" | "dispose"
+>;
+
+type ResultChannel = {
+  set(result: Result): void;
+  get(): Result;
+};
+
+export type Result = {
+  readonly jobId?: string;
+};
+
 type OutputDestination = "output" | "file";
 
 const formats = ["table", "markdown", "json-lines", "json", "csv"] as const;
@@ -86,13 +100,27 @@ class ErrorWithId {
   constructor(public error: unknown, public id: string) {}
 }
 
-export async function activate(ctx: ExtensionContext) {
+export async function activate(
+  ctx: Pick<ExtensionContext, "subscriptions">,
+  dependencies?: {
+    outputChannel?: OutputChannel;
+    resultChannel?: ResultChannel;
+  }
+) {
   try {
     const title = "BigQuery Runner";
     const section = "bigqueryRunner";
 
-    const outputChannel = window.createOutputChannel(title);
-    ctx.subscriptions.push(outputChannel);
+    const outputCh =
+      dependencies?.outputChannel ?? window.createOutputChannel(title);
+    ctx.subscriptions.push(outputCh);
+
+    const resultCh = dependencies?.resultChannel ?? {
+      get(): Result {
+        return {};
+      },
+      set() {},
+    };
 
     const diagnosticCollection = languages.createDiagnosticCollection(section);
     ctx.subscriptions.push(diagnosticCollection);
@@ -109,8 +137,9 @@ export async function activate(ctx: ExtensionContext) {
         wrapCallback({
           configManager,
           diagnosticCollection,
-          outputChannel,
+          outputChannel: outputCh,
           callback: run,
+          resultChannel: resultCh,
         }),
       ],
       [
@@ -118,8 +147,9 @@ export async function activate(ctx: ExtensionContext) {
         wrapCallback({
           configManager,
           diagnosticCollection,
-          outputChannel,
+          outputChannel: outputCh,
           callback: dryRun,
+          resultChannel: resultCh,
         }),
       ],
     ]).forEach((action, name) => {
@@ -131,7 +161,7 @@ export async function activate(ctx: ExtensionContext) {
         verify({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel,
+          outputChannel: outputCh,
           document,
         })
       ),
@@ -139,7 +169,7 @@ export async function activate(ctx: ExtensionContext) {
         verify({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel,
+          outputChannel: outputCh,
           document,
         });
       }),
@@ -147,7 +177,7 @@ export async function activate(ctx: ExtensionContext) {
         verify({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel,
+          outputChannel: outputCh,
           document,
         })
       ),
@@ -240,6 +270,7 @@ function wrapCallback({
   diagnosticCollection,
   outputChannel,
   callback,
+  resultChannel,
 }: {
   readonly configManager: ConfigManager;
   readonly diagnosticCollection: DiagnosticCollection;
@@ -250,21 +281,23 @@ function wrapCallback({
     readonly outputChannel: OutputChannel;
     readonly document: TextDocument;
     readonly range?: Range;
-  }) => Promise<void>;
-}): () => void {
+  }) => Promise<Result>;
+  readonly resultChannel: ResultChannel;
+}): () => Promise<void> {
   return async () => {
     try {
       if (!window.activeTextEditor) {
         throw new Error("no active text editor");
       }
       const { document, selection } = window.activeTextEditor;
-      await callback({
+      const result = await callback({
         config: configManager.get(),
         errorMarker: createErrorMarker({ diagnosticCollection, document }),
         outputChannel,
         document,
         range: selection,
       });
+      resultChannel.set(result);
     } catch (err) {
       outputChannel.show(true);
       if (err instanceof ErrorWithId) {
@@ -290,7 +323,7 @@ async function run({
   readonly outputChannel: OutputChannel;
   readonly document: TextDocument;
   readonly range?: Range;
-}): Promise<void> {
+}): Promise<Result> {
   outputChannel.show(true);
   outputChannel.appendLine(`Run`);
 
@@ -403,6 +436,8 @@ async function run({
       default:
         throw new Error(`Invalid output.format: ${config.output.format}`);
     }
+
+    return { jobId: job.id };
   } catch (err) {
     if (job.id) {
       throw new ErrorWithId(err, job.id);
@@ -424,7 +459,7 @@ async function dryRun({
   readonly outputChannel: OutputChannel;
   readonly document: TextDocument;
   readonly range?: Range;
-}): Promise<void> {
+}): Promise<Result> {
   outputChannel.show(true);
   outputChannel.appendLine(`Dry run`);
 
@@ -451,11 +486,13 @@ async function dryRun({
       ? parseInt(totalBytesProcessed, 10)
       : undefined;
   if (bytes === undefined) {
-    return;
+    return {};
   }
   outputChannel.appendLine(
     `Result: ${formatBytes(bytes)} estimated to be read`
   );
+
+  return { jobId: job.id };
 }
 
 function getQueryText({
