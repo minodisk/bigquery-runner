@@ -69,25 +69,25 @@ Specifies whether to use BigQuery's legacy SQL dialect for this query. The defau
 
 Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default.
 
-### `bigqueryRunner.verifyOnSave.enabled`
+### `bigqueryRunner.queryValidation.enabled`
 
 - default: `false`
 
-If set to true, do a dry run on file save to verify for runtime errors in the query.
+If set to true, do a dry run on file save to validate for runtime errors in the query.
 
-![Screenshot of verify on save](screenshots/verify-error-on-save.gif)
+![Screenshot of validate on save](screenshots/query-validation.gif)
 
-### `bigqueryRunner.verifyOnSave.languageIds`
+### `bigqueryRunner.queryValidation.languageIds`
 
 - default: `[ "bigquery", "sql-bigquery" ]`
 
-List of language IDs to be verified for errors when saving files.
+List of language IDs to be validated for errors when saving files.
 
-### `bigqueryRunner.verifyOnSave.extensions`
+### `bigqueryRunner.queryValidation.extensions`
 
 - default: `[ ".bqsql", ".bqddl", ".bqdml" ]`
 
-List of file extensions to be verified for errors when saving files.
+List of file extensions to be validated for errors when saving files.
 
 ### `bigqueryRunner.output.destination.type`
 

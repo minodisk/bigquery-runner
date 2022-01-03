@@ -69,27 +69,27 @@
           "default": null,
           "description": "(Optional) Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default."
         },
-        "bigqueryRunner.verifyOnSave.enabled": {
+        "bigqueryRunner.queryValidation.enabled": {
           "type": "boolean",
-          "default": false,
-          "description": "If set to true, do a dry run on file save to verify for runtime errors in the query."
+          "default": true,
+          "description": "If set to true, do a dry run on file save to validate for runtime errors in the query."
         },
-        "bigqueryRunner.verifyOnSave.languageIds": {
+        "bigqueryRunner.queryValidation.languageIds": {
           "type": "array",
           "default": [
             "bigquery",
             "sql-bigquery"
           ],
-          "description": "List of language IDs to be verified for errors when saving files."
+          "description": "List of language ID to be validated for errors when saving files."
         },
-        "bigqueryRunner.verifyOnSave.extensions": {
+        "bigqueryRunner.queryValidation.extensions": {
           "type": "array",
           "default": [
             ".bqsql",
             ".bqddl",
             ".bqdml"
           ],
-          "description": "List of file extensions to be verified for errors when saving files."
+          "description": "List of file extensions to be validated for errors when saving files."
         },
         "bigqueryRunner.output.destination.type": {
           "type": "string",
@@ -135,25 +135,26 @@
     "compile": "rm -rf out && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "debug": "run-s package:debug install:debug",
+    "debug:insiders": "run-s package:debug install:debug:insiders",
     "package": "mkdirp dist && vsce package -o ./dist/",
     "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
-    "install:debug": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
+    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
+    "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint 'src/**/*.ts'",
     "test": "node ./out/test/runTest.js"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^5.9.2",
-    "@types/bytes": "^3.1.1",
     "bytes": "^3.1.1",
     "csv-stringify": "^6.0.4",
-    "deepmerge": "^4.2.2",
     "easy-table": "^1.2.0",
     "flat": "^5.0.2",
     "mkdirp": "^0.5.5",
     "tenderizer": "^0.0.5"
   },
   "devDependencies": {
+    "@types/bytes": "^3.1.1",
     "@types/csv-stringify": "^3.1.0",
     "@types/easy-table": "^1.2.0",
     "@types/flat": "^5.0.2",

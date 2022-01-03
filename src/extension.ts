@@ -15,7 +15,6 @@
 import { format as formatBytes } from "bytes";
 import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
-import deepmerge from "deepmerge";
 import { flatten } from "flat";
 import { createWriteStream } from "fs";
 import mkdirp from "mkdirp";
@@ -49,7 +48,7 @@ type Config = {
   readonly location: string;
   readonly useLegacySql: boolean;
   readonly maximumBytesBilled?: string;
-  readonly verifyOnSave: {
+  readonly queryValidation: {
     readonly enabled: boolean;
     readonly languageIds: Array<string>;
     readonly extensions: Array<string>;
@@ -163,7 +162,7 @@ export async function activate(
 
     ctx.subscriptions.push(
       workspace.onDidOpenTextDocument((document) =>
-        verify({
+        validateQuery({
           config: configManager.get(),
           diagnosticCollection,
           outputChannel: outputChannel,
@@ -171,7 +170,7 @@ export async function activate(
         })
       ),
       workspace.onDidChangeTextDocument(({ document }) => {
-        verify({
+        validateQuery({
           config: configManager.get(),
           diagnosticCollection,
           outputChannel: outputChannel,
@@ -179,7 +178,7 @@ export async function activate(
         });
       }),
       workspace.onDidSaveTextDocument((document) =>
-        verify({
+        validateQuery({
           config: configManager.get(),
           diagnosticCollection,
           outputChannel: outputChannel,
@@ -188,11 +187,12 @@ export async function activate(
       ),
       // Listen for configuration changes and trigger an update, so that users don't
       // have to reload the VS Code environment after a config update.
-      workspace.onDidChangeConfiguration((event) => {
-        if (!event.affectsConfiguration(section)) {
+      workspace.onDidChangeConfiguration((e) => {
+        if (!e.affectsConfiguration(section)) {
           return;
         }
         configManager.refresh();
+        // outputChannel.appendLine(JSON.stringify(configManager.get(), null, 2));
       })
     );
   } catch (err) {
@@ -209,14 +209,14 @@ function createConfigManager(section: string) {
       return config;
     },
     refresh(): void {
-      config = deepmerge(config, workspace.getConfiguration(section));
+      config = workspace.getConfiguration(section) as any as Config;
     },
     dispose(): void {},
   };
 }
 type ConfigManager = ReturnType<typeof createConfigManager>;
 
-async function verify({
+async function validateQuery({
   config,
   diagnosticCollection,
   outputChannel,
@@ -228,7 +228,7 @@ async function verify({
   readonly document: TextDocument;
 }): Promise<void> {
   try {
-    if (!config.verifyOnSave.enabled) {
+    if (!config.queryValidation.enabled) {
       return;
     }
     if (!isBigQuery({ config, document })) {
@@ -265,8 +265,8 @@ function isBigQuery({
   readonly document: TextDocument;
 }): boolean {
   return (
-    config.verifyOnSave.languageIds.includes(document.languageId) ||
-    config.verifyOnSave.extensions.includes(extname(document.fileName))
+    config.queryValidation.languageIds.includes(document.languageId) ||
+    config.queryValidation.extensions.includes(extname(document.fileName))
   );
 }
 
@@ -295,8 +295,9 @@ function wrapCallback({
         throw new Error("no active text editor");
       }
       const { document, selection } = window.activeTextEditor;
+      const config = configManager.get();
       const result = await callback({
-        config: configManager.get(),
+        config,
         errorMarker: createErrorMarker({ diagnosticCollection, document }),
         outputChannel,
         document,
@@ -556,12 +557,28 @@ function createErrorMarker({
     },
     mark(err: any) {
       if (!(err instanceof Error)) {
+        const first = document.lineAt(0);
+        const last = document.lineAt(document.lineCount - 1);
+        diagnosticCollection.set(document.uri, [
+          new Diagnostic(
+            new Range(first.range.start, last.range.end),
+            `${err}`
+          ),
+        ]);
         throw err;
       }
       const { message } = err;
       const rMessage = /^(.*?) at \[(\d+):(\d+)\]$/;
       const res = rMessage.exec(message);
       if (!res) {
+        const first = document.lineAt(0);
+        const last = document.lineAt(document.lineCount - 1);
+        diagnosticCollection.set(document.uri, [
+          new Diagnostic(
+            new Range(first.range.start, last.range.end),
+            `${err}`
+          ),
+        ]);
         throw err;
       }
       const [_, m, l, c] = res;

@@ -6,7 +6,12 @@ All notable changes to the "bigquery-runner" extension will be documented in thi
 
 ### Added
 
-- Verify correct query when changing text.
+- Validate that the query is correct when editing it.
+
+### Changed
+
+- Changed to validate queries by default.
+- Renamed verifyOnSave option to queryValidation.
 
 ## [v0.0.18]
 

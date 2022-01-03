@@ -1,5 +1,5 @@
 select
-    ip
+    *
 from
     (
         select
