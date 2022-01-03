@@ -13,13 +13,5 @@
     "source.fixAll.eslint": true
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "eslint.validate": ["javascript", "typescript"],
-
-  "bigqueryRunner.keyFilename": "/Users/minodisk/bigquery-runner-minodisk.json",
-  "bigqueryRunner.location": "US",
-  "bigqueryRunner.verifyOnSave.enabled": true
-  // "bigqueryRunner.output.format.type": "table"
-  // "bigqueryRunner.output.format.csv.header": true,
-  // "bigqueryRunner.output.format.csv.delimiter": "\t",
-  // "bigqueryRunner.output.destination.type": "file"
+  "eslint.validate": ["javascript", "typescript"]
 }

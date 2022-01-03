@@ -100,29 +100,34 @@ class ErrorWithId {
   constructor(public error: unknown, public id: string) {}
 }
 
+export type Dependencies = {
+  readonly outputChannel: OutputChannel;
+  readonly resultChannel: ResultChannel;
+  readonly diagnosticCollection: DiagnosticCollection;
+};
+
 export async function activate(
   ctx: Pick<ExtensionContext, "subscriptions">,
-  dependencies?: {
-    outputChannel?: OutputChannel;
-    resultChannel?: ResultChannel;
-  }
+  dependencies?: Dependencies
 ) {
   try {
     const title = "BigQuery Runner";
     const section = "bigqueryRunner";
 
-    const outputCh =
+    const outputChannel =
       dependencies?.outputChannel ?? window.createOutputChannel(title);
-    ctx.subscriptions.push(outputCh);
+    ctx.subscriptions.push(outputChannel);
 
-    const resultCh = dependencies?.resultChannel ?? {
+    const resultChannel = dependencies?.resultChannel ?? {
       get(): Result {
         return {};
       },
       set() {},
     };
 
-    const diagnosticCollection = languages.createDiagnosticCollection(section);
+    const diagnosticCollection =
+      dependencies?.diagnosticCollection ??
+      languages.createDiagnosticCollection(section);
     ctx.subscriptions.push(diagnosticCollection);
 
     const configManager = createConfigManager(section);
@@ -137,9 +142,9 @@ export async function activate(
         wrapCallback({
           configManager,
           diagnosticCollection,
-          outputChannel: outputCh,
+          outputChannel: outputChannel,
           callback: run,
-          resultChannel: resultCh,
+          resultChannel: resultChannel,
         }),
       ],
       [
@@ -147,9 +152,9 @@ export async function activate(
         wrapCallback({
           configManager,
           diagnosticCollection,
-          outputChannel: outputCh,
+          outputChannel: outputChannel,
           callback: dryRun,
-          resultChannel: resultCh,
+          resultChannel: resultChannel,
         }),
       ],
     ]).forEach((action, name) => {
@@ -161,7 +166,7 @@ export async function activate(
         verify({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel: outputCh,
+          outputChannel: outputChannel,
           document,
         })
       ),
@@ -169,7 +174,7 @@ export async function activate(
         verify({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel: outputCh,
+          outputChannel: outputChannel,
           document,
         });
       }),
@@ -177,7 +182,7 @@ export async function activate(
         verify({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel: outputCh,
+          outputChannel: outputChannel,
           document,
         })
       ),

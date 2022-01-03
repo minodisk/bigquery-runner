@@ -1,43 +1,64 @@
 import { strictEqual } from "assert";
 import { describe, it } from "mocha";
-import { commands, window, workspace } from "vscode";
+import { commands, languages, window, workspace } from "vscode";
 import { activate, Result } from "../../extension";
 
-describe("activate", () => {
+// async function sleep(ms: number) {
+//   return new Promise((resolve) => setTimeout(resolve, ms));
+// }
+
+describe("BigQuery Runner", () => {
   window.showInformationMessage("Start all tests.");
 
-  let output = "";
-  let result = {};
-  const dependencies = {
-    outputChannel: {
-      append(value: string) {
-        output += value;
+  const dependencies = (() => {
+    let output = "";
+    let result = {};
+    const diagnosticCollection =
+      languages.createDiagnosticCollection("bigqueryRunner");
+    return {
+      outputChannel: {
+        // required interface
+        append(value: string) {
+          output += value;
+        },
+        appendLine(value: string) {
+          output += value + "\n";
+        },
+        show() {},
+        dispose() {},
+        // for test
+        get() {
+          return output;
+        },
       },
-      appendLine(value: string) {
-        output += value + "\n";
+      resultChannel: {
+        set(r: Result) {
+          result = r;
+        },
+        get(): Result {
+          return result;
+        },
       },
-      show() {},
-      dispose() {},
-    },
-    resultChannel: {
-      set(r: Result) {
-        result = r;
+      diagnosticCollection,
+      clear() {
+        output = "";
+        result = {};
+        diagnosticCollection.clear();
       },
-      get(): Result {
-        return result;
-      },
-    },
-  };
+    };
+  })();
 
-  it("should push disposable to subscriptions", async () => {
-    const subscriptions: Array<{ dispose(): any }> = [];
-    await activate(
-      {
-        subscriptions,
-      },
-      dependencies
-    );
-    strictEqual(subscriptions.length, 9);
+  describe("activation", () => {
+    it("should push disposable to subscriptions", async () => {
+      const subscriptions: Array<{ dispose(): any }> = [];
+      await activate(
+        {
+          subscriptions,
+        },
+        dependencies
+      );
+      strictEqual(subscriptions.length, 9);
+    });
   });
 
   describe("commands", () => {
@@ -48,6 +69,7 @@ describe("activate", () => {
       });
       await window.showTextDocument(doc);
       await commands.executeCommand("bigqueryRunner.run");
+      const output = dependencies.outputChannel.get();
       const { jobId } = dependencies.resultChannel.get();
       strictEqual(
         output,
@@ -60,6 +82,44 @@ a
 
 `
       );
+      dependencies.clear();
     });
   });
+
+  //   describe("verification", () => {
+  //     it("should run on file chaned", async () => {
+  //       const config = workspace.getConfiguration("bigqueryRunner");
+  //       await config.update("verifyOnSave.enabled", true, true);
+  //       console.log("cofig:", config);
+
+  //       dependencies.clear();
+
+  //       const uri = Uri.joinPath(
+  //         Uri.parse(__dirname),
+  //         "../../../examples/error.bqsql"
+  //       );
+  //       console.log("->", uri);
+  //       const document = await workspace.openTextDocument(uri);
+  //       await window.showTextDocument(document);
+  //       // await commands.executeCommand("bigqueryRunner.dryRun");
+
+  //       await sleep(5000);
+
+  //       const output = dependencies.outputChannel.get();
+  //       const diagnostics = dependencies.diagnosticCollection.get(uri);
+  //       console.log("->", diagnostics);
+
+  //       // const { jobId } = dependencies.resultChannel.get();
+  //       strictEqual(
+  //         output,
+  //         `Validate
+  // Dry run
+  // Error: Field 'ip' not found.
+
+  // `
+  //       );
+
+  //       dependencies.clear();
+  //     });
+  //   });
 });

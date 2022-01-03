@@ -1,0 +1,7 @@
+select
+    ip
+from
+    (
+        select
+            'a' as id
+    )
