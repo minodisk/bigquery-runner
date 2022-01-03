@@ -15,8 +15,10 @@ jobs:
           node-version: 16
       - name: Install modules
         run: npm ci
-      - name: Test
-        run: npm test
+      - name: Run headless test
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm test
       - name: Publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v0
         with:
