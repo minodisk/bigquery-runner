@@ -18,7 +18,7 @@ import EasyTable from "easy-table";
 import { flatten } from "flat";
 import { createWriteStream } from "fs";
 import mkdirp from "mkdirp";
-import { basename, extname, join } from "path";
+import { basename, extname, isAbsolute, join } from "path";
 import { tenderize } from "tenderizer";
 import {
   commands,
@@ -192,7 +192,6 @@ export async function activate(
           return;
         }
         configManager.refresh();
-        // outputChannel.appendLine(JSON.stringify(configManager.get(), null, 2));
       })
     );
   } catch (err) {
@@ -203,18 +202,31 @@ export async function activate(
 export function deactivate() {}
 
 function createConfigManager(section: string) {
-  let config = workspace.getConfiguration(section) as any as Config;
+  let config = getConfigration(section);
   return {
     get(): Config {
       return config;
     },
     refresh(): void {
-      config = workspace.getConfiguration(section) as any as Config;
+      config = getConfigration(section);
     },
     dispose(): void {},
   };
 }
 type ConfigManager = ReturnType<typeof createConfigManager>;
+
+function getConfigration(section: string): Config {
+  const config = workspace.getConfiguration(section) as any as Config;
+  return {
+    ...config,
+    keyFilename:
+      isAbsolute(config.keyFilename) ||
+      !workspace.workspaceFolders ||
+      workspace.workspaceFolders.length === 0
+        ? config.keyFilename
+        : join(workspace.workspaceFolders[0].uri.fsPath, config.keyFilename),
+  };
+}
 
 const pathTimeoutId = new Map<string, NodeJS.Timeout>();
 
