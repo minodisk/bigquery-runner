@@ -4,9 +4,9 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ## [v0.0.20]
 
-### Changed
+### Added
 
-- Changed to validate already opened files when the extension is activated.
+- Validate already opened files when the extension is activated.
 
 ## [v0.0.19]
 
