@@ -1,3 +1,5 @@
+// DO NOT EDIT
+// This file is generated from gen-src/config.d.ts.ejs.
 export type Config = {
   readonly keyFilename: string;
   readonly projectId: string | undefined;

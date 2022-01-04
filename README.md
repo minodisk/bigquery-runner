@@ -1,3 +1,5 @@
+<!-- DO NOT EDIT
+This file is generated from gen-src/README.md.ejs. -->
 # BigQuery Runner
 
 A Visual Studio Code extension that can query Google Cloud Platform's [BigQuery](https://cloud.google.com/bigquery/) from, and return results to, your editor. This extension allows you to:
@@ -8,6 +10,8 @@ A Visual Studio Code extension that can query Google Cloud Platform's [BigQuery]
 - Mark the location of errors encountered during the execution of a query job in the editor
 
 This extension is great if you're exploring BigQuery and prefer VSCode's editing environment, or for cases where you're writing documentation (hint: use "Run selected text as query") and want to double check that the query is valid.
+
+This extension was forked from [google/vscode-bigquery](https://github.com/google/vscode-bigquery).
 
 ## Installing
 
@@ -25,7 +29,7 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 |ID|
 |---|
-|bigqueryRunner.run|
+|`bigqueryRunner.run`|
 
 Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
@@ -35,7 +39,7 @@ Run the query with BigQuery and display the results. Run the query on the select
 
 |ID|
 |---|
-|bigqueryRunner.dryRun|
+|`bigqueryRunner.dryRun`|
 
 Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
