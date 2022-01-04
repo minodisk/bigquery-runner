@@ -122,6 +122,14 @@ export async function activate(
       ctx.subscriptions.push(commands.registerCommand(name, action));
     });
 
+    workspace.textDocuments.forEach((document) =>
+      validateQuery({
+        config: configManager.get(),
+        diagnosticCollection,
+        outputChannel: outputChannel,
+        document,
+      })
+    );
     ctx.subscriptions.push(
       workspace.onDidOpenTextDocument((document) =>
         validateQuery({

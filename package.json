@@ -15,9 +15,19 @@
   "categories": [
     "Other"
   ],
+  "tags": [
+    "bigquery",
+    "sql",
+    "runner",
+    "query",
+    "erorr"
+  ],
   "main": "out/extension.js",
   "icon": "assets/icon.png",
   "activationEvents": [
+    "workspaceContains:**/*.bqsql",
+    "workspaceContains:**/*.bqddl",
+    "workspaceContains:**/*.bqdml",
     "onLanguage:bigquery",
     "onLanguage:sql-bigquery",
     "onCommand:bigqueryRunner.run",

@@ -3,7 +3,8 @@
 assets-src
 dist
 examples
+gen-src
 src
+.eslintrc.json
 .gitignore
 tsconfig.json
-.eslintrc.json
