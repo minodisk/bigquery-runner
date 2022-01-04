@@ -34,43 +34,13 @@ import {
   workspace,
 } from "vscode";
 import { BigQuery, Job } from "@google-cloud/bigquery";
+import { Config } from "./config";
 
 type Writer = {
   readonly path?: string;
   readonly write: (chunk: string) => void;
   readonly writeLine: (chunk: string) => void;
   readonly close: () => Promise<void>;
-};
-
-type Config = {
-  readonly keyFilename: string;
-  readonly projectId: string;
-  readonly location: string;
-  readonly useLegacySql: boolean;
-  readonly maximumBytesBilled?: string;
-  readonly queryValidation: {
-    readonly enabled: boolean;
-    readonly languageIds: Array<string>;
-    readonly extensions: Array<string>;
-  };
-  readonly output: {
-    readonly destination: {
-      readonly type: OutputDestination;
-      readonly file: {
-        readonly path: string;
-      };
-    };
-    readonly format: {
-      readonly type: OutputFormat;
-      readonly csv: {
-        readonly header: boolean;
-        readonly delimiter: string;
-      };
-      readonly json: {
-        readonly space?: string;
-      };
-    };
-  };
 };
 
 type OutputChannel = Pick<
@@ -86,14 +56,6 @@ type ResultChannel = {
 export type Result = {
   readonly jobId?: string;
 };
-
-type OutputDestination = "output" | "file";
-
-const formats = ["table", "markdown", "json-lines", "json", "csv"] as const;
-type OutputFormat = typeof formats[number];
-
-const extensions = [".txt", ".md", ".jsonl", ".json", ".csv"] as const;
-type OutputExtension = typeof extensions[number];
 
 class ErrorWithId {
   constructor(public error: unknown, public id: string) {}
@@ -256,7 +218,7 @@ async function validateQuery({
           outputChannel,
           document,
         }),
-      500
+      config.queryValidation.debounceInterval
     )
   );
 }
@@ -406,7 +368,7 @@ async function run({
 
     outputChannel.appendLine(`Result: ${rows.length} rows`);
 
-    switch (config.output.format.type) {
+    switch (config.format.type) {
       case "table":
         const t = new EasyTable();
         rows.forEach((row) => {
@@ -469,7 +431,7 @@ async function run({
         await new Promise<void>((resolve, reject) => {
           CSV.stringify(
             structs,
-            config.output.format.csv,
+            config.format.csv,
             (err?: Error, res?: string) => {
               if (err) {
                 reject(err);
@@ -485,7 +447,7 @@ async function run({
         });
         break;
       default:
-        throw new Error(`Invalid output.format: ${config.output.format}`);
+        throw new Error(`Invalid format: ${config.format.type}`);
     }
 
     return { jobId: job.id };
@@ -657,7 +619,7 @@ async function createOutput({
   readonly outputChannel: OutputChannel;
   readonly filename: string;
 }): Promise<Writer> {
-  switch (config.output.destination.type) {
+  switch (config.output.type) {
     case "output":
       return {
         write(chunk: string) {
@@ -677,13 +639,13 @@ async function createOutput({
       const dirname = join(
         workspace.workspaceFolders[0].uri.path ||
           workspace.workspaceFolders[0].uri.fsPath,
-        config.output.destination.file.path
+        config.output.file.path
       );
       await mkdirp(dirname);
       const path = join(
         dirname,
         `${basename(filename, extname(filename))}${formatToExtension(
-          config.output.format.type
+          config.format.type
         )}`
       );
       outputChannel.appendLine(`Output to: ${path}`);
@@ -704,6 +666,12 @@ async function createOutput({
   }
 }
 
-function formatToExtension(format: OutputFormat): OutputExtension {
-  return extensions[formats.indexOf(format)];
+function formatToExtension(format: Config["format"]["type"]) {
+  return {
+    table: ".txt",
+    markdown: ".md",
+    "json-lines": ".jsonl",
+    json: ".json",
+    csv: ".csv",
+  }[format];
 }
