@@ -169,14 +169,14 @@ export async function activate(
           document,
         })
       ),
-      workspace.onDidChangeTextDocument(({ document }) => {
+      workspace.onDidChangeTextDocument(({ document }) =>
         validateQuery({
           config: configManager.get(),
           diagnosticCollection,
           outputChannel: outputChannel,
           document,
-        });
-      }),
+        })
+      ),
       workspace.onDidSaveTextDocument((document) =>
         validateQuery({
           config: configManager.get(),
@@ -216,7 +216,40 @@ function createConfigManager(section: string) {
 }
 type ConfigManager = ReturnType<typeof createConfigManager>;
 
+const pathTimeoutId = new Map<string, NodeJS.Timeout>();
+
 async function validateQuery({
+  config,
+  diagnosticCollection,
+  outputChannel,
+  document,
+}: {
+  readonly config: Config;
+  readonly diagnosticCollection: DiagnosticCollection;
+  readonly outputChannel: OutputChannel;
+  readonly document: TextDocument;
+}): Promise<void> {
+  const timeoutId = pathTimeoutId.get(document.uri.path);
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    pathTimeoutId.delete(document.uri.path);
+  }
+  pathTimeoutId.set(
+    document.uri.path,
+    setTimeout(
+      () =>
+        _validateQuery({
+          config,
+          diagnosticCollection,
+          outputChannel,
+          document,
+        }),
+      500
+    )
+  );
+}
+
+async function _validateQuery({
   config,
   diagnosticCollection,
   outputChannel,

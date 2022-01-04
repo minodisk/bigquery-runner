@@ -1,5 +1,5 @@
 select
-    *
+    id
 from
     (
         select
