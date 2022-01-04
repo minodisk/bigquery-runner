@@ -1,0 +1,48 @@
+<% 
+const config = Object.keys(contributes.configuration.properties).reduce((obj, property) => {
+  const value = contributes.configuration.properties[property];
+  const properties = property.split('.');
+  const last = properties.length - 1;
+  properties.reduce((o, property, i) => {
+    if (i === 0) {
+      return o
+    }
+    if (i === last) {
+      o[property] = value
+      return o
+    }
+    if (!o[property]) {
+      o[property] = {}
+    }
+    return o[property]
+  }, obj)
+  return obj
+}, {})
+function build(config, indent = 0) {
+  return `{
+${Object.keys(config).map((key) =>
+  `${'  '.repeat(indent + 1)}readonly ${key}: ${(config[key].description) ? buildType(config[key]) : build(config[key], indent + 1)};`
+).join('\n')}
+${'  '.repeat(indent)}}`
+}
+function buildType(value) {
+  if (value.enum) {
+    return value.enum.map(JSON.stringify, JSON).join(' | ') 
+  }
+  if (Array.isArray(value.type)) {
+    return value.type.map((t) => t === 'null' ? 'undefined' : t).join(' | ')
+  }
+  if (value.type === 'array') {
+    if (!value.default) {
+      return `Array<any>`
+    }
+    const typeSet = value.default.reduce((s, v) => {
+      s.add(typeof v)
+      return s
+    }, new Set());
+    return `Array<${ Array.from(typeSet).join(" | ") }>`
+  }
+  return value.type
+}
+-%>
+export type Config = <%- build(config) %>;

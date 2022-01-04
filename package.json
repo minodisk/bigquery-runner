@@ -27,11 +27,15 @@
     "commands": [
       {
         "command": "bigqueryRunner.run",
-        "title": "BigQuery Runner: Run"
+        "title": "BigQuery Runner: Run",
+        "description": "Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
+        "screenshot": "screenshots/run.gif"
       },
       {
         "command": "bigqueryRunner.dryRun",
-        "title": "BigQuery Runner: Dry Run"
+        "title": "BigQuery Runner: Dry Run",
+        "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
+        "screenshot": "screenshots/dry-run.gif"
       }
     ],
     "configuration": {
@@ -41,7 +45,7 @@
         "bigqueryRunner.keyFilename": {
           "type": "string",
           "default": "",
-          "description": "(Required) Full path to the a .json, .pem, or .p12 key downloaded from the Google Developers Console. If you provide a path to a JSON file, the projectId option is not necessary. NOTE: .pem and .p12 require you to specify the email option as well."
+          "description": "The path to the JSON file for the service account. When specifying a relative path, specify the path from the root folder that is open in VSCode. If it is not specified, the path specified in `GOOGLE_APPLICATION_CREDENTIALS` is used."
         },
         "bigqueryRunner.projectId": {
           "type": [
@@ -49,17 +53,20 @@
             "null"
           ],
           "default": null,
-          "description": "(Optional) The project ID from the Google Developer's Console, e.g. 'grape-spaceship-123'. This is NOT needed if you are provide a key in JSON format"
+          "description": "Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used."
         },
         "bigqueryRunner.location": {
-          "type": "string",
-          "default": "US",
-          "description": "(Optional) The geographic location of the job. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location."
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "The geographic location where the job should run. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location."
         },
         "bigqueryRunner.useLegacySql": {
           "type": "boolean",
           "default": false,
-          "description": "(Optional) Specifies whether to use BigQuery's legacy SQL dialect for this query. The default value is true. If set to false, the query will use BigQuery's standard SQL: https://cloud.google.com/bigquery/sql-reference/"
+          "description": "Flag whether to use legacy SQL. If `false`, use standard SQL."
         },
         "bigqueryRunner.maximumBytesBilled": {
           "type": [
@@ -67,12 +74,18 @@
             "null"
           ],
           "default": null,
-          "description": "(Optional) Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default."
+          "description": "Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used."
         },
         "bigqueryRunner.queryValidation.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "If set to true, do a dry run on file save to validate for runtime errors in the query."
+          "description": "Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.",
+          "screenshot": "screenshots/query-validation.gif"
+        },
+        "bigqueryRunner.queryValidation.debounceInterval": {
+          "type": "number",
+          "default": 600,
+          "description": "Debounce interval in milliseconds to validate the query when the file is modified."
         },
         "bigqueryRunner.queryValidation.languageIds": {
           "type": "array",
@@ -80,7 +93,7 @@
             "bigquery",
             "sql-bigquery"
           ],
-          "description": "List of language ID to be validated for errors when saving files."
+          "description": "List of language IDs of the files whose queries are to be validated when the files are modified."
         },
         "bigqueryRunner.queryValidation.extensions": {
           "type": "array",
@@ -89,23 +102,9 @@
             ".bqddl",
             ".bqdml"
           ],
-          "description": "List of file extensions to be validated for errors when saving files."
+          "description": "List of file extensions for which the query is to be validated when the file is modified."
         },
-        "bigqueryRunner.output.destination.type": {
-          "type": "string",
-          "default": "output",
-          "enum": [
-            "output",
-            "file"
-          ],
-          "description": "(Optional) Controls the output destination for query results."
-        },
-        "bigqueryRunner.output.destination.file.path": {
-          "type": "string",
-          "default": ".",
-          "description": "(Optional) Controls the output file path for query results when output.type is specified as file."
-        },
-        "bigqueryRunner.output.format.type": {
+        "bigqueryRunner.format.type": {
           "type": "string",
           "default": "table",
           "enum": [
@@ -115,17 +114,31 @@
             "json-lines",
             "csv"
           ],
-          "description": "(Optional) Controls the output format for query results."
+          "description": "Controls the output format for query results."
         },
-        "bigqueryRunner.output.format.csv.header": {
+        "bigqueryRunner.format.csv.header": {
           "type": "boolean",
           "default": false,
           "description": "Columns names are automatically discovered from the first record if it is provided as a literal object."
         },
-        "bigqueryRunner.output.format.csv.delimiter": {
+        "bigqueryRunner.format.csv.delimiter": {
           "type": "string",
           "default": ",",
           "description": "Set the delimiter between the fields of a record. It can be one or multiple characters. The default value is a comma `,`"
+        },
+        "bigqueryRunner.output.type": {
+          "type": "string",
+          "default": "output",
+          "enum": [
+            "output",
+            "file"
+          ],
+          "description": "Controls the output destination for query results."
+        },
+        "bigqueryRunner.output.file.path": {
+          "type": "string",
+          "default": ".",
+          "description": "Controls the output file path for query results when output.type is specified as file."
         }
       }
     }
@@ -142,7 +155,18 @@
     "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint 'src/**/*.ts'",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "generate": "run-p generate:readme generate:dts",
+    "generate:watch": "nodemon --exec 'npm run generate'",
+    "generate:readme": "ejs ./gen-src/README.md.ejs -f package.json -o ./README.md",
+    "generate:dts": "ejs ./gen-src/config.d.ts.ejs -f package.json -o ./src/config.d.ts"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "gen-src/",
+      "package.json"
+    ],
+    "ext": "ejs,json"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^5.9.2",
@@ -166,11 +190,13 @@
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "@vscode/test-electron": "^1.6.2",
+    "ejs": "^3.1.6",
     "eslint": "^8.1.0",
     "eslint-plugin-import": "^2.25.3",
     "eslint-plugin-unused-imports": "^2.0.0",
     "glob": "^7.1.7",
     "mocha": "^9.1.3",
+    "nodemon": "^2.0.15",
     "npm-run-all": "^4.1.5",
     "typescript": "^4.4.4",
     "vsce": "^2.5.1"

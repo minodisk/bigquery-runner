@@ -1,13 +1,13 @@
-# BigQuery Runner for Visual Studio Code
+# BigQuery Runner
 
-A Visual Studio Code ("VS Code") extension that can query Google Cloud Platform's [BigQuery analytics database](https://cloud.google.com/bigquery/) from, and return results to, your editor. This extension allows you to:
+A Visual Studio Code extension that can query Google Cloud Platform's [BigQuery](https://cloud.google.com/bigquery/) from, and return results to, your editor. This extension allows you to:
 
-- Write SQL in VS Code and query BigQuery datasets directly
+- Write SQL in VSCode and query BigQuery datasets directly
 - Create queries from selected text
-- Capture results into VS Code window to manipulate them further
+- Capture results into VSCode window to manipulate them further
 - Mark the location of errors encountered during the execution of a query job in the editor
 
-This extension is great if you're exploring BigQuery and prefer VS Code's editing environment, or for cases where you're writing documentation (hint: use "Run selected text as query") and want to double check that the query is valid.
+This extension is great if you're exploring BigQuery and prefer VSCode's editing environment, or for cases where you're writing documentation (hint: use "Run selected text as query") and want to double check that the query is valid.
 
 ## Installing
 
@@ -21,21 +21,25 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 ## Commands
 
-### `BigQuery Runner: Run`
+### BigQuery Runner: Run
 
-- ID: `bigqueryRunner.run`
+|ID|
+|---|
+|bigqueryRunner.run|
 
 Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
-![Screenshot of Run](screenshots/run.gif)
+![BigQuery Runner: Run](screenshots/run.gif)
 
-### `BigQuery Runner: Dry Run`
+### BigQuery Runner: Dry Run
 
-- ID: `bigqueryRunner.dryRun`
+|ID|
+|---|
+|bigqueryRunner.dryRun|
 
 Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
-![Screenshot of Dry Run](screenshots/dry-run.gif)
+![BigQuery Runner: Dry Run](screenshots/dry-run.gif)
 
 ## Configuration
 
@@ -43,87 +47,117 @@ The extension can be customized by modifying your `settings.json` file. The avai
 
 ### `bigqueryRunner.keyFilename`
 
-- **required**
+|Type|Default|
+|---|---|
+|`string`|`""`|
 
-Full path to the a .json, .pem, or .p12 key downloaded from the Google Developers Console. If you provide a path to a JSON file, the projectId option is not necessary. NOTE: .pem and .p12 require you to specify the email option as well.
+The path to the JSON file for the service account. When specifying a relative path, specify the path from the root folder that is open in VSCode. If it is not specified, the path specified in `GOOGLE_APPLICATION_CREDENTIALS` is used.
 
 ### `bigqueryRunner.projectId`
 
-The project ID from the Google Developer's Console, e.g. 'grape-spaceship-123'. This is NOT needed if you are provide a key in JSON format.
+|Type|Default|
+|---|---|
+|`string \| null`|`null`|
+
+Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used.
 
 ### `bigqueryRunner.location`
 
-- default: `"US"`
+|Type|Default|
+|---|---|
+|`string \| null`|`null`|
 
-The geographic location of the job. Required except for US and EU. See details at https://cloud.google.com/bigquery/docs/dataset-locations#specifying_your_location.
+The geographic location where the job should run. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
 
 ### `bigqueryRunner.useLegacySql`
 
-- default: `false`
+|Type|Default|
+|---|---|
+|`boolean`|`false`|
 
-Specifies whether to use BigQuery's legacy SQL dialect for this query. The default value is true. If set to false, the query will use BigQuery's standard SQL: https://cloud.google.com/bigquery/sql-reference/
+Flag whether to use legacy SQL. If `false`, use standard SQL.
 
 ### `bigqueryRunner.maximumBytesBilled`
 
-- default: `null`
+|Type|Default|
+|---|---|
+|`string \| null`|`null`|
 
-Limits the bytes billed for this job. Queries that will have bytes billed beyond this limit will fail (without incurring a charge). If unspecified, this will be set to your project default.
+Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used.
 
 ### `bigqueryRunner.queryValidation.enabled`
 
-- default: `false`
+|Type|Default|
+|---|---|
+|`boolean`|`true`|
 
-If set to true, do a dry run on file save to validate for runtime errors in the query.
+Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.
+![bigqueryRunner.queryValidation.enabled](screenshots/query-validation.gif)
 
-![Screenshot of validate on save](screenshots/query-validation.gif)
+### `bigqueryRunner.queryValidation.debounceInterval`
+
+|Type|Default|
+|---|---|
+|`number`|`600`|
+
+Debounce interval in milliseconds to validate the query when the file is modified.
 
 ### `bigqueryRunner.queryValidation.languageIds`
 
-- default: `[ "bigquery", "sql-bigquery" ]`
+|Type|Default|
+|---|---|
+|`array`|`["bigquery","sql-bigquery"]`|
 
-List of language IDs to be validated for errors when saving files.
+List of language IDs of the files whose queries are to be validated when the files are modified.
 
 ### `bigqueryRunner.queryValidation.extensions`
 
-- default: `[ ".bqsql", ".bqddl", ".bqdml" ]`
+|Type|Default|
+|---|---|
+|`array`|`[".bqsql",".bqddl",".bqdml"]`|
 
-List of file extensions to be validated for errors when saving files.
+List of file extensions for which the query is to be validated when the file is modified.
 
-### `bigqueryRunner.output.destination.type`
+### `bigqueryRunner.format.type`
 
-- default: `"output"`
+|Type|Default|Enum|
+|---|---|---|
+|`string`|`"table"`|`"table" \| "markdown" \| "json" \| "json-lines" \| "csv"`|
 
-Controls the output destination for query results.
+Controls the output format for query results.
 
-### `bigqueryRunner.output.destination.file.path`
+### `bigqueryRunner.format.csv.header`
 
-- default: `"."`
-
-Controls the output file path for query results when output.type is specified as file.
-
-### `bigqueryRunner.output.format.type`
-
-- default: `"table"`
-
-Controls the output format for query results. "table", "markdown", "json", "csv"
-
-### `bigqueryRunner.output.format.csv.header`
-
-- default: `false`
+|Type|Default|
+|---|---|
+|`boolean`|`false`|
 
 Columns names are automatically discovered from the first record if it is provided as a literal object.
 
-### `bigqueryRunner.output.format.csv.delimiter`
+### `bigqueryRunner.format.csv.delimiter`
 
-- default: `","`
+|Type|Default|
+|---|---|
+|`string`|`","`|
 
 Set the delimiter between the fields of a record. It can be one or multiple characters. The default value is a comma `,`
 
-### `bigqueryRunner.output.format.json.space`
+### `bigqueryRunner.output.type`
 
-- default: `null`
+|Type|Default|Enum|
+|---|---|---|
+|`string`|`"output"`|`"output" \| "file"`|
 
-Pretty print JSON results when output.format.type is specified as json.
+Controls the output destination for query results.
+
+### `bigqueryRunner.output.file.path`
+
+|Type|Default|
+|---|---|
+|`string`|`"."`|
+
+Controls the output file path for query results when output.type is specified as file.
+
 
 ## Recommended Setting
 

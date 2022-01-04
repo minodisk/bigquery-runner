@@ -1,0 +1,79 @@
+# BigQuery Runner
+
+A Visual Studio Code extension that can query Google Cloud Platform's [BigQuery](https://cloud.google.com/bigquery/) from, and return results to, your editor. This extension allows you to:
+
+- Write SQL in VSCode and query BigQuery datasets directly
+- Create queries from selected text
+- Capture results into VSCode window to manipulate them further
+- Mark the location of errors encountered during the execution of a query job in the editor
+
+This extension is great if you're exploring BigQuery and prefer VSCode's editing environment, or for cases where you're writing documentation (hint: use "Run selected text as query") and want to double check that the query is valid.
+
+## Installing
+
+[BigQuery Runner \- Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
+
+## Usage
+
+The BigQuery extension adds a number of commands to the command palette (Cmd/Ctrl+Shift+P).
+
+By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental variable (if set) and use the service account described in that JSON file. You can also explicitly set `bigqueryRunner.keyFilename` to the path of your [Service Account key file](https://cloud.google.com/docs/authentication/getting-started). Unless necessary, it's recommended that you scope this key to the [`roles.bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#permissions_and_roles) role, which is sufficient for querying and most related tasks.
+
+## Commands
+
+<% contributes.commands.forEach((command) => { -%>
+### <%- command.title %>
+
+|ID|
+|---|
+|<%- command.command %>|
+
+<%- command.description %>
+
+<% if (command.screenshot) { -%>
+![<%- command.title %>](<%- command.screenshot %>)
+<% } -%>
+
+<% }) -%>
+## Configuration
+
+The extension can be customized by modifying your `settings.json` file. The available configuration options, and their defaults, are below.
+
+<% Object.keys(contributes.configuration.properties).forEach((property) => {
+  const value = contributes.configuration.properties[property]
+-%>
+### `<%- property -%>`
+
+|Type|Default|<% if (value.enum) { %>Enum|<% } %>
+|---|---|<% if (value.enum) { %>---|<% } %>
+|`<%- Array.isArray(value.type) ? value.type.join(' \\| ') : value.type %>`|`<%- JSON.stringify(value.default) %>`|<% if (value.enum) { %>`<%- value.enum.map(JSON.stringify, JSON).join(' \\| ') %>`|<% } %>
+
+<%- value.description -%>
+
+<% if (value.screenshot) { -%>
+![<%- property %>](<%- value.screenshot %>)
+<% } -%>
+
+<% }) -%>
+
+## Recommended Setting
+
+It is recommended to set the settings in settings.json to avoid wrapping when outputting a table with a large number of fields.
+
+```json:settings.json
+{
+  "[Log]": {
+    "editor.wordWrap": "off"
+  }
+}
+```
+
+## Contributing
+
+Feature requests are accepted, but please raise an issue describing your feature before sending a PR. This extension focuses on _querying_ BigQuery, rather than dataset- and/or table- level functionality.
+
+This is not an officially supported Google product.
+
+## License
+
+Apache 2.0 licensed. See the LICENSE file for details.

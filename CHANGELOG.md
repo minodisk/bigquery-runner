@@ -13,6 +13,9 @@ All notable changes to the "bigquery-runner" extension will be documented in thi
 
 - Changed to validate queries by default.
 - Renamed verifyOnSave option to queryValidation.
+- Shortened the property in config.
+  - `bigqueryRunner.output.format` -> `bigqueryRunner.format`
+  - `bigqueryRunner.output.destination` -> `bigqueryRunner.output`
 
 ## [v0.0.18]
 
