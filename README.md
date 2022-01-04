@@ -29,7 +29,7 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 |ID|
 |---|
-|`bigqueryRunner.run`|
+|bigqueryRunner.run|
 
 Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
@@ -39,7 +39,7 @@ Run the query with BigQuery and display the results. Run the query on the select
 
 |ID|
 |---|
-|`bigqueryRunner.dryRun`|
+|bigqueryRunner.dryRun|
 
 Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
@@ -53,7 +53,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 
 |Type|Default|
 |---|---|
-|`string`|`""`|
+|string|""|
 
 The path to the JSON file for the service account. When specifying a relative path, specify the path from the root folder that is open in VSCode. If it is not specified, the path specified in `GOOGLE_APPLICATION_CREDENTIALS` is used.
 
@@ -61,7 +61,7 @@ The path to the JSON file for the service account. When specifying a relative pa
 
 |Type|Default|
 |---|---|
-|`string \| null`|`null`|
+|string &#x7C; null|null|
 
 Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used.
 
@@ -69,7 +69,7 @@ Project ID for Google Cloud Platform. If not specified, the value of `project_id
 
 |Type|Default|
 |---|---|
-|`string \| null`|`null`|
+|string &#x7C; null|null|
 
 The geographic location where the job should run. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
 
@@ -77,7 +77,7 @@ The geographic location where the job should run. See details at https://cloud.g
 
 |Type|Default|
 |---|---|
-|`boolean`|`false`|
+|boolean|false|
 
 Flag whether to use legacy SQL. If `false`, use standard SQL.
 
@@ -85,7 +85,7 @@ Flag whether to use legacy SQL. If `false`, use standard SQL.
 
 |Type|Default|
 |---|---|
-|`string \| null`|`null`|
+|string &#x7C; null|null|
 
 Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used.
 
@@ -93,7 +93,7 @@ Limits the bytes billed for this query. Queries with bytes billed above this lim
 
 |Type|Default|
 |---|---|
-|`boolean`|`true`|
+|boolean|true|
 
 Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.
 ![bigqueryRunner.queryValidation.enabled](screenshots/query-validation.gif)
@@ -102,7 +102,7 @@ Validate the query whenever the file set in `queryValidation.languageIds` or `qu
 
 |Type|Default|
 |---|---|
-|`number`|`600`|
+|number|600|
 
 Debounce interval in milliseconds to validate the query when the file is modified.
 
@@ -110,7 +110,7 @@ Debounce interval in milliseconds to validate the query when the file is modifie
 
 |Type|Default|
 |---|---|
-|`array`|`["bigquery","sql-bigquery"]`|
+|array|["bigquery","sql-bigquery"]|
 
 List of language IDs of the files whose queries are to be validated when the files are modified.
 
@@ -118,7 +118,7 @@ List of language IDs of the files whose queries are to be validated when the fil
 
 |Type|Default|
 |---|---|
-|`array`|`[".bqsql",".bqddl",".bqdml"]`|
+|array|[".bqsql",".bqddl",".bqdml"]|
 
 List of file extensions for which the query is to be validated when the file is modified.
 
@@ -126,7 +126,7 @@ List of file extensions for which the query is to be validated when the file is 
 
 |Type|Default|Enum|
 |---|---|---|
-|`string`|`"table"`|`"table" \| "markdown" \| "json" \| "json-lines" \| "csv"`|
+|string|"table"|"table" &#x7C; "markdown" &#x7C; "json" &#x7C; "json-lines" &#x7C; "csv"|
 
 Controls the output format for query results.
 
@@ -134,7 +134,7 @@ Controls the output format for query results.
 
 |Type|Default|
 |---|---|
-|`boolean`|`false`|
+|boolean|false|
 
 Columns names are automatically discovered from the first record if it is provided as a literal object.
 
@@ -142,7 +142,7 @@ Columns names are automatically discovered from the first record if it is provid
 
 |Type|Default|
 |---|---|
-|`string`|`","`|
+|string|","|
 
 Set the delimiter between the fields of a record. It can be one or multiple characters. The default value is a comma `,`
 
@@ -150,7 +150,7 @@ Set the delimiter between the fields of a record. It can be one or multiple char
 
 |Type|Default|Enum|
 |---|---|---|
-|`string`|`"output"`|`"output" \| "file"`|
+|string|"output"|"output" &#x7C; "file"|
 
 Controls the output destination for query results.
 
@@ -158,7 +158,7 @@ Controls the output destination for query results.
 
 |Type|Default|
 |---|---|
-|`string`|`"."`|
+|string|"."|
 
 Controls the output file path for query results when output.type is specified as file.
 

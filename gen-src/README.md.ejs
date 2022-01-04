@@ -30,7 +30,7 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 |ID|
 |---|
-|`<%- command.command %>`|
+|<%- command.command %>|
 
 <%- command.description %>
 
@@ -50,7 +50,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 
 |Type|Default|<% if (value.enum) { %>Enum|<% } %>
 |---|---|<% if (value.enum) { %>---|<% } %>
-|`<%- Array.isArray(value.type) ? value.type.join(' \\| ') : value.type %>`|`<%- JSON.stringify(value.default) %>`|<% if (value.enum) { %>`<%- value.enum.map(JSON.stringify, JSON).join(' \\| ') %>`|<% } %>
+|<%- Array.isArray(value.type) ? value.type.join(' &#x7C; ') : value.type %>|<%- JSON.stringify(value.default) %>|<% if (value.enum) { %><%- value.enum.map(JSON.stringify, JSON).join(' &#x7C; ') %>|<% } %>
 
 <%- value.description -%>
 
