@@ -7,7 +7,8 @@ All notable changes to the "bigquery-runner" extension will be documented in thi
 ### Added
 
 - Validate that the query is correct when editing it.
-- Convert the relative path set in keyFilename to an absolute path from the root folder.
+- Added support for relative paths in `keyFilename` option.
+  - Convert the relative path to an absolute path from the root folder.
 
 ### Changed
 
