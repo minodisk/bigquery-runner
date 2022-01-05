@@ -1,0 +1,30 @@
+{
+  "name": "misc",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minodisk/vscode-bigquery.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/minodisk/vscode-bigquery/issues"
+  },
+  "homepage": "https://github.com/minodisk/vscode-bigquery#readme",
+  "scripts": {
+    "generate": "run-p generate:readme generate:dts",
+    "generate:watch": "nodemon --exec 'npm run generate'",
+    "generate:readme": "ejs ./gen-src/README.md.ejs -f package.json -o ./README.md",
+    "generate:dts": "ejs ./gen-src/config.d.ts.ejs -f package.json -o ./src/config.d.ts"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "gen-src/",
+      "package.json"
+    ],
+    "ext": "ejs,json"
+  },
+  "devDependencies": {}
+}

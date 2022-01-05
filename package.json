@@ -23,7 +23,7 @@
     "erorr"
   ],
   "main": "out/extension.js",
-  "icon": "assets/icon.png",
+  "icon": "icon.png",
   "activationEvents": [
     "workspaceContains:**/*.bqsql",
     "workspaceContains:**/*.bqddl",
@@ -153,31 +153,6 @@
       }
     }
   },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "rm -rf out && tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "debug": "run-s package:debug install:debug",
-    "debug:insiders": "run-s package:debug install:debug:insiders",
-    "package": "mkdirp dist && vsce package -o ./dist/",
-    "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
-    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
-    "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint 'src/**/*.ts'",
-    "test": "node ./out/test/runTest.js",
-    "generate": "run-p generate:readme generate:dts",
-    "generate:watch": "nodemon --exec 'npm run generate'",
-    "generate:readme": "ejs ./gen-src/README.md.ejs -f package.json -o ./README.md",
-    "generate:dts": "ejs ./gen-src/config.d.ts.ejs -f package.json -o ./src/config.d.ts"
-  },
-  "nodemonConfig": {
-    "watch": [
-      "gen-src/",
-      "package.json"
-    ],
-    "ext": "ejs,json"
-  },
   "dependencies": {
     "@google-cloud/bigquery": "^5.9.2",
     "bytes": "^3.1.1",
@@ -210,5 +185,11 @@
     "npm-run-all": "^4.1.5",
     "typescript": "^4.4.4",
     "vsce": "^2.5.1"
-  }
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/viewer",
+    "packages/misc",
+    "packages/examples"
+  ]
 }
