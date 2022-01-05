@@ -167,9 +167,9 @@
     "dev:viewer": "npm run -w viewer dev",
     "debug": "run-s package:debug install:debug",
     "debug:insiders": "run-s package:debug install:debug:insiders",
-    "package": "mkdirp dist && vsce package -o ./dist/ --no-dependencies",
-    "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix --no-dependencies",
-    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix --no-dependencies",
+    "package": "mkdirp dist && vsce package -o ./dist/",
+    "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
+    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
     "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
     "vscode:prepublish": "npm run -w core compile"
   },
