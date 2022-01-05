@@ -54,6 +54,7 @@ describe("BigQuery Runner", () => {
       await activate(
         {
           subscriptions,
+          extensionPath: "",
         },
         dependencies
       );

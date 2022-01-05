@@ -145,8 +145,9 @@
         },
         "bigqueryRunner.output.type": {
           "type": "string",
-          "default": "output",
+          "default": "viewer",
           "enum": [
+            "viewer",
             "output",
             "file"
           ],
@@ -171,7 +172,7 @@
     "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
     "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
     "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
-    "vscode:prepublish": "npm run -w core compile"
+    "vscode:prepublish": "npm run -w core compile && npm run -w viewer build"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^5.9.2",

@@ -20,7 +20,7 @@ export type Config = {
     };
   };
   readonly output: {
-    readonly type: "output" | "file";
+    readonly type: "viewer" | "output" | "file";
     readonly file: {
       readonly path: string;
     };

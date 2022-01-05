@@ -17,6 +17,7 @@ import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
 import { flatten } from "flat";
 import { createWriteStream } from "fs";
+import { readFile } from "fs/promises";
 import mkdirp from "mkdirp";
 import { basename, extname, isAbsolute, join } from "path";
 import { tenderize } from "tenderizer";
@@ -30,6 +31,8 @@ import {
   Position,
   Range,
   TextDocument,
+  Uri,
+  ViewColumn,
   window,
   workspace,
 } from "vscode";
@@ -68,7 +71,7 @@ export type Dependencies = {
 };
 
 export async function activate(
-  ctx: Pick<ExtensionContext, "subscriptions">,
+  ctx: Pick<ExtensionContext, "subscriptions" | "extensionPath">,
   dependencies?: Dependencies
 ) {
   try {
@@ -104,8 +107,9 @@ export async function activate(
           configManager,
           diagnosticCollection,
           outputChannel: outputChannel,
-          callback: run,
           resultChannel: resultChannel,
+          extensionPath: ctx.extensionPath,
+          callback: run,
         }),
       ],
       [
@@ -114,8 +118,9 @@ export async function activate(
           configManager,
           diagnosticCollection,
           outputChannel: outputChannel,
-          callback: dryRun,
           resultChannel: resultChannel,
+          extensionPath: ctx.extensionPath,
+          callback: dryRun,
         }),
       ],
     ]).forEach((action, name) => {
@@ -290,20 +295,23 @@ function wrapCallback({
   configManager,
   diagnosticCollection,
   outputChannel,
-  callback,
   resultChannel,
+  extensionPath,
+  callback,
 }: {
   readonly configManager: ConfigManager;
   readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
+  readonly resultChannel: ResultChannel;
+  readonly extensionPath: string;
   readonly callback: (params: {
     readonly config: Config;
     readonly errorMarker: ErrorMarker;
     readonly outputChannel: OutputChannel;
     readonly document: TextDocument;
     readonly range?: Range;
+    readonly extensionPath: string;
   }) => Promise<Result>;
-  readonly resultChannel: ResultChannel;
 }): () => Promise<void> {
   return async () => {
     try {
@@ -318,6 +326,7 @@ function wrapCallback({
         outputChannel,
         document,
         range: selection,
+        extensionPath,
       });
       resultChannel.set(result);
     } catch (err) {
@@ -339,12 +348,14 @@ async function run({
   outputChannel,
   document,
   range,
+  extensionPath,
 }: {
   readonly config: Config;
   readonly errorMarker: ErrorMarker;
   readonly outputChannel: OutputChannel;
   readonly document: TextDocument;
   readonly range?: Range;
+  readonly extensionPath: string;
 }): Promise<Result> {
   outputChannel.show(true);
   outputChannel.appendLine(`Run`);
@@ -366,6 +377,7 @@ async function run({
       config,
       outputChannel,
       filename: document.fileName,
+      extensionPath,
     });
 
     outputChannel.appendLine(`Job ID: ${job.id}`);
@@ -623,12 +635,43 @@ async function createOutput({
   config,
   outputChannel,
   filename,
+  extensionPath,
 }: {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
   readonly filename: string;
+  readonly extensionPath: string;
 }): Promise<Writer> {
   switch (config.output.type) {
+    case "viewer":
+      const panel = window.createWebviewPanel(
+        "bigqueryRunner",
+        "BigQuery Runner",
+        ViewColumn.One,
+        {
+          enableScripts: true,
+          localResourceRoots: [Uri.file(join(extensionPath, "build"))],
+        }
+      );
+      const base = Uri.file(join(extensionPath, "build")).with({
+        scheme: "vscode-resource",
+      });
+      // outputChannel.appendLine(JSON.stringify(base, null, 2));
+      // outputChannel.appendLine(base.toString());
+      const html = (
+        await readFile(join(extensionPath, "build", "index.html"), "utf-8")
+      ).replace("%BASE_URL%", base.toString());
+      // outputChannel.appendLine(html);
+      panel.webview.html = html;
+      return {
+        write(chunk: string) {
+          panel.webview.postMessage(chunk);
+        },
+        writeLine(chunk: string) {
+          panel.webview.postMessage(chunk + "\n");
+        },
+        async close() {},
+      };
     case "output":
       return {
         write(chunk: string) {
