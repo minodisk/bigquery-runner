@@ -4,16 +4,6 @@
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/minodisk/vscode-bigquery.git"
-  },
-  "author": "",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/minodisk/vscode-bigquery/issues"
-  },
-  "homepage": "https://github.com/minodisk/vscode-bigquery#readme",
   "scripts": {
     "dev": "run-p generate:watch",
     "generate": "run-p generate:readme generate:dts",

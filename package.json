@@ -13,6 +13,12 @@
   "engines": {
     "vscode": "^1.63.2"
   },
+  "workspaces": [
+    "packages/core",
+    "packages/examples",
+    "packages/gencode",
+    "packages/viewer"
+  ],
   "categories": [
     "Other"
   ],
@@ -155,9 +161,10 @@
     }
   },
   "scripts": {
-    "dev": "run-p dev:core dev:gencode",
+    "dev": "run-p dev:core dev:gencode dev:viewer",
     "dev:core": "npm run -w core dev",
     "dev:gencode": "npm run -w gencode dev",
+    "dev:viewer": "npm run -w viewer dev",
     "debug": "run-s package:debug install:debug",
     "debug:insiders": "run-s package:debug install:debug:insiders",
     "package": "mkdirp dist && vsce package -o ./dist/ --no-dependencies",
@@ -196,13 +203,7 @@
     "mocha": "^9.1.3",
     "nodemon": "^2.0.15",
     "npm-run-all": "^4.1.5",
-    "typescript": "^4.4.4",
+    "typescript": "^4.5.4",
     "vsce": "^2.5.1"
-  },
-  "workspaces": [
-    "packages/core",
-    "packages/examples",
-    "packages/gencode",
-    "packages/viewer"
-  ]
+  }
 }
