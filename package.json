@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "bigquery-runner",
   "displayName": "BigQuery Runner",
   "description": "An extension for querying Google Cloud Platform's BigQuery analytics datasets directly from VS Code.",
@@ -153,6 +154,18 @@
       }
     }
   },
+  "scripts": {
+    "dev": "run-p dev:core dev:gencode",
+    "dev:core": "npm run -w core dev",
+    "dev:gencode": "npm run -w gencode dev",
+    "debug": "run-s package:debug install:debug",
+    "debug:insiders": "run-s package:debug install:debug:insiders",
+    "package": "mkdirp dist && vsce package -o ./dist/ --no-dependencies",
+    "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix --no-dependencies",
+    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix --no-dependencies",
+    "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
+    "vscode:prepublish": "npm run -w core compile"
+  },
   "dependencies": {
     "@google-cloud/bigquery": "^5.9.2",
     "bytes": "^3.1.1",
@@ -188,8 +201,8 @@
   },
   "workspaces": [
     "packages/core",
-    "packages/viewer",
-    "packages/misc",
-    "packages/examples"
+    "packages/examples",
+    "packages/gencode",
+    "packages/viewer"
   ]
 }

@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "core",
   "version": "0.0.0",
   "description": "",
@@ -14,18 +15,11 @@
   },
   "homepage": "https://github.com/minodisk/vscode-bigquery#readme",
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "rm -rf out && tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "debug": "run-s package:debug install:debug",
-    "debug:insiders": "run-s package:debug install:debug:insiders",
-    "package": "mkdirp dist && vsce package -o ./dist/",
-    "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
-    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
-    "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
+    "dev": "run-p compile:watch",
+    "compile": "rm -rf ../../out && tsc -p ./",
+    "compile:watch": "npm run compile -- -w",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint 'src/**/*.ts'",
-    "test": "node ./out/test/runTest.js"
-  },
-  "devDependencies": {}
+    "test": "node ../../out/test/runTest.js"
+  }
 }

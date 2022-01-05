@@ -1,10 +1,7 @@
 .vscode
 .vscode-test
-assets-src
 dist
 examples
-gen-src
-src
+packages
 .eslintrc.json
 .gitignore
-tsconfig.json

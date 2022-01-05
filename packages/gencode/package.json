@@ -1,5 +1,6 @@
 {
-  "name": "misc",
+  "private": true,
+  "name": "gencode",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
@@ -14,17 +15,17 @@
   },
   "homepage": "https://github.com/minodisk/vscode-bigquery#readme",
   "scripts": {
+    "dev": "run-p generate:watch",
     "generate": "run-p generate:readme generate:dts",
     "generate:watch": "nodemon --exec 'npm run generate'",
-    "generate:readme": "ejs ./gen-src/README.md.ejs -f package.json -o ./README.md",
-    "generate:dts": "ejs ./gen-src/config.d.ts.ejs -f package.json -o ./src/config.d.ts"
+    "generate:readme": "ejs ./src/README.md.ejs -f ../../package.json -o ../../README.md",
+    "generate:dts": "ejs ./src/config.d.ts.ejs -f ../../package.json -o ../core/src/config.d.ts"
   },
   "nodemonConfig": {
     "watch": [
-      "gen-src/",
-      "package.json"
+      "./src/",
+      "../../package.json"
     ],
     "ext": "ejs,json"
-  },
-  "devDependencies": {}
+  }
 }
