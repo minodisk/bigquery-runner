@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import logo from "./logo.svg";
 import "./App.css";
 
 function App() {
+  const [lines, setLines] = useState<Array<string>>([]);
+  useEffect(() => {
+    window.addEventListener("message", (e: MessageEvent<string>) => {
+      console.log(e);
+      setLines((ls) => [...ls, e.data]);
+    });
+  }, []);
   return (
     <div className="App">
       <header className="App-header">
@@ -18,6 +25,11 @@ function App() {
         >
           Learn React
         </a>
+        <ul>
+          {lines.map((line) => (
+            <li>{line}</li>
+          ))}
+        </ul>
       </header>
     </div>
   );
