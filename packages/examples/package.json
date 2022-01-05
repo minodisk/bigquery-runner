@@ -3,15 +3,5 @@
   "name": "examples",
   "version": "0.0.0",
   "description": "",
-  "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/minodisk/vscode-bigquery.git"
-  },
-  "author": "",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/minodisk/vscode-bigquery/issues"
-  },
-  "homepage": "https://github.com/minodisk/vscode-bigquery#readme"
+  "main": "index.js"
 }
