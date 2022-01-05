@@ -192,6 +192,7 @@ function getConfigration(section: string): Config {
     keyFilename:
       isAbsolute(config.keyFilename) ||
       !workspace.workspaceFolders ||
+      !workspace.workspaceFolders[0] ||
       workspace.workspaceFolders.length === 0
         ? config.keyFilename
         : join(workspace.workspaceFolders[0].uri.fsPath, config.keyFilename),
@@ -609,7 +610,7 @@ function createErrorMarker({
               new Position(line, character),
               new Position(line, character + 1)
             ),
-          m
+          m ?? ""
         ),
       ]);
       throw err;
@@ -641,7 +642,7 @@ async function createOutput({
         async close() {},
       };
     case "file":
-      if (!workspace.workspaceFolders) {
+      if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
         throw new Error(`no workspace folders`);
       }
       const dirname = join(
