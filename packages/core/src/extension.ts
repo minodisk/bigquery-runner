@@ -386,9 +386,9 @@ async function run({
     outputChannel.appendLine("TABLE INFO -------------------");
     outputChannel.appendLine(JSON.stringify(tableInfo, null, 2));
 
-    const headers = fieldsToHeaders(tableInfo.schema.fields);
-    outputChannel.appendLine("HEADERS -------------------");
-    outputChannel.appendLine(JSON.stringify(headers));
+    const header = fieldsToHeader(tableInfo.schema.fields);
+    outputChannel.appendLine("HEADER -------------------");
+    outputChannel.appendLine(JSON.stringify(header));
 
     const output = await createOutput({
       config,
@@ -398,7 +398,7 @@ async function run({
     });
 
     await output.open();
-    await output.writeHeader(headers);
+    await output.writeHeader(header);
     await output.writeRows(rows);
     await output.close();
 
@@ -412,13 +412,13 @@ async function run({
   }
 }
 
-function fieldsToHeaders(fields?: Array<TableField>): Array<string> {
+function fieldsToHeader(fields?: Array<TableField>): Array<string> {
   if (!fields) {
     return [];
   }
   return fields.flatMap(({ type, name, fields }) => {
     if (type === "STRUCT" || type === "RECORD") {
-      return fieldsToHeaders(fields).map((n) => `${name}.${n}`);
+      return fieldsToHeader(fields).map((n) => `${name}.${n}`);
     }
     if (!name) {
       return "";
@@ -696,87 +696,25 @@ function createErrorMarker({
 type ErrorMarker = ReturnType<typeof createErrorMarker>;
 
 type Output = {
-  readonly open: () => Promise<void>;
+  readonly open: () => Promise<unknown>;
   readonly path?: () => string;
   readonly writeHeader: (headers: Array<string>) => Promise<unknown>;
-  readonly writeRows: (rows: Array<Array<any>>) => Promise<unknown>;
+  readonly writeRows: (rows: Array<any>) => Promise<unknown>;
   readonly close: () => Promise<void>;
 };
-async function createOutput({
-  config,
-  outputChannel,
-  filename,
-  extensionPath,
-}: {
+type CreateOutputParams = {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
   readonly filename: string;
   readonly extensionPath: string;
-}): Promise<Output> {
-  if (config.output.type === "viewer") {
-    let panel: WebviewPanel | undefined;
-    let base: string | undefined;
-    return {
-      async open() {
-        panel = window.createWebviewPanel(
-          "bigqueryRunner",
-          "BigQuery Runner",
-          ViewColumn.Beside,
-          {
-            enableScripts: true,
-            localResourceRoots: [Uri.file(join(extensionPath, "build"))],
-          }
-        );
-        base = Uri.file(join(extensionPath, "build"))
-          .with({
-            scheme: "vscode-resource",
-          })
-          .toString();
-        // outputChannel.appendLine(JSON.stringify(base, null, 2));
-        // outputChannel.appendLine(base.toString());
-        const html = (
-          await readFile(join(extensionPath, "build", "index.html"), "utf-8")
-        ).replace("%BASE_URL%", base);
-        // outputChannel.appendLine(html);
-        panel.webview.html = html;
-      },
-      path() {
-        if (!base) {
-          throw new Error(`base is not initialized`);
-        }
-        return base;
-      },
-      async writeHeader(header: Array<string>) {
-        if (!panel) {
-          throw new Error(`panel is not initialized`);
-        }
-        return panel.webview.postMessage({
-          source: "bigquery-runner",
-          payload: {
-            event: "header",
-            payload: header,
-          },
-        });
-      },
-      async writeRows(rows: Array<Array<any>>) {
-        if (!panel) {
-          throw new Error(`panel is not initialized`);
-        }
-        return panel.webview.postMessage({
-          source: "bigquery-runner",
-          payload: {
-            event: "rows",
-            payload: rows,
-          },
-        });
-      },
-      async close() {},
-    };
-  }
-
-  const formatter = createFormatter({ config });
+};
+async function createOutput(params: CreateOutputParams): Promise<Output> {
+  const { config, outputChannel, filename } = params;
   switch (config.output.type) {
+    case "viewer":
+      return createViewerOutput(params);
     case "output": {
+      const formatter = createFormatter({ config });
       let header: Array<string>;
       return {
         async open() {
@@ -795,6 +733,7 @@ async function createOutput({
       };
     }
     case "file": {
+      const formatter = createFormatter({ config });
       let stream: WriteStream;
       let header: Array<string>;
       return {
@@ -839,6 +778,82 @@ async function createOutput({
       };
     }
   }
+}
+
+let panel: WebviewPanel | undefined;
+
+async function createViewerOutput({
+  extensionPath,
+}: {
+  extensionPath: string;
+  outputChannel: OutputChannel;
+}): Promise<Output> {
+  return {
+    async open() {
+      if (!panel) {
+        panel = window.createWebviewPanel(
+          "bigqueryRunner",
+          "BigQuery Runner",
+          ViewColumn.Beside,
+          {
+            enableScripts: true,
+            localResourceRoots: [Uri.file(join(extensionPath, "build"))],
+          }
+        );
+        const base = Uri.file(join(extensionPath, "build"))
+          .with({
+            scheme: "vscode-resource",
+          })
+          .toString();
+        const html = (
+          await readFile(join(extensionPath, "build", "index.html"), "utf-8")
+        ).replace("%BASE_URL%", base);
+        panel.webview.html = html;
+        panel.onDidDispose(
+          () => {
+            panel = undefined;
+          },
+          null
+          // ctx.subscriptions
+        );
+      }
+
+      return panel.webview.postMessage({
+        source: "bigquery-runner",
+        payload: {
+          event: "clear",
+        },
+      });
+    },
+    path() {
+      return "";
+    },
+    async writeHeader(header: Array<string>) {
+      if (!panel) {
+        throw new Error(`panel is not initialized`);
+      }
+      return panel.webview.postMessage({
+        source: "bigquery-runner",
+        payload: {
+          event: "header",
+          payload: header,
+        },
+      });
+    },
+    async writeRows(rows: Array<any>) {
+      if (!panel) {
+        throw new Error(`panel is not initialized`);
+      }
+      return panel.webview.postMessage({
+        source: "bigquery-runner",
+        payload: {
+          event: "rows",
+          payload: rows.flatMap((row) => tenderize(row)),
+        },
+      });
+    },
+    async close() {},
+  };
 }
 
 type Formatter = {
