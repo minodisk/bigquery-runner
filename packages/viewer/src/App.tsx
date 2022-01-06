@@ -32,17 +32,17 @@ function isHeader(e: Event): e is Header {
 }
 
 type Row = {
-  event: "row";
-  payload: Array<any>;
+  event: "rows";
+  payload: Array<Array<any>>;
 };
 
 function isRow(e: Event): e is Row {
-  return e.event === "row";
+  return e.event === "rows";
 }
 
 function App() {
   const [header, setHeader] = useState<Array<string>>([]);
-  const [rows, setRows] = useState<Array<Array<string>>>([]);
+  const [rows, setRows] = useState<Array<{ [key: string]: any }>>([]);
   useEffect(() => {
     window.addEventListener("message", (e: MessageEvent) => {
       if (!isData(e.data)) {
@@ -62,7 +62,7 @@ function App() {
         return;
       }
       if (isRow(payload)) {
-        setRows((rows) => [...rows, payload.payload]);
+        setRows((rows) => [...rows, ...payload.payload]);
         return;
       }
       throw new Error(`undefined data payload '${payload}'`);
@@ -86,16 +86,16 @@ function App() {
         <table>
           <thead>
             <tr>
-              {header.map((v) => (
-                <th>{v}</th>
+              {header.map((h) => (
+                <th key={h}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr>
-                {r.map((v) => (
-                  <td>{v}</td>
+            {rows.map((row, i) => (
+              <tr key={`row-${i}`}>
+                {header.map((h) => (
+                  <td key={`row-${i}-value-${h}`}>{row[h]}</td>
                 ))}
               </tr>
             ))}
@@ -105,24 +105,5 @@ function App() {
     </div>
   );
 }
-
-setTimeout(() => {
-  window.postMessage({
-    source: "bigquery-runner",
-    payload: { event: "clear", payload: undefined },
-  } as Data);
-  window.postMessage({
-    source: "bigquery-runner",
-    payload: { event: "header", payload: ["a", "b", "c"] },
-  } as Data);
-  window.postMessage({
-    source: "bigquery-runner",
-    payload: { event: "row", payload: ["1.1", "1.2", "1.3"] },
-  } as Data);
-  window.postMessage({
-    source: "bigquery-runner",
-    payload: { event: "row", payload: ["2.1", "2.2", "2.3"] },
-  } as Data);
-}, 1000);
 
 export default App;
