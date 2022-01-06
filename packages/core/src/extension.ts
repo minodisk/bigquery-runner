@@ -15,8 +15,7 @@
 import { format as formatBytes } from "bytes";
 import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
-import { flatten } from "flat";
-import { createWriteStream } from "fs";
+import { createWriteStream, WriteStream } from "fs";
 import { readFile } from "fs/promises";
 import mkdirp from "mkdirp";
 import { basename, extname, isAbsolute, join } from "path";
@@ -33,18 +32,16 @@ import {
   TextDocument,
   Uri,
   ViewColumn,
+  WebviewPanel,
   window,
   workspace,
 } from "vscode";
-import { BigQuery, Job } from "@google-cloud/bigquery";
+import {
+  BigQuery,
+  Job,
+  TableField as OrigTableField,
+} from "@google-cloud/bigquery";
 import { Config } from "./config";
-
-type Writer = {
-  readonly path?: string;
-  readonly write: (chunk: string) => void;
-  readonly writeLine: (chunk: string) => void;
-  readonly close: () => Promise<void>;
-};
 
 type OutputChannel = Pick<
   OrigOutputChannel,
@@ -367,12 +364,32 @@ async function run({
       config,
       queryText: getQueryText({ document, range }),
     });
+    outputChannel.appendLine(`Job ID: ${job.id}`);
     errorMarker.clear();
   } catch (err) {
     errorMarker.mark(err);
   }
 
   try {
+    const [rows] = await job.getQueryResults({
+      autoPaginate: true,
+    });
+    outputChannel.appendLine(`Results: ${rows.length} rows`);
+
+    const jobInfo = await getJobInfo({ job });
+    outputChannel.appendLine("JOB INFO -------------------");
+    outputChannel.appendLine(JSON.stringify(jobInfo, null, 2));
+    const tableInfo = await getTableInfo({
+      config,
+      tableReference: jobInfo.configuration.query.destinationTable,
+    });
+    outputChannel.appendLine("TABLE INFO -------------------");
+    outputChannel.appendLine(JSON.stringify(tableInfo, null, 2));
+
+    const headers = fieldsToHeaders(tableInfo.schema.fields);
+    outputChannel.appendLine("HEADERS -------------------");
+    outputChannel.appendLine(JSON.stringify(headers));
+
     const output = await createOutput({
       config,
       outputChannel,
@@ -380,96 +397,10 @@ async function run({
       extensionPath,
     });
 
-    outputChannel.appendLine(`Job ID: ${job.id}`);
-
-    const res = await job.getQueryResults({
-      autoPaginate: true,
-    });
-    const [rows] = res;
-
-    outputChannel.appendLine(`Result: ${rows.length} rows`);
-
-    switch (config.format.type) {
-      case "table":
-        const t = new EasyTable();
-        rows.forEach((row) => {
-          tenderize(row).forEach((o) => {
-            Object.keys(o).forEach((key) => t.cell(key, o[key]));
-            t.newRow();
-          });
-        });
-        output.writeLine(t.toString().trimEnd());
-        output.close();
-        break;
-      case "markdown":
-        const keys = new Set<string>();
-        const rs = rows.flatMap((row) => {
-          const ts = tenderize(row);
-          ts.map((t) => {
-            Object.keys(t).forEach((key) => {
-              keys.add(key);
-            });
-          });
-          return ts;
-        });
-        const ks = Array.from(keys);
-        const m: Array<string> = [
-          `|${ks.join("|")}|`,
-          `|${ks.map(() => "---").join("|")}|`,
-          ...rs.map(
-            (r) =>
-              `|${ks
-                .map((key) => {
-                  if (!r[key]) {
-                    return "";
-                  }
-                  return `${r[key]}`.replace("\n", "<br/>");
-                })
-                .join("|")}|`
-          ),
-        ];
-        output.writeLine(m.join("\n"));
-        output.close();
-        break;
-      case "json-lines":
-        rows.forEach((row) => {
-          output.writeLine(JSON.stringify(flatten(row, { safe: true })));
-        });
-        output.close();
-        break;
-      case "json":
-        output.write("[");
-        rows.forEach((row, i) => {
-          output.write(
-            (i === 0 ? "" : ",") + JSON.stringify(flatten(row, { safe: true }))
-          );
-        });
-        output.writeLine("]");
-        output.close();
-        break;
-      case "csv":
-        const structs = rows.flatMap((row) => tenderize(row));
-        await new Promise<void>((resolve, reject) => {
-          CSV.stringify(
-            structs,
-            config.format.csv,
-            (err?: Error, res?: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (res) {
-                output.write(res);
-                output.close();
-              }
-              resolve();
-            }
-          );
-        });
-        break;
-      default:
-        throw new Error(`Invalid format: ${config.format.type}`);
-    }
+    await output.open();
+    await output.writeHeader(headers);
+    await output.writeRows(rows);
+    await output.close();
 
     return { jobId: job.id };
   } catch (err) {
@@ -479,6 +410,21 @@ async function run({
       throw err;
     }
   }
+}
+
+function fieldsToHeaders(fields?: Array<TableField>): Array<string> {
+  if (!fields) {
+    return [];
+  }
+  return fields.flatMap(({ type, name, fields }) => {
+    if (type === "STRUCT" || type === "RECORD") {
+      return fieldsToHeaders(fields).map((n) => `${name}.${n}`);
+    }
+    if (!name) {
+      return "";
+    }
+    return name;
+  });
 }
 
 async function dryRun({
@@ -572,6 +518,124 @@ async function createJob({
   return job;
 }
 
+type JobInfo = {
+  kind: string;
+  etag: string;
+  id: string;
+  selfLink: string;
+  // user_email: string;
+  configuration: {
+    query: {
+      query: string;
+      destinationTable: TableReference;
+      writeDisposition: string;
+      priority: string;
+      useLegacySql: boolean;
+    };
+    jobType: string;
+  };
+  jobReference: {
+    projectId: string;
+    jobId: string;
+    location: string;
+  };
+  statistics: {
+    creationTime: string;
+    startTime: string;
+    endTime: string;
+    totalBytesProcessed: string;
+    query: {
+      totalBytesProcessed: string;
+      totalBytesBilled: string;
+      cacheHit: boolean;
+      statementType: string;
+    };
+  };
+  status: {
+    state: string;
+  };
+};
+
+async function getJobInfo({ job }: { job: Job }): Promise<JobInfo> {
+  const metadata = await job.getMetadata();
+  const jobInfo: JobInfo | undefined = metadata.find(
+    ({ kind }) => kind === "bigquery#job"
+  );
+  if (!jobInfo) {
+    throw new Error(`no job info: ${job.id}`);
+  }
+  return jobInfo;
+}
+
+type TableSchema = {
+  fields?: Array<TableField>;
+};
+
+type TableField = Omit<OrigTableField, "mode" | "type" | "fields"> & {
+  mode?: "NULLABLE" | "REQUIRED" | "REPEATED";
+  type?:
+    | "STRING"
+    | "BYTES"
+    | "INTEGER"
+    | "INT64"
+    | "FLOAT"
+    | "FLOAT64"
+    | "NUMERIC"
+    | "BIGNUMERIC"
+    | "BOOLEAN"
+    | "BOOL"
+    | "TIMESTAMP"
+    | "DATE"
+    | "TIME"
+    | "DATETIME"
+    | "INTERVAL"
+    | "RECORD"
+    | "STRUCT";
+  fields?: Array<TableField>;
+};
+
+type Table = {
+  kind: string;
+  etag: string;
+  id: string;
+  selfLink: string;
+  tableReference: TableReference;
+  schema: TableSchema;
+  numBytes: string;
+  numLongTermBytes: string;
+  numRows: string;
+  creationTime: string;
+  expirationTime: string;
+  lastModifiedTime: string;
+  type: "TABLE";
+  location: string;
+};
+
+type TableReference = {
+  projectId: string;
+  datasetId: string;
+  tableId: string;
+};
+
+async function getTableInfo({
+  config,
+  tableReference: { projectId, datasetId, tableId },
+}: {
+  readonly config: Config;
+  readonly tableReference: TableReference;
+}): Promise<Table> {
+  const bigQuery = new BigQuery({
+    keyFilename: config.keyFilename,
+    projectId: projectId,
+  });
+  const res = await bigQuery.dataset(datasetId).table(tableId).get();
+  const table: Table = res.find(({ kind }) => kind === "bigquery#table");
+  if (!table) {
+    throw new Error(`no table info: ${projectId}.${datasetId}.${tableId}`);
+  }
+  return table;
+}
+
 function createErrorMarker({
   diagnosticCollection,
   document,
@@ -631,6 +695,13 @@ function createErrorMarker({
 }
 type ErrorMarker = ReturnType<typeof createErrorMarker>;
 
+type Output = {
+  readonly open: () => Promise<void>;
+  readonly path?: () => string;
+  readonly writeHeader: (headers: Array<string>) => Promise<unknown>;
+  readonly writeRows: (rows: Array<Array<any>>) => Promise<unknown>;
+  readonly close: () => Promise<void>;
+};
 async function createOutput({
   config,
   outputChannel,
@@ -641,80 +712,256 @@ async function createOutput({
   readonly outputChannel: OutputChannel;
   readonly filename: string;
   readonly extensionPath: string;
-}): Promise<Writer> {
-  switch (config.output.type) {
-    case "viewer":
-      const panel = window.createWebviewPanel(
-        "bigqueryRunner",
-        "BigQuery Runner",
-        ViewColumn.One,
-        {
-          enableScripts: true,
-          localResourceRoots: [Uri.file(join(extensionPath, "build"))],
+}): Promise<Output> {
+  if (config.output.type === "viewer") {
+    let panel: WebviewPanel | undefined;
+    let base: string | undefined;
+    return {
+      async open() {
+        panel = window.createWebviewPanel(
+          "bigqueryRunner",
+          "BigQuery Runner",
+          ViewColumn.Beside,
+          {
+            enableScripts: true,
+            localResourceRoots: [Uri.file(join(extensionPath, "build"))],
+          }
+        );
+        base = Uri.file(join(extensionPath, "build"))
+          .with({
+            scheme: "vscode-resource",
+          })
+          .toString();
+        // outputChannel.appendLine(JSON.stringify(base, null, 2));
+        // outputChannel.appendLine(base.toString());
+        const html = (
+          await readFile(join(extensionPath, "build", "index.html"), "utf-8")
+        ).replace("%BASE_URL%", base);
+        // outputChannel.appendLine(html);
+        panel.webview.html = html;
+      },
+      path() {
+        if (!base) {
+          throw new Error(`base is not initialized`);
         }
-      );
-      const base = Uri.file(join(extensionPath, "build")).with({
-        scheme: "vscode-resource",
-      });
-      // outputChannel.appendLine(JSON.stringify(base, null, 2));
-      // outputChannel.appendLine(base.toString());
-      const html = (
-        await readFile(join(extensionPath, "build", "index.html"), "utf-8")
-      ).replace("%BASE_URL%", base.toString());
-      // outputChannel.appendLine(html);
-      panel.webview.html = html;
+        return base;
+      },
+      async writeHeader(header: Array<string>) {
+        if (!panel) {
+          throw new Error(`panel is not initialized`);
+        }
+        return panel.webview.postMessage({
+          source: "bigquery-runner",
+          payload: {
+            event: "header",
+            payload: header,
+          },
+        });
+      },
+      async writeRows(rows: Array<Array<any>>) {
+        if (!panel) {
+          throw new Error(`panel is not initialized`);
+        }
+        return panel.webview.postMessage({
+          source: "bigquery-runner",
+          payload: {
+            event: "rows",
+            payload: rows,
+          },
+        });
+      },
+      async close() {},
+    };
+  }
+
+  const formatter = createFormatter({ config });
+  switch (config.output.type) {
+    case "output": {
+      let header: Array<string>;
       return {
-        write(chunk: string) {
-          panel.webview.postMessage(chunk);
-        },
-        writeLine(chunk: string) {
-          panel.webview.postMessage(chunk + "\n");
-        },
-        async close() {},
-      };
-    case "output":
-      return {
-        write(chunk: string) {
+        async open() {
           outputChannel.show(true);
-          outputChannel.append(chunk);
         },
-        writeLine(chunk: string) {
-          outputChannel.show(true);
-          outputChannel.appendLine(chunk);
+        async writeHeader(h) {
+          header = h;
+          outputChannel.append(formatter.header(h));
         },
-        async close() {},
-      };
-    case "file":
-      if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
-        throw new Error(`no workspace folders`);
-      }
-      const dirname = join(
-        workspace.workspaceFolders[0].uri.path ||
-          workspace.workspaceFolders[0].uri.fsPath,
-        config.output.file.path
-      );
-      await mkdirp(dirname);
-      const path = join(
-        dirname,
-        `${basename(filename, extname(filename))}${formatToExtension(
-          config.format.type
-        )}`
-      );
-      outputChannel.appendLine(`Output to: ${path}`);
-      const stream = createWriteStream(path);
-      return {
-        path,
-        write: (chunk) => stream.write(chunk),
-        writeLine: (chunk) => stream.write(chunk + "\n"),
+        async writeRows(rows) {
+          outputChannel.append(await formatter.rows({ header, rows }));
+        },
         async close() {
-          return new Promise((resolve, reject) => {
-            outputChannel.appendLine(
-              `Total bytes written: ${formatBytes(stream.bytesWritten)}`
-            );
+          outputChannel.append(formatter.footer());
+        },
+      };
+    }
+    case "file": {
+      let stream: WriteStream;
+      let header: Array<string>;
+      return {
+        async open() {
+          if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
+            throw new Error(`no workspace folders`);
+          }
+          const dirname = join(
+            workspace.workspaceFolders[0].uri.path ||
+              workspace.workspaceFolders[0].uri.fsPath,
+            config.output.file.path
+          );
+          await mkdirp(dirname);
+          const path = join(
+            dirname,
+            `${basename(filename, extname(filename))}${formatToExtension(
+              config.format.type
+            )}`
+          );
+          outputChannel.appendLine(`Output to: ${path}`);
+          stream = createWriteStream(path);
+        },
+        async writeHeader(h) {
+          header = h;
+          const res = formatter.header(h);
+          if (res) {
+            stream.write(res);
+          }
+        },
+        async writeRows(rows) {
+          stream.write(await formatter.rows({ header, rows }));
+        },
+        async close() {
+          stream.write(formatter.footer());
+          await new Promise((resolve, reject) => {
             stream.on("error", reject).on("finish", resolve).end();
           });
+          outputChannel.appendLine(
+            `Total bytes written: ${formatBytes(stream.bytesWritten)}`
+          );
         },
       };
+    }
+  }
+}
+
+type Formatter = {
+  header: (header: Array<string>) => string;
+  rows: (params: {
+    header: Array<string>;
+    rows: Array<any>;
+  }) => Promise<string>;
+  footer: () => string;
+};
+function createFormatter({ config }: { config: Config }): Formatter {
+  switch (config.format.type) {
+    case "table":
+      return {
+        header() {
+          return "";
+        },
+        async rows({ rows }) {
+          const t = new EasyTable();
+          rows.forEach((row) => {
+            tenderize(row).forEach((o) => {
+              Object.keys(o).forEach((key) => t.cell(key, o[key]));
+              t.newRow();
+            });
+          });
+          return t.toString().trimEnd();
+        },
+        footer() {
+          return "";
+        },
+      };
+    case "markdown":
+      return {
+        header(header) {
+          return `|${header.join("|")}|
+|${header.map(() => "---").join("|")}|
+`;
+        },
+        async rows({ rows }) {
+          const keys = new Set<string>();
+          const rs = rows.flatMap((row) => {
+            const ts = tenderize(row);
+            ts.map((t) => {
+              Object.keys(t).forEach((key) => {
+                keys.add(key);
+              });
+            });
+            return ts;
+          });
+          const ks = Array.from(keys);
+          const m: Array<string> = rs.map(
+            (r) =>
+              `|${ks
+                .map((key) => {
+                  if (!r[key]) {
+                    return "";
+                  }
+                  return `${r[key]}`.replace("\n", "<br/>");
+                })
+                .join("|")}|`
+          );
+          return m.join("\n");
+        },
+        footer() {
+          return "";
+        },
+      };
+    case "json-lines":
+      return {
+        header() {
+          return "";
+        },
+        async rows({ rows }) {
+          return rows.map((row) => JSON.stringify(row)).join("\n") + "\n";
+        },
+        footer() {
+          return "";
+        },
+      };
+    case "json":
+      let len = 0;
+      return {
+        header() {
+          return "[";
+        },
+        async rows({ rows }) {
+          const prefix = len === 0 ? "" : ",";
+          len += rows.length;
+          return prefix + rows.map((row) => JSON.stringify(row)).join(",");
+        },
+        footer() {
+          return "]";
+        },
+      };
+    case "csv":
+      return {
+        header() {
+          return "";
+        },
+        async rows({ rows }) {
+          const structs = rows.flatMap((row) => tenderize(row));
+          return await new Promise<string>((resolve, reject) => {
+            CSV.stringify(
+              structs,
+              config.format.csv,
+              (err?: Error, res?: string) => {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+                if (res) {
+                  resolve(res);
+                }
+              }
+            );
+          });
+        },
+        footer() {
+          return "";
+        },
+      };
+    default:
+      throw new Error(`Invalid format: ${config.format.type}`);
   }
 }
 
