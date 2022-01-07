@@ -6,3 +6,5 @@ from
     `bigquery-public-data.wikipedia.wikidata`
 where
     en_label = 'cherry'
+limit
+    1

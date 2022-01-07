@@ -24,7 +24,7 @@
   "scripts": {
     "dev": "npm run start",
     "start": "react-scripts start",
-    "build": "BUILD_PATH=../../build PUBLIC_URL='.' react-scripts build",
+    "build": "rm -rf ../../build && cp -rf ./public ../../build && esbuild src/index.tsx --bundle --outfile=../../build/index.js --loader:.html=text --loader:.js=jsx --loader:.svg=dataurl",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

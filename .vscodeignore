@@ -2,7 +2,10 @@
 .vscode
 .vscode-test
 dist
+node_modules
 examples
+output
 packages
+screenshots
 .eslintrc.json
 .gitignore

@@ -46,13 +46,13 @@
         "command": "bigqueryRunner.run",
         "title": "BigQuery Runner: Run",
         "description": "Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
-        "screenshot": "screenshots/run.gif"
+        "screenshot": "https://storage.cloud.google.com/bigquery-runner/run.gif"
       },
       {
         "command": "bigqueryRunner.dryRun",
         "title": "BigQuery Runner: Dry Run",
         "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
-        "screenshot": "screenshots/dry-run.gif"
+        "screenshot": "https://storage.cloud.google.com/bigquery-runner/dry-run.gif"
       }
     ],
     "configuration": {
@@ -97,7 +97,7 @@
           "type": "boolean",
           "default": true,
           "description": "Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.",
-          "screenshot": "screenshots/query-validation.gif"
+          "screenshot": "https://storage.cloud.google.com/bigquery-runner/query-validation.gif"
         },
         "bigqueryRunner.queryValidation.debounceInterval": {
           "type": "number",
@@ -172,7 +172,7 @@
     "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
     "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
     "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
-    "vscode:prepublish": "npm run -w gencode generate && npm run -w core compile && npm run -w viewer build"
+    "vscode:prepublish": "npm run -w gencode generate && npm run -w core compile:publish && npm run -w viewer build"
   },
   "dependencies": {
     "@chakra-ui/react": "^1.7.4",
@@ -196,6 +196,7 @@
     "@types/node": "^16.11.19",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
+    "esbuild": "^0.14.10",
     "eslint": "^8.1.0",
     "eslint-plugin-import": "^2.25.3",
     "eslint-plugin-unused-imports": "^2.0.0",

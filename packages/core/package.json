@@ -6,9 +6,12 @@
   "main": "src/extension.ts",
   "scripts": {
     "dev": "run-p compile:watch",
-    "compile": "rm -rf ../../out && tsc -p ./",
-    "compile:watch": "npm run compile -- -w",
-    "pretest": "npm run compile && npm run lint",
+    "compile": "rm -rf ../../out && esbuild ./src/extension.ts --bundle --outfile=../../out/extension.js --external:vscode --format=cjs --platform=node",
+    "compile:test": "tsc -p ./",
+    "compile:watch": "npm run compile -- --sourcemap --watch",
+    "compile:debug": "npm run compile -- --sourcemap",
+    "compile:publish": "npm run compile -- --minify",
+    "pretest": "npm run compile:test && npm run lint",
     "lint": "eslint 'src/**/*.ts'",
     "test": "node ../../out/test/runTest.js"
   },
