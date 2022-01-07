@@ -1,5 +1,6 @@
 <!-- DO NOT EDIT
 This file is generated from gen-src/README.md.ejs. -->
+<% const base = 'https://storage.googleapis.com/bigquery-runner/' -%>
 # BigQuery Runner
 
 A Visual Studio Code extension that can query Google Cloud Platform's [BigQuery](https://cloud.google.com/bigquery/) from, and return results to, your editor. This extension allows you to:
@@ -35,7 +36,7 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 <%- command.description %>
 
 <% if (command.screenshot) { -%>
-![<%- command.title %>](<%- command.screenshot %>)
+![<%- command.title %>](<%- base %><%- command.screenshot %>)
 <% } -%>
 
 <% }) -%>
@@ -55,7 +56,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 <%- value.description -%>
 
 <% if (value.screenshot) { -%>
-![<%- property %>](<%- value.screenshot %>)
+![<%- property %>](<%- base %><%- value.screenshot %>)
 <% } -%>
 
 <% }) -%>

@@ -46,13 +46,13 @@
         "command": "bigqueryRunner.run",
         "title": "BigQuery Runner: Run",
         "description": "Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
-        "screenshot": "https://storage.cloud.google.com/bigquery-runner/run.gif"
+        "screenshot": "run.gif"
       },
       {
         "command": "bigqueryRunner.dryRun",
         "title": "BigQuery Runner: Dry Run",
         "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
-        "screenshot": "https://storage.cloud.google.com/bigquery-runner/dry-run.gif"
+        "screenshot": "dry-run.gif"
       }
     ],
     "configuration": {
@@ -97,7 +97,7 @@
           "type": "boolean",
           "default": true,
           "description": "Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.",
-          "screenshot": "https://storage.cloud.google.com/bigquery-runner/query-validation.gif"
+          "screenshot": "query-validation.gif"
         },
         "bigqueryRunner.queryValidation.debounceInterval": {
           "type": "number",

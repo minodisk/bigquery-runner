@@ -33,7 +33,7 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
-![BigQuery Runner: Run](https://storage.cloud.google.com/bigquery-runner/run.gif)
+![BigQuery Runner: Run](https://storage.googleapis.com/bigquery-runner/run.gif)
 
 ### BigQuery Runner: Dry Run
 
@@ -43,7 +43,7 @@ Run the query with BigQuery and display the results. Run the query on the select
 
 Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
-![BigQuery Runner: Dry Run](https://storage.cloud.google.com/bigquery-runner/dry-run.gif)
+![BigQuery Runner: Dry Run](https://storage.googleapis.com/bigquery-runner/dry-run.gif)
 
 ## Configuration
 
@@ -96,7 +96,7 @@ Limits the bytes billed for this query. Queries with bytes billed above this lim
 |boolean|true|
 
 Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.
-![bigqueryRunner.queryValidation.enabled](https://storage.cloud.google.com/bigquery-runner/query-validation.gif)
+![bigqueryRunner.queryValidation.enabled](https://storage.googleapis.com/bigquery-runner/query-validation.gif)
 
 ### `bigqueryRunner.queryValidation.debounceInterval`
 
