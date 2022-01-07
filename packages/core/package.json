@@ -14,13 +14,5 @@
     "pretest": "npm run compile:test && npm run lint",
     "lint": "eslint 'src/**/*.ts'",
     "test": "node ../../out/test/runTest.js"
-  },
-  "devDependencies": {
-    "@types/csv-stringify": "^3.1.0",
-    "@types/easy-table": "^1.2.0",
-    "@types/flat": "^5.0.2",
-    "@types/mkdirp": "^1.0.2",
-    "@types/vscode": "^1.63.1",
-    "@vscode/test-electron": "^1.6.2"
   }
 }

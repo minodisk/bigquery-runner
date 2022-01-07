@@ -811,7 +811,7 @@ async function createViewerOutput({
             join(ctx.extensionPath, "build", "index.html"),
             "utf-8"
           )
-        ).replace("%BASE_URL%", base);
+        ).replace("<head>", `<head><base href="${base}/" />`);
         panel.webview.html = html;
         panel.onDidDispose(
           () => {

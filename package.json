@@ -190,20 +190,36 @@
     "tenderizer": "^0.0.5"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.1",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/user-event": "^13.5.0",
     "@types/bytes": "^3.1.1",
+    "@types/csv-stringify": "^3.1.0",
+    "@types/easy-table": "^1.2.0",
     "@types/glob": "^7.1.4",
+    "@types/jest": "^27.4.0",
+    "@types/mkdirp": "^1.0.2",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.11.19",
+    "@types/react": "^17.0.38",
+    "@types/react-dom": "^17.0.11",
+    "@types/react-table": "^7.7.9",
+    "@vscode/test-electron": "^1.6.2",
+    "@types/vscode": "^1.63.1",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
+    "ejs": "^3.1.6",
     "esbuild": "^0.14.10",
     "eslint": "^8.1.0",
+    "eslint-config-react-app": "^7.0.0",
     "eslint-plugin-import": "^2.25.3",
     "eslint-plugin-unused-imports": "^2.0.0",
     "glob": "^7.1.7",
     "mocha": "^9.1.3",
+    "nodemon": "^2.0.15",
     "npm-run-all": "^4.1.5",
     "typescript": "^4.5.4",
-    "vsce": "^2.5.1"
+    "vsce": "^2.5.1",
+    "web-vitals": "^2.1.2"
   }
 }
