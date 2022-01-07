@@ -15,8 +15,8 @@
   },
   "workspaces": [
     "packages/codegen",
-    "packages/examples",
     "packages/extension",
+    "packages/misc",
     "packages/viewer"
   ],
   "categories": [
