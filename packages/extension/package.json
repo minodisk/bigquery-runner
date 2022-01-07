@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "core",
+  "name": "extension",
   "version": "0.0.0",
   "description": "",
   "main": "src/extension.ts",

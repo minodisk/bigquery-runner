@@ -14,7 +14,7 @@
     "vscode": "^1.63.2"
   },
   "workspaces": [
-    "packages/core",
+    "packages/extension",
     "packages/examples",
     "packages/gencode",
     "packages/viewer"
@@ -162,8 +162,8 @@
     }
   },
   "scripts": {
-    "dev": "run-p dev:core dev:gencode dev:viewer",
-    "dev:core": "npm run -w core dev",
+    "dev": "run-p dev:extension dev:gencode dev:viewer",
+    "dev:extension": "npm run -w extension dev",
     "dev:gencode": "npm run -w gencode dev",
     "dev:viewer": "npm run -w viewer dev",
     "debug": "run-s package:debug install:debug",
@@ -172,7 +172,7 @@
     "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
     "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
     "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
-    "vscode:prepublish": "npm run -w gencode generate && npm run -w core compile:publish && npm run -w viewer build"
+    "vscode:prepublish": "npm run -w gencode generate && npm run -w extension compile:publish && npm run -w viewer build"
   },
   "dependencies": {
     "@chakra-ui/react": "^1.7.4",
