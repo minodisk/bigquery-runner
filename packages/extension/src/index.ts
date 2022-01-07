@@ -792,25 +792,23 @@ async function createViewerOutput({
   return {
     async open() {
       if (!panel) {
+        const root = join(ctx.extensionPath, "out/viewer");
         panel = window.createWebviewPanel(
           "bigqueryRunner",
           "BigQuery Runner",
           ViewColumn.Beside,
           {
             enableScripts: true,
-            localResourceRoots: [Uri.file(join(ctx.extensionPath, "build"))],
+            localResourceRoots: [Uri.file(root)],
           }
         );
-        const base = Uri.file(join(ctx.extensionPath, "build"))
+        const base = Uri.file(root)
           .with({
             scheme: "vscode-resource",
           })
           .toString();
         const html = (
-          await readFile(
-            join(ctx.extensionPath, "build", "index.html"),
-            "utf-8"
-          )
+          await readFile(join(root, "index.html"), "utf-8")
         ).replace("<head>", `<head><base href="${base}/" />`);
         panel.webview.html = html;
         panel.onDidDispose(

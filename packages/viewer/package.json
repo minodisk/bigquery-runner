@@ -3,31 +3,23 @@
   "name": "viewer",
   "version": "0.0.0",
   "description": "",
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "scripts": {
+    "dev": "run-p serve build:watch",
+    "serve": "npm run build -- --servedir=../../out/viewer",
+    "build": "rm -rf ../../out/viewer && cp -rf ./public ../../out/viewer && esbuild src/index.tsx --bundle --outfile=../../out/viewer/index.js --loader:.html=text --loader:.js=jsx --loader:.svg=dataurl",
+    "build:test": "tsc -p ./",
+    "build:watch": "npm run build -- --sourcemap --watch",
+    "build:debug": "npm run build -- --sourcemap",
+    "build:production": "npm run build -- --minify",
+    "pretest": "run-p build:test lint",
+    "lint": "eslint 'src/**/*.tsx'",
+    "test": "node scripts/test.js"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
     ]
-  },
-  "scripts": {
-    "dev": "run-p serve build:watch",
-    "serve": "npm run build -- --servedir=../../build",
-    "start": "node scripts/start.js",
-    "build": "rm -rf ../../build && cp -rf ./public ../../build && esbuild src/index.tsx --bundle --outfile=../../build/index.js --loader:.html=text --loader:.js=jsx --loader:.svg=dataurl",
-    "build:watch": "npm run build -- --watch",
-    "test": "node scripts/test.js"
   },
   "jest": {
     "roots": [

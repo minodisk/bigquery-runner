@@ -5,13 +5,13 @@
   "description": "",
   "main": "src/extension.ts",
   "scripts": {
-    "dev": "run-p compile:watch",
-    "compile": "rm -rf ../../out && esbuild ./src/extension.ts --bundle --outfile=../../out/extension.js --external:vscode --format=cjs --platform=node",
-    "compile:test": "tsc -p ./",
-    "compile:watch": "npm run compile -- --sourcemap --watch",
-    "compile:debug": "npm run compile -- --sourcemap",
-    "compile:publish": "npm run compile -- --minify",
-    "pretest": "npm run compile:test && npm run lint",
+    "dev": "run-p build:watch",
+    "build": "rm -rf ../../out/extension && esbuild ./src/index.ts --bundle --outfile=../../out/extension/index.js --external:vscode --format=cjs --platform=node",
+    "build:test": "tsc -p ./",
+    "build:watch": "npm run build -- --sourcemap --watch",
+    "build:debug": "npm run build -- --sourcemap",
+    "build:production": "npm run build -- --minify",
+    "pretest": "run-p build:test lint",
     "lint": "eslint 'src/**/*.ts'",
     "test": "node ../../out/test/runTest.js"
   }

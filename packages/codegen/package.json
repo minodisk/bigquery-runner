@@ -5,11 +5,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "run-p generate:watch",
-    "generate": "run-p generate:readme generate:dts",
-    "generate:watch": "nodemon --exec 'npm run generate'",
-    "generate:readme": "ejs ./src/README.md.ejs -f ../../package.json -o ../../README.md",
-    "generate:dts": "ejs ./src/config.d.ts.ejs -f ../../package.json -o ../extension/src/config.d.ts"
+    "dev": "nodemon --exec 'npm run build'",
+    "build": "run-p build:*",
+    "build:readme": "ejs ./src/README.md.ejs -f ../../package.json -o ../../README.md",
+    "build:dts": "ejs ./src/config.d.ts.ejs -f ../../package.json -o ../extension/src/config.d.ts"
   },
   "nodemonConfig": {
     "watch": [

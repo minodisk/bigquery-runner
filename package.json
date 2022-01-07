@@ -29,7 +29,7 @@
     "query",
     "erorr"
   ],
-  "main": "out/extension.js",
+  "main": "out/extension/index.js",
   "icon": "icon.png",
   "activationEvents": [
     "workspaceContains:**/*.bqsql",
@@ -162,17 +162,18 @@
     }
   },
   "scripts": {
-    "dev": "run-p dev:extension dev:codegen dev:viewer",
+    "dev": "run-p dev:*",
     "dev:extension": "npm run -w extension dev",
     "dev:codegen": "npm run -w codegen dev",
     "dev:viewer": "npm run -w viewer dev",
+    "vscode:prepublish": "run-p build:*",
+    "build:codegen": "npm run -w codegen build",
+    "build:extension": "npm run -w extension build:production",
+    "build:viewer": "npm run -w viewer build:production",
     "debug": "run-s package:debug install:debug",
-    "debug:insiders": "run-s package:debug install:debug:insiders",
     "package": "mkdirp dist && vsce package -o ./dist/",
     "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
-    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
-    "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
-    "vscode:prepublish": "npm run -w codegen generate && npm run -w extension compile:publish && npm run -w viewer build"
+    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix"
   },
   "dependencies": {
     "@chakra-ui/react": "^1.7.4",

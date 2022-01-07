@@ -1,7 +1,6 @@
 .DS_Store
 .vscode-test
-build
+dist
 out
 output
-dist
 node_modules

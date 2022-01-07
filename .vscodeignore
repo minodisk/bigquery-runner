@@ -1,11 +1,11 @@
+.DS_Store
 .github
 .vscode
-.vscode-test
 dist
 node_modules
-examples
 output
 packages
 screenshots
 .eslintrc.json
 .gitignore
+package-lock.json
