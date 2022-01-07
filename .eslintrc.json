@@ -6,9 +6,19 @@
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint", "import", "unused-imports"],
+  // "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "rules": {
-    "@typescript-eslint/naming-convention": "warn",
-    "@typescript-eslint/semi": "warn",
+    // "@typescript-eslint/no-unused-vars": [
+    //   "warn",
+    //   {
+    //     "vars": "all",
+    //     "varsIgnorePattern": "^_",
+    //     "args": "after-used",
+    //     "argsIgnorePattern": "^_"
+    //   }
+    // ],
+    // "@typescript-eslint/naming-convention": "warn",
+    // "@typescript-eslint/semi": "warn",
     // "import/order": "off",
     "import/no-unresolved": "off",
     "unused-imports/no-unused-imports": "error",

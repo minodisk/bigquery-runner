@@ -5,4 +5,4 @@ select
 from
     `bigquery-public-data.wikipedia.wikidata`
 where
-    array_length(labels) < 20
+    en_label = 'cherry'

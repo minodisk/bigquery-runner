@@ -1,6 +1,16 @@
+import {
+  Box,
+  Stack,
+  Table,
+  Tbody,
+  Td,
+  Tfoot,
+  Th,
+  Thead,
+  Tr,
+} from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
-import logo from "./logo.svg";
-import "./App.css";
+import { Column, useTable } from "react-table";
 
 type Data = {
   source: "bigquery-runner";
@@ -33,7 +43,7 @@ function isHeader(e: Event): e is Header {
 
 type Row = {
   event: "rows";
-  payload: Array<Array<any>>;
+  payload: Array<{ [key: string]: any }>;
 };
 
 function isRow(e: Event): e is Row {
@@ -41,8 +51,21 @@ function isRow(e: Event): e is Row {
 }
 
 function App() {
-  const [header, setHeader] = useState<Array<string>>([]);
-  const [rows, setRows] = useState<Array<{ [key: string]: any }>>([]);
+  const [columns, setColumns] = useState<Array<Column>>([]);
+  const [data, setData] = useState<Array<object>>([]);
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    footerGroups,
+    rows,
+    prepareRow,
+  } = useTable({
+    columns,
+    data,
+  });
+
   useEffect(() => {
     window.addEventListener("message", (e: MessageEvent) => {
       if (!isData(e.data)) {
@@ -51,59 +74,147 @@ function App() {
       const {
         data: { payload },
       } = e;
-      console.log(payload);
       if (isClear(payload)) {
-        setHeader([]);
-        setRows([]);
+        setColumns([]);
+        setData([]);
         return;
       }
       if (isHeader(payload)) {
-        setHeader(payload.payload);
+        console.log("->", payload.payload);
+        const columns = payload.payload.map((accessor) => ({
+          accessor: (d: any) => d[accessor],
+          Header: accessor,
+          key: accessor,
+        }));
+        console.log("=>", columns);
+        setColumns(columns);
         return;
       }
       if (isRow(payload)) {
-        setRows((rows) => [...rows, ...payload.payload]);
+        setData((rows) => [...rows, ...payload.payload]);
         return;
       }
       throw new Error(`undefined data payload '${payload}'`);
     });
   }, []);
+
+  console.log(columns, data);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <table>
-          <thead>
-            <tr>
-              {header.map((h) => (
-                <th key={h}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr key={`row-${i}`}>
-                {header.map((h) => (
-                  <td key={`row-${i}-value-${h}`}>{row[h]}</td>
+    <Stack m="6" display="inline-block">
+      <Box p="1" borderWidth="1px" borderRadius="lg">
+        <Table variant="simple" size="sm" {...getTableProps()}>
+          <Thead>
+            {headerGroups.map((headerGroup) => (
+              <Tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map((column) => (
+                  <Th textTransform="none" {...column.getHeaderProps()}>
+                    {column.render("Header")}
+                  </Th>
                 ))}
-              </tr>
+              </Tr>
             ))}
-          </tbody>
-        </table>
-      </header>
-    </div>
+          </Thead>
+          <Tbody {...getTableBodyProps()}>
+            {rows.map((row) => {
+              prepareRow(row);
+              return (
+                <Tr {...row.getRowProps()}>
+                  {row.cells.map((cell) => {
+                    return (
+                      <Td
+                        isNumeric={typeof cell.value === "number"}
+                        {...cell.getCellProps()}
+                      >
+                        {cell.render("Cell")}
+                      </Td>
+                    );
+                  })}
+                </Tr>
+              );
+            })}
+          </Tbody>
+          <Tfoot>
+            {footerGroups.map((footerGroup) => (
+              <Tr {...footerGroup.getHeaderGroupProps()}>
+                {footerGroup.headers.map((column) => (
+                  <Th textTransform="none" {...column.getHeaderProps()}>
+                    {column.render("Header")}
+                  </Th>
+                ))}
+              </Tr>
+            ))}
+          </Tfoot>
+        </Table>
+      </Box>
+    </Stack>
   );
 }
+
+// (async () => {
+//   const events = [
+//     {
+//       source: "bigquery-runner",
+//       payload: { event: "clear" },
+//     },
+//     {
+//       source: "bigquery-runner",
+//       payload: {
+//         event: "header",
+//         payload: [
+//           "order_id",
+//           "items.product_id",
+//           "items.quantity",
+//           "items.name",
+//           "items.price",
+//         ],
+//       },
+//     },
+//     {
+//       source: "bigquery-runner",
+//       payload: {
+//         event: "rows",
+//         payload: [
+//           {
+//             order_id: 1,
+//             "items.product_id": 1001,
+//             "items.quantity": 4,
+//             "items.name": "wallet",
+//             "items.price": 30000,
+//           },
+//           {
+//             "items.product_id": 1003,
+//             "items.quantity": 1,
+//             "items.name": "bag",
+//             "items.price": 50000,
+//           },
+//           {
+//             order_id: 2,
+//             "items.product_id": 1002,
+//             "items.quantity": 2,
+//             "items.name": "watch",
+//             "items.price": 10000,
+//           },
+//           {
+//             "items.product_id": 1003,
+//             "items.quantity": 4,
+//             "items.name": "bag",
+//             "items.price": 50000,
+//           },
+//         ],
+//       },
+//     },
+//   ];
+
+//   for (const event of events) {
+//     await sleep(1000);
+//     console.log(event);
+//     window.postMessage(event);
+//   }
+// })();
+
+// async function sleep(ms: number): Promise<void> {
+//   return new Promise((resolve) => setTimeout(resolve, ms));
+// }
 
 export default App;

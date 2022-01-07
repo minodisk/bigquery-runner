@@ -68,7 +68,7 @@ export type Dependencies = {
 };
 
 export async function activate(
-  ctx: Pick<ExtensionContext, "subscriptions" | "extensionPath">,
+  ctx: ExtensionContext,
   dependencies?: Dependencies
 ) {
   try {
@@ -83,7 +83,9 @@ export async function activate(
       get(): Result {
         return {};
       },
-      set() {},
+      set() {
+        // do nothing
+      },
     };
 
     const diagnosticCollection =
@@ -103,9 +105,9 @@ export async function activate(
         wrapCallback({
           configManager,
           diagnosticCollection,
-          outputChannel: outputChannel,
-          resultChannel: resultChannel,
-          extensionPath: ctx.extensionPath,
+          outputChannel,
+          resultChannel,
+          ctx,
           callback: run,
         }),
       ],
@@ -114,9 +116,9 @@ export async function activate(
         wrapCallback({
           configManager,
           diagnosticCollection,
-          outputChannel: outputChannel,
-          resultChannel: resultChannel,
-          extensionPath: ctx.extensionPath,
+          outputChannel,
+          resultChannel,
+          ctx,
           callback: dryRun,
         }),
       ],
@@ -171,7 +173,9 @@ export async function activate(
   }
 }
 
-export function deactivate() {}
+export function deactivate() {
+  // do nothing
+}
 
 function createConfigManager(section: string) {
   let config = getConfigration(section);
@@ -182,13 +186,15 @@ function createConfigManager(section: string) {
     refresh(): void {
       config = getConfigration(section);
     },
-    dispose(): void {},
+    dispose(): void {
+      // do nothing
+    },
   };
 }
 type ConfigManager = ReturnType<typeof createConfigManager>;
 
 function getConfigration(section: string): Config {
-  const config = workspace.getConfiguration(section) as any as Config;
+  const config = workspace.getConfiguration(section) as Config;
   return {
     ...config,
     keyFilename:
@@ -264,14 +270,12 @@ async function _validateQuery({
       },
       document,
     });
-    outputChannel.appendLine("");
   } catch (err) {
     if (err instanceof ErrorWithId) {
       outputChannel.appendLine(`${err.error} (${err.id})`);
     } else {
       outputChannel.appendLine(`${err}`);
     }
-    outputChannel.appendLine("");
   }
 }
 
@@ -293,21 +297,21 @@ function wrapCallback({
   diagnosticCollection,
   outputChannel,
   resultChannel,
-  extensionPath,
+  ctx,
   callback,
 }: {
   readonly configManager: ConfigManager;
   readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
   readonly resultChannel: ResultChannel;
-  readonly extensionPath: string;
+  readonly ctx: ExtensionContext;
   readonly callback: (params: {
     readonly config: Config;
     readonly errorMarker: ErrorMarker;
     readonly outputChannel: OutputChannel;
     readonly document: TextDocument;
     readonly range?: Range;
-    readonly extensionPath: string;
+    readonly ctx: ExtensionContext;
   }) => Promise<Result>;
 }): () => Promise<void> {
   return async () => {
@@ -323,7 +327,7 @@ function wrapCallback({
         outputChannel,
         document,
         range: selection,
-        extensionPath,
+        ctx,
       });
       resultChannel.set(result);
     } catch (err) {
@@ -333,8 +337,6 @@ function wrapCallback({
       } else {
         outputChannel.appendLine(`${err}`);
       }
-    } finally {
-      outputChannel.appendLine("");
     }
   };
 }
@@ -345,16 +347,16 @@ async function run({
   outputChannel,
   document,
   range,
-  extensionPath,
+  ctx,
 }: {
   readonly config: Config;
   readonly errorMarker: ErrorMarker;
   readonly outputChannel: OutputChannel;
   readonly document: TextDocument;
   readonly range?: Range;
-  readonly extensionPath: string;
+  readonly ctx: ExtensionContext;
 }): Promise<Result> {
-  outputChannel.show(true);
+  // outputChannel.show(true);
   outputChannel.appendLine(`Run`);
 
   let job!: Job;
@@ -394,7 +396,7 @@ async function run({
       config,
       outputChannel,
       filename: document.fileName,
-      extensionPath,
+      ctx,
     });
 
     await output.open();
@@ -440,7 +442,7 @@ async function dryRun({
   readonly document: TextDocument;
   readonly range?: Range;
 }): Promise<Result> {
-  outputChannel.show(true);
+  // outputChannel.show(true);
   outputChannel.appendLine(`Dry run`);
 
   let job!: Job;
@@ -647,7 +649,7 @@ function createErrorMarker({
     clear() {
       diagnosticCollection.delete(document.uri);
     },
-    mark(err: any) {
+    mark(err: unknown) {
       if (!(err instanceof Error)) {
         const first = document.lineAt(0);
         const last = document.lineAt(document.lineCount - 1);
@@ -706,7 +708,7 @@ type CreateOutputParams = {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
   readonly filename: string;
-  readonly extensionPath: string;
+  readonly ctx: ExtensionContext;
 };
 async function createOutput(params: CreateOutputParams): Promise<Output> {
   const { config, outputChannel, filename } = params;
@@ -783,10 +785,9 @@ async function createOutput(params: CreateOutputParams): Promise<Output> {
 let panel: WebviewPanel | undefined;
 
 async function createViewerOutput({
-  extensionPath,
+  ctx,
 }: {
-  extensionPath: string;
-  outputChannel: OutputChannel;
+  ctx: ExtensionContext;
 }): Promise<Output> {
   return {
     async open() {
@@ -797,24 +798,27 @@ async function createViewerOutput({
           ViewColumn.Beside,
           {
             enableScripts: true,
-            localResourceRoots: [Uri.file(join(extensionPath, "build"))],
+            localResourceRoots: [Uri.file(join(ctx.extensionPath, "build"))],
           }
         );
-        const base = Uri.file(join(extensionPath, "build"))
+        const base = Uri.file(join(ctx.extensionPath, "build"))
           .with({
             scheme: "vscode-resource",
           })
           .toString();
         const html = (
-          await readFile(join(extensionPath, "build", "index.html"), "utf-8")
+          await readFile(
+            join(ctx.extensionPath, "build", "index.html"),
+            "utf-8"
+          )
         ).replace("%BASE_URL%", base);
         panel.webview.html = html;
         panel.onDidDispose(
           () => {
             panel = undefined;
           },
-          null
-          // ctx.subscriptions
+          null,
+          ctx.subscriptions
         );
       }
 
@@ -852,7 +856,9 @@ async function createViewerOutput({
         },
       });
     },
-    async close() {},
+    async close() {
+      // do nothing
+    },
   };
 }
 
@@ -933,7 +939,7 @@ function createFormatter({ config }: { config: Config }): Formatter {
           return "";
         },
       };
-    case "json":
+    case "json": {
       let len = 0;
       return {
         header() {
@@ -948,6 +954,7 @@ function createFormatter({ config }: { config: Config }): Formatter {
           return "]";
         },
       };
+    }
     case "csv":
       return {
         header() {

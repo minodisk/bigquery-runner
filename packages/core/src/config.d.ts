@@ -1,6 +1,9 @@
 // DO NOT EDIT
 // This file is generated from gen-src/config.d.ts.ejs.
-export type Config = {
+
+import { WorkspaceConfiguration } from "vscode";
+
+export type Config = WorkspaceConfiguration & {
   readonly keyFilename: string;
   readonly projectId: string | undefined;
   readonly location: string | undefined;
