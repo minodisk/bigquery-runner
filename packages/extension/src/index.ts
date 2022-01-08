@@ -883,7 +883,7 @@ function createFormatter({ config }: { config: Config }): Formatter {
               t.newRow();
             });
           });
-          return t.toString().trimEnd();
+          return t.toString().trimEnd() + "\n";
         },
         footer() {
           return "";
@@ -919,7 +919,7 @@ function createFormatter({ config }: { config: Config }): Formatter {
                 })
                 .join("|")}|`
           );
-          return m.join("\n");
+          return m.join("\n") + "\n";
         },
         footer() {
           return "";
@@ -949,7 +949,7 @@ function createFormatter({ config }: { config: Config }): Formatter {
           return prefix + rows.map((row) => JSON.stringify(row)).join(",");
         },
         footer() {
-          return "]";
+          return "]\n";
         },
       };
     }
