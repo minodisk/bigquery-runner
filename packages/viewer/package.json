@@ -15,12 +15,6 @@
     "lint": "eslint 'src/**/*.tsx'",
     "test": "node scripts/test.js"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "jest": {
     "roots": [
       "<rootDir>/src"

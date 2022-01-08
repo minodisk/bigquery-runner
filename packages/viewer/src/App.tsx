@@ -1,5 +1,4 @@
 import {
-  Box,
   Stack,
   Table,
   Tbody,
@@ -101,120 +100,138 @@ function App() {
   console.log(columns, data);
 
   return (
-    <Stack m="6" display="inline-block">
-      <Box p="1" borderWidth="1px" borderRadius="lg">
-        <Table variant="simple" size="sm" {...getTableProps()}>
-          <Thead>
-            {headerGroups.map((headerGroup) => (
-              <Tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map((column) => (
-                  <Th textTransform="none" {...column.getHeaderProps()}>
-                    {column.render("Header")}
-                  </Th>
-                ))}
+    <Stack m="3" display="inline-block">
+      <Table size="sm" {...getTableProps()}>
+        <Thead>
+          {headerGroups.map((headerGroup) => (
+            <Tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map((column) => (
+                <Th
+                  textTransform="none"
+                  color="var(--vscode-terminal-foreground)"
+                  fontFamily="var(--vscode-editor-font-family)"
+                  fontSize="var(--vscode-editor-font-size)"
+                  borderBottomColor="var(--vscode-terminal-border)"
+                  borderBottomWidth={2}
+                  {...column.getHeaderProps()}
+                >
+                  {column.render("Header")}
+                </Th>
+              ))}
+            </Tr>
+          ))}
+        </Thead>
+        <Tbody {...getTableBodyProps()}>
+          {rows.map((row) => {
+            prepareRow(row);
+            return (
+              <Tr {...row.getRowProps()}>
+                {row.cells.map((cell) => {
+                  return (
+                    <Td
+                      color="var(--vscode-terminal-foreground)"
+                      fontFamily="var(--vscode-editor-font-family)"
+                      fontSize="var(--vscode-editor-font-size)"
+                      fontWeight="var(--vscode-editor-font-weight)"
+                      borderBottomColor="var(--vscode-terminal-border)"
+                      {...cell.getCellProps()}
+                    >
+                      {cell.render("Cell")}
+                    </Td>
+                  );
+                })}
               </Tr>
-            ))}
-          </Thead>
-          <Tbody {...getTableBodyProps()}>
-            {rows.map((row) => {
-              prepareRow(row);
-              return (
-                <Tr {...row.getRowProps()}>
-                  {row.cells.map((cell) => {
-                    return (
-                      <Td
-                        isNumeric={typeof cell.value === "number"}
-                        {...cell.getCellProps()}
-                      >
-                        {cell.render("Cell")}
-                      </Td>
-                    );
-                  })}
-                </Tr>
-              );
-            })}
-          </Tbody>
-          <Tfoot>
-            {footerGroups.map((footerGroup) => (
-              <Tr {...footerGroup.getHeaderGroupProps()}>
-                {footerGroup.headers.map((column) => (
-                  <Th textTransform="none" {...column.getHeaderProps()}>
-                    {column.render("Header")}
-                  </Th>
-                ))}
-              </Tr>
-            ))}
-          </Tfoot>
-        </Table>
-      </Box>
+            );
+          })}
+        </Tbody>
+        <Tfoot>
+          {footerGroups.map((footerGroup) => (
+            <Tr {...footerGroup.getHeaderGroupProps()}>
+              {footerGroup.headers.map((column) => (
+                <Th
+                  textTransform="none"
+                  color="var(--vscode-terminal-foreground)"
+                  fontFamily="var(--vscode-editor-font-family)"
+                  fontSize="var(--vscode-editor-font-size)"
+                  borderTopColor="var(--vscode-terminal-border)"
+                  borderTopWidth={2}
+                  {...column.getHeaderProps()}
+                >
+                  {column.render("Header")}
+                </Th>
+              ))}
+            </Tr>
+          ))}
+        </Tfoot>
+      </Table>
     </Stack>
   );
 }
 
-// (async () => {
-//   const events = [
-//     {
-//       source: "bigquery-runner",
-//       payload: { event: "clear" },
-//     },
-//     {
-//       source: "bigquery-runner",
-//       payload: {
-//         event: "header",
-//         payload: [
-//           "order_id",
-//           "items.product_id",
-//           "items.quantity",
-//           "items.name",
-//           "items.price",
-//         ],
-//       },
-//     },
-//     {
-//       source: "bigquery-runner",
-//       payload: {
-//         event: "rows",
-//         payload: [
-//           {
-//             order_id: 1,
-//             "items.product_id": 1001,
-//             "items.quantity": 4,
-//             "items.name": "wallet",
-//             "items.price": 30000,
-//           },
-//           {
-//             "items.product_id": 1003,
-//             "items.quantity": 1,
-//             "items.name": "bag",
-//             "items.price": 50000,
-//           },
-//           {
-//             order_id: 2,
-//             "items.product_id": 1002,
-//             "items.quantity": 2,
-//             "items.name": "watch",
-//             "items.price": 10000,
-//           },
-//           {
-//             "items.product_id": 1003,
-//             "items.quantity": 4,
-//             "items.name": "bag",
-//             "items.price": 50000,
-//           },
-//         ],
-//       },
-//     },
-//   ];
+(async () => {
+  const events = [
+    {
+      source: "bigquery-runner",
+      payload: { event: "clear" },
+    },
+    {
+      source: "bigquery-runner",
+      payload: {
+        event: "header",
+        payload: [
+          "order_id",
+          "items.product_id",
+          "items.quantity",
+          "items.name",
+          "items.price",
+        ],
+      },
+    },
+    {
+      source: "bigquery-runner",
+      payload: {
+        event: "rows",
+        payload: [
+          {
+            order_id: 1,
+            "items.product_id": 1001,
+            "items.quantity": 4,
+            "items.name": "wallet",
+            "items.price": 30000,
+          },
+          {
+            "items.product_id": 1003,
+            "items.quantity": 1,
+            "items.name": "bag",
+            "items.price": 50000,
+          },
+          {
+            order_id: 2,
+            "items.product_id": 1002,
+            "items.quantity": 2,
+            "items.name": "watch",
+            "items.price": 10000,
+          },
+          {
+            "items.product_id": 1003,
+            "items.quantity": 4,
+            "items.name": "bag",
+            "items.price": 50000,
+          },
+        ],
+      },
+    },
+  ];
 
-//   for (const event of events) {
-//     await sleep(1000);
-//     console.log(event);
-//     window.postMessage(event);
-//   }
-// })();
+  for (const event of events) {
+    await sleep(10);
+    console.log(event);
+    window.postMessage(event);
+  }
+})();
 
-// async function sleep(ms: number): Promise<void> {
-//   return new Promise((resolve) => setTimeout(resolve, ms));
-// }
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export default App;
