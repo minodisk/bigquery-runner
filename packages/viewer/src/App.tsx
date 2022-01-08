@@ -168,70 +168,70 @@ function App() {
   );
 }
 
-(async () => {
-  const events = [
-    {
-      source: "bigquery-runner",
-      payload: { event: "clear" },
-    },
-    {
-      source: "bigquery-runner",
-      payload: {
-        event: "header",
-        payload: [
-          "order_id",
-          "items.product_id",
-          "items.quantity",
-          "items.name",
-          "items.price",
-        ],
-      },
-    },
-    {
-      source: "bigquery-runner",
-      payload: {
-        event: "rows",
-        payload: [
-          {
-            order_id: 1,
-            "items.product_id": 1001,
-            "items.quantity": 4,
-            "items.name": "wallet",
-            "items.price": 30000,
-          },
-          {
-            "items.product_id": 1003,
-            "items.quantity": 1,
-            "items.name": "bag",
-            "items.price": 50000,
-          },
-          {
-            order_id: 2,
-            "items.product_id": 1002,
-            "items.quantity": 2,
-            "items.name": "watch",
-            "items.price": 10000,
-          },
-          {
-            "items.product_id": 1003,
-            "items.quantity": 4,
-            "items.name": "bag",
-            "items.price": 50000,
-          },
-        ],
-      },
-    },
-  ];
+// (async () => {
+//   const events = [
+//     {
+//       source: "bigquery-runner",
+//       payload: { event: "clear" },
+//     },
+//     {
+//       source: "bigquery-runner",
+//       payload: {
+//         event: "header",
+//         payload: [
+//           "order_id",
+//           "items.product_id",
+//           "items.quantity",
+//           "items.name",
+//           "items.price",
+//         ],
+//       },
+//     },
+//     {
+//       source: "bigquery-runner",
+//       payload: {
+//         event: "rows",
+//         payload: [
+//           {
+//             order_id: 1,
+//             "items.product_id": 1001,
+//             "items.quantity": 4,
+//             "items.name": "wallet",
+//             "items.price": 30000,
+//           },
+//           {
+//             "items.product_id": 1003,
+//             "items.quantity": 1,
+//             "items.name": "bag",
+//             "items.price": 50000,
+//           },
+//           {
+//             order_id: 2,
+//             "items.product_id": 1002,
+//             "items.quantity": 2,
+//             "items.name": "watch",
+//             "items.price": 10000,
+//           },
+//           {
+//             "items.product_id": 1003,
+//             "items.quantity": 4,
+//             "items.name": "bag",
+//             "items.price": 50000,
+//           },
+//         ],
+//       },
+//     },
+//   ];
 
-  for (const event of events) {
-    await sleep(10);
-    console.log(event);
-    window.postMessage(event);
-  }
-})();
+//   for (const event of events) {
+//     await sleep(10);
+//     console.log(event);
+//     window.postMessage(event);
+//   }
+// })();
 
-async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+// async function sleep(ms: number): Promise<void> {
+//   return new Promise((resolve) => setTimeout(resolve, ms));
+// }
 
 export default App;

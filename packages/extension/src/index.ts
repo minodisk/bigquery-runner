@@ -36,12 +36,9 @@ import {
   window,
   workspace,
 } from "vscode";
-import {
-  BigQuery,
-  Job,
-  TableField as OrigTableField,
-} from "@google-cloud/bigquery";
+import { BigQuery, Job } from "@google-cloud/bigquery";
 import { Config } from "./config";
+import { fieldsToHeader, flatRows, getJobInfo, getTableInfo } from "./bigquery";
 
 type OutputChannel = Pick<
   OrigOutputChannel,
@@ -382,15 +379,23 @@ async function run({
     outputChannel.appendLine("JOB INFO -------------------");
     outputChannel.appendLine(JSON.stringify(jobInfo, null, 2));
     const tableInfo = await getTableInfo({
-      config,
+      keyFilename: config.keyFilename,
       tableReference: jobInfo.configuration.query.destinationTable,
     });
     outputChannel.appendLine("TABLE INFO -------------------");
     outputChannel.appendLine(JSON.stringify(tableInfo, null, 2));
 
-    const header = fieldsToHeader(tableInfo.schema.fields);
+    const { fields } = tableInfo.schema;
+    if (!fields) {
+      throw new Error(`no fields`);
+    }
+    const header = fieldsToHeader(fields);
     outputChannel.appendLine("HEADER -------------------");
-    outputChannel.appendLine(JSON.stringify(header));
+    outputChannel.appendLine(JSON.stringify(header, null, 2));
+
+    const rs = flatRows({ fields, rows });
+    outputChannel.appendLine("PARSED ROWS -------------------");
+    outputChannel.appendLine(JSON.stringify(rs, null, 2));
 
     const output = await createOutput({
       config,
@@ -412,21 +417,6 @@ async function run({
       throw err;
     }
   }
-}
-
-function fieldsToHeader(fields?: Array<TableField>): Array<string> {
-  if (!fields) {
-    return [];
-  }
-  return fields.flatMap(({ type, name, fields }) => {
-    if (type === "STRUCT" || type === "RECORD") {
-      return fieldsToHeader(fields).map((n) => `${name}.${n}`);
-    }
-    if (!name) {
-      return "";
-    }
-    return name;
-  });
 }
 
 async function dryRun({
@@ -518,124 +508,6 @@ async function createJob({
     throw new Error(`no job ID`);
   }
   return job;
-}
-
-type JobInfo = {
-  kind: string;
-  etag: string;
-  id: string;
-  selfLink: string;
-  // user_email: string;
-  configuration: {
-    query: {
-      query: string;
-      destinationTable: TableReference;
-      writeDisposition: string;
-      priority: string;
-      useLegacySql: boolean;
-    };
-    jobType: string;
-  };
-  jobReference: {
-    projectId: string;
-    jobId: string;
-    location: string;
-  };
-  statistics: {
-    creationTime: string;
-    startTime: string;
-    endTime: string;
-    totalBytesProcessed: string;
-    query: {
-      totalBytesProcessed: string;
-      totalBytesBilled: string;
-      cacheHit: boolean;
-      statementType: string;
-    };
-  };
-  status: {
-    state: string;
-  };
-};
-
-async function getJobInfo({ job }: { job: Job }): Promise<JobInfo> {
-  const metadata = await job.getMetadata();
-  const jobInfo: JobInfo | undefined = metadata.find(
-    ({ kind }) => kind === "bigquery#job"
-  );
-  if (!jobInfo) {
-    throw new Error(`no job info: ${job.id}`);
-  }
-  return jobInfo;
-}
-
-type TableSchema = {
-  fields?: Array<TableField>;
-};
-
-type TableField = Omit<OrigTableField, "mode" | "type" | "fields"> & {
-  mode?: "NULLABLE" | "REQUIRED" | "REPEATED";
-  type?:
-    | "STRING"
-    | "BYTES"
-    | "INTEGER"
-    | "INT64"
-    | "FLOAT"
-    | "FLOAT64"
-    | "NUMERIC"
-    | "BIGNUMERIC"
-    | "BOOLEAN"
-    | "BOOL"
-    | "TIMESTAMP"
-    | "DATE"
-    | "TIME"
-    | "DATETIME"
-    | "INTERVAL"
-    | "RECORD"
-    | "STRUCT";
-  fields?: Array<TableField>;
-};
-
-type Table = {
-  kind: string;
-  etag: string;
-  id: string;
-  selfLink: string;
-  tableReference: TableReference;
-  schema: TableSchema;
-  numBytes: string;
-  numLongTermBytes: string;
-  numRows: string;
-  creationTime: string;
-  expirationTime: string;
-  lastModifiedTime: string;
-  type: "TABLE";
-  location: string;
-};
-
-type TableReference = {
-  projectId: string;
-  datasetId: string;
-  tableId: string;
-};
-
-async function getTableInfo({
-  config,
-  tableReference: { projectId, datasetId, tableId },
-}: {
-  readonly config: Config;
-  readonly tableReference: TableReference;
-}): Promise<Table> {
-  const bigQuery = new BigQuery({
-    keyFilename: config.keyFilename,
-    projectId: projectId,
-  });
-  const res = await bigQuery.dataset(datasetId).table(tableId).get();
-  const table: Table = res.find(({ kind }) => kind === "bigquery#table");
-  if (!table) {
-    throw new Error(`no table info: ${projectId}.${datasetId}.${tableId}`);
-  }
-  return table;
 }
 
 function createErrorMarker({
