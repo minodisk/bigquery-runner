@@ -38,7 +38,7 @@ import {
 } from "vscode";
 import { BigQuery, Job } from "@google-cloud/bigquery";
 import { Config } from "./config";
-import { fieldsToHeader, flatRows, getJobInfo, getTableInfo } from "./bigquery";
+import { fieldsToHeader, flatRows, getJobInfo, getTableInfo } from "bigquery";
 
 type OutputChannel = Pick<
   OrigOutputChannel,
@@ -393,9 +393,14 @@ async function run({
     outputChannel.appendLine("HEADER -------------------");
     outputChannel.appendLine(JSON.stringify(header, null, 2));
 
+    outputChannel.appendLine("ROWS -------------------");
+    outputChannel.appendLine(JSON.stringify(rows, null, 2));
+
     const rs = flatRows({ fields, rows });
-    outputChannel.appendLine("PARSED ROWS -------------------");
+    outputChannel.appendLine("FLAT ROWS -------------------");
     outputChannel.appendLine(JSON.stringify(rs, null, 2));
+
+    outputChannel.show(true);
 
     const output = await createOutput({
       config,
@@ -405,7 +410,7 @@ async function run({
     });
 
     await output.open();
-    await output.writeHeader(header);
+    await output.writeHeader(header.map(({ name }) => name));
     await output.writeRows(rows);
     await output.close();
 
