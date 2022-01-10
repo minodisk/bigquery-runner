@@ -1,4 +1,4 @@
-import { flatRow } from "./bigquery";
+import { flatRow } from "./flatten";
 
 describe("flatRow", () => {
   it("empty", () => {
