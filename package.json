@@ -167,6 +167,8 @@
     "dev:extension": "npm run -w extension dev",
     "dev:codegen": "npm run -w codegen dev",
     "dev:viewer": "npm run -w viewer dev",
+    "test": "run-p test:*",
+    "test:bigquery": "npm run -w bigquery test",
     "vscode:prepublish": "run-p build:*",
     "build:codegen": "npm run -w codegen build",
     "build:extension": "npm run -w extension build:production",
