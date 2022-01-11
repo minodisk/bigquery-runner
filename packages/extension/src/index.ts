@@ -13,13 +13,10 @@
 // limitations under the License.
 
 import { format as formatBytes } from "bytes";
-import * as CSV from "csv-stringify";
-import EasyTable from "easy-table";
 import { createWriteStream, WriteStream } from "fs";
 import { readFile } from "fs/promises";
 import mkdirp from "mkdirp";
 import { basename, extname, isAbsolute, join } from "path";
-import { tenderize } from "tenderizer";
 import {
   commands,
   Diagnostic,
@@ -38,8 +35,20 @@ import {
 } from "vscode";
 import { BigQuery, Job } from "@google-cloud/bigquery";
 import { Config } from "./config";
-import { getJobInfo, getTableInfo } from "bigquery";
-import { createFlatten, Accessor, Row, Cell } from "bigquery/src/flatten";
+import {
+  Accessor,
+  Cell,
+  createCSVFormatter,
+  createFlatten,
+  createJSONFormatter,
+  createJSONLinesFormatter,
+  createMarkdownFormatter,
+  createTableFormatter,
+  Formatter,
+  getJobInfo,
+  getTableInfo,
+  Row,
+} from "core";
 
 type OutputChannel = Pick<
   OrigOutputChannel,
@@ -748,126 +757,18 @@ function createViewerOutput({ ctx }: { ctx: ExtensionContext }): Output {
   };
 }
 
-type Formatter = {
-  header: (header: Array<string>) => string;
-  rows: (params: {
-    header: Array<string>;
-    rows: Array<Row>;
-  }) => Promise<string>;
-  footer: () => string;
-};
 function createFormatter({ config }: { config: Config }): Formatter {
   switch (config.format.type) {
     case "table":
-      return {
-        header() {
-          return "";
-        },
-        async rows({ rows }) {
-          const t = new EasyTable();
-          rows.forEach((row) => {
-            row.forEach((cell) => {
-              t.cell(cell.id, cell.value);
-            });
-            t.newRow();
-          });
-          return t.toString().trimEnd() + "\n";
-        },
-        footer() {
-          return "";
-        },
-      };
+      return createTableFormatter();
     case "markdown":
-      return {
-        header(header) {
-          return `|${header.join("|")}|
-|${header.map(() => "---").join("|")}|
-`;
-        },
-        async rows({ rows }) {
-          const keys = new Set<string>();
-          const rs = rows.flatMap((row) => {
-            const ts = tenderize(row);
-            ts.map((t) => {
-              Object.keys(t).forEach((key) => {
-                keys.add(key);
-              });
-            });
-            return ts;
-          });
-          const ks = Array.from(keys);
-          const m: Array<string> = rs.map(
-            (r) =>
-              `|${ks
-                .map((key) => {
-                  if (!r[key]) {
-                    return "";
-                  }
-                  return `${r[key]}`.replace("\n", "<br/>");
-                })
-                .join("|")}|`
-          );
-          return m.join("\n") + "\n";
-        },
-        footer() {
-          return "";
-        },
-      };
+      return createMarkdownFormatter();
     case "json-lines":
-      return {
-        header() {
-          return "";
-        },
-        async rows({ rows }) {
-          return rows.map((row) => JSON.stringify(row)).join("\n") + "\n";
-        },
-        footer() {
-          return "";
-        },
-      };
-    case "json": {
-      let len = 0;
-      return {
-        header() {
-          return "[";
-        },
-        async rows({ rows }) {
-          const prefix = len === 0 ? "" : ",";
-          len += rows.length;
-          return prefix + rows.map((row) => JSON.stringify(row)).join(",");
-        },
-        footer() {
-          return "]\n";
-        },
-      };
-    }
+      return createJSONLinesFormatter();
+    case "json":
+      return createJSONFormatter();
     case "csv":
-      return {
-        header() {
-          return "";
-        },
-        async rows({ rows }) {
-          const structs = rows.flatMap((row) => tenderize(row));
-          return await new Promise<string>((resolve, reject) => {
-            CSV.stringify(
-              structs,
-              config.format.csv,
-              (err?: Error, res?: string) => {
-                if (err) {
-                  reject(err);
-                  return;
-                }
-                if (res) {
-                  resolve(res);
-                }
-              }
-            );
-          });
-        },
-        footer() {
-          return "";
-        },
-      };
+      return createCSVFormatter(config.format.csv);
     default:
       throw new Error(`Invalid format: ${config.format.type}`);
   }
