@@ -1,4 +1,4 @@
-import { createFlatten } from ".";
+import { createFlatten } from "./flatten";
 
 describe("structToRows", () => {
   it("Empty", () => {
@@ -78,36 +78,36 @@ describe("structToRows", () => {
     ]);
   });
 
-  // it("Empty Array<Value>", () => {
-  //   const flatten = createFlatten([
-  //     {
-  //       name: "a",
-  //       type: "STRING",
-  //       mode: "REQUIRED",
-  //     },
-  //     {
-  //       name: "b",
-  //       type: "INTEGER",
-  //       mode: "REPEATED",
-  //     },
-  //     {
-  //       name: "c",
-  //       type: "FLOAT",
-  //       mode: "REPEATED",
-  //     },
-  //   ]);
-  //   expect(
-  //     flatten.toRows([
-  //       {
-  //         a: "foo",
-  //         b: [],
-  //         c: 0.123,
-  //       },
-  //     ])
-  //   ).toEqual([
-  //     [{ id: "a", value: "foo" }, undefined, { id: "c", value: 0.123 }],
-  //   ]);
-  // });
+  it("Empty Array<Value>", () => {
+    const flatten = createFlatten([
+      {
+        name: "a",
+        type: "STRING",
+        mode: "REQUIRED",
+      },
+      {
+        name: "b",
+        type: "INTEGER",
+        mode: "REPEATED",
+      },
+      {
+        name: "c",
+        type: "FLOAT",
+        mode: "REQUIRED",
+      },
+    ]);
+    expect(
+      flatten.toRows([
+        {
+          a: "foo",
+          b: [],
+          c: 0.123,
+        },
+      ])
+    ).toEqual([
+      [{ id: "a", value: "foo" }, undefined, { id: "c", value: 0.123 }],
+    ]);
+  });
 
   it("Array<Value>", () => {
     const flatten = createFlatten([
@@ -158,48 +158,59 @@ describe("structToRows", () => {
     ]);
   });
 
-  // it("Empty Array<Struct>", () => {
-  //   const flatten = createFlatten([
-  //     {
-  //       name: "a",
-  //       type: "STRING",
-  //       mode: "REQUIRED",
-  //     },
-  //     {
-  //       name: "b",
-  //       type: "STRUCT",
-  //       mode: "REPEATED",
-  //       fields: [
-  //         {
-  //           name: "c",
-  //           type: "BOOLEAN",
-  //           mode: "REQUIRED",
-  //         },
-  //         {
-  //           name: "d",
-  //           type: "FLOAT",
-  //           mode: "REQUIRED",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       name: "e",
-  //       type: "FLOAT",
-  //       mode: "REQUIRED",
-  //     },
-  //   ]);
-  //   expect(
-  //     flatten.toRows([
-  //       {
-  //         a: "foo",
-  //         b: [],
-  //         c: 0.123,
-  //       },
-  //     ])
-  //   ).toEqual([
-  //     [{ id: "a", value: "foo" }, undefined, { id: "c", value: 0.123 }],
-  //   ]);
-  // });
+  it("Empty Array<Struct>", () => {
+    const flatten = createFlatten([
+      {
+        name: "a",
+        type: "STRING",
+        mode: "REQUIRED",
+      },
+      {
+        name: "b",
+        type: "STRUCT",
+        mode: "REPEATED",
+        fields: [
+          {
+            name: "c",
+            type: "BOOLEAN",
+            mode: "REQUIRED",
+          },
+          {
+            name: "d",
+            type: "FLOAT",
+            mode: "REQUIRED",
+          },
+          {
+            name: "e",
+            type: "STRING",
+            mode: "REQUIRED",
+          },
+        ],
+      },
+      {
+        name: "f",
+        type: "FLOAT",
+        mode: "REQUIRED",
+      },
+    ]);
+    expect(
+      flatten.toRows([
+        {
+          a: "foo",
+          b: [],
+          f: 0.123,
+        },
+      ])
+    ).toEqual([
+      [
+        { id: "a", value: "foo" },
+        undefined,
+        undefined,
+        undefined,
+        { id: "f", value: 0.123 },
+      ],
+    ]);
+  });
 
   it("Array<Struct>", () => {
     const flatten = createFlatten([

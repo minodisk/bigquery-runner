@@ -104,38 +104,48 @@ function App() {
     <Stack m="3" display="inline-block">
       <Table size="sm" {...getTableProps()}>
         <Thead>
-          {headerGroups.map((headerGroup) => (
-            <Tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <Th
-                  textTransform="none"
-                  color="var(--vscode-terminal-foreground)"
-                  fontFamily="var(--vscode-editor-font-family)"
-                  fontSize="var(--vscode-editor-font-size)"
-                  borderBottomColor="var(--vscode-terminal-border)"
-                  borderBottomWidth={2}
-                  {...column.getHeaderProps()}
-                >
-                  {column.render("Header")}
-                </Th>
-              ))}
-            </Tr>
-          ))}
+          {headerGroups.map((headerGroup) => {
+            const { key, ...props } = headerGroup.getHeaderGroupProps();
+            return (
+              <Tr key={key} {...props}>
+                {headerGroup.headers.map((column) => {
+                  const { key, ...props } = column.getHeaderProps();
+                  return (
+                    <Th
+                      key={key}
+                      textTransform="none"
+                      color="var(--vscode-terminal-foreground)"
+                      fontFamily="var(--vscode-editor-font-family)"
+                      fontSize="var(--vscode-editor-font-size)"
+                      borderBottomColor="var(--vscode-terminal-border)"
+                      borderBottomWidth={2}
+                      {...props}
+                    >
+                      {column.render("Header")}
+                    </Th>
+                  );
+                })}
+              </Tr>
+            );
+          })}
         </Thead>
         <Tbody {...getTableBodyProps()}>
           {rows.map((row) => {
             prepareRow(row);
+            const { key, ...props } = row.getRowProps();
             return (
-              <Tr {...row.getRowProps()}>
+              <Tr key={key} {...props}>
                 {row.cells.map((cell) => {
+                  const { key, ...props } = cell.getCellProps();
                   return (
                     <Td
+                      key={key}
                       color="var(--vscode-terminal-foreground)"
                       fontFamily="var(--vscode-editor-font-family)"
                       fontSize="var(--vscode-editor-font-size)"
                       fontWeight="var(--vscode-editor-font-weight)"
                       borderBottomColor="var(--vscode-terminal-border)"
-                      {...cell.getCellProps()}
+                      {...props}
                     >
                       {cell.render("Cell")}
                     </Td>
@@ -146,23 +156,30 @@ function App() {
           })}
         </Tbody>
         <Tfoot>
-          {footerGroups.map((footerGroup) => (
-            <Tr {...footerGroup.getHeaderGroupProps()}>
-              {footerGroup.headers.map((column) => (
-                <Th
-                  textTransform="none"
-                  color="var(--vscode-terminal-foreground)"
-                  fontFamily="var(--vscode-editor-font-family)"
-                  fontSize="var(--vscode-editor-font-size)"
-                  borderTopColor="var(--vscode-terminal-border)"
-                  borderTopWidth={2}
-                  {...column.getHeaderProps()}
-                >
-                  {column.render("Header")}
-                </Th>
-              ))}
-            </Tr>
-          ))}
+          {footerGroups.map((footerGroup) => {
+            const { key, ...props } = footerGroup.getHeaderGroupProps();
+            return (
+              <Tr key={key} {...props}>
+                {footerGroup.headers.map((column) => {
+                  const { key, ...props } = column.getHeaderProps();
+                  return (
+                    <Th
+                      key={key}
+                      textTransform="none"
+                      color="var(--vscode-terminal-foreground)"
+                      fontFamily="var(--vscode-editor-font-family)"
+                      fontSize="var(--vscode-editor-font-size)"
+                      borderTopColor="var(--vscode-terminal-border)"
+                      borderTopWidth={2}
+                      {...props}
+                    >
+                      {column.render("Header")}
+                    </Th>
+                  );
+                })}
+              </Tr>
+            );
+          })}
         </Tfoot>
       </Table>
     </Stack>

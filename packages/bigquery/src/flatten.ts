@@ -78,8 +78,6 @@ export function createFlatten(fields: Array<Field>): {
 } {
   const heads = fieldsToHeads(fields);
   const columns = fieldsToColumns(fields);
-  console.log("heads:", heads);
-  console.log("columns:", columns);
   return {
     heads,
     columns,
