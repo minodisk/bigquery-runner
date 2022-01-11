@@ -43,7 +43,9 @@ type StructFieldType = typeof structTableFieldTypes[number];
 
 export type FieldMode = "NULLABLE" | "REQUIRED" | "REPEATED";
 
-export type Head = {
+type Column = Array<Accessor>;
+export type Accessor = {
+  id: string;
   name: string;
   type: FieldType;
   mode: FieldMode;
@@ -64,58 +66,81 @@ export type Primitive =
   | BigQueryTimestamp;
 
 export type Row = Array<Cell>;
-export type Cell = null | number | string | boolean;
+export type Cell = {
+  id: string;
+  value: null | number | string | boolean;
+};
 
-export function fieldsToHeads(fields?: Array<Field>): Array<Head> {
-  if (!fields) {
-    return [];
-  }
+export function createFlatten(fields: Array<Field>): {
+  readonly heads: Array<Accessor>;
+  readonly columns: Array<Column>;
+  readonly toRows: (structs: Array<Struct>) => Array<Row>;
+} {
+  const heads = fieldsToHeads(fields);
+  const columns = fieldsToColumns(fields);
+  console.log("heads:", heads);
+  console.log("columns:", columns);
+  return {
+    heads,
+    columns,
+    toRows(structs) {
+      return structsToRows({ columns, structs });
+    },
+  };
+}
+
+function fieldsToHeads(fields: Array<Field>): Array<Accessor> {
   return fields.flatMap((field) => {
     if (field.type === "STRUCT" || field.type === "RECORD") {
       return fieldsToHeads(field.fields).map((f) => ({
-        name: `${field.name}.${f.name}`,
-        type: f.type,
-        mode: f.mode,
+        ...f,
+        id: `${field.name}.${f.name}`,
       }));
     }
-    return field;
+    return {
+      ...field,
+      id: field.name,
+    };
   });
 }
 
-type Column = Array<Accessor>;
-type Accessor = Field & { rowIndex: number };
-
-function filedsToColumns(fields: Array<Field>): Array<Column> {
+function fieldsToColumns(fields: Array<Field>): Array<Column> {
   return fields.flatMap((field) => {
     if (field.type === "STRUCT" || field.type === "RECORD") {
-      return filedsToColumns(field.fields).map((fs) => [
-        { ...field, rowIndex: 0 },
-        ...fs,
+      return fieldsToColumns(field.fields).map((columns) => [
+        {
+          ...field,
+          id: field.name,
+        },
+        ...columns.map((column) => ({
+          ...column,
+          id: `${field.name}.${column.id}`,
+        })),
       ]);
     }
-    return [[{ ...field, rowIndex: 0 }]];
+    return [[{ ...field, id: field.name }]];
   });
 }
 
-export function structsToRows({
-  fields,
+function structsToRows({
+  columns,
   structs,
 }: {
-  fields: Array<Field>;
+  columns: Array<Column>;
   structs: Array<Struct>;
 }): Array<Row> {
-  return structs.flatMap((struct) => structToRows({ fields, struct }));
+  return structs.flatMap((struct) => structToRows({ columns, struct }));
 }
 
-export function structToRows({
-  fields,
+function structToRows({
+  columns,
   struct,
 }: {
-  fields: Array<Field>;
+  columns: Array<Column>;
   struct: Struct;
 }): Array<Row> {
-  const columns = filedsToColumns(fields);
   const rows: Array<Row> = [];
+  const depths: Array<number> = new Array(columns.length).fill(0);
   columns.forEach((column, columnIndex) =>
     walk({
       struct,
@@ -123,6 +148,7 @@ export function structToRows({
       column,
       accessorIndex: 0,
       rows,
+      depths,
     })
   );
   return rows;
@@ -134,12 +160,14 @@ function walk({
   column,
   accessorIndex,
   rows,
+  depths,
 }: {
   struct: Struct;
   columnIndex: number;
   column: Column;
   accessorIndex: number;
   rows: Array<Row>;
+  depths: Array<number>;
 }): void {
   let s: Struct = struct;
   for (let ai = accessorIndex; ai < column.length; ai += 1) {
@@ -153,34 +181,39 @@ function walk({
             column,
             accessorIndex: ai + 1,
             rows,
+            depths,
           });
         });
         break;
       }
       (s[accessor.name] as Array<Primitive>).forEach((v) => {
-        if (!rows[accessor.rowIndex]) {
-          rows[accessor.rowIndex] = [];
+        if (!rows[depths[columnIndex]!]) {
+          rows[depths[columnIndex]!] = [];
         }
-        rows[accessor.rowIndex]![columnIndex] = primitiveToCell(v);
-        accessor.rowIndex += 1;
+        rows[depths[columnIndex]!]![columnIndex] = {
+          id: accessor.id,
+          value: primitiveToCell(v),
+        };
+        depths[columnIndex]! += 1;
       });
     } else {
-      if (!rows[accessor.rowIndex]) {
-        rows[accessor.rowIndex] = [];
+      if (!rows[depths[columnIndex]!]) {
+        rows[depths[columnIndex]!] = [];
       }
       if (accessor.type === "STRUCT" || accessor.type === "RECORD") {
         s = s[accessor.name] as Struct;
         continue;
       }
-      rows[accessor.rowIndex]![columnIndex] = primitiveToCell(
-        s[accessor.name] as Primitive
-      );
-      accessor.rowIndex += 1;
+      rows[depths[columnIndex]!]![columnIndex] = {
+        id: accessor.id,
+        value: primitiveToCell(s[accessor.name] as Primitive),
+      };
+      depths[columnIndex]! += 1;
     }
   }
 }
 
-function primitiveToCell(primitive: Primitive): Cell {
+function primitiveToCell(primitive: Primitive): Cell["value"] {
   if (
     primitive === null ||
     typeof primitive === "number" ||

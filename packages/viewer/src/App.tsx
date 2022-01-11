@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { Column, useTable } from "react-table";
+import { Row } from "bigquery/src/flatten";
 
 type Data = {
   source: "bigquery-runner";
@@ -20,7 +21,7 @@ function isData(data: any): data is Data {
   return data.source === "bigquery-runner";
 }
 
-type Event = Clear | Header | Row;
+type Event = Clear | Header | Rows;
 
 type Clear = {
   event: "clear";
@@ -40,18 +41,18 @@ function isHeader(e: Event): e is Header {
   return e.event === "header";
 }
 
-type Row = {
+type Rows = {
   event: "rows";
-  payload: Array<{ [key: string]: any }>;
+  payload: Array<Row>;
 };
 
-function isRow(e: Event): e is Row {
+function isRows(e: Event): e is Rows {
   return e.event === "rows";
 }
 
 function App() {
   const [columns, setColumns] = useState<Array<Column>>([]);
-  const [data, setData] = useState<Array<object>>([]);
+  const [data, setData] = useState<Array<Row>>([]);
 
   const {
     getTableProps,
@@ -61,7 +62,7 @@ function App() {
     rows,
     prepareRow,
   } = useTable({
-    columns,
+    columns: columns as any,
     data,
   });
 
@@ -89,8 +90,8 @@ function App() {
         setColumns(columns);
         return;
       }
-      if (isRow(payload)) {
-        setData((rows) => [...rows, ...payload.payload]);
+      if (isRows(payload)) {
+        setData((data) => [...data, ...payload.payload]);
         return;
       }
       throw new Error(`undefined data payload '${payload}'`);

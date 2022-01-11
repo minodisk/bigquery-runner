@@ -38,7 +38,8 @@ import {
 } from "vscode";
 import { BigQuery, Job } from "@google-cloud/bigquery";
 import { Config } from "./config";
-import { fieldsToHeader, flatRows, getJobInfo, getTableInfo } from "bigquery";
+import { getJobInfo, getTableInfo } from "bigquery";
+import { createFlatten, Accessor, Row, Cell } from "bigquery/src/flatten";
 
 type OutputChannel = Pick<
   OrigOutputChannel,
@@ -389,18 +390,22 @@ async function run({
     if (!fields) {
       throw new Error(`no fields`);
     }
-    const header = fieldsToHeader(fields);
-    outputChannel.appendLine("HEADER -------------------");
-    outputChannel.appendLine(JSON.stringify(header, null, 2));
+
+    const { heads, toRows } = createFlatten(fields);
+
+    outputChannel.appendLine("HEADS -------------------");
+    outputChannel.appendLine(JSON.stringify(heads, null, 2));
 
     outputChannel.appendLine("ROWS -------------------");
     outputChannel.appendLine(JSON.stringify(rows, null, 2));
 
-    const rs = flatRows({ fields, rows });
+    const rs = toRows(rows);
     outputChannel.appendLine("FLAT ROWS -------------------");
     outputChannel.appendLine(JSON.stringify(rs, null, 2));
 
     outputChannel.show(true);
+
+    outputChannel.appendLine("A -------------------");
 
     const output = await createOutput({
       config,
@@ -409,10 +414,16 @@ async function run({
       ctx,
     });
 
+    outputChannel.appendLine("B -------------------");
+
     await output.open();
-    await output.writeHeader(header.map(({ name }) => name));
-    await output.writeRows(rows);
+    outputChannel.appendLine("C -------------------");
+    await output.writeHeads({ heads });
+    outputChannel.appendLine("D -------------------");
+    await output.writeRows({ heads, rows: rs });
+    outputChannel.appendLine("E -------------------");
     await output.close();
+    outputChannel.appendLine("F -------------------");
 
     return { jobId: job.id };
   } catch (err) {
@@ -577,8 +588,11 @@ type ErrorMarker = ReturnType<typeof createErrorMarker>;
 type Output = {
   readonly open: () => Promise<unknown>;
   readonly path?: () => string;
-  readonly writeHeader: (headers: Array<string>) => Promise<unknown>;
-  readonly writeRows: (rows: Array<any>) => Promise<unknown>;
+  readonly writeHeads: (props: { heads: Array<Accessor> }) => Promise<unknown>;
+  readonly writeRows: (props: {
+    heads: Array<Accessor>;
+    rows: Array<Row>;
+  }) => Promise<unknown>;
   readonly close: () => Promise<void>;
 };
 type CreateOutputParams = {
@@ -591,7 +605,8 @@ async function createOutput(params: CreateOutputParams): Promise<Output> {
   const { config, outputChannel, filename } = params;
   switch (config.output.type) {
     case "viewer":
-      return createViewerOutput(params);
+      return createViewerOutput({ ctx: params.ctx });
+      break;
     case "output": {
       const formatter = createFormatter({ config });
       let header: Array<string>;
@@ -599,11 +614,11 @@ async function createOutput(params: CreateOutputParams): Promise<Output> {
         async open() {
           outputChannel.show(true);
         },
-        async writeHeader(h) {
-          header = h;
-          outputChannel.append(formatter.header(h));
+        async writeHeads({ heads }) {
+          header = heads.map(({ id }) => id);
+          outputChannel.append(formatter.header(header));
         },
-        async writeRows(rows) {
+        async writeRows({ rows }) {
           outputChannel.append(await formatter.rows({ header, rows }));
         },
         async close() {
@@ -635,14 +650,14 @@ async function createOutput(params: CreateOutputParams): Promise<Output> {
           outputChannel.appendLine(`Output to: ${path}`);
           stream = createWriteStream(path);
         },
-        async writeHeader(h) {
-          header = h;
-          const res = formatter.header(h);
+        async writeHeads({ heads }) {
+          header = heads.map(({ id }) => id);
+          const res = formatter.header(header);
           if (res) {
             stream.write(res);
           }
         },
-        async writeRows(rows) {
+        async writeRows({ rows }) {
           stream.write(await formatter.rows({ header, rows }));
         },
         async close() {
@@ -707,7 +722,7 @@ async function createViewerOutput({
     path() {
       return "";
     },
-    async writeHeader(header: Array<string>) {
+    async writeHeads({ heads }) {
       if (!panel) {
         throw new Error(`panel is not initialized`);
       }
@@ -715,11 +730,11 @@ async function createViewerOutput({
         source: "bigquery-runner",
         payload: {
           event: "header",
-          payload: header,
+          payload: heads.map(({ id }) => id),
         },
       });
     },
-    async writeRows(rows: Array<any>) {
+    async writeRows({ rows }) {
       if (!panel) {
         throw new Error(`panel is not initialized`);
       }
@@ -727,7 +742,15 @@ async function createViewerOutput({
         source: "bigquery-runner",
         payload: {
           event: "rows",
-          payload: rows.flatMap((row) => tenderize(row)),
+          payload: rows.map((row) =>
+            row.reduce<{ [accessor: string]: Cell["value"] }>((obj, cell) => {
+              console.log("cell:", cell);
+              if (cell) {
+                obj[cell.id] = cell.value;
+              }
+              return obj;
+            }, {})
+          ),
         },
       });
     },
