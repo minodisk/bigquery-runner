@@ -10,6 +10,9 @@ ReactDOM.render(
       theme={extendTheme({
         styles: {
           global: {
+            html: {
+              "-webkit-font-smoothing": "initial",
+            },
             body: {
               backgroundColor: "var(--vscode-terminal-background)",
               color: "var(--vscode-terminal-foreground)",

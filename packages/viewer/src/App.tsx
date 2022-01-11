@@ -80,13 +80,11 @@ function App() {
         return;
       }
       if (isHeader(payload)) {
-        console.log("->", payload.payload);
         const columns = payload.payload.map((accessor) => ({
           accessor: (d: any) => d[accessor],
           Header: accessor,
           key: accessor,
         }));
-        console.log("=>", columns);
         setColumns(columns);
         return;
       }
@@ -97,8 +95,6 @@ function App() {
       throw new Error(`undefined data payload '${payload}'`);
     });
   }, []);
-
-  console.log(columns, data);
 
   return (
     <Stack m="3" display="inline-block">
@@ -116,7 +112,9 @@ function App() {
                       textTransform="none"
                       color="var(--vscode-terminal-foreground)"
                       fontFamily="var(--vscode-editor-font-family)"
+                      fontFeatureSetting="'liga' 0, 'calt' 0"
                       fontSize="var(--vscode-editor-font-size)"
+                      lineHeight="var(--vscode-editor-line-height)"
                       borderBottomColor="var(--vscode-terminal-border)"
                       borderBottomWidth={2}
                       {...props}
@@ -243,7 +241,6 @@ function App() {
 
 //   for (const event of events) {
 //     await sleep(10);
-//     console.log(event);
 //     window.postMessage(event);
 //   }
 // })();

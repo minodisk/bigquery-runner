@@ -392,21 +392,7 @@ async function run({
     }
 
     const { heads, toRows } = createFlatten(fields);
-
-    outputChannel.appendLine("HEADS -------------------");
-    outputChannel.appendLine(JSON.stringify(heads, null, 2));
-
-    outputChannel.appendLine("ROWS -------------------");
-    outputChannel.appendLine(JSON.stringify(rows, null, 2));
-
     const rs = toRows(rows);
-    outputChannel.appendLine("FLAT ROWS -------------------");
-    outputChannel.appendLine(JSON.stringify(rs, null, 2));
-
-    outputChannel.show(true);
-
-    outputChannel.appendLine("A -------------------");
-
     const output = await createOutput({
       config,
       outputChannel,
@@ -414,16 +400,10 @@ async function run({
       ctx,
     });
 
-    outputChannel.appendLine("B -------------------");
-
     await output.open();
-    outputChannel.appendLine("C -------------------");
     await output.writeHeads({ heads });
-    outputChannel.appendLine("D -------------------");
     await output.writeRows({ heads, rows: rs });
-    outputChannel.appendLine("E -------------------");
     await output.close();
-    outputChannel.appendLine("F -------------------");
 
     return { jobId: job.id };
   } catch (err) {
@@ -606,7 +586,6 @@ async function createOutput(params: CreateOutputParams): Promise<Output> {
   switch (config.output.type) {
     case "viewer":
       return createViewerOutput({ ctx: params.ctx });
-      break;
     case "output": {
       const formatter = createFormatter({ config });
       let header: Array<string>;
@@ -676,11 +655,7 @@ async function createOutput(params: CreateOutputParams): Promise<Output> {
 
 let panel: WebviewPanel | undefined;
 
-async function createViewerOutput({
-  ctx,
-}: {
-  ctx: ExtensionContext;
-}): Promise<Output> {
+function createViewerOutput({ ctx }: { ctx: ExtensionContext }): Output {
   return {
     async open() {
       if (!panel) {
@@ -744,7 +719,6 @@ async function createViewerOutput({
           event: "rows",
           payload: rows.map((row) =>
             row.reduce<{ [accessor: string]: Cell["value"] }>((obj, cell) => {
-              console.log("cell:", cell);
               if (cell) {
                 obj[cell.id] = cell.value;
               }
