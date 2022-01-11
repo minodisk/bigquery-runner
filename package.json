@@ -15,10 +15,10 @@
   },
   "workspaces": [
     "packages/codegen",
+    "packages/core",
     "packages/extension",
     "packages/misc",
-    "packages/viewer",
-    "packages/bigquery"
+    "packages/viewer"
   ],
   "categories": [
     "Other"

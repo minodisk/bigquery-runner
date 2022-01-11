@@ -1,9 +1,9 @@
 {
-  "name": "bigquery",
+  "name": "core",
   "version": "1.0.0",
   "description": "",
   "license": "Apach-2",
-  "main": "src/bigquery.ts",
+  "main": "src/index.ts",
   "scripts": {
     "test": "jest --silent=false",
     "test:watch": "npm run test -- --watch"
