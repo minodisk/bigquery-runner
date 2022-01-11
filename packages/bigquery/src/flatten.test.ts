@@ -1,18 +1,18 @@
-import { flatRow } from "./flatten";
+import { structToRows } from "./flatten";
 
-describe("flatRow", () => {
-  it("empty", () => {
+describe("structToRows", () => {
+  it("Empty", () => {
     expect(
-      flatRow({
+      structToRows({
         fields: [],
-        row: {},
+        struct: {},
       })
     ).toEqual([]);
   });
 
-  it("Value", () => {
+  it("Flat", () => {
     expect(
-      flatRow({
+      structToRows({
         fields: [
           {
             name: "a",
@@ -25,7 +25,7 @@ describe("flatRow", () => {
             mode: "REQUIRED",
           },
         ],
-        row: {
+        struct: {
           a: "foo",
           b: 321,
         },
@@ -35,7 +35,7 @@ describe("flatRow", () => {
 
   it("Struct", () => {
     expect(
-      flatRow({
+      structToRows({
         fields: [
           {
             name: "a",
@@ -60,7 +60,7 @@ describe("flatRow", () => {
             mode: "REQUIRED",
           },
         ],
-        row: {
+        struct: {
           a: "foo",
           b: {
             c: true,
@@ -73,7 +73,7 @@ describe("flatRow", () => {
 
   it("Array<Value>", () => {
     expect(
-      flatRow({
+      structToRows({
         fields: [
           {
             name: "a",
@@ -96,7 +96,7 @@ describe("flatRow", () => {
             mode: "REPEATED",
           },
         ],
-        row: {
+        struct: {
           a: "foo",
           b: [123, 456, 789],
           c: true,
@@ -112,7 +112,7 @@ describe("flatRow", () => {
 
   it("Array<Struct>", () => {
     expect(
-      flatRow({
+      structToRows({
         fields: [
           {
             name: "a",
@@ -137,7 +137,7 @@ describe("flatRow", () => {
             ],
           },
         ],
-        row: {
+        struct: {
           a: "foo",
           b: [
             {
@@ -164,7 +164,7 @@ describe("flatRow", () => {
 
   it("Array<Struct<Array<Struct>>>", () => {
     expect(
-      flatRow({
+      structToRows({
         fields: [
           {
             name: "a",
@@ -186,7 +186,7 @@ describe("flatRow", () => {
             ],
           },
         ],
-        row: {
+        struct: {
           a: [
             {
               b: [

@@ -43,7 +43,7 @@ type StructFieldType = typeof structTableFieldTypes[number];
 
 export type FieldMode = "NULLABLE" | "REQUIRED" | "REPEATED";
 
-export type Header = {
+export type Head = {
   name: string;
   type: FieldType;
   mode: FieldMode;
@@ -66,13 +66,13 @@ export type Primitive =
 export type Row = Array<Cell>;
 export type Cell = null | number | string | boolean;
 
-export function fieldsToHeader(fields?: Array<Field>): Array<Header> {
+export function fieldsToHeads(fields?: Array<Field>): Array<Head> {
   if (!fields) {
     return [];
   }
   return fields.flatMap((field) => {
     if (field.type === "STRUCT" || field.type === "RECORD") {
-      return fieldsToHeader(field.fields).map((f) => ({
+      return fieldsToHeads(field.fields).map((f) => ({
         name: `${field.name}.${f.name}`,
         type: f.type,
         mode: f.mode,
@@ -82,118 +82,112 @@ export function fieldsToHeader(fields?: Array<Field>): Array<Header> {
   });
 }
 
-type Accessor = Field & { y: number };
+type Column = Array<Accessor>;
+type Accessor = Field & { rowIndex: number };
 
-function fieldsToAccessorsList(fields: Array<Field>): Array<Array<Accessor>> {
+function filedsToColumns(fields: Array<Field>): Array<Column> {
   return fields.flatMap((field) => {
     if (field.type === "STRUCT" || field.type === "RECORD") {
-      return fieldsToAccessorsList(field.fields).map((fs) => [
-        { ...field, y: 0 },
+      return filedsToColumns(field.fields).map((fs) => [
+        { ...field, rowIndex: 0 },
         ...fs,
       ]);
     }
-    return [[{ ...field, y: 0 }]];
+    return [[{ ...field, rowIndex: 0 }]];
   });
 }
 
-export function flatRows({
+export function structsToRows({
   fields,
-  rows,
+  structs,
 }: {
   fields: Array<Field>;
-  rows: Array<Struct>;
+  structs: Array<Struct>;
 }): Array<Row> {
-  return rows.flatMap((row) => flatRow({ fields, row }));
+  return structs.flatMap((struct) => structToRows({ fields, struct }));
 }
 
-//      x:0            x:1            x:2
-// y:0 [accessor[0][0] accessor[1][0] accessor[2][0]]
-// y:1 [undefined      accessor[1][1] accessor[2][1]]
-// y:2 [undefined      accessor[1][2]               ]
-export function flatRow({
+export function structToRows({
   fields,
-  row,
+  struct,
 }: {
   fields: Array<Field>;
-  row: Struct;
+  struct: Struct;
 }): Array<Row> {
-  const accessorsList = fieldsToAccessorsList(fields);
+  const columns = filedsToColumns(fields);
   const rows: Array<Row> = [];
-  // console.log("------------------------------");
-  // console.log("row:", row);
-  // console.dir(accessors, { depth: 10 });
-  accessorsList.forEach((accessors, x) => {
+  columns.forEach((column, columnIndex) =>
     walk({
-      row,
-      fieldIndex: x,
+      struct,
+      columnIndex,
+      column,
       accessorIndex: 0,
-      accessors,
       rows,
-    });
-  });
-  console.log("rows:", rows);
-
+    })
+  );
   return rows;
 }
 
 function walk({
-  row,
+  struct,
+  columnIndex,
+  column,
   accessorIndex,
-  fieldIndex,
-  accessors,
   rows,
 }: {
-  row: Struct;
+  struct: Struct;
+  columnIndex: number;
+  column: Column;
   accessorIndex: number;
-  fieldIndex: number;
-  accessors: Array<Accessor>;
   rows: Array<Row>;
-}) {
-  let val: any = row;
-  for (let ai = accessorIndex; ai < accessors.length; ai += 1) {
-    const accessor = accessors[ai]!;
+}): void {
+  let s: Struct = struct;
+  for (let ai = accessorIndex; ai < column.length; ai += 1) {
+    const accessor = column[ai]!;
     if (accessor.mode === "REPEATED") {
       if (accessor.type === "STRUCT" || accessor.type === "RECORD") {
-        val[accessor.name].forEach((struct: any) => {
+        (s[accessor.name] as Array<Struct>).forEach((struct) => {
           walk({
-            row: struct,
-            fieldIndex,
+            struct,
+            columnIndex,
+            column,
             accessorIndex: ai + 1,
-            accessors,
             rows,
           });
         });
         break;
       }
-      (val[accessor.name] as Array<Primitive>).forEach((v) => {
-        if (!rows[accessor.y]) {
-          rows[accessor.y] = [];
+      (s[accessor.name] as Array<Primitive>).forEach((v) => {
+        if (!rows[accessor.rowIndex]) {
+          rows[accessor.rowIndex] = [];
         }
-        rows[accessor.y]![fieldIndex] = cast(v);
-        accessor.y += 1;
+        rows[accessor.rowIndex]![columnIndex] = primitiveToCell(v);
+        accessor.rowIndex += 1;
       });
     } else {
-      if (!rows[accessor.y]) {
-        rows[accessor.y] = [];
+      if (!rows[accessor.rowIndex]) {
+        rows[accessor.rowIndex] = [];
       }
       if (accessor.type === "STRUCT" || accessor.type === "RECORD") {
-        val = val[accessor.name];
+        s = s[accessor.name] as Struct;
         continue;
       }
-      rows[accessor.y]![fieldIndex] = cast(val[accessor.name]);
-      accessor.y += 1;
+      rows[accessor.rowIndex]![columnIndex] = primitiveToCell(
+        s[accessor.name] as Primitive
+      );
+      accessor.rowIndex += 1;
     }
   }
 }
 
-function cast(value: Primitive): Cell {
+function primitiveToCell(primitive: Primitive): Cell {
   if (
-    value === null ||
-    typeof value === "number" ||
-    typeof value === "string" ||
-    typeof value === "boolean"
+    primitive === null ||
+    typeof primitive === "number" ||
+    typeof primitive === "string" ||
+    typeof primitive === "boolean"
   ) {
-    return value;
+    return primitive;
   }
-  return value.value;
+  return primitive.value;
 }
