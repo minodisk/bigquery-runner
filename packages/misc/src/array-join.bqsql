@@ -17,7 +17,7 @@ orders as (
         2 as order_id, 
         [
             struct(
-                1002 as product_id,
+                1003 as product_id,
                 2 as quantity
             ),
             struct(

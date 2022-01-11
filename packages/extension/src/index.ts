@@ -377,16 +377,30 @@ async function run({
     outputChannel.appendLine(`Results: ${rows.length} rows`);
 
     const jobInfo = await getJobInfo({ job });
-    outputChannel.appendLine("JOB INFO -------------------");
-    outputChannel.appendLine(JSON.stringify(jobInfo, null, 2));
+    // outputChannel.appendLine("JOB INFO -------------------");
+    // outputChannel.appendLine(JSON.stringify(jobInfo, null, 2));
+
+    const {
+      statistics: {
+        query: { totalBytesBilled, cacheHit },
+      },
+    } = jobInfo;
+    outputChannel.appendLine(
+      `Result: ${formatBytes(
+        parseInt(totalBytesBilled, 10)
+      )} to be billed (cache: ${cacheHit})`
+    );
+
     const tableInfo = await getTableInfo({
       keyFilename: config.keyFilename,
       tableReference: jobInfo.configuration.query.destinationTable,
     });
-    outputChannel.appendLine("TABLE INFO -------------------");
-    outputChannel.appendLine(JSON.stringify(tableInfo, null, 2));
+    // outputChannel.appendLine("TABLE INFO -------------------");
+    // outputChannel.appendLine(JSON.stringify(tableInfo, null, 2));
 
-    const { fields } = tableInfo.schema;
+    const {
+      schema: { fields },
+    } = tableInfo;
     if (!fields) {
       throw new Error(`no fields`);
     }
@@ -738,7 +752,7 @@ type Formatter = {
   header: (header: Array<string>) => string;
   rows: (params: {
     header: Array<string>;
-    rows: Array<any>;
+    rows: Array<Row>;
   }) => Promise<string>;
   footer: () => string;
 };
@@ -752,10 +766,10 @@ function createFormatter({ config }: { config: Config }): Formatter {
         async rows({ rows }) {
           const t = new EasyTable();
           rows.forEach((row) => {
-            tenderize(row).forEach((o) => {
-              Object.keys(o).forEach((key) => t.cell(key, o[key]));
-              t.newRow();
+            row.forEach((cell) => {
+              t.cell(cell.id, cell.value);
             });
+            t.newRow();
           });
           return t.toString().trimEnd() + "\n";
         },
