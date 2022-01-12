@@ -1,5 +1,5 @@
 import { BigQuery, Job } from "@google-cloud/bigquery";
-import { Field } from "./flatten";
+import { Field } from "./flat";
 
 export type JobInfo = {
   kind: string;

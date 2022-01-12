@@ -1,4 +1,4 @@
-import { createFlat } from "./flatten";
+import { createFlat } from "./flat";
 
 describe("structToRows", () => {
   it("Empty", () => {

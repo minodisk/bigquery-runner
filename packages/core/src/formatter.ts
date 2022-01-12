@@ -1,6 +1,6 @@
 import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
-import { Flat, Struct } from "./flatten";
+import { Flat, Struct } from "./flat";
 
 export type Formatter = {
   readonly type: "table" | "markdown" | "json-lines" | "json" | "csv";
