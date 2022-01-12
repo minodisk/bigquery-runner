@@ -6,7 +6,7 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "jest --silent=false",
-    "test:watch": "npm run test -- --watch"
+    "test:watch": "npm run test -- --watchAll"
   },
   "jest": {
     "roots": [

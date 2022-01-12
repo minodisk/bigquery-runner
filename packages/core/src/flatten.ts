@@ -184,31 +184,52 @@ function walk({
         });
         break;
       }
-      (s[accessor.name] as Array<Primitive>).forEach((v) => {
-        if (!rows[depths[columnIndex]!]) {
-          rows[depths[columnIndex]!] = [];
-        }
-        rows[depths[columnIndex]!]![columnIndex] = {
-          id: accessor.id,
-          value: primitiveToCell(v),
-        };
-        depths[columnIndex]! += 1;
-      });
+      (s[accessor.name] as Array<Primitive>).forEach((value) =>
+        fill({
+          columnIndex,
+          accessor,
+          rows,
+          depths,
+          value,
+        })
+      );
     } else {
-      if (!rows[depths[columnIndex]!]) {
-        rows[depths[columnIndex]!] = [];
-      }
       if (accessor.type === "STRUCT" || accessor.type === "RECORD") {
         s = s[accessor.name] as Struct;
         continue;
       }
-      rows[depths[columnIndex]!]![columnIndex] = {
-        id: accessor.id,
-        value: primitiveToCell(s[accessor.name] as Primitive),
-      };
-      depths[columnIndex]! += 1;
+      fill({
+        columnIndex,
+        accessor,
+        rows,
+        depths,
+        value: s[accessor.name] as Primitive,
+      });
     }
   }
+}
+
+function fill({
+  columnIndex,
+  accessor,
+  rows,
+  depths,
+  value,
+}: {
+  columnIndex: number;
+  accessor: Accessor;
+  rows: Array<Row>;
+  depths: Array<number>;
+  value: Primitive;
+}) {
+  if (!rows[depths[columnIndex]!]) {
+    rows[depths[columnIndex]!] = [];
+  }
+  rows[depths[columnIndex]!]![columnIndex] = {
+    id: accessor.id,
+    value: primitiveToCell(value),
+  };
+  depths[columnIndex]! += 1;
 }
 
 function primitiveToCell(primitive: Primitive): Cell["value"] {
