@@ -81,7 +81,7 @@ export function createViewerOutput({
           payload: rows.map((row) =>
             row.reduce<{ [accessor: string]: Cell["value"] }>((obj, cell) => {
               if (cell) {
-                obj[cell.id] = cell.value;
+                obj[cell.id] = `${cell.value}`;
               }
               return obj;
             }, {})
