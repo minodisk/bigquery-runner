@@ -1,23 +1,22 @@
 import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
 import { tenderize } from "tenderizer";
-import { Accessor, Row } from ".";
+import { Accessor, Row } from "./flatten";
 
 export type Formatter = {
-  header: (header: Array<Accessor>) => string;
-  rows: (params: {
-    header: Array<string>;
-    rows: Array<Row>;
-  }) => Promise<string>;
-  footer: () => string;
+  readonly type: "table" | "markdown" | "json-lines" | "json" | "csv";
+  readonly header: (heads: Array<Accessor>) => string;
+  readonly rows: (rows: Array<Row>) => Promise<string>;
+  readonly footer: () => string;
 };
 
 export function createTableFormatter(): Formatter {
   return {
+    type: "table",
     header() {
       return "";
     },
-    async rows({ rows }) {
+    async rows(rows) {
       const t = new EasyTable();
       rows.forEach((row) => {
         row.forEach((cell) => {
@@ -35,32 +34,24 @@ export function createTableFormatter(): Formatter {
 
 export function createMarkdownFormatter(): Formatter {
   return {
-    header(header) {
-      return `|${header.join("|")}|
-|${header.map(() => "---").join("|")}|
+    type: "markdown",
+    header(heads) {
+      if (heads.length === 0) {
+        return "";
+      }
+      return `|${heads.map(({ id }) => id).join("|")}|
+|${heads.map(() => "---").join("|")}|
 `;
     },
-    async rows({ rows }) {
-      const keys = new Set<string>();
-      const rs = rows.flatMap((row) => {
-        const ts = tenderize(row);
-        ts.map((t) => {
-          Object.keys(t).forEach((key) => {
-            keys.add(key);
-          });
-        });
-        return ts;
-      });
-      const ks = Array.from(keys);
-      const m: Array<string> = rs.map(
-        (r) =>
-          `|${ks
-            .map((key) => {
-              if (!r[key]) {
-                return "";
-              }
-              return `${r[key]}`.replace("\n", "<br/>");
-            })
+    async rows(rows) {
+      const m: Array<string> = rows.map(
+        (row) =>
+          `|${row
+            .map(({ value }) =>
+              typeof value === "string"
+                ? value.replace(/\n/g, "<br/>")
+                : `${value}`
+            )
             .join("|")}|`
       );
       return m.join("\n") + "\n";
@@ -73,10 +64,11 @@ export function createMarkdownFormatter(): Formatter {
 
 export function createJSONLinesFormatter(): Formatter {
   return {
+    type: "json-lines",
     header() {
       return "";
     },
-    async rows({ rows }) {
+    async rows(rows) {
       return rows.map((row) => JSON.stringify(row)).join("\n") + "\n";
     },
     footer() {
@@ -88,10 +80,11 @@ export function createJSONLinesFormatter(): Formatter {
 export function createJSONFormatter(): Formatter {
   let len = 0;
   return {
+    type: "json",
     header() {
       return "[";
     },
-    async rows({ rows }) {
+    async rows(rows) {
       const prefix = len === 0 ? "" : ",";
       len += rows.length;
       return prefix + rows.map((row) => JSON.stringify(row)).join(",");
@@ -104,10 +97,11 @@ export function createJSONFormatter(): Formatter {
 
 export function createCSVFormatter(options: CSV.Options): Formatter {
   return {
+    type: "csv",
     header() {
       return "";
     },
-    async rows({ rows }) {
+    async rows(rows) {
       const structs = rows.flatMap((row) => tenderize(row));
       return await new Promise<string>((resolve, reject) => {
         CSV.stringify(structs, options, (err?: Error, res?: string) => {

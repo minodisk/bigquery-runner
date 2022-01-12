@@ -13,10 +13,7 @@
 // limitations under the License.
 
 import { format as formatBytes } from "bytes";
-import { createWriteStream, WriteStream } from "fs";
-import { readFile } from "fs/promises";
-import mkdirp from "mkdirp";
-import { basename, extname, isAbsolute, join } from "path";
+import { extname, isAbsolute, join } from "path";
 import {
   commands,
   Diagnostic,
@@ -28,27 +25,27 @@ import {
   Range,
   TextDocument,
   Uri,
-  ViewColumn,
-  WebviewPanel,
   window,
   workspace,
 } from "vscode";
 import { BigQuery, Job } from "@google-cloud/bigquery";
 import { Config } from "./config";
 import {
-  Accessor,
-  Cell,
   createCSVFormatter,
+  createFileOutput,
   createFlatten,
   createJSONFormatter,
   createJSONLinesFormatter,
+  createLogOutput,
   createMarkdownFormatter,
   createTableFormatter,
+  createViewerOutput,
   Formatter,
   getJobInfo,
   getTableInfo,
-  Row,
+  Output,
 } from "core";
+import { readFile } from "fs/promises";
 
 type OutputChannel = Pick<
   OrigOutputChannel,
@@ -423,10 +420,18 @@ async function run({
       ctx,
     });
 
-    await output.open();
-    await output.writeHeads({ heads });
-    await output.writeRows({ heads, rows: rs });
-    await output.close();
+    const path = await output.open();
+    if (path !== undefined) {
+      outputChannel.appendLine(`Output to: ${path}`);
+    }
+    await output.writeHeads(heads);
+    await output.writeRows(rs);
+    const bytesWritten = await output.close();
+    if (bytesWritten !== undefined) {
+      outputChannel.appendLine(
+        `Total bytes written: ${formatBytes(bytesWritten)}`
+      );
+    }
 
     return { jobId: job.id };
   } catch (err) {
@@ -588,173 +593,62 @@ function createErrorMarker({
 }
 type ErrorMarker = ReturnType<typeof createErrorMarker>;
 
-type Output = {
-  readonly open: () => Promise<unknown>;
-  readonly path?: () => string;
-  readonly writeHeads: (props: { heads: Array<Accessor> }) => Promise<unknown>;
-  readonly writeRows: (props: {
-    heads: Array<Accessor>;
-    rows: Array<Row>;
-  }) => Promise<unknown>;
-  readonly close: () => Promise<void>;
-};
-type CreateOutputParams = {
+async function createOutput({
+  config,
+  outputChannel,
+  filename,
+  ctx,
+}: {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
   readonly filename: string;
   readonly ctx: ExtensionContext;
-};
-async function createOutput(params: CreateOutputParams): Promise<Output> {
-  const { config, outputChannel, filename } = params;
+}): Promise<Output> {
   switch (config.output.type) {
     case "viewer":
-      return createViewerOutput({ ctx: params.ctx });
-    case "output": {
-      const formatter = createFormatter({ config });
-      let header: Array<string>;
-      return {
-        async open() {
-          outputChannel.show(true);
-        },
-        async writeHeads({ heads }) {
-          header = heads.map(({ id }) => id);
-          outputChannel.append(formatter.header(header));
-        },
-        async writeRows({ rows }) {
-          outputChannel.append(await formatter.rows({ header, rows }));
-        },
-        async close() {
-          outputChannel.append(formatter.footer());
-        },
-      };
-    }
-    case "file": {
-      const formatter = createFormatter({ config });
-      let stream: WriteStream;
-      let header: Array<string>;
-      return {
-        async open() {
-          if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
-            throw new Error(`no workspace folders`);
-          }
-          const dirname = join(
-            workspace.workspaceFolders[0].uri.path ||
-              workspace.workspaceFolders[0].uri.fsPath,
-            config.output.file.path
-          );
-          await mkdirp(dirname);
-          const path = join(
-            dirname,
-            `${basename(filename, extname(filename))}${formatToExtension(
-              config.format.type
-            )}`
-          );
-          outputChannel.appendLine(`Output to: ${path}`);
-          stream = createWriteStream(path);
-        },
-        async writeHeads({ heads }) {
-          header = heads.map(({ id }) => id);
-          const res = formatter.header(header);
-          if (res) {
-            stream.write(res);
-          }
-        },
-        async writeRows({ rows }) {
-          stream.write(await formatter.rows({ header, rows }));
-        },
-        async close() {
-          stream.write(formatter.footer());
-          await new Promise((resolve, reject) => {
-            stream.on("error", reject).on("finish", resolve).end();
-          });
-          outputChannel.appendLine(
-            `Total bytes written: ${formatBytes(stream.bytesWritten)}`
-          );
-        },
-      };
-    }
-  }
-}
-
-let panel: WebviewPanel | undefined;
-
-function createViewerOutput({ ctx }: { ctx: ExtensionContext }): Output {
-  return {
-    async open() {
-      if (!panel) {
-        const root = join(ctx.extensionPath, "out/viewer");
-        panel = window.createWebviewPanel(
-          "bigqueryRunner",
-          "BigQuery Runner",
-          ViewColumn.Beside,
-          {
-            enableScripts: true,
-            localResourceRoots: [Uri.file(root)],
-          }
-        );
-        const base = Uri.file(root)
-          .with({
-            scheme: "vscode-resource",
-          })
-          .toString();
-        const html = (
-          await readFile(join(root, "index.html"), "utf-8")
-        ).replace("<head>", `<head><base href="${base}/" />`);
-        panel.webview.html = html;
-        panel.onDidDispose(
-          () => {
-            panel = undefined;
-          },
-          null,
-          ctx.subscriptions
-        );
-      }
-
-      return panel.webview.postMessage({
-        source: "bigquery-runner",
-        payload: {
-          event: "clear",
-        },
-      });
-    },
-    path() {
-      return "";
-    },
-    async writeHeads({ heads }) {
-      if (!panel) {
-        throw new Error(`panel is not initialized`);
-      }
-      return panel.webview.postMessage({
-        source: "bigquery-runner",
-        payload: {
-          event: "header",
-          payload: heads.map(({ id }) => id),
-        },
-      });
-    },
-    async writeRows({ rows }) {
-      if (!panel) {
-        throw new Error(`panel is not initialized`);
-      }
-      return panel.webview.postMessage({
-        source: "bigquery-runner",
-        payload: {
-          event: "rows",
-          payload: rows.map((row) =>
-            row.reduce<{ [accessor: string]: Cell["value"] }>((obj, cell) => {
-              if (cell) {
-                obj[cell.id] = cell.value;
-              }
-              return obj;
-            }, {})
+      const root = join(ctx.extensionPath, "out/viewer");
+      const base = Uri.file(root)
+        .with({
+          scheme: "vscode-resource",
+        })
+        .toString();
+      const html = (await readFile(join(root, "index.html"), "utf-8")).replace(
+        "<head>",
+        `<head><base href="${base}/" />`
+      );
+      return createViewerOutput({
+        html,
+        subscriptions: ctx.subscriptions,
+        createWebviewPanel: () =>
+          window.createWebviewPanel(
+            "bigqueryRunner",
+            "BigQuery Runner",
+            { viewColumn: -2, preserveFocus: true },
+            {
+              enableScripts: true,
+              localResourceRoots: [Uri.file(root)],
+            }
           ),
-        },
       });
-    },
-    async close() {
-      // do nothing
-    },
-  };
+    case "output":
+      return createLogOutput({
+        formatter: createFormatter({ config }),
+        outputChannel,
+      });
+    case "file":
+      if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
+        throw new Error(`no workspace folders`);
+      }
+      return createFileOutput({
+        formatter: createFormatter({ config }),
+        dirname: join(
+          workspace.workspaceFolders[0].uri.path ||
+            workspace.workspaceFolders[0].uri.fsPath,
+          config.output.file.path
+        ),
+        filename,
+      });
+  }
 }
 
 function createFormatter({ config }: { config: Config }): Formatter {
@@ -772,14 +666,4 @@ function createFormatter({ config }: { config: Config }): Formatter {
     default:
       throw new Error(`Invalid format: ${config.format.type}`);
   }
-}
-
-function formatToExtension(format: Config["format"]["type"]) {
-  return {
-    table: ".txt",
-    markdown: ".md",
-    "json-lines": ".jsonl",
-    json: ".json",
-    csv: ".csv",
-  }[format];
 }
