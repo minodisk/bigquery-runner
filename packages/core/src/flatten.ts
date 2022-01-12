@@ -71,21 +71,23 @@ export type Cell = {
   value: null | number | string | boolean;
 };
 
-export function createFlatten(fields: Array<Field>): {
-  readonly heads: Array<Accessor>;
-  readonly columns: Array<Column>;
-  readonly toRows: (structs: Array<Struct>) => Array<Row>;
-} {
+type Hash = { [id: string]: Primitive };
+
+export function createFlat(fields: Array<Field>) {
   const heads = fieldsToHeads(fields);
   const columns = fieldsToColumns(fields);
   return {
     heads,
     columns,
-    toRows(structs) {
+    toRows(structs: Array<Struct>) {
       return structsToRows({ columns, structs });
+    },
+    toHashes(structs: Array<Struct>) {
+      return structsToHashes({ columns, structs });
     },
   };
 }
+export type Flat = ReturnType<typeof createFlat>;
 
 function fieldsToHeads(fields: Array<Field>): Array<Accessor> {
   return fields.flatMap((field) => {
@@ -137,7 +139,7 @@ function structToRows({
   columns: Array<Column>;
   struct: Struct;
 }): Array<Row> {
-  const rows: Array<Row> = [];
+  const results: Array<Row> = [];
   const depths: Array<number> = new Array(columns.length).fill(0);
   columns.forEach((column, columnIndex) =>
     walk({
@@ -145,27 +147,69 @@ function structToRows({
       columnIndex,
       column,
       accessorIndex: 0,
-      rows,
+      results,
       depths,
+      fill: fillWithRow,
     })
   );
-  return rows;
+  return results;
 }
 
-function walk({
+function structsToHashes({
+  columns,
+  structs,
+}: {
+  columns: Array<Column>;
+  structs: Array<Struct>;
+}): Array<Hash> {
+  return structs.flatMap((struct) => structToHashes({ columns, struct }));
+}
+
+function structToHashes({
+  columns,
+  struct,
+}: {
+  columns: Array<Column>;
+  struct: Struct;
+}): Array<Hash> {
+  const hashes: Array<Hash> = [];
+  const depths: Array<number> = new Array(columns.length).fill(0);
+  columns.forEach((column, columnIndex) =>
+    walk({
+      struct,
+      columnIndex,
+      column,
+      accessorIndex: 0,
+      results: hashes,
+      depths,
+      fill: fillWithHash,
+    })
+  );
+  return hashes;
+}
+
+function walk<T>({
   struct,
   columnIndex,
   column,
   accessorIndex,
-  rows,
+  results,
   depths,
+  fill,
 }: {
   struct: Struct;
   columnIndex: number;
   column: Column;
   accessorIndex: number;
-  rows: Array<Row>;
+  results: Array<T>;
   depths: Array<number>;
+  fill(props: {
+    columnIndex: number;
+    accessor: Accessor;
+    results: Array<T>;
+    depths: Array<number>;
+    value: Primitive;
+  }): void;
 }): void {
   let s: Struct = struct;
   for (let ai = accessorIndex; ai < column.length; ai += 1) {
@@ -178,8 +222,9 @@ function walk({
             columnIndex,
             column,
             accessorIndex: ai + 1,
-            rows,
+            results,
             depths,
+            fill,
           });
         });
         break;
@@ -188,7 +233,7 @@ function walk({
         fill({
           columnIndex,
           accessor,
-          rows,
+          results: results,
           depths,
           value,
         })
@@ -201,7 +246,7 @@ function walk({
       fill({
         columnIndex,
         accessor,
-        rows,
+        results: results,
         depths,
         value: s[accessor.name] as Primitive,
       });
@@ -209,26 +254,46 @@ function walk({
   }
 }
 
-function fill({
+function fillWithRow({
   columnIndex,
   accessor,
-  rows,
+  results,
   depths,
   value,
 }: {
   columnIndex: number;
   accessor: Accessor;
-  rows: Array<Row>;
+  results: Array<Row>;
   depths: Array<number>;
   value: Primitive;
 }) {
-  if (!rows[depths[columnIndex]!]) {
-    rows[depths[columnIndex]!] = [];
+  if (!results[depths[columnIndex]!]) {
+    results[depths[columnIndex]!] = [];
   }
-  rows[depths[columnIndex]!]![columnIndex] = {
+  results[depths[columnIndex]!]![columnIndex] = {
     id: accessor.id,
     value: primitiveToCell(value),
   };
+  depths[columnIndex]! += 1;
+}
+
+function fillWithHash({
+  columnIndex,
+  accessor,
+  results,
+  depths,
+  value,
+}: {
+  columnIndex: number;
+  accessor: Accessor;
+  results: Array<Hash>;
+  depths: Array<number>;
+  value: Primitive;
+}) {
+  if (!results[depths[columnIndex]!]) {
+    results[depths[columnIndex]!] = {};
+  }
+  results[depths[columnIndex]!]![accessor.id] = primitiveToCell(value);
   depths[columnIndex]! += 1;
 }
 

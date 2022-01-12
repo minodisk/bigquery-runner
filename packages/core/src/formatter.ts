@@ -1,16 +1,15 @@
 import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
-import { tenderize } from "tenderizer";
-import { Accessor, Row } from "./flatten";
+import { Flat, Struct } from "./flatten";
 
 export type Formatter = {
   readonly type: "table" | "markdown" | "json-lines" | "json" | "csv";
-  readonly header: (heads: Array<Accessor>) => string;
-  readonly rows: (rows: Array<Row>) => Promise<string>;
+  readonly header: () => string;
+  readonly rows: (rows: Array<Struct>) => Promise<string>;
   readonly footer: () => string;
 };
 
-export function createTableFormatter(): Formatter {
+export function createTableFormatter({ flat }: { flat: Flat }): Formatter {
   return {
     type: "table",
     header() {
@@ -18,7 +17,7 @@ export function createTableFormatter(): Formatter {
     },
     async rows(rows) {
       const t = new EasyTable();
-      rows.forEach((row) => {
+      flat.toRows(rows).forEach((row) => {
         row.forEach((cell) => {
           t.cell(cell.id, cell.value);
         });
@@ -32,29 +31,33 @@ export function createTableFormatter(): Formatter {
   };
 }
 
-export function createMarkdownFormatter(): Formatter {
+export function createMarkdownFormatter({ flat }: { flat: Flat }): Formatter {
   return {
     type: "markdown",
-    header(heads) {
-      if (heads.length === 0) {
+    header() {
+      if (flat.heads.length === 0) {
         return "";
       }
-      return `|${heads.map(({ id }) => id).join("|")}|
-|${heads.map(() => "---").join("|")}|
+      return `|${flat.heads.map(({ id }) => id).join("|")}|
+|${flat.heads.map(() => "---").join("|")}|
 `;
     },
     async rows(rows) {
-      const m: Array<string> = rows.map(
-        (row) =>
-          `|${row
-            .map(({ value }) =>
-              typeof value === "string"
-                ? value.replace(/\n/g, "<br/>")
-                : `${value}`
-            )
-            .join("|")}|`
+      return (
+        flat
+          .toRows(rows)
+          .map(
+            (row) =>
+              `|${row
+                .map(({ value }) =>
+                  typeof value === "string"
+                    ? value.replace(/\n/g, "<br/>")
+                    : `${value}`
+                )
+                .join("|")}|`
+          )
+          .join("\n") + "\n"
       );
-      return m.join("\n") + "\n";
     },
     footer() {
       return "";
@@ -95,24 +98,36 @@ export function createJSONFormatter(): Formatter {
   };
 }
 
-export function createCSVFormatter(options: CSV.Options): Formatter {
+export function createCSVFormatter({
+  flat,
+  options,
+}: {
+  flat: Flat;
+  options: CSV.Options;
+}): Formatter {
   return {
     type: "csv",
     header() {
       return "";
     },
     async rows(rows) {
-      const structs = rows.flatMap((row) => tenderize(row));
+      if (rows.length === 0) {
+        return "";
+      }
       return await new Promise<string>((resolve, reject) => {
-        CSV.stringify(structs, options, (err?: Error, res?: string) => {
-          if (err) {
-            reject(err);
-            return;
+        CSV.stringify(
+          flat.toHashes(rows),
+          options,
+          (err?: Error, res?: string) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            if (res) {
+              resolve(res);
+            }
           }
-          if (res) {
-            resolve(res);
-          }
-        });
+        );
       });
     },
     footer() {

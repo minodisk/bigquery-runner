@@ -1,14 +1,14 @@
 import { createWriteStream, WriteStream } from "fs";
 import mkdirp from "mkdirp";
 import { basename, extname, join } from "path";
-import { Accessor, Cell, Row } from "./flatten";
+import { Flat, Struct } from ".";
 import { Formatter } from "./formatter";
 
 export type Output = {
   readonly open: () => Promise<string | void>;
   readonly path: () => string | void;
-  readonly writeHeads: (heads: Array<Accessor>) => Promise<unknown>;
-  readonly writeRows: (rows: Array<Row>) => Promise<unknown>;
+  readonly writeHeads: () => Promise<unknown>;
+  readonly writeRows: (rows: Array<Struct>) => Promise<unknown>;
   readonly close: () => Promise<number | void>;
 };
 
@@ -28,10 +28,12 @@ export function createViewerOutput({
   html,
   subscriptions,
   createWebviewPanel,
+  flat,
 }: {
   readonly html: string;
   readonly subscriptions: Array<{ dispose(): any }>;
   createWebviewPanel(): WebviewPanel;
+  readonly flat: Flat;
 }): Output {
   let panel: WebviewPanel | undefined;
   return {
@@ -58,7 +60,7 @@ export function createViewerOutput({
     path() {
       return "";
     },
-    async writeHeads(heads) {
+    async writeHeads() {
       if (!panel) {
         throw new Error(`panel is not initialized`);
       }
@@ -66,7 +68,7 @@ export function createViewerOutput({
         source: "bigquery-runner",
         payload: {
           event: "header",
-          payload: heads.map(({ id }) => id),
+          payload: flat.heads.map(({ id }) => id),
         },
       });
     },
@@ -78,14 +80,7 @@ export function createViewerOutput({
         source: "bigquery-runner",
         payload: {
           event: "rows",
-          payload: rows.map((row) =>
-            row.reduce<{ [accessor: string]: Cell["value"] }>((obj, cell) => {
-              if (cell) {
-                obj[cell.id] = `${cell.value}`;
-              }
-              return obj;
-            }, {})
-          ),
+          payload: flat.toHashes(rows),
         },
       });
     },
@@ -110,8 +105,8 @@ export function createLogOutput({
       outputChannel.show(true);
     },
     path() {},
-    async writeHeads(heads) {
-      outputChannel.append(formatter.header(heads));
+    async writeHeads() {
+      outputChannel.append(formatter.header());
     },
     async writeRows(rows) {
       outputChannel.append(await formatter.rows(rows));
@@ -145,8 +140,8 @@ export function createFileOutput({
       return path;
     },
     path() {},
-    async writeHeads(heads) {
-      const res = formatter.header(heads);
+    async writeHeads() {
+      const res = formatter.header();
       if (res) {
         stream.write(res);
       }

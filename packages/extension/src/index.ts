@@ -33,13 +33,14 @@ import { Config } from "./config";
 import {
   createCSVFormatter,
   createFileOutput,
-  createFlatten,
+  createFlat,
   createJSONFormatter,
   createJSONLinesFormatter,
   createLogOutput,
   createMarkdownFormatter,
   createTableFormatter,
   createViewerOutput,
+  Flat,
   Formatter,
   getJobInfo,
   getTableInfo,
@@ -411,21 +412,21 @@ async function run({
       throw new Error(`no fields`);
     }
 
-    const { heads, toRows } = createFlatten(fields);
-    const rs = toRows(rows);
+    const flat = createFlat(fields);
     const output = await createOutput({
       config,
       outputChannel,
       filename: document.fileName,
       ctx,
+      flat,
     });
 
     const path = await output.open();
     if (path !== undefined) {
       outputChannel.appendLine(`Output to: ${path}`);
     }
-    await output.writeHeads(heads);
-    await output.writeRows(rs);
+    await output.writeHeads();
+    await output.writeRows(rows);
     const bytesWritten = await output.close();
     if (bytesWritten !== undefined) {
       outputChannel.appendLine(
@@ -598,11 +599,13 @@ async function createOutput({
   outputChannel,
   filename,
   ctx,
+  flat,
 }: {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
   readonly filename: string;
   readonly ctx: ExtensionContext;
+  readonly flat: Flat;
 }): Promise<Output> {
   switch (config.output.type) {
     case "viewer":
@@ -629,10 +632,11 @@ async function createOutput({
               localResourceRoots: [Uri.file(root)],
             }
           ),
+        flat,
       });
     case "output":
       return createLogOutput({
-        formatter: createFormatter({ config }),
+        formatter: createFormatter({ config, flat }),
         outputChannel,
       });
     case "file":
@@ -640,7 +644,7 @@ async function createOutput({
         throw new Error(`no workspace folders`);
       }
       return createFileOutput({
-        formatter: createFormatter({ config }),
+        formatter: createFormatter({ config, flat }),
         dirname: join(
           workspace.workspaceFolders[0].uri.path ||
             workspace.workspaceFolders[0].uri.fsPath,
@@ -651,18 +655,24 @@ async function createOutput({
   }
 }
 
-function createFormatter({ config }: { config: Config }): Formatter {
+function createFormatter({
+  config,
+  flat,
+}: {
+  config: Config;
+  flat: Flat;
+}): Formatter {
   switch (config.format.type) {
     case "table":
-      return createTableFormatter();
+      return createTableFormatter({ flat });
     case "markdown":
-      return createMarkdownFormatter();
+      return createMarkdownFormatter({ flat });
     case "json-lines":
       return createJSONLinesFormatter();
     case "json":
       return createJSONFormatter();
     case "csv":
-      return createCSVFormatter(config.format.csv);
+      return createCSVFormatter({ flat, options: config.format.csv });
     default:
       throw new Error(`Invalid format: ${config.format.type}`);
   }

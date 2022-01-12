@@ -1,13 +1,13 @@
-import { createFlatten } from "./flatten";
+import { createFlat } from "./flatten";
 
 describe("structToRows", () => {
   it("Empty", () => {
-    const flatten = createFlatten([]);
+    const flatten = createFlat([]);
     expect(flatten.toRows([])).toEqual([]);
   });
 
   it("Flat", () => {
-    const flatten = createFlatten([
+    const flatten = createFlat([
       {
         name: "a",
         type: "STRING",
@@ -35,7 +35,7 @@ describe("structToRows", () => {
   });
 
   it("Struct", () => {
-    const flatten = createFlatten([
+    const flatten = createFlat([
       {
         name: "a",
         type: "STRING",
@@ -79,7 +79,7 @@ describe("structToRows", () => {
   });
 
   it("Empty Array<Value>", () => {
-    const flatten = createFlatten([
+    const flatten = createFlat([
       {
         name: "a",
         type: "STRING",
@@ -110,7 +110,7 @@ describe("structToRows", () => {
   });
 
   it("Array<Value>", () => {
-    const flatten = createFlatten([
+    const flatten = createFlat([
       {
         name: "a",
         type: "STRING",
@@ -159,7 +159,7 @@ describe("structToRows", () => {
   });
 
   it("Empty Array<Struct>", () => {
-    const flatten = createFlatten([
+    const flatten = createFlat([
       {
         name: "a",
         type: "STRING",
@@ -213,7 +213,7 @@ describe("structToRows", () => {
   });
 
   it("Array<Struct>", () => {
-    const flatten = createFlatten([
+    const flatten = createFlat([
       {
         name: "a",
         type: "STRING",
@@ -269,7 +269,7 @@ describe("structToRows", () => {
   });
 
   it("Array<Struct<Array<Struct>>>", () => {
-    const flatten = createFlatten([
+    const flatten = createFlat([
       {
         name: "a",
         type: "STRUCT",
