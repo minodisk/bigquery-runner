@@ -68,7 +68,7 @@ export type Primitive =
 export type Row = Array<Cell>;
 export type Cell = {
   id: string;
-  value: null | number | string | boolean;
+  value: undefined | null | number | string | boolean;
 };
 
 type Hash = { [id: string]: Primitive };
@@ -80,7 +80,7 @@ export function createFlat(fields: Array<Field>) {
     heads,
     columns,
     toRows(structs: Array<Struct>) {
-      return structsToRows({ columns, structs });
+      return structsToRows({ heads, columns, structs });
     },
     toHashes(structs: Array<Struct>) {
       return structsToHashes({ columns, structs });
@@ -123,33 +123,38 @@ function fieldsToColumns(fields: Array<Field>): Array<Column> {
 }
 
 function structsToRows({
+  heads,
   columns,
   structs,
 }: {
+  heads: Array<Accessor>;
   columns: Array<Column>;
   structs: Array<Struct>;
 }): Array<Row> {
-  return structs.flatMap((struct) => structToRows({ columns, struct }));
+  return structs.flatMap((struct) => structToRows({ heads, columns, struct }));
 }
 
 function structToRows({
+  heads,
   columns,
   struct,
 }: {
+  heads: Array<Accessor>;
   columns: Array<Column>;
   struct: Struct;
 }): Array<Row> {
   const results: Array<Row> = [];
-  const depths: Array<number> = new Array(columns.length).fill(0);
+  const createFillWithRow = createFillWithRowCreator({
+    heads,
+    results,
+    depths: new Array(columns.length).fill(0),
+  });
   columns.forEach((column, columnIndex) =>
     walk({
       struct,
-      columnIndex,
       column,
       accessorIndex: 0,
-      results,
-      depths,
-      fill: fillWithRow,
+      fill: createFillWithRow({ columnIndex }),
     })
   );
   return results;
@@ -172,44 +177,32 @@ function structToHashes({
   columns: Array<Column>;
   struct: Struct;
 }): Array<Hash> {
-  const hashes: Array<Hash> = [];
-  const depths: Array<number> = new Array(columns.length).fill(0);
+  const results: Array<Hash> = [];
+  const createFillWithHash = createFillWithHashCreator({
+    results,
+    depths: new Array(columns.length).fill(0),
+  });
   columns.forEach((column, columnIndex) =>
     walk({
       struct,
-      columnIndex,
       column,
       accessorIndex: 0,
-      results: hashes,
-      depths,
-      fill: fillWithHash,
+      fill: createFillWithHash({ columnIndex }),
     })
   );
-  return hashes;
+  return results;
 }
 
-function walk<T>({
+function walk({
   struct,
-  columnIndex,
   column,
   accessorIndex,
-  results,
-  depths,
   fill,
 }: {
   struct: Struct;
-  columnIndex: number;
   column: Column;
   accessorIndex: number;
-  results: Array<T>;
-  depths: Array<number>;
-  fill(props: {
-    columnIndex: number;
-    accessor: Accessor;
-    results: Array<T>;
-    depths: Array<number>;
-    value: Primitive;
-  }): void;
+  fill(props: { accessor: Accessor; value: Primitive }): void;
 }): void {
   let s: Struct = struct;
   for (let ai = accessorIndex; ai < column.length; ai += 1) {
@@ -219,11 +212,8 @@ function walk<T>({
         (s[accessor.name] as Array<Struct>).forEach((struct) => {
           walk({
             struct,
-            columnIndex,
             column,
             accessorIndex: ai + 1,
-            results,
-            depths,
             fill,
           });
         });
@@ -231,10 +221,7 @@ function walk<T>({
       }
       (s[accessor.name] as Array<Primitive>).forEach((value) =>
         fill({
-          columnIndex,
           accessor,
-          results: results,
-          depths,
           value,
         })
       );
@@ -244,60 +231,60 @@ function walk<T>({
         continue;
       }
       fill({
-        columnIndex,
         accessor,
-        results: results,
-        depths,
         value: s[accessor.name] as Primitive,
       });
     }
   }
 }
 
-function fillWithRow({
-  columnIndex,
-  accessor,
+function createFillWithRowCreator({
+  heads,
   results,
   depths,
-  value,
 }: {
-  columnIndex: number;
-  accessor: Accessor;
+  heads: Array<Accessor>;
   results: Array<Row>;
   depths: Array<number>;
-  value: Primitive;
 }) {
-  if (!results[depths[columnIndex]!]) {
-    results[depths[columnIndex]!] = [];
-  }
-  results[depths[columnIndex]!]![columnIndex] = {
-    id: accessor.id,
-    value: primitiveToCell(value),
+  return ({ columnIndex }: { columnIndex: number }) => {
+    return ({ accessor, value }: { value: Primitive; accessor: Accessor }) => {
+      if (!results[depths[columnIndex]!]) {
+        results[depths[columnIndex]!] = heads.map(({ id }) => ({
+          id,
+          value: undefined,
+        }));
+      }
+      results[depths[columnIndex]!]![columnIndex] = {
+        id: accessor.id,
+        value: primitiveToCell(value),
+      };
+      depths[columnIndex]! += 1;
+    };
   };
-  depths[columnIndex]! += 1;
 }
 
-function fillWithHash({
-  columnIndex,
-  accessor,
+function createFillWithHashCreator({
   results,
   depths,
-  value,
 }: {
-  columnIndex: number;
-  accessor: Accessor;
   results: Array<Hash>;
   depths: Array<number>;
-  value: Primitive;
 }) {
-  if (!results[depths[columnIndex]!]) {
-    results[depths[columnIndex]!] = {};
-  }
-  results[depths[columnIndex]!]![accessor.id] = primitiveToCell(value);
-  depths[columnIndex]! += 1;
+  return ({ columnIndex }: { columnIndex: number }) => {
+    return ({ value, accessor }: { value: Primitive; accessor: Accessor }) => {
+      if (!results[depths[columnIndex]!]) {
+        results[depths[columnIndex]!] = {};
+      }
+      results[depths[columnIndex]!]![accessor.id] = primitiveToCell(value);
+      depths[columnIndex]! += 1;
+    };
+  };
 }
 
-function primitiveToCell(primitive: Primitive): Cell["value"] {
+function primitiveToCell(
+  primitive: Primitive
+): null | number | string | boolean {
   if (
     primitive === null ||
     typeof primitive === "number" ||

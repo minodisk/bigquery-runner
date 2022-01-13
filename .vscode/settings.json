@@ -20,7 +20,7 @@
   "eslint.validate": ["javascript", "typescript"],
 
   "bigqueryRunner.output.file.path": "./output",
-  "bigqueryRunner.output.type": "viewer",
+  "bigqueryRunner.output.type": "output",
   "bigqueryRunner.format.type": "markdown",
   "bigqueryRunner.format.csv.header": true
 }

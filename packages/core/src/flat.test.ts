@@ -105,7 +105,11 @@ describe("structToRows", () => {
         },
       ])
     ).toEqual([
-      [{ id: "a", value: "foo" }, undefined, { id: "c", value: 0.123 }],
+      [
+        { id: "a", value: "foo" },
+        { id: "b", value: undefined },
+        { id: "c", value: 0.123 },
+      ],
     ]);
   });
 
@@ -149,12 +153,17 @@ describe("structToRows", () => {
         { id: "d", value: 0.123 },
       ],
       [
-        undefined,
+        { id: "a", value: undefined },
         { id: "b", value: 456 },
-        undefined,
+        { id: "c", value: undefined },
         { id: "d", value: 0.456 },
       ],
-      [undefined, { id: "b", value: 789 }],
+      [
+        { id: "a", value: undefined },
+        { id: "b", value: 789 },
+        { id: "c", value: undefined },
+        { id: "d", value: undefined },
+      ],
     ]);
   });
 
@@ -204,9 +213,9 @@ describe("structToRows", () => {
     ).toEqual([
       [
         { id: "a", value: "foo" },
-        undefined,
-        undefined,
-        undefined,
+        { id: "b.c", value: undefined },
+        { id: "b.d", value: undefined },
+        { id: "b.e", value: undefined },
         { id: "f", value: 0.123 },
       ],
     ]);
@@ -263,8 +272,16 @@ describe("structToRows", () => {
         { id: "b.c", value: true },
         { id: "b.d", value: 0.123 },
       ],
-      [undefined, { id: "b.c", value: false }, { id: "b.d", value: 0.456 }],
-      [undefined, { id: "b.c", value: false }, { id: "b.d", value: 0.789 }],
+      [
+        { id: "a", value: undefined },
+        { id: "b.c", value: false },
+        { id: "b.d", value: 0.456 },
+      ],
+      [
+        { id: "a", value: undefined },
+        { id: "b.c", value: false },
+        { id: "b.d", value: 0.789 },
+      ],
     ]);
   });
 

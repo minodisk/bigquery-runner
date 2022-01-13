@@ -50,7 +50,9 @@ export function createMarkdownFormatter({ flat }: { flat: Flat }): Formatter {
             (row) =>
               `|${row
                 .map(({ value }) =>
-                  typeof value === "string"
+                  value === undefined
+                    ? ""
+                    : typeof value === "string"
                     ? value.replace(/\n/g, "<br/>")
                     : `${value}`
                 )
