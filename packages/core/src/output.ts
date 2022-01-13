@@ -1,8 +1,7 @@
 import { createWriteStream, WriteStream } from "fs";
 import mkdirp from "mkdirp";
 import { basename, extname, join } from "path";
-import { Flat, Struct } from ".";
-import { Formatter } from "./formatter";
+import { Flat, Formatter, Struct } from ".";
 
 export type Output = {
   readonly open: () => Promise<string | void>;
