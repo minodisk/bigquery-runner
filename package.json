@@ -146,7 +146,7 @@
         },
         "bigqueryRunner.output.type": {
           "type": "string",
-          "default": "viewer",
+          "default": "output",
           "enum": [
             "viewer",
             "output",
