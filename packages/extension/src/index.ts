@@ -13,13 +13,7 @@
 // limitations under the License.
 
 import { format as formatBytes } from "bytes";
-import * as CSV from "csv-stringify";
-import EasyTable from "easy-table";
-import { flatten } from "flat";
-import { createWriteStream } from "fs";
-import mkdirp from "mkdirp";
-import { basename, extname, isAbsolute, join } from "path";
-import { tenderize } from "tenderizer";
+import { extname, isAbsolute, join } from "path";
 import {
   commands,
   Diagnostic,
@@ -30,18 +24,29 @@ import {
   Position,
   Range,
   TextDocument,
+  Uri,
   window,
   workspace,
 } from "vscode";
 import { BigQuery, Job } from "@google-cloud/bigquery";
 import { Config } from "./config";
-
-type Writer = {
-  readonly path?: string;
-  readonly write: (chunk: string) => void;
-  readonly writeLine: (chunk: string) => void;
-  readonly close: () => Promise<void>;
-};
+import {
+  createCSVFormatter,
+  createFileOutput,
+  createFlat,
+  createJSONFormatter,
+  createJSONLinesFormatter,
+  createLogOutput,
+  createMarkdownFormatter,
+  createTableFormatter,
+  createViewerOutput,
+  Flat,
+  Formatter,
+  getJobInfo,
+  getTableInfo,
+  Output,
+} from "core";
+import { readFile } from "fs/promises";
 
 type OutputChannel = Pick<
   OrigOutputChannel,
@@ -68,7 +73,7 @@ export type Dependencies = {
 };
 
 export async function activate(
-  ctx: Pick<ExtensionContext, "subscriptions">,
+  ctx: ExtensionContext,
   dependencies?: Dependencies
 ) {
   try {
@@ -83,7 +88,9 @@ export async function activate(
       get(): Result {
         return {};
       },
-      set() {},
+      set() {
+        // do nothing
+      },
     };
 
     const diagnosticCollection =
@@ -103,9 +110,10 @@ export async function activate(
         wrapCallback({
           configManager,
           diagnosticCollection,
-          outputChannel: outputChannel,
+          outputChannel,
+          resultChannel,
+          ctx,
           callback: run,
-          resultChannel: resultChannel,
         }),
       ],
       [
@@ -113,9 +121,10 @@ export async function activate(
         wrapCallback({
           configManager,
           diagnosticCollection,
-          outputChannel: outputChannel,
+          outputChannel,
+          resultChannel,
+          ctx,
           callback: dryRun,
-          resultChannel: resultChannel,
         }),
       ],
     ]).forEach((action, name) => {
@@ -169,7 +178,9 @@ export async function activate(
   }
 }
 
-export function deactivate() {}
+export function deactivate() {
+  // do nothing
+}
 
 function createConfigManager(section: string) {
   let config = getConfigration(section);
@@ -180,18 +191,21 @@ function createConfigManager(section: string) {
     refresh(): void {
       config = getConfigration(section);
     },
-    dispose(): void {},
+    dispose(): void {
+      // do nothing
+    },
   };
 }
 type ConfigManager = ReturnType<typeof createConfigManager>;
 
 function getConfigration(section: string): Config {
-  const config = workspace.getConfiguration(section) as any as Config;
+  const config = workspace.getConfiguration(section) as Config;
   return {
     ...config,
     keyFilename:
       isAbsolute(config.keyFilename) ||
       !workspace.workspaceFolders ||
+      !workspace.workspaceFolders[0] ||
       workspace.workspaceFolders.length === 0
         ? config.keyFilename
         : join(workspace.workspaceFolders[0].uri.fsPath, config.keyFilename),
@@ -261,14 +275,12 @@ async function _validateQuery({
       },
       document,
     });
-    outputChannel.appendLine("");
   } catch (err) {
     if (err instanceof ErrorWithId) {
       outputChannel.appendLine(`${err.error} (${err.id})`);
     } else {
       outputChannel.appendLine(`${err}`);
     }
-    outputChannel.appendLine("");
   }
 }
 
@@ -289,20 +301,23 @@ function wrapCallback({
   configManager,
   diagnosticCollection,
   outputChannel,
-  callback,
   resultChannel,
+  ctx,
+  callback,
 }: {
   readonly configManager: ConfigManager;
   readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
+  readonly resultChannel: ResultChannel;
+  readonly ctx: ExtensionContext;
   readonly callback: (params: {
     readonly config: Config;
     readonly errorMarker: ErrorMarker;
     readonly outputChannel: OutputChannel;
     readonly document: TextDocument;
     readonly range?: Range;
+    readonly ctx: ExtensionContext;
   }) => Promise<Result>;
-  readonly resultChannel: ResultChannel;
 }): () => Promise<void> {
   return async () => {
     try {
@@ -317,6 +332,7 @@ function wrapCallback({
         outputChannel,
         document,
         range: selection,
+        ctx,
       });
       resultChannel.set(result);
     } catch (err) {
@@ -326,8 +342,6 @@ function wrapCallback({
       } else {
         outputChannel.appendLine(`${err}`);
       }
-    } finally {
-      outputChannel.appendLine("");
     }
   };
 }
@@ -338,14 +352,16 @@ async function run({
   outputChannel,
   document,
   range,
+  ctx,
 }: {
   readonly config: Config;
   readonly errorMarker: ErrorMarker;
   readonly outputChannel: OutputChannel;
   readonly document: TextDocument;
   readonly range?: Range;
+  readonly ctx: ExtensionContext;
 }): Promise<Result> {
-  outputChannel.show(true);
+  // outputChannel.show(true);
   outputChannel.appendLine(`Run`);
 
   let job!: Job;
@@ -355,107 +371,67 @@ async function run({
       config,
       queryText: getQueryText({ document, range }),
     });
+    outputChannel.appendLine(`Job ID: ${job.id}`);
     errorMarker.clear();
   } catch (err) {
     errorMarker.mark(err);
   }
 
   try {
+    const [rows] = await job.getQueryResults({
+      autoPaginate: true,
+    });
+    outputChannel.appendLine(`Results: ${rows.length} rows`);
+
+    const jobInfo = await getJobInfo({ job });
+    // outputChannel.appendLine("JOB INFO -------------------");
+    // outputChannel.appendLine(JSON.stringify(jobInfo, null, 2));
+
+    const {
+      statistics: {
+        query: { totalBytesBilled, cacheHit },
+      },
+    } = jobInfo;
+    outputChannel.appendLine(
+      `Result: ${formatBytes(
+        parseInt(totalBytesBilled, 10)
+      )} to be billed (cache: ${cacheHit})`
+    );
+
+    const tableInfo = await getTableInfo({
+      keyFilename: config.keyFilename,
+      tableReference: jobInfo.configuration.query.destinationTable,
+    });
+    // outputChannel.appendLine("TABLE INFO -------------------");
+    // outputChannel.appendLine(JSON.stringify(tableInfo, null, 2));
+
+    const {
+      schema: { fields },
+    } = tableInfo;
+    if (!fields) {
+      throw new Error(`no fields`);
+    }
+
+    const flat = createFlat(fields);
     const output = await createOutput({
       config,
       outputChannel,
       filename: document.fileName,
+      ctx,
+      flat,
     });
 
-    outputChannel.appendLine(`Job ID: ${job.id}`);
-
-    const res = await job.getQueryResults({
-      autoPaginate: true,
-    });
-    const [rows] = res;
-
-    outputChannel.appendLine(`Result: ${rows.length} rows`);
-
-    switch (config.format.type) {
-      case "table":
-        const t = new EasyTable();
-        rows.forEach((row) => {
-          tenderize(row).forEach((o) => {
-            Object.keys(o).forEach((key) => t.cell(key, o[key]));
-            t.newRow();
-          });
-        });
-        output.writeLine(t.toString().trimEnd());
-        output.close();
-        break;
-      case "markdown":
-        const keys = new Set<string>();
-        const rs = rows.flatMap((row) => {
-          const ts = tenderize(row);
-          ts.map((t) => {
-            Object.keys(t).forEach((key) => {
-              keys.add(key);
-            });
-          });
-          return ts;
-        });
-        const ks = Array.from(keys);
-        const m: Array<string> = [
-          `|${ks.join("|")}|`,
-          `|${ks.map(() => "---").join("|")}|`,
-          ...rs.map(
-            (r) =>
-              `|${ks
-                .map((key) => {
-                  if (!r[key]) {
-                    return "";
-                  }
-                  return `${r[key]}`.replace("\n", "<br/>");
-                })
-                .join("|")}|`
-          ),
-        ];
-        output.writeLine(m.join("\n"));
-        output.close();
-        break;
-      case "json-lines":
-        rows.forEach((row) => {
-          output.writeLine(JSON.stringify(flatten(row, { safe: true })));
-        });
-        output.close();
-        break;
-      case "json":
-        output.write("[");
-        rows.forEach((row, i) => {
-          output.write(
-            (i === 0 ? "" : ",") + JSON.stringify(flatten(row, { safe: true }))
-          );
-        });
-        output.writeLine("]");
-        output.close();
-        break;
-      case "csv":
-        const structs = rows.flatMap((row) => tenderize(row));
-        await new Promise<void>((resolve, reject) => {
-          CSV.stringify(
-            structs,
-            config.format.csv,
-            (err?: Error, res?: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (res) {
-                output.write(res);
-                output.close();
-              }
-              resolve();
-            }
-          );
-        });
-        break;
-      default:
-        throw new Error(`Invalid format: ${config.format.type}`);
+    const path = await output.open();
+    if (path !== undefined) {
+      outputChannel.appendLine(`Output to: ${path}`);
+    }
+    await output.writeHeads();
+    await output.writeRows(rows);
+    const bytesWritten = await output.close();
+    if (bytesWritten !== undefined) {
+      outputChannel.appendLine(
+        `Total bytes written: ${formatBytes(bytesWritten)}`
+      );
     }
 
     return { jobId: job.id };
@@ -481,7 +457,7 @@ async function dryRun({
   readonly document: TextDocument;
   readonly range?: Range;
 }): Promise<Result> {
-  outputChannel.show(true);
+  // outputChannel.show(true);
   outputChannel.appendLine(`Dry run`);
 
   let job!: Job;
@@ -570,7 +546,7 @@ function createErrorMarker({
     clear() {
       diagnosticCollection.delete(document.uri);
     },
-    mark(err: any) {
+    mark(err: unknown) {
       if (!(err instanceof Error)) {
         const first = document.lineAt(0);
         const last = document.lineAt(document.lineCount - 1);
@@ -609,7 +585,7 @@ function createErrorMarker({
               new Position(line, character),
               new Position(line, character + 1)
             ),
-          m
+          m ?? ""
         ),
       ]);
       throw err;
@@ -622,64 +598,82 @@ async function createOutput({
   config,
   outputChannel,
   filename,
+  ctx,
+  flat,
 }: {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
   readonly filename: string;
-}): Promise<Writer> {
+  readonly ctx: ExtensionContext;
+  readonly flat: Flat;
+}): Promise<Output> {
   switch (config.output.type) {
+    case "viewer":
+      const root = join(ctx.extensionPath, "out/viewer");
+      const base = Uri.file(root)
+        .with({
+          scheme: "vscode-resource",
+        })
+        .toString();
+      const html = (await readFile(join(root, "index.html"), "utf-8")).replace(
+        "<head>",
+        `<head><base href="${base}/" />`
+      );
+      return createViewerOutput({
+        html,
+        subscriptions: ctx.subscriptions,
+        createWebviewPanel: () =>
+          window.createWebviewPanel(
+            "bigqueryRunner",
+            "BigQuery Runner",
+            { viewColumn: -2, preserveFocus: true },
+            {
+              enableScripts: true,
+              localResourceRoots: [Uri.file(root)],
+            }
+          ),
+        flat,
+      });
     case "output":
-      return {
-        write(chunk: string) {
-          outputChannel.show(true);
-          outputChannel.append(chunk);
-        },
-        writeLine(chunk: string) {
-          outputChannel.show(true);
-          outputChannel.appendLine(chunk);
-        },
-        async close() {},
-      };
+      return createLogOutput({
+        formatter: createFormatter({ config, flat }),
+        outputChannel,
+      });
     case "file":
-      if (!workspace.workspaceFolders) {
+      if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
         throw new Error(`no workspace folders`);
       }
-      const dirname = join(
-        workspace.workspaceFolders[0].uri.path ||
-          workspace.workspaceFolders[0].uri.fsPath,
-        config.output.file.path
-      );
-      await mkdirp(dirname);
-      const path = join(
-        dirname,
-        `${basename(filename, extname(filename))}${formatToExtension(
-          config.format.type
-        )}`
-      );
-      outputChannel.appendLine(`Output to: ${path}`);
-      const stream = createWriteStream(path);
-      return {
-        path,
-        write: (chunk) => stream.write(chunk),
-        writeLine: (chunk) => stream.write(chunk + "\n"),
-        async close() {
-          return new Promise((resolve, reject) => {
-            outputChannel.appendLine(
-              `Total bytes written: ${formatBytes(stream.bytesWritten)}`
-            );
-            stream.on("error", reject).on("finish", resolve).end();
-          });
-        },
-      };
+      return createFileOutput({
+        formatter: createFormatter({ config, flat }),
+        dirname: join(
+          workspace.workspaceFolders[0].uri.path ||
+            workspace.workspaceFolders[0].uri.fsPath,
+          config.output.file.path
+        ),
+        filename,
+      });
   }
 }
 
-function formatToExtension(format: Config["format"]["type"]) {
-  return {
-    table: ".txt",
-    markdown: ".md",
-    "json-lines": ".jsonl",
-    json: ".json",
-    csv: ".csv",
-  }[format];
+function createFormatter({
+  config,
+  flat,
+}: {
+  config: Config;
+  flat: Flat;
+}): Formatter {
+  switch (config.format.type) {
+    case "table":
+      return createTableFormatter({ flat });
+    case "markdown":
+      return createMarkdownFormatter({ flat });
+    case "json-lines":
+      return createJSONLinesFormatter();
+    case "json":
+      return createJSONFormatter();
+    case "csv":
+      return createCSVFormatter({ flat, options: config.format.csv });
+    default:
+      throw new Error(`Invalid format: ${config.format.type}`);
+  }
 }

@@ -17,5 +17,10 @@
     "source.fixAll.eslint": true
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "eslint.validate": ["javascript", "typescript"]
+  "eslint.validate": ["javascript", "typescript"],
+
+  "bigqueryRunner.output.file.path": "./output",
+  "bigqueryRunner.output.type": "viewer",
+  "bigqueryRunner.format.type": "markdown",
+  "bigqueryRunner.format.csv.header": true
 }

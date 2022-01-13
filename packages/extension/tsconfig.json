@@ -2,16 +2,17 @@
   "compilerOptions": {
     "module": "CommonJS",
     "target": "ES2020",
-    "outDir": "out",
+    "rootDir": "src",
+    "outDir": "../../out",
     "lib": ["ES2020"],
     "sourceMap": true,
-    "rootDir": "src",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true
   },
   "exclude": ["node_modules", ".vscode-test"]
 }

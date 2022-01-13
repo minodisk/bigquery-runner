@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "bigquery-runner",
   "displayName": "BigQuery Runner",
   "description": "An extension for querying Google Cloud Platform's BigQuery analytics datasets directly from VS Code.",
@@ -12,6 +13,13 @@
   "engines": {
     "vscode": "^1.63.2"
   },
+  "workspaces": [
+    "packages/codegen",
+    "packages/core",
+    "packages/extension",
+    "packages/misc",
+    "packages/viewer"
+  ],
   "categories": [
     "Other"
   ],
@@ -22,8 +30,8 @@
     "query",
     "erorr"
   ],
-  "main": "out/extension.js",
-  "icon": "assets/icon.png",
+  "main": "out/extension/index.js",
+  "icon": "icon.png",
   "activationEvents": [
     "workspaceContains:**/*.bqsql",
     "workspaceContains:**/*.bqddl",
@@ -39,13 +47,13 @@
         "command": "bigqueryRunner.run",
         "title": "BigQuery Runner: Run",
         "description": "Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
-        "screenshot": "screenshots/run.gif"
+        "screenshot": "run.gif"
       },
       {
         "command": "bigqueryRunner.dryRun",
         "title": "BigQuery Runner: Dry Run",
         "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
-        "screenshot": "screenshots/dry-run.gif"
+        "screenshot": "dry-run.gif"
       }
     ],
     "configuration": {
@@ -90,7 +98,7 @@
           "type": "boolean",
           "default": true,
           "description": "Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.",
-          "screenshot": "screenshots/query-validation.gif"
+          "screenshot": "query-validation.gif"
         },
         "bigqueryRunner.queryValidation.debounceInterval": {
           "type": "number",
@@ -140,6 +148,7 @@
           "type": "string",
           "default": "output",
           "enum": [
+            "viewer",
             "output",
             "file"
           ],
@@ -154,61 +163,71 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "rm -rf out && tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "dev": "run-p dev:*",
+    "dev:extension": "npm run -w extension dev",
+    "dev:codegen": "npm run -w codegen dev",
+    "dev:viewer": "npm run -w viewer dev",
+    "test": "run-p test:*",
+    "test:core": "npm run -w core test",
+    "test-watch": "run-p test-watch:*",
+    "test-watch:core": "npm run -w core test:watch",
+    "vscode:prepublish": "run-p build:*",
+    "build:codegen": "npm run -w codegen build",
+    "build:extension": "npm run -w extension build:production",
+    "build:viewer": "npm run -w viewer build:production",
     "debug": "run-s package:debug install:debug",
-    "debug:insiders": "run-s package:debug install:debug:insiders",
     "package": "mkdirp dist && vsce package -o ./dist/",
     "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
-    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix",
-    "install:debug:insiders": "code-insiders --install-extension ./dist/bigquery-runner-debug.vsix",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint 'src/**/*.ts'",
-    "test": "node ./out/test/runTest.js",
-    "generate": "run-p generate:readme generate:dts",
-    "generate:watch": "nodemon --exec 'npm run generate'",
-    "generate:readme": "ejs ./gen-src/README.md.ejs -f package.json -o ./README.md",
-    "generate:dts": "ejs ./gen-src/config.d.ts.ejs -f package.json -o ./src/config.d.ts"
-  },
-  "nodemonConfig": {
-    "watch": [
-      "gen-src/",
-      "package.json"
-    ],
-    "ext": "ejs,json"
+    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^5.9.2",
+    "@chakra-ui/react": "^1.7.4",
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@google-cloud/bigquery": "^5.10.0",
     "bytes": "^3.1.1",
-    "csv-stringify": "^6.0.4",
+    "csv-stringify": "^6.0.5",
     "easy-table": "^1.2.0",
-    "flat": "^5.0.2",
-    "mkdirp": "^0.5.5",
-    "tenderizer": "^0.0.5"
+    "framer-motion": "^5.6.0",
+    "mkdirp": "^1.0.4",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-table": "^7.7.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.1",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/user-event": "^13.5.0",
     "@types/bytes": "^3.1.1",
     "@types/csv-stringify": "^3.1.0",
     "@types/easy-table": "^1.2.0",
-    "@types/flat": "^5.0.2",
-    "@types/glob": "^7.1.4",
+    "@types/glob": "^7.2.0",
+    "@types/jest": "^27.4.0",
     "@types/mkdirp": "^1.0.2",
     "@types/mocha": "^9.0.0",
-    "@types/node": "14.x",
-    "@types/vscode": "^1.63.0",
-    "@typescript-eslint/eslint-plugin": "^5.4.0",
-    "@typescript-eslint/parser": "^5.4.0",
-    "@vscode/test-electron": "^1.6.2",
+    "@types/node": "^17.0.8",
+    "@types/react": "^17.0.38",
+    "@types/react-dom": "^17.0.11",
+    "@types/react-table": "^7.7.9",
+    "@types/vscode": "^1.63.1",
+    "@typescript-eslint/eslint-plugin": "^5.9.1",
+    "@typescript-eslint/parser": "^5.9.1",
+    "@vscode/test-electron": "^2.0.3",
     "ejs": "^3.1.6",
-    "eslint": "^8.1.0",
-    "eslint-plugin-import": "^2.25.3",
+    "esbuild": "^0.14.11",
+    "eslint": "^8.6.0",
+    "eslint-config-react-app": "^7.0.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-unused-imports": "^2.0.0",
-    "glob": "^7.1.7",
+    "glob": "^7.2.0",
+    "jest": "^27.4.7",
     "mocha": "^9.1.3",
     "nodemon": "^2.0.15",
     "npm-run-all": "^4.1.5",
-    "typescript": "^4.4.4",
-    "vsce": "^2.5.1"
+    "ts-jest": "^27.1.2",
+    "typescript": "^4.5.4",
+    "vsce": "^2.6.3",
+    "web-vitals": "^2.1.3"
   }
 }
