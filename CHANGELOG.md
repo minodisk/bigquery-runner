@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## [v0.0.21]
+
+### Added
+
+- Add the `viewer` options to `bigqueryRunner.output.type`
+  - Rendering a well-formed table to a webview
+
 ## [v0.0.20]
 
 ### Added

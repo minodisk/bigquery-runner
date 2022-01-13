@@ -150,7 +150,7 @@ Set the delimiter between the fields of a record. It can be one or multiple char
 
 |Type|Default|Enum|
 |---|---|---|
-|string|"viewer"|"viewer" &#x7C; "output" &#x7C; "file"|
+|string|"output"|"viewer" &#x7C; "output" &#x7C; "file"|
 
 Controls the output destination for query results.
 
