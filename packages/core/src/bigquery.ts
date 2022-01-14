@@ -1,4 +1,4 @@
-import { BigQuery, Job } from "@google-cloud/bigquery";
+import { BigQuery, BigQueryOptions, Query } from "@google-cloud/bigquery";
 import { Field } from ".";
 
 export type JobInfo = {
@@ -66,32 +66,115 @@ export type TableReference = {
   tableId: string;
 };
 
-export async function getJobInfo({ job }: { job: Job }): Promise<JobInfo> {
-  const metadata = await job.getMetadata();
-  const jobInfo: JobInfo | undefined = metadata.find(
-    ({ kind }) => kind === "bigquery#job"
-  );
-  if (!jobInfo) {
-    throw new Error(`no job info: ${job.id}`);
+export type Client = ReturnType<typeof createClient> extends Promise<infer T>
+  ? T
+  : never;
+export type RunJob = ReturnType<Client["createRunJob"]> extends Promise<infer T>
+  ? T
+  : never;
+export type DryRunJob = ReturnType<Client["createDryRunJob"]> extends Promise<
+  infer T
+>
+  ? T
+  : never;
+export class AuthenticationError extends Error {
+  constructor(keyFilename?: string) {
+    super(
+      keyFilename
+        ? `Bad authentication: Make sure that "${keyFilename}", which is set in bigqueryRunner.keyFilename of setting.json, is the valid path to service account key file`
+        : `Bad authentication: Set bigqueryRunner.keyFilename of your setting.json to the valid path to service account key file`
+    );
   }
-  return jobInfo;
 }
-
-export async function getTableInfo({
-  keyFilename,
-  tableReference: { projectId, datasetId, tableId },
-}: {
-  readonly keyFilename: string;
-  readonly tableReference: TableReference;
-}): Promise<Table> {
-  const bigQuery = new BigQuery({
-    keyFilename,
-    projectId: projectId,
-  });
-  const res = await bigQuery.dataset(datasetId).table(tableId).get();
-  const table: Table = res.find(({ kind }) => kind === "bigquery#table");
-  if (!table) {
-    throw new Error(`no table info: ${projectId}.${datasetId}.${tableId}`);
+export async function createClient(options: BigQueryOptions) {
+  const bigQuery = new BigQuery(options);
+  try {
+    await bigQuery.authClient.getProjectId();
+  } catch (err) {
+    if (
+      (err as { message: string }).message &&
+      (err as { message: string }).message.startsWith(
+        "Unable to detect a Project Id in the current environment."
+      )
+    ) {
+      throw new AuthenticationError(options.keyFilename);
+    }
   }
-  return table;
+
+  return {
+    async createRunJob(query: Omit<Query, "dryRun">) {
+      const data = await bigQuery.createQueryJob({ ...query, dryRun: false });
+      const job = data[0];
+      if (!job.id) {
+        throw new Error(`no job ID`);
+      }
+      return {
+        id: job.id,
+        async getRows() {
+          const [rows] = await job.getQueryResults({
+            autoPaginate: true,
+          });
+          return rows;
+        },
+        async getInfo() {
+          const metadata = await job.getMetadata();
+          const jobInfo: JobInfo | undefined = metadata.find(
+            ({ kind }) => kind === "bigquery#job"
+          );
+          if (!jobInfo) {
+            throw new Error(`no job info: ${job.id}`);
+          }
+          const {
+            configuration: {
+              query: {
+                destinationTable: { projectId, datasetId, tableId },
+              },
+            },
+            statistics: { query },
+          } = jobInfo;
+
+          const res = await bigQuery.dataset(datasetId).table(tableId).get();
+          const table: Table = res.find(
+            ({ kind }) => kind === "bigquery#table"
+          );
+          if (!table) {
+            throw new Error(
+              `no table info: ${projectId}.${datasetId}.${tableId}`
+            );
+          }
+          const {
+            schema: { fields },
+          } = table;
+          if (!fields) {
+            throw new Error(`schema has no fields`);
+          }
+          return {
+            query,
+            schema: { fields },
+          };
+        },
+      };
+    },
+    async createDryRunJob(query: Omit<Query, "dryRun">) {
+      const data = await bigQuery.createQueryJob({ ...query, dryRun: true });
+      const job = data[0];
+      if (!job.id) {
+        throw new Error(`no job ID`);
+      }
+      return {
+        id: job.id,
+        getInfo(): { totalBytesProcessed: number } {
+          const { totalBytesProcessed } = job.metadata.statistics;
+          return {
+            totalBytesProcessed:
+              typeof totalBytesProcessed === "number"
+                ? totalBytesProcessed
+                : typeof totalBytesProcessed === "string"
+                ? parseInt(totalBytesProcessed, 10)
+                : 0,
+          };
+        },
+      };
+    },
+  };
 }

@@ -19,6 +19,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "eslint.validate": ["javascript", "typescript"],
 
+  "bigqueryRunner.keyFilename": "/Users/minodisk/bigquery-runner-minodisk.json",
   "bigqueryRunner.output.file.path": "./output",
   "bigqueryRunner.output.type": "viewer",
   "bigqueryRunner.format.type": "markdown",

@@ -9,6 +9,7 @@ export type Output = {
   readonly writeHeads: () => Promise<unknown>;
   readonly writeRows: (rows: Array<Struct>) => Promise<unknown>;
   readonly close: () => Promise<number | void>;
+  readonly dispose: () => unknown;
 };
 
 export type WebviewPanel = {
@@ -16,12 +17,15 @@ export type WebviewPanel = {
     html: string;
     postMessage(message: any): Thenable<boolean>;
   };
+  dispose(): unknown;
   onDidDispose(
     callback: () => void,
     hoge: any,
     subscriptions: Array<{ dispose(): any }>
   ): void;
 };
+
+let panel: WebviewPanel | undefined;
 
 export function createViewerOutput({
   html,
@@ -34,7 +38,6 @@ export function createViewerOutput({
   createWebviewPanel(): WebviewPanel;
   readonly flat: Flat;
 }): Output {
-  let panel: WebviewPanel | undefined;
   return {
     async open() {
       if (!panel) {
@@ -86,6 +89,12 @@ export function createViewerOutput({
     async close() {
       // do nothing
     },
+    dispose() {
+      if (!panel) {
+        return;
+      }
+      return panel.dispose();
+    },
   };
 }
 
@@ -113,6 +122,7 @@ export function createLogOutput({
     async close() {
       outputChannel.append(formatter.footer());
     },
+    async dispose() {},
   };
 }
 
@@ -154,6 +164,10 @@ export function createFileOutput({
         stream.on("error", reject).on("finish", resolve).end();
       });
       return stream.bytesWritten;
+    },
+    async dispose() {
+      stream.end();
+      stream = undefined!;
     },
   };
 }

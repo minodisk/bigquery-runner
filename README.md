@@ -53,7 +53,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 
 |Type|Default|
 |---|---|
-|string|""|
+|string &#x7C; null|null|
 
 The path to the JSON file for the service account. When specifying a relative path, specify the path from the root folder that is open in VSCode. If it is not specified, the path specified in `GOOGLE_APPLICATION_CREDENTIALS` is used.
 
@@ -150,7 +150,7 @@ Set the delimiter between the fields of a record. It can be one or multiple char
 
 |Type|Default|Enum|
 |---|---|---|
-|string|"viewer"|"viewer" &#x7C; "output" &#x7C; "file"|
+|string|"output"|"viewer" &#x7C; "output" &#x7C; "file"|
 
 Controls the output destination for query results.
 

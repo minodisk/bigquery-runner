@@ -6,7 +6,7 @@
   "main": "src/extension.ts",
   "scripts": {
     "dev": "run-p build:watch",
-    "build": "rm -rf ../../out/extension && esbuild ./src/index.ts --bundle --outfile=../../out/extension/index.js --external:vscode --format=cjs --platform=node",
+    "build": "esbuild ./src/index.ts --bundle --outfile=../../out/extension/index.js --external:vscode --format=cjs --platform=node",
     "build:test": "tsc -p ./",
     "build:watch": "npm run build -- --sourcemap --watch",
     "build:debug": "npm run build -- --sourcemap",

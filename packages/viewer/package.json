@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "run-p serve build:watch",
     "serve": "npm run build -- --servedir=../../out/viewer",
-    "build": "rm -rf ../../out/viewer && cp -rf ./public ../../out/viewer && esbuild src/index.tsx --bundle --outfile=../../out/viewer/index.js --loader:.html=text --loader:.js=jsx --loader:.svg=dataurl",
+    "build": "mkdirp ../../out && cp -rf ./public ../../out/viewer && esbuild src/index.tsx --bundle --outfile=../../out/viewer/index.js --loader:.html=text --loader:.js=jsx --loader:.svg=dataurl",
     "build:test": "tsc -p ./",
     "build:watch": "npm run build -- --sourcemap --watch",
     "build:debug": "npm run build -- --sourcemap",

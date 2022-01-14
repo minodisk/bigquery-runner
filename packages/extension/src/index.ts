@@ -28,9 +28,9 @@ import {
   window,
   workspace,
 } from "vscode";
-import { BigQuery, Job } from "@google-cloud/bigquery";
 import { Config } from "./config";
 import {
+  createClient,
   createCSVFormatter,
   createFileOutput,
   createFlat,
@@ -42,9 +42,10 @@ import {
   createViewerOutput,
   Flat,
   Formatter,
-  getJobInfo,
-  getTableInfo,
+  RunJob,
   Output,
+  DryRunJob,
+  AuthenticationError,
 } from "core";
 import { readFile } from "fs/promises";
 
@@ -203,10 +204,12 @@ function getConfigration(section: string): Config {
   return {
     ...config,
     keyFilename:
-      isAbsolute(config.keyFilename) ||
-      !workspace.workspaceFolders ||
-      !workspace.workspaceFolders[0] ||
-      workspace.workspaceFolders.length === 0
+      config.keyFilename === null || config.keyFilename === undefined
+        ? undefined
+        : isAbsolute(config.keyFilename) ||
+          !workspace.workspaceFolders ||
+          !workspace.workspaceFolders[0] ||
+          workspace.workspaceFolders.length === 0
         ? config.keyFilename
         : join(workspace.workspaceFolders[0].uri.fsPath, config.keyFilename),
   };
@@ -342,6 +345,10 @@ function wrapCallback({
       } else {
         outputChannel.appendLine(`${err}`);
       }
+      console.log(err instanceof AuthenticationError);
+      if (err instanceof AuthenticationError) {
+        window.showErrorMessage(`${err.message}`);
+      }
     }
   };
 }
@@ -361,15 +368,15 @@ async function run({
   readonly range?: Range;
   readonly ctx: ExtensionContext;
 }): Promise<Result> {
-  // outputChannel.show(true);
   outputChannel.appendLine(`Run`);
 
-  let job!: Job;
+  const client = await createClient(config);
+
+  let job!: RunJob;
   try {
     errorMarker.clear();
-    job = await createJob({
-      config,
-      queryText: getQueryText({ document, range }),
+    job = await client.createRunJob({
+      query: getQueryText({ document, range }),
     });
     outputChannel.appendLine(`Job ID: ${job.id}`);
     errorMarker.clear();
@@ -378,41 +385,16 @@ async function run({
   }
 
   try {
-    const [rows] = await job.getQueryResults({
-      autoPaginate: true,
-    });
+    const rows = await job.getRows();
     outputChannel.appendLine(`Results: ${rows.length} rows`);
-
-    const jobInfo = await getJobInfo({ job });
-    // outputChannel.appendLine("JOB INFO -------------------");
-    // outputChannel.appendLine(JSON.stringify(jobInfo, null, 2));
-
-    const {
-      statistics: {
-        query: { totalBytesBilled, cacheHit },
-      },
-    } = jobInfo;
+    const { query, schema } = await job.getInfo();
     outputChannel.appendLine(
       `Result: ${formatBytes(
-        parseInt(totalBytesBilled, 10)
-      )} to be billed (cache: ${cacheHit})`
+        parseInt(query.totalBytesBilled, 10)
+      )} to be billed (cache: ${query.cacheHit})`
     );
 
-    const tableInfo = await getTableInfo({
-      keyFilename: config.keyFilename,
-      tableReference: jobInfo.configuration.query.destinationTable,
-    });
-    // outputChannel.appendLine("TABLE INFO -------------------");
-    // outputChannel.appendLine(JSON.stringify(tableInfo, null, 2));
-
-    const {
-      schema: { fields },
-    } = tableInfo;
-    if (!fields) {
-      throw new Error(`no fields`);
-    }
-
-    const flat = createFlat(fields);
+    const flat = createFlat(schema.fields);
     const output = await createOutput({
       config,
       outputChannel,
@@ -457,16 +439,15 @@ async function dryRun({
   readonly document: TextDocument;
   readonly range?: Range;
 }): Promise<Result> {
-  // outputChannel.show(true);
   outputChannel.appendLine(`Dry run`);
 
-  let job!: Job;
+  const client = await createClient(config);
+
+  let job!: DryRunJob;
   try {
     errorMarker.clear();
-    job = await createJob({
-      config,
-      queryText: getQueryText({ document, range }),
-      dryRun: true,
+    job = await client.createDryRunJob({
+      query: getQueryText({ document, range }),
     });
     errorMarker.clear();
   } catch (err) {
@@ -474,19 +455,9 @@ async function dryRun({
   }
 
   outputChannel.appendLine(`Job ID: ${job.id}`);
-
-  const { totalBytesProcessed } = job.metadata.statistics;
-  const bytes =
-    typeof totalBytesProcessed === "number"
-      ? totalBytesProcessed
-      : typeof totalBytesProcessed === "string"
-      ? parseInt(totalBytesProcessed, 10)
-      : undefined;
-  if (bytes === undefined) {
-    return {};
-  }
+  const { totalBytesProcessed } = job.getInfo();
   outputChannel.appendLine(
-    `Result: ${formatBytes(bytes)} estimated to be read`
+    `Result: ${formatBytes(totalBytesProcessed)} estimated to be read`
   );
 
   return { jobId: job.id };
@@ -506,33 +477,6 @@ function getQueryText({
   }
 
   return text;
-}
-
-async function createJob({
-  config,
-  queryText,
-  dryRun,
-}: {
-  readonly config: Config;
-  readonly queryText: string;
-  readonly dryRun?: boolean;
-}): Promise<Job> {
-  const client = new BigQuery({
-    keyFilename: config.keyFilename,
-    projectId: config.projectId,
-  });
-  const data = await client.createQueryJob({
-    query: queryText,
-    location: config.location,
-    maximumBytesBilled: config.maximumBytesBilled,
-    useLegacySql: config.useLegacySql,
-    dryRun,
-  });
-  const job = data[0];
-  if (!job.id) {
-    throw new Error(`no job ID`);
-  }
-  return job;
 }
 
 function createErrorMarker({
@@ -622,8 +566,8 @@ async function createOutput({
       return createViewerOutput({
         html,
         subscriptions: ctx.subscriptions,
-        createWebviewPanel: () =>
-          window.createWebviewPanel(
+        createWebviewPanel: () => {
+          const panel = window.createWebviewPanel(
             "bigqueryRunner",
             "BigQuery Runner",
             { viewColumn: -2, preserveFocus: true },
@@ -631,7 +575,10 @@ async function createOutput({
               enableScripts: true,
               localResourceRoots: [Uri.file(root)],
             }
-          ),
+          );
+          ctx.subscriptions.push(panel);
+          return panel;
+        },
         flat,
       });
     case "output":
