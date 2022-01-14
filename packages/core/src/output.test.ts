@@ -18,6 +18,7 @@ describe("formatter", () => {
                 return true;
               },
             },
+            dispose() {},
             onDidDispose() {},
           };
         },
