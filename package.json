@@ -171,14 +171,14 @@
     "test:core": "npm run -w core test",
     "test-watch": "run-p test-watch:*",
     "test-watch:core": "npm run -w core test:watch",
-    "vscode:prepublish": "rm -rf ./out ./dist && npm run build",
+    "vscode:prepublish": "rm -rf ./out && npm run build",
     "build": "run-p build:*",
     "build:codegen": "npm run -w codegen build",
     "build:extension": "npm run -w extension build:production",
     "build:viewer": "npm run -w viewer build:production",
     "debug": "run-s package:debug install:debug",
-    "package": "mkdirp dist && vsce package -o ./dist/",
-    "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
+    "package": "mkdir -p dist && vsce package -o ./dist/",
+    "package:debug": "mkdir -p dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
     "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix"
   },
   "dependencies": {
