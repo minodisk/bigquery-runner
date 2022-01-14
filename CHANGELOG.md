@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## [v0.0.23]
+
+### Added
+
+- Show an authentication error message.
+
 ## [v0.0.22]
 
 ### Changed

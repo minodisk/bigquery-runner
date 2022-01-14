@@ -4,7 +4,7 @@
 import { WorkspaceConfiguration } from "vscode";
 
 export type Config = WorkspaceConfiguration & {
-  readonly keyFilename: string;
+  readonly keyFilename: string | undefined;
   readonly projectId: string | undefined;
   readonly location: string | undefined;
   readonly useLegacySql: boolean;
