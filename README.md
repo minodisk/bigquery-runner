@@ -25,6 +25,16 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 ## Commands
 
+### BigQuery Runner: Dry Run
+
+|ID|
+|---|
+|bigqueryRunner.dryRun|
+
+Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
+
+![BigQuery Runner: Dry Run](https://storage.googleapis.com/bigquery-runner/dry-run.gif)
+
 ### BigQuery Runner: Run
 
 |ID|
@@ -35,15 +45,25 @@ Run the query with BigQuery and display the results. Run the query on the select
 
 ![BigQuery Runner: Run](https://storage.googleapis.com/bigquery-runner/run.gif)
 
-### BigQuery Runner: Dry Run
+### BigQuery Runner: Previous Page
 
 |ID|
 |---|
-|bigqueryRunner.dryRun|
+|bigqueryRunner.prevPage|
 
-Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
-![BigQuery Runner: Dry Run](https://storage.googleapis.com/bigquery-runner/dry-run.gif)
+
+![BigQuery Runner: Previous Page](https://storage.googleapis.com/bigquery-runner/dry-run.gif)
+
+### BigQuery Runner: Next Page
+
+|ID|
+|---|
+|bigqueryRunner.nextPage|
+
+
+
+![BigQuery Runner: Next Page](https://storage.googleapis.com/bigquery-runner/dry-run.gif)
 
 ## Configuration
 
@@ -129,6 +149,14 @@ List of file extensions for which the query is to be validated when the file is 
 |string|"table"|"table" &#x7C; "markdown" &#x7C; "json" &#x7C; "json-lines" &#x7C; "csv"|
 
 Controls the output format for query results.
+
+### `bigqueryRunner.page.results`
+
+|Type|Default|
+|---|---|
+|number &#x7C; null|null|
+
+aaa
 
 ### `bigqueryRunner.format.csv.header`
 

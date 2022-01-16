@@ -1,10 +1,10 @@
 select
     en_label,
-    labels,
-    descriptions,
+    -- labels,
+    -- descriptions,
 from
     `bigquery-public-data.wikipedia.wikidata`
-where
-    en_label = 'cherry'
+-- where
+--     en_label = 'cherry'
 limit
-    2
+    100 

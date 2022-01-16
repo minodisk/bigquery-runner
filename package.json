@@ -44,15 +44,27 @@
   "contributes": {
     "commands": [
       {
+        "command": "bigqueryRunner.dryRun",
+        "title": "BigQuery Runner: Dry Run",
+        "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
+        "screenshot": "dry-run.gif"
+      },
+      {
         "command": "bigqueryRunner.run",
         "title": "BigQuery Runner: Run",
         "description": "Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
         "screenshot": "run.gif"
       },
       {
-        "command": "bigqueryRunner.dryRun",
-        "title": "BigQuery Runner: Dry Run",
-        "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
+        "command": "bigqueryRunner.prevPage",
+        "title": "BigQuery Runner: Previous Page",
+        "description": "",
+        "screenshot": "dry-run.gif"
+      },
+      {
+        "command": "bigqueryRunner.nextPage",
+        "title": "BigQuery Runner: Next Page",
+        "description": "",
         "screenshot": "dry-run.gif"
       }
     ],
@@ -136,6 +148,14 @@
             "csv"
           ],
           "description": "Controls the output format for query results."
+        },
+        "bigqueryRunner.page.results": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": null,
+          "description": "aaa"
         },
         "bigqueryRunner.format.csv.header": {
           "type": "boolean",

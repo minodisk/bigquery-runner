@@ -22,6 +22,9 @@ export type Config = WorkspaceConfiguration & {
       readonly delimiter: string;
     };
   };
+  readonly page: {
+    readonly results: number | undefined;
+  };
   readonly output: {
     readonly type: "viewer" | "output" | "file";
     readonly file: {

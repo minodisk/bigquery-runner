@@ -108,12 +108,50 @@ export async function createClient(options: BigQueryOptions) {
       if (!job.id) {
         throw new Error(`no job ID`);
       }
+
+      let tokens: Map<number, string> = new Map();
+      let page: number = 0;
       return {
         id: job.id,
         async getRows() {
-          const [rows] = await job.getQueryResults({
-            autoPaginate: true,
+          // nextQuery = undefined;
+          const [rows, next] = await job.getQueryResults({
+            maxResults: query.maxResults,
           });
+          if (next?.pageToken) {
+            tokens.set(page + 1, next.pageToken);
+          }
+          // nextQuery = next;
+          return rows;
+        },
+        async getPrevRows() {
+          const pageToken = tokens.get(page - 1);
+          if (!pageToken) {
+            throw new Error(`no page`);
+          }
+          page -= 1;
+          const [rows, next] = await job.getQueryResults({
+            maxResults: query.maxResults,
+            pageToken,
+          });
+          if (next?.pageToken) {
+            tokens.set(page + 1, next.pageToken);
+          }
+          return rows;
+        },
+        async getNextRows() {
+          const pageToken = tokens.get(page + 1);
+          if (!pageToken) {
+            throw new Error(`no page`);
+          }
+          page += 1;
+          const [rows, next] = await job.getQueryResults({
+            maxResults: query.maxResults,
+            pageToken,
+          });
+          if (next?.pageToken) {
+            tokens.set(page + 1, next.pageToken);
+          }
           return rows;
         },
         async getInfo() {

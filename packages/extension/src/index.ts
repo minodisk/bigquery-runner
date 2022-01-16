@@ -107,6 +107,17 @@ export async function activate(
     // and the function they invoke.
     new Map<string, () => void>([
       [
+        `${section}.dryRun`,
+        wrapCallback({
+          configManager,
+          diagnosticCollection,
+          outputChannel,
+          resultChannel,
+          ctx,
+          callback: dryRun,
+        }),
+      ],
+      [
         `${section}.run`,
         wrapCallback({
           configManager,
@@ -118,14 +129,25 @@ export async function activate(
         }),
       ],
       [
-        `${section}.dryRun`,
+        `${section}.prevPage`,
         wrapCallback({
           configManager,
           diagnosticCollection,
           outputChannel,
           resultChannel,
           ctx,
-          callback: dryRun,
+          callback: runPrevPage,
+        }),
+      ],
+      [
+        `${section}.nextPage`,
+        wrapCallback({
+          configManager,
+          diagnosticCollection,
+          outputChannel,
+          resultChannel,
+          ctx,
+          callback: runNextPage,
         }),
       ],
     ]).forEach((action, name) => {
@@ -353,6 +375,7 @@ function wrapCallback({
   };
 }
 
+let job: RunJob | undefined;
 async function run({
   config,
   errorMarker,
@@ -372,11 +395,11 @@ async function run({
 
   const client = await createClient(config);
 
-  let job!: RunJob;
   try {
     errorMarker.clear();
     job = await client.createRunJob({
       query: getQueryText({ document, range }),
+      maxResults: config.page.results,
     });
     outputChannel.appendLine(`Job ID: ${job.id}`);
     errorMarker.clear();
@@ -384,9 +407,111 @@ async function run({
     errorMarker.mark(err);
   }
 
+  if (!job) {
+    throw new Error(`no job`);
+  }
+
   try {
-    const rows = await job.getRows();
-    outputChannel.appendLine(`Results: ${rows.length} rows`);
+    await renderRows({
+      config,
+      outputChannel,
+      document,
+      ctx,
+      rows: await job.getRows(),
+    });
+    return { jobId: job.id };
+  } catch (err) {
+    if (job.id) {
+      throw new ErrorWithId(err, job.id);
+    } else {
+      throw err;
+    }
+  }
+}
+
+async function runPrevPage({
+  config,
+  outputChannel,
+  document,
+  ctx,
+}: {
+  readonly config: Config;
+  readonly outputChannel: OutputChannel;
+  readonly document: TextDocument;
+  readonly ctx: ExtensionContext;
+}) {
+  if (!job) {
+    return;
+  }
+  try {
+    await renderRows({
+      config,
+      outputChannel,
+      document,
+      ctx,
+      rows: await job.getPrevRows(),
+    });
+    return { jobId: job.id };
+  } catch (err) {
+    if (job.id) {
+      throw new ErrorWithId(err, job.id);
+    } else {
+      throw err;
+    }
+  }
+}
+
+async function runNextPage({
+  config,
+  outputChannel,
+  document,
+  ctx,
+}: {
+  readonly config: Config;
+  readonly outputChannel: OutputChannel;
+  readonly document: TextDocument;
+  readonly ctx: ExtensionContext;
+}) {
+  if (!job) {
+    return;
+  }
+  try {
+    await renderRows({
+      config,
+      outputChannel,
+      document,
+      ctx,
+      rows: await job.getNextRows(),
+    });
+    return { jobId: job.id };
+  } catch (err) {
+    if (job.id) {
+      throw new ErrorWithId(err, job.id);
+    } else {
+      throw err;
+    }
+  }
+}
+
+async function renderRows({
+  config,
+  outputChannel,
+  document,
+  ctx,
+  rows,
+}: {
+  readonly config: Config;
+  readonly outputChannel: OutputChannel;
+  readonly document: TextDocument;
+  readonly ctx: ExtensionContext;
+  readonly rows: Array<any>;
+}) {
+  if (!job) {
+    throw new Error(`no job`);
+  }
+
+  try {
+    outputChannel.appendLine(`Result: ${rows.length} rows`);
     const { query, schema } = await job.getInfo();
     outputChannel.appendLine(
       `Result: ${formatBytes(
@@ -415,8 +540,6 @@ async function run({
         `Total bytes written: ${formatBytes(bytesWritten)}`
       );
     }
-
-    return { jobId: job.id };
   } catch (err) {
     if (job.id) {
       throw new ErrorWithId(err, job.id);
