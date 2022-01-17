@@ -46,6 +46,8 @@ import {
   Output,
   DryRunJob,
   AuthenticationError,
+  Results,
+  NoPageTokenError,
 } from "core";
 import { readFile } from "fs/promises";
 
@@ -225,6 +227,12 @@ function getConfigration(section: string): Config {
   const config = workspace.getConfiguration(section) as Config;
   return {
     ...config,
+    page: {
+      results:
+        config.page?.results === undefined || config.page?.results === null
+          ? undefined
+          : config.page.results,
+    },
     keyFilename:
       config.keyFilename === null || config.keyFilename === undefined
         ? undefined
@@ -361,14 +369,15 @@ function wrapCallback({
       });
       resultChannel.set(result);
     } catch (err) {
-      outputChannel.show(true);
       if (err instanceof ErrorWithId) {
         outputChannel.appendLine(`${err.error} (${err.id})`);
       } else {
         outputChannel.appendLine(`${err}`);
       }
-      console.log(err instanceof AuthenticationError);
-      if (err instanceof AuthenticationError) {
+      if (
+        err instanceof AuthenticationError ||
+        err instanceof NoPageTokenError
+      ) {
         window.showErrorMessage(`${err.message}`);
       }
     }
@@ -376,6 +385,7 @@ function wrapCallback({
 }
 
 let job: RunJob | undefined;
+
 async function run({
   config,
   errorMarker,
@@ -417,7 +427,7 @@ async function run({
       outputChannel,
       document,
       ctx,
-      rows: await job.getRows(),
+      results: await job.getRows(),
     });
     return { jobId: job.id };
   } catch (err) {
@@ -441,7 +451,7 @@ async function runPrevPage({
   readonly ctx: ExtensionContext;
 }) {
   if (!job) {
-    return;
+    return { jobId: undefined };
   }
   try {
     await renderRows({
@@ -449,7 +459,7 @@ async function runPrevPage({
       outputChannel,
       document,
       ctx,
-      rows: await job.getPrevRows(),
+      results: await job.getPrevRows(),
     });
     return { jobId: job.id };
   } catch (err) {
@@ -473,7 +483,7 @@ async function runNextPage({
   readonly ctx: ExtensionContext;
 }) {
   if (!job) {
-    return;
+    return { jobId: undefined };
   }
   try {
     await renderRows({
@@ -481,7 +491,7 @@ async function runNextPage({
       outputChannel,
       document,
       ctx,
-      rows: await job.getNextRows(),
+      results: await job.getNextRows(),
     });
     return { jobId: job.id };
   } catch (err) {
@@ -498,21 +508,21 @@ async function renderRows({
   outputChannel,
   document,
   ctx,
-  rows,
+  results,
 }: {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
   readonly document: TextDocument;
   readonly ctx: ExtensionContext;
-  readonly rows: Array<any>;
+  readonly results: Results;
 }) {
   if (!job) {
     throw new Error(`no job`);
   }
 
   try {
-    outputChannel.appendLine(`Result: ${rows.length} rows`);
-    const { query, schema } = await job.getInfo();
+    outputChannel.appendLine(`Result: ${results.rows.length} rows`);
+    const { query, schema, numRows } = await job.getInfo();
     outputChannel.appendLine(
       `Result: ${formatBytes(
         parseInt(query.totalBytesBilled, 10)
@@ -533,7 +543,7 @@ async function renderRows({
       outputChannel.appendLine(`Output to: ${path}`);
     }
     await output.writeHeads();
-    await output.writeRows(rows);
+    await output.writeRows({ ...results, numRows });
     const bytesWritten = await output.close();
     if (bytesWritten !== undefined) {
       outputChannel.appendLine(

@@ -1,16 +1,17 @@
 import {
+  Box,
   Stack,
   Table,
   Tbody,
   Td,
+  Text,
   Tfoot,
   Th,
   Thead,
   Tr,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
-import { Column, useTable } from "react-table";
-import { Row } from "bigquery/src/flatten";
+import { Page, Row } from "core";
 
 type Data = {
   source: "bigquery-runner";
@@ -43,7 +44,11 @@ function isHeader(e: Event): e is Header {
 
 type Rows = {
   event: "rows";
-  payload: Array<Row>;
+  payload: {
+    rows: Array<Row>;
+    page?: Page;
+    numRows: string;
+  };
 };
 
 function isRows(e: Event): e is Rows {
@@ -51,20 +56,22 @@ function isRows(e: Event): e is Rows {
 }
 
 function App() {
-  const [columns, setColumns] = useState<Array<Column>>([]);
-  const [data, setData] = useState<Array<Row>>([]);
+  const [columns, setColumns] = useState<Array<string>>([]);
+  const [rows, setRows] = useState<Array<Row>>([]);
+  const [page, setPage] = useState<Page | undefined>();
+  const [numRows, setNumRows] = useState<string>("");
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    footerGroups,
-    rows,
-    prepareRow,
-  } = useTable({
-    columns: columns as any,
-    data,
-  });
+  // const {
+  //   getTableProps,
+  //   getTableBodyProps,
+  //   headerGroups,
+  //   footerGroups,
+  //   rows,
+  //   prepareRow,
+  // } = useTable({
+  //   columns: columns as any,
+  //   data,
+  // });
 
   useEffect(() => {
     window.addEventListener("message", (e: MessageEvent) => {
@@ -76,20 +83,25 @@ function App() {
       } = e;
       if (isClear(payload)) {
         setColumns([]);
-        setData([]);
+        setRows([]);
+        setPage(undefined);
+        setNumRows("");
         return;
       }
       if (isHeader(payload)) {
-        const columns = payload.payload.map((accessor) => ({
-          accessor: (d: any) => d[accessor],
-          Header: accessor,
-          key: accessor,
-        }));
-        setColumns(columns);
+        // const columns = payload.payload.map((accessor) => ({
+        //   accessor: (d: any) => d[accessor],
+        //   Header: accessor,
+        //   key: accessor,
+        // }));
+        setColumns(payload.payload);
         return;
       }
       if (isRows(payload)) {
-        setData((data) => [...data, ...payload.payload]);
+        // setRows((data) => [...data, ...payload.payload]);
+        setRows(payload.payload.rows);
+        setPage(payload.payload.page);
+        setNumRows(payload.payload.numRows);
         return;
       }
       throw new Error(`undefined data payload '${payload}'`);
@@ -98,88 +110,70 @@ function App() {
 
   return (
     <Stack m="3" display="inline-block">
-      <Table size="sm" {...getTableProps()}>
+      <Table size="sm">
         <Thead>
-          {headerGroups.map((headerGroup) => {
-            const { key, ...props } = headerGroup.getHeaderGroupProps();
-            return (
-              <Tr key={key} {...props}>
-                {headerGroup.headers.map((column) => {
-                  const { key, ...props } = column.getHeaderProps();
-                  return (
-                    <Th
-                      key={key}
-                      textTransform="none"
-                      color="var(--vscode-terminal-foreground)"
-                      fontFamily="var(--vscode-editor-font-family)"
-                      fontFeatureSetting="'liga' 0, 'calt' 0"
-                      fontSize="var(--vscode-editor-font-size)"
-                      lineHeight="var(--vscode-editor-line-height)"
-                      borderBottomColor="var(--vscode-terminal-border)"
-                      borderBottomWidth={2}
-                      {...props}
-                    >
-                      {column.render("Header")}
-                    </Th>
-                  );
-                })}
-              </Tr>
-            );
-          })}
+          <Tr>
+            {columns.map((column) => (
+              <Th
+                key={column}
+                textTransform="none"
+                color="var(--vscode-terminal-foreground)"
+                fontFamily="var(--vscode-editor-font-family)"
+                fontFeatureSetting="'liga' 0, 'calt' 0"
+                fontSize="var(--vscode-editor-font-size)"
+                lineHeight="var(--vscode-editor-line-height)"
+                borderBottomColor="var(--vscode-terminal-border)"
+                borderBottomWidth={2}
+              >
+                {column}
+              </Th>
+            ))}
+          </Tr>
         </Thead>
-        <Tbody {...getTableBodyProps()}>
-          {rows.map((row) => {
-            prepareRow(row);
-            const { key, ...props } = row.getRowProps();
-            return (
-              <Tr key={key} {...props}>
-                {row.cells.map((cell) => {
-                  const { key, ...props } = cell.getCellProps();
-                  return (
-                    <Td
-                      key={key}
-                      color="var(--vscode-terminal-foreground)"
-                      fontFamily="var(--vscode-editor-font-family)"
-                      fontSize="var(--vscode-editor-font-size)"
-                      fontWeight="var(--vscode-editor-font-weight)"
-                      borderBottomColor="var(--vscode-terminal-border)"
-                      {...props}
-                    >
-                      {cell.render("Cell")}
-                    </Td>
-                  );
-                })}
-              </Tr>
-            );
-          })}
+        <Tbody>
+          {rows.map((row, i) => (
+            <Tr key={i}>
+              {row.map((cell) => (
+                <Td
+                  key={cell.id}
+                  color="var(--vscode-terminal-foreground)"
+                  fontFamily="var(--vscode-editor-font-family)"
+                  fontSize="var(--vscode-editor-font-size)"
+                  fontWeight="var(--vscode-editor-font-weight)"
+                  borderBottomColor="var(--vscode-terminal-border)"
+                >
+                  {cell.value}
+                </Td>
+              ))}
+            </Tr>
+          ))}
         </Tbody>
         <Tfoot>
-          {footerGroups.map((footerGroup) => {
-            const { key, ...props } = footerGroup.getHeaderGroupProps();
-            return (
-              <Tr key={key} {...props}>
-                {footerGroup.headers.map((column) => {
-                  const { key, ...props } = column.getHeaderProps();
-                  return (
-                    <Th
-                      key={key}
-                      textTransform="none"
-                      color="var(--vscode-terminal-foreground)"
-                      fontFamily="var(--vscode-editor-font-family)"
-                      fontSize="var(--vscode-editor-font-size)"
-                      borderTopColor="var(--vscode-terminal-border)"
-                      borderTopWidth={2}
-                      {...props}
-                    >
-                      {column.render("Header")}
-                    </Th>
-                  );
-                })}
-              </Tr>
-            );
-          })}
+          <Tr>
+            {columns.map((column) => (
+              <Th
+                key={column}
+                textTransform="none"
+                color="var(--vscode-terminal-foreground)"
+                fontFamily="var(--vscode-editor-font-family)"
+                fontSize="var(--vscode-editor-font-size)"
+                borderTopColor="var(--vscode-terminal-border)"
+                borderTopWidth={2}
+              >
+                {column}
+              </Th>
+            ))}
+          </Tr>
         </Tfoot>
       </Table>
+      {page ? (
+        <Box ps={4}>
+          <Text color="var(--vscode-descriptionForeground)">
+            {page.rowsPerPage * page.current + 1} -{" "}
+            {page.rowsPerPage * page.current + rows.length} / {numRows}
+          </Text>
+        </Box>
+      ) : null}
     </Stack>
   );
 }
@@ -207,34 +201,22 @@ function App() {
 //       source: "bigquery-runner",
 //       payload: {
 //         event: "rows",
-//         payload: [
-//           {
-//             order_id: 1,
-//             "items.product_id": 1001,
-//             "items.quantity": 4,
-//             "items.name": "wallet",
-//             "items.price": 30000,
-//           },
-//           {
-//             "items.product_id": 1003,
-//             "items.quantity": 1,
-//             "items.name": "bag",
-//             "items.price": 50000,
-//           },
-//           {
-//             order_id: 2,
-//             "items.product_id": 1002,
-//             "items.quantity": 2,
-//             "items.name": "watch",
-//             "items.price": 10000,
-//           },
-//           {
-//             "items.product_id": 1003,
-//             "items.quantity": 4,
-//             "items.name": "bag",
-//             "items.price": 50000,
-//           },
-//         ],
+//         payload: {
+//           rows: [
+//             [
+//               { id: "order_id", value: 1 },
+//               { id: "items.product_id", value: 1001 },
+//               { id: "items.quantity", value: 4 },
+//               { id: "items.name", value: "wallet" },
+//               { id: "items.price", value: 30000 },
+//             ],
+//             // [undefined, 1003, 1, "bag", 50000],
+//             // [2, 1002, 2, "watch", 10000],
+//             // [undefined, 1003, 4, "bag", 50000],
+//           ],
+//           page: { rowsPerPage: 100, current: 2 },
+//           numRows: "123000",
+//         },
 //       },
 //     },
 //   ];

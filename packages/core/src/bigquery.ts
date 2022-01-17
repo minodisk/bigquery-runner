@@ -77,6 +77,7 @@ export type DryRunJob = ReturnType<Client["createDryRunJob"]> extends Promise<
 >
   ? T
   : never;
+
 export class AuthenticationError extends Error {
   constructor(keyFilename?: string) {
     super(
@@ -86,6 +87,23 @@ export class AuthenticationError extends Error {
     );
   }
 }
+
+export class NoPageTokenError extends Error {
+  constructor(page: number) {
+    super(`no page token for page at ${page}`);
+  }
+}
+
+export type Results = {
+  readonly rows: Array<any>;
+  readonly page?: Page;
+};
+
+export type Page = {
+  readonly rowsPerPage: number;
+  readonly current: number;
+};
+
 export async function createClient(options: BigQueryOptions) {
   const bigQuery = new BigQuery(options);
   try {
@@ -109,50 +127,72 @@ export async function createClient(options: BigQueryOptions) {
         throw new Error(`no job ID`);
       }
 
-      let tokens: Map<number, string> = new Map();
+      let tokens: Map<number, string | null> = new Map([[0, null]]);
       let page: number = 0;
       return {
         id: job.id,
-        async getRows() {
-          // nextQuery = undefined;
+        async getRows(): Promise<Results> {
           const [rows, next] = await job.getQueryResults({
             maxResults: query.maxResults,
           });
           if (next?.pageToken) {
             tokens.set(page + 1, next.pageToken);
           }
-          // nextQuery = next;
-          return rows;
+          return {
+            rows,
+            page: query.maxResults
+              ? {
+                  rowsPerPage: query.maxResults,
+                  current: page,
+                }
+              : undefined,
+          };
         },
-        async getPrevRows() {
+        async getPrevRows(): Promise<Results> {
           const pageToken = tokens.get(page - 1);
-          if (!pageToken) {
-            throw new Error(`no page`);
+          if (pageToken === undefined) {
+            throw new NoPageTokenError(page - 1);
           }
           page -= 1;
           const [rows, next] = await job.getQueryResults({
             maxResults: query.maxResults,
-            pageToken,
+            pageToken: pageToken ?? undefined,
           });
           if (next?.pageToken) {
             tokens.set(page + 1, next.pageToken);
           }
-          return rows;
+          return {
+            rows,
+            page: query.maxResults
+              ? {
+                  rowsPerPage: query.maxResults,
+                  current: page,
+                }
+              : undefined,
+          };
         },
-        async getNextRows() {
+        async getNextRows(): Promise<Results> {
           const pageToken = tokens.get(page + 1);
-          if (!pageToken) {
-            throw new Error(`no page`);
+          if (pageToken === undefined) {
+            throw new NoPageTokenError(page + 1);
           }
           page += 1;
           const [rows, next] = await job.getQueryResults({
             maxResults: query.maxResults,
-            pageToken,
+            pageToken: pageToken ?? undefined,
           });
           if (next?.pageToken) {
             tokens.set(page + 1, next.pageToken);
           }
-          return rows;
+          return {
+            rows,
+            page: query.maxResults
+              ? {
+                  rowsPerPage: query.maxResults,
+                  current: page,
+                }
+              : undefined,
+          };
         },
         async getInfo() {
           const metadata = await job.getMetadata();
@@ -182,6 +222,7 @@ export async function createClient(options: BigQueryOptions) {
           }
           const {
             schema: { fields },
+            numRows,
           } = table;
           if (!fields) {
             throw new Error(`schema has no fields`);
@@ -189,6 +230,7 @@ export async function createClient(options: BigQueryOptions) {
           return {
             query,
             schema: { fields },
+            numRows,
           };
         },
       };

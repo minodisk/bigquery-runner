@@ -79,8 +79,14 @@ export function createFlat(fields: Array<Field>) {
   return {
     heads,
     columns,
-    toRows(structs: Array<Struct>) {
-      return structsToRows({ heads, columns, structs });
+    toRows({
+      structs,
+      rowNumber,
+    }: {
+      structs: Array<Struct>;
+      rowNumber: number;
+    }) {
+      return structsToRows({ heads, columns, structs, rowNumber });
     },
     toHashes(structs: Array<Struct>) {
       return structsToHashes({ columns, structs });
@@ -126,22 +132,28 @@ function structsToRows({
   heads,
   columns,
   structs,
+  rowNumber,
 }: {
-  heads: Array<Accessor>;
-  columns: Array<Column>;
-  structs: Array<Struct>;
+  readonly heads: Array<Accessor>;
+  readonly columns: Array<Column>;
+  readonly structs: Array<Struct>;
+  readonly rowNumber: number;
 }): Array<Row> {
-  return structs.flatMap((struct) => structToRows({ heads, columns, struct }));
+  return structs.flatMap((struct, i) =>
+    structToRows({ heads, columns, struct, rowNumber: rowNumber + i })
+  );
 }
 
 function structToRows({
   heads,
   columns,
   struct,
+  rowNumber,
 }: {
-  heads: Array<Accessor>;
-  columns: Array<Column>;
-  struct: Struct;
+  readonly heads: Array<Accessor>;
+  readonly columns: Array<Column>;
+  readonly struct: Struct;
+  readonly rowNumber: number;
 }): Array<Row> {
   const results: Array<Row> = [];
   const createFillWithRow = createFillWithRowCreator({

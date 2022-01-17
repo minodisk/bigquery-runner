@@ -1,13 +1,15 @@
 import { createWriteStream, WriteStream } from "fs";
 import mkdirp from "mkdirp";
 import { basename, extname, join } from "path";
-import { Flat, Formatter, Struct } from ".";
+import { Flat, Formatter, Results } from ".";
 
 export type Output = {
   readonly open: () => Promise<string | void>;
   readonly path: () => string | void;
   readonly writeHeads: () => Promise<unknown>;
-  readonly writeRows: (rows: Array<Struct>) => Promise<unknown>;
+  readonly writeRows: (
+    results: Results & { numRows: string }
+  ) => Promise<unknown>;
   readonly close: () => Promise<number | void>;
   readonly dispose: () => unknown;
 };
@@ -74,7 +76,7 @@ export function createViewerOutput({
         },
       });
     },
-    async writeRows(rows) {
+    async writeRows(results) {
       if (!panel) {
         throw new Error(`panel is not initialized`);
       }
@@ -82,7 +84,16 @@ export function createViewerOutput({
         source: "bigquery-runner",
         payload: {
           event: "rows",
-          payload: flat.toHashes(rows),
+          payload: {
+            rows: flat.toRows({
+              structs: results.rows,
+              rowNumber: results.page
+                ? results.page.rowsPerPage * results.page.current + 1
+                : 1,
+            }),
+            page: results.page,
+            numRows: results.numRows,
+          },
         },
       });
     },
@@ -116,8 +127,8 @@ export function createLogOutput({
     async writeHeads() {
       outputChannel.append(formatter.header());
     },
-    async writeRows(rows) {
-      outputChannel.append(await formatter.rows(rows));
+    async writeRows(results) {
+      outputChannel.append(await formatter.rows(results.rows));
     },
     async close() {
       outputChannel.append(formatter.footer());
@@ -155,8 +166,8 @@ export function createFileOutput({
         stream.write(res);
       }
     },
-    async writeRows(rows) {
-      stream.write(await formatter.rows(rows));
+    async writeRows(results) {
+      stream.write(await formatter.rows(results.rows));
     },
     async close() {
       stream.write(formatter.footer());

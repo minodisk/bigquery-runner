@@ -16,6 +16,9 @@ ReactDOM.render(
             body: {
               backgroundColor: "var(--vscode-terminal-background)",
               color: "var(--vscode-terminal-foreground)",
+
+              fontFamily: "var(--vscode-editor-font-family)",
+              fontSize: "var(--vscode-editor-font-size)",
             },
           },
         },
