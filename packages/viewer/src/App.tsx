@@ -2,16 +2,18 @@ import {
   Box,
   Stack,
   Table,
+  TableCellProps,
+  TableColumnHeaderProps,
   Tbody,
-  Td,
+  Td as OrigTd,
   Text,
   Tfoot,
-  Th,
+  Th as OrigTh,
   Thead,
   Tr,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
-import { Page, Row } from "core";
+import { NumberedRows, Page } from "core";
 
 type Data = {
   source: "bigquery-runner";
@@ -45,7 +47,7 @@ function isHeader(e: Event): e is Header {
 type Rows = {
   event: "rows";
   payload: {
-    rows: Array<Row>;
+    rows: Array<NumberedRows>;
     page?: Page;
     numRows: string;
   };
@@ -57,7 +59,7 @@ function isRows(e: Event): e is Rows {
 
 function App() {
   const [columns, setColumns] = useState<Array<string>>([]);
-  const [rows, setRows] = useState<Array<Row>>([]);
+  const [numberedRows, setNumberedRows] = useState<Array<NumberedRows>>([]);
   const [page, setPage] = useState<Page | undefined>();
   const [numRows, setNumRows] = useState<string>("");
 
@@ -83,7 +85,7 @@ function App() {
       } = e;
       if (isClear(payload)) {
         setColumns([]);
-        setRows([]);
+        setNumberedRows([]);
         setPage(undefined);
         setNumRows("");
         return;
@@ -99,7 +101,7 @@ function App() {
       }
       if (isRows(payload)) {
         // setRows((data) => [...data, ...payload.payload]);
-        setRows(payload.payload.rows);
+        setNumberedRows(payload.payload.rows);
         setPage(payload.payload.page);
         setNumRows(payload.payload.numRows);
         return;
@@ -113,55 +115,37 @@ function App() {
       <Table size="sm">
         <Thead>
           <Tr>
+            <Th color="var(--vscode-descriptionForeground)">row</Th>
             {columns.map((column) => (
-              <Th
-                key={column}
-                textTransform="none"
-                color="var(--vscode-terminal-foreground)"
-                fontFamily="var(--vscode-editor-font-family)"
-                fontFeatureSetting="'liga' 0, 'calt' 0"
-                fontSize="var(--vscode-editor-font-size)"
-                lineHeight="var(--vscode-editor-line-height)"
-                borderBottomColor="var(--vscode-terminal-border)"
-                borderBottomWidth={2}
-              >
-                {column}
-              </Th>
+              <Th key={column}>{column}</Th>
             ))}
           </Tr>
         </Thead>
         <Tbody>
-          {rows.map((row, i) => (
-            <Tr key={i}>
-              {row.map((cell) => (
-                <Td
-                  key={cell.id}
-                  color="var(--vscode-terminal-foreground)"
-                  fontFamily="var(--vscode-editor-font-family)"
-                  fontSize="var(--vscode-editor-font-size)"
-                  fontWeight="var(--vscode-editor-font-weight)"
-                  borderBottomColor="var(--vscode-terminal-border)"
-                >
-                  {cell.value}
-                </Td>
-              ))}
-            </Tr>
-          ))}
+          {numberedRows.map(({ rowNumber, rows }) =>
+            rows.map((row, i) => (
+              <Tr key={i}>
+                {i === 0 ? (
+                  <Td
+                    rowSpan={rows.length}
+                    verticalAlign="top"
+                    color="var(--vscode-descriptionForeground)"
+                  >
+                    {rowNumber}
+                  </Td>
+                ) : null}
+                {row.map((cell) => (
+                  <Td key={cell.id}>{cell.value}</Td>
+                ))}
+              </Tr>
+            ))
+          )}
         </Tbody>
         <Tfoot>
           <Tr>
+            <Th color="var(--vscode-descriptionForeground)">row</Th>
             {columns.map((column) => (
-              <Th
-                key={column}
-                textTransform="none"
-                color="var(--vscode-terminal-foreground)"
-                fontFamily="var(--vscode-editor-font-family)"
-                fontSize="var(--vscode-editor-font-size)"
-                borderTopColor="var(--vscode-terminal-border)"
-                borderTopWidth={2}
-              >
-                {column}
-              </Th>
+              <Th key={column}>{column}</Th>
             ))}
           </Tr>
         </Tfoot>
@@ -170,13 +154,36 @@ function App() {
         <Box ps={4}>
           <Text color="var(--vscode-descriptionForeground)">
             {page.rowsPerPage * page.current + 1} -{" "}
-            {page.rowsPerPage * page.current + rows.length} / {numRows}
+            {page.rowsPerPage * page.current + numberedRows.length} / {numRows}
           </Text>
         </Box>
       ) : null}
     </Stack>
   );
 }
+
+const Th = (props: TableColumnHeaderProps) => (
+  <OrigTh
+    textTransform="none"
+    color="var(--vscode-terminal-foreground)"
+    fontFamily="var(--vscode-editor-font-family)"
+    fontSize="var(--vscode-editor-font-size)"
+    borderTopColor="var(--vscode-terminal-border)"
+    borderBottomColor="var(--vscode-terminal-border)"
+    {...props}
+  />
+);
+
+const Td = (props: TableCellProps) => (
+  <OrigTd
+    color="var(--vscode-terminal-foreground)"
+    fontFamily="var(--vscode-editor-font-family)"
+    fontSize="var(--vscode-editor-font-size)"
+    fontWeight="var(--vscode-editor-font-weight)"
+    borderBottomColor="var(--vscode-terminal-border)"
+    {...props}
+  />
+);
 
 // (async () => {
 //   const events = [

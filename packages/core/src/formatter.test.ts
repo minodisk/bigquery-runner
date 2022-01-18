@@ -4,8 +4,8 @@ import {
   createJSONFormatter,
   createJSONLinesFormatter,
   createMarkdownFormatter,
+  createTableFormatter,
 } from ".";
-import { createTableFormatter } from "./formatter";
 
 describe("formatter", () => {
   describe("createTableFormatter", () => {
@@ -17,7 +17,7 @@ describe("formatter", () => {
         flat,
       });
       expect(formatter.header()).toEqual("");
-      expect(await formatter.rows([])).toEqual("\n");
+      expect(await formatter.rows({ structs: [], rowNumber: 0 })).toEqual("\n");
       expect(formatter.footer()).toEqual("");
     });
 
@@ -28,11 +28,14 @@ describe("formatter", () => {
       const formatter = createTableFormatter({ flat });
       expect(formatter.header()).toEqual("");
       expect(
-        await formatter.rows([
-          {
-            foo: 123,
-          },
-        ])
+        await formatter.rows({
+          structs: [
+            {
+              foo: 123,
+            },
+          ],
+          rowNumber: 0,
+        })
       ).toEqual(
         `
 foo
@@ -56,7 +59,7 @@ foo
 |---|
 `.trimStart()
       );
-      expect(await formatter.rows([])).toEqual("\n");
+      expect(await formatter.rows({ structs: [], rowNumber: 0 })).toEqual("\n");
       expect(formatter.footer()).toEqual("");
     });
 
@@ -72,11 +75,14 @@ foo
 `.trimStart()
       );
       expect(
-        await formatter.rows([
-          {
-            foo: 123,
-          },
-        ])
+        await formatter.rows({
+          structs: [
+            {
+              foo: 123,
+            },
+          ],
+          rowNumber: 0,
+        })
       ).toEqual(
         `
 |123|
@@ -107,40 +113,43 @@ foo
 `.trimStart()
       );
       expect(
-        await formatter.rows([
-          {
-            a: 123,
-            b: [
-              {
-                c: 0.456,
-                d: "foo",
-              },
-              {
-                c: 0.789,
-                d: "bar",
-              },
-            ],
-            e: true,
-          },
-          {
-            a: 987,
-            b: [
-              {
-                c: 0.65,
-                d: "foo",
-              },
-              {
-                c: 0.43,
-                d: "bar",
-              },
-              {
-                c: 0.21,
-                d: "baz",
-              },
-            ],
-            e: false,
-          },
-        ])
+        await formatter.rows({
+          structs: [
+            {
+              a: 123,
+              b: [
+                {
+                  c: 0.456,
+                  d: "foo",
+                },
+                {
+                  c: 0.789,
+                  d: "bar",
+                },
+              ],
+              e: true,
+            },
+            {
+              a: 987,
+              b: [
+                {
+                  c: 0.65,
+                  d: "foo",
+                },
+                {
+                  c: 0.43,
+                  d: "bar",
+                },
+                {
+                  c: 0.21,
+                  d: "baz",
+                },
+              ],
+              e: false,
+            },
+          ],
+          rowNumber: 0,
+        })
       ).toEqual(
         `
 |123|0.456|foo|true|
@@ -158,7 +167,7 @@ foo
     it("should be format empty", async () => {
       const formatter = createJSONLinesFormatter();
       expect(formatter.header()).toEqual("");
-      expect(await formatter.rows([])).toEqual("\n");
+      expect(await formatter.rows({ structs: [], rowNumber: 0 })).toEqual("\n");
       expect(formatter.footer()).toEqual("");
     });
 
@@ -166,11 +175,14 @@ foo
       const formatter = createJSONLinesFormatter();
       expect(formatter.header()).toEqual("");
       expect(
-        await formatter.rows([
-          {
-            foo: 123,
-          },
-        ])
+        await formatter.rows({
+          structs: [
+            {
+              foo: 123,
+            },
+          ],
+          rowNumber: 0,
+        })
       ).toEqual(
         `
 {"foo":123}
@@ -184,7 +196,7 @@ foo
     it("should be format empty", async () => {
       const formatter = createJSONFormatter();
       expect(formatter.header()).toEqual("[");
-      expect(await formatter.rows([])).toEqual("");
+      expect(await formatter.rows({ structs: [], rowNumber: 0 })).toEqual("");
       expect(formatter.footer()).toEqual(`]
 `);
     });
@@ -193,11 +205,14 @@ foo
       const formatter = createJSONFormatter();
       expect(formatter.header()).toEqual("[");
       expect(
-        await formatter.rows([
-          {
-            foo: 123,
-          },
-        ])
+        await formatter.rows({
+          structs: [
+            {
+              foo: 123,
+            },
+          ],
+          rowNumber: 0,
+        })
       ).toEqual(`{"foo":123}`);
       expect(formatter.footer()).toEqual(`]
 `);
@@ -211,7 +226,7 @@ foo
         options: {},
       });
       expect(formatter.header()).toEqual("");
-      expect(await formatter.rows([])).toEqual("");
+      expect(await formatter.rows({ structs: [], rowNumber: 0 })).toEqual("");
       expect(formatter.footer()).toEqual(``);
     });
 
@@ -225,16 +240,19 @@ foo
       });
       expect(formatter.header()).toEqual("");
       expect(
-        await formatter.rows([
-          {
-            a: "foo",
-            b: "bar",
-          },
-          {
-            a: "baz",
-            b: "qux",
-          },
-        ])
+        await formatter.rows({
+          structs: [
+            {
+              a: "foo",
+              b: "bar",
+            },
+            {
+              a: "baz",
+              b: "qux",
+            },
+          ],
+          rowNumber: 0,
+        })
       ).toEqual(`foo,bar
 baz,qux
 `);

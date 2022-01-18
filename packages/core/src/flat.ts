@@ -128,6 +128,11 @@ function fieldsToColumns(fields: Array<Field>): Array<Column> {
   });
 }
 
+export type NumberedRows = {
+  rowNumber: number;
+  rows: Array<Row>;
+};
+
 function structsToRows({
   heads,
   columns,
@@ -138,27 +143,29 @@ function structsToRows({
   readonly columns: Array<Column>;
   readonly structs: Array<Struct>;
   readonly rowNumber: number;
-}): Array<Row> {
-  return structs.flatMap((struct, i) =>
-    structToRows({ heads, columns, struct, rowNumber: rowNumber + i })
-  );
+}): Array<NumberedRows> {
+  return structs.map((struct, i) => {
+    const rows = structToRows({ heads, columns, struct });
+    return {
+      rowNumber: rowNumber + i,
+      rows,
+    };
+  });
 }
 
 function structToRows({
   heads,
   columns,
   struct,
-  rowNumber,
 }: {
   readonly heads: Array<Accessor>;
   readonly columns: Array<Column>;
   readonly struct: Struct;
-  readonly rowNumber: number;
 }): Array<Row> {
-  const results: Array<Row> = [];
+  const rows: Array<Row> = [];
   const createFillWithRow = createFillWithRowCreator({
     heads,
-    results,
+    results: rows,
     depths: new Array(columns.length).fill(0),
   });
   columns.forEach((column, columnIndex) =>
@@ -169,7 +176,7 @@ function structToRows({
       fill: createFillWithRow({ columnIndex }),
     })
   );
-  return results;
+  return rows;
 }
 
 function structsToHashes({

@@ -128,7 +128,9 @@ export function createLogOutput({
       outputChannel.append(formatter.header());
     },
     async writeRows(results) {
-      outputChannel.append(await formatter.rows(results.rows));
+      outputChannel.append(
+        await formatter.rows({ structs: results.rows, rowNumber: 0 })
+      );
     },
     async close() {
       outputChannel.append(formatter.footer());
@@ -167,7 +169,9 @@ export function createFileOutput({
       }
     },
     async writeRows(results) {
-      stream.write(await formatter.rows(results.rows));
+      stream.write(
+        await formatter.rows({ structs: results.rows, rowNumber: 0 })
+      );
     },
     async close() {
       stream.write(formatter.footer());

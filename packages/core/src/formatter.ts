@@ -5,7 +5,10 @@ import { Flat, Struct } from ".";
 export type Formatter = {
   readonly type: "table" | "markdown" | "json-lines" | "json" | "csv";
   readonly header: () => string;
-  readonly rows: (rows: Array<Struct>) => Promise<string>;
+  readonly rows: (props: {
+    structs: Array<Struct>;
+    rowNumber: number;
+  }) => Promise<string>;
   readonly footer: () => string;
 };
 
@@ -15,12 +18,12 @@ export function createTableFormatter({ flat }: { flat: Flat }): Formatter {
     header() {
       return "";
     },
-    async rows(rows) {
+    async rows(props) {
       const t = new EasyTable();
-      flat.toRows(rows).forEach((row) => {
-        row.forEach((cell) => {
-          t.cell(cell.id, cell.value);
-        });
+      flat.toRows(props).forEach(({ rows }) => {
+        rows.forEach((row) =>
+          row.forEach((cell) => t.cell(cell.id, cell.value))
+        );
         t.newRow();
       });
       return t.toString().trimEnd() + "\n";
@@ -42,21 +45,23 @@ export function createMarkdownFormatter({ flat }: { flat: Flat }): Formatter {
 |${flat.heads.map(() => "---").join("|")}|
 `;
     },
-    async rows(rows) {
+    async rows(props) {
       return (
         flat
-          .toRows(rows)
-          .map(
-            (row) =>
-              `|${row
-                .map(({ value }) =>
-                  value === undefined
-                    ? ""
-                    : typeof value === "string"
-                    ? value.replace(/\n/g, "<br/>")
-                    : `${value}`
-                )
-                .join("|")}|`
+          .toRows(props)
+          .flatMap(({ rows }) =>
+            rows.map(
+              (row) =>
+                `|${row
+                  .map(({ value }) =>
+                    value === undefined
+                      ? ""
+                      : typeof value === "string"
+                      ? value.replace(/\n/g, "<br/>")
+                      : `${value}`
+                  )
+                  .join("|")}|`
+            )
           )
           .join("\n") + "\n"
       );
@@ -73,8 +78,13 @@ export function createJSONLinesFormatter(): Formatter {
     header() {
       return "";
     },
-    async rows(rows) {
-      return rows.map((row) => JSON.stringify(row)).join("\n") + "\n";
+    async rows({ structs }) {
+      return (
+        structs
+          .flatMap(({ rows }) => rows)
+          .map((row) => JSON.stringify(row))
+          .join("\n") + "\n"
+      );
     },
     footer() {
       return "";
@@ -89,7 +99,8 @@ export function createJSONFormatter(): Formatter {
     header() {
       return "[";
     },
-    async rows(rows) {
+    async rows({ structs }) {
+      const rows = structs.flatMap(({ rows }) => rows);
       const prefix = len === 0 ? "" : ",";
       len += rows.length;
       return prefix + rows.map((row) => JSON.stringify(row)).join(",");
@@ -112,7 +123,8 @@ export function createCSVFormatter({
     header() {
       return "";
     },
-    async rows(rows) {
+    async rows({ structs }) {
+      const rows = structs.flatMap(({ rows }) => rows);
       if (rows.length === 0) {
         return "";
       }

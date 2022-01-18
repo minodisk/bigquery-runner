@@ -26,11 +26,14 @@ describe("formatter", () => {
       });
       await formatter.open();
       await formatter.writeHeads();
-      await formatter.writeRows([
-        {
-          foo: true,
-        },
-      ]);
+      await formatter.writeRows({
+        rows: [
+          {
+            foo: true,
+          },
+        ],
+        numRows: "0",
+      });
       await formatter.close();
     });
   });

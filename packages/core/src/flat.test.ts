@@ -3,7 +3,7 @@ import { createFlat } from "./flat";
 describe("structToRows", () => {
   it("Empty", () => {
     const flatten = createFlat([]);
-    expect(flatten.toRows([])).toEqual([]);
+    expect(flatten.toRows({ structs: [], rowNumber: 0 })).toEqual([]);
   });
 
   it("Flat", () => {
@@ -20,12 +20,15 @@ describe("structToRows", () => {
       },
     ]);
     expect(
-      flatten.toRows([
-        {
-          a: "foo",
-          b: 321,
-        },
-      ])
+      flatten.toRows({
+        structs: [
+          {
+            a: "foo",
+            b: 321,
+          },
+        ],
+        rowNumber: 0,
+      })
     ).toEqual([
       [
         { id: "a", value: "foo" },
@@ -60,15 +63,18 @@ describe("structToRows", () => {
       },
     ]);
     expect(
-      flatten.toRows([
-        {
-          a: "foo",
-          b: {
-            c: true,
+      flatten.toRows({
+        structs: [
+          {
+            a: "foo",
+            b: {
+              c: true,
+            },
+            d: 123,
           },
-          d: 123,
-        },
-      ])
+        ],
+        rowNumber: 0,
+      })
     ).toEqual([
       [
         { id: "a", value: "foo" },
@@ -97,13 +103,16 @@ describe("structToRows", () => {
       },
     ]);
     expect(
-      flatten.toRows([
-        {
-          a: "foo",
-          b: [],
-          c: 0.123,
-        },
-      ])
+      flatten.toRows({
+        structs: [
+          {
+            a: "foo",
+            b: [],
+            c: 0.123,
+          },
+        ],
+        rowNumber: 0,
+      })
     ).toEqual([
       [
         { id: "a", value: "foo" },
@@ -137,14 +146,17 @@ describe("structToRows", () => {
       },
     ]);
     expect(
-      flatten.toRows([
-        {
-          a: "foo",
-          b: [123, 456, 789],
-          c: true,
-          d: [0.123, 0.456],
-        },
-      ])
+      flatten.toRows({
+        structs: [
+          {
+            a: "foo",
+            b: [123, 456, 789],
+            c: true,
+            d: [0.123, 0.456],
+          },
+        ],
+        rowNumber: 0,
+      })
     ).toEqual([
       [
         { id: "a", value: "foo" },
@@ -203,13 +215,16 @@ describe("structToRows", () => {
       },
     ]);
     expect(
-      flatten.toRows([
-        {
-          a: "foo",
-          b: [],
-          f: 0.123,
-        },
-      ])
+      flatten.toRows({
+        structs: [
+          {
+            a: "foo",
+            b: [],
+            f: 0.123,
+          },
+        ],
+        rowNumber: 0,
+      })
     ).toEqual([
       [
         { id: "a", value: "foo" },
@@ -247,25 +262,28 @@ describe("structToRows", () => {
       },
     ]);
     expect(
-      flatten.toRows([
-        {
-          a: "foo",
-          b: [
-            {
-              c: true,
-              d: 0.123,
-            },
-            {
-              c: false,
-              d: 0.456,
-            },
-            {
-              c: false,
-              d: 0.789,
-            },
-          ],
-        },
-      ])
+      flatten.toRows({
+        structs: [
+          {
+            a: "foo",
+            b: [
+              {
+                c: true,
+                d: 0.123,
+              },
+              {
+                c: false,
+                d: 0.456,
+              },
+              {
+                c: false,
+                d: 0.789,
+              },
+            ],
+          },
+        ],
+        rowNumber: 0,
+      })
     ).toEqual([
       [
         { id: "a", value: "foo" },
@@ -308,42 +326,45 @@ describe("structToRows", () => {
       },
     ]);
     expect(
-      flatten.toRows([
-        {
-          a: [
-            {
-              b: [
-                {
-                  c: "foo",
-                },
-                {
-                  c: "bar",
-                },
-                {
-                  c: "baz",
-                },
-              ],
-            },
-            {
-              b: [
-                {
-                  c: "qux",
-                },
-                {
-                  c: "quux",
-                },
-              ],
-            },
-            {
-              b: [
-                {
-                  c: "corge",
-                },
-              ],
-            },
-          ],
-        },
-      ])
+      flatten.toRows({
+        structs: [
+          {
+            a: [
+              {
+                b: [
+                  {
+                    c: "foo",
+                  },
+                  {
+                    c: "bar",
+                  },
+                  {
+                    c: "baz",
+                  },
+                ],
+              },
+              {
+                b: [
+                  {
+                    c: "qux",
+                  },
+                  {
+                    c: "quux",
+                  },
+                ],
+              },
+              {
+                b: [
+                  {
+                    c: "corge",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        rowNumber: 0,
+      })
     ).toEqual([
       [{ id: "a.b.c", value: "foo" }],
       [{ id: "a.b.c", value: "bar" }],
