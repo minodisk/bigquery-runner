@@ -79,12 +79,7 @@ export function createJSONLinesFormatter(): Formatter {
       return "";
     },
     async rows({ structs }) {
-      return (
-        structs
-          .flatMap(({ rows }) => rows)
-          .map((row) => JSON.stringify(row))
-          .join("\n") + "\n"
-      );
+      return structs.map((struct) => JSON.stringify(struct)).join("\n") + "\n";
     },
     footer() {
       return "";
@@ -100,10 +95,9 @@ export function createJSONFormatter(): Formatter {
       return "[";
     },
     async rows({ structs }) {
-      const rows = structs.flatMap(({ rows }) => rows);
       const prefix = len === 0 ? "" : ",";
-      len += rows.length;
-      return prefix + rows.map((row) => JSON.stringify(row)).join(",");
+      len += structs.length;
+      return prefix + structs.map((struct) => JSON.stringify(struct)).join(",");
     },
     footer() {
       return "]\n";
@@ -124,13 +118,12 @@ export function createCSVFormatter({
       return "";
     },
     async rows({ structs }) {
-      const rows = structs.flatMap(({ rows }) => rows);
-      if (rows.length === 0) {
+      if (structs.length === 0) {
         return "";
       }
       return await new Promise<string>((resolve, reject) => {
         CSV.stringify(
-          flat.toHashes(rows),
+          flat.toHashes(structs),
           options,
           (err?: Error, res?: string) => {
             if (err) {
