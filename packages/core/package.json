@@ -6,7 +6,8 @@
   "main": "src/index.ts",
   "scripts": {
     "test": "jest --silent=false",
-    "test:watch": "npm run test -- --watchAll"
+    "test-coverage": "npm run test -- --coverage --coverageDirectory ../../coverage/core",
+    "test-watch": "npm run test -- --watchAll"
   },
   "jest": {
     "roots": [
