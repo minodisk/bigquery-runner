@@ -1,4 +1,4 @@
-import { createFlat } from ".";
+import { createFlat, createLogOutput, createMarkdownFormatter } from ".";
 import { createViewerOutput, WebviewPanel } from "./output";
 
 describe("formatter", () => {
@@ -7,14 +7,16 @@ describe("formatter", () => {
       const flat = createFlat([
         { name: "foo", type: "BOOLEAN", mode: "REQUIRED" },
       ]);
-      const formatter = createViewerOutput({
+      const messages: Array<any> = [];
+      const output = createViewerOutput({
         html: "",
         subscriptions: [],
         createWebviewPanel(): WebviewPanel {
           return {
             webview: {
               html: "",
-              async postMessage() {
+              async postMessage(message) {
+                messages.push(message);
                 return true;
               },
             },
@@ -24,9 +26,9 @@ describe("formatter", () => {
         },
         flat,
       });
-      await formatter.open();
-      await formatter.writeHeads();
-      await formatter.writeRows({
+      await output.open();
+      await output.writeHeads();
+      await output.writeRows({
         rows: [
           {
             foo: true,
@@ -34,7 +36,84 @@ describe("formatter", () => {
         ],
         numRows: "0",
       });
-      await formatter.close();
+      await output.close();
+      expect(messages).toEqual([
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "clear",
+          },
+        },
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "header",
+            payload: ["foo"],
+          },
+        },
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "rows",
+            payload: {
+              rows: [
+                {
+                  rowNumber: 1,
+                  rows: [
+                    [
+                      {
+                        id: "foo",
+                        value: true,
+                      },
+                    ],
+                  ],
+                },
+              ],
+              page: undefined,
+              numRows: "0",
+            },
+          },
+        },
+      ]);
+    });
+  });
+
+  describe("createLogOutput", () => {
+    describe("format markdown", () => {
+      it("should be output", async () => {
+        const flat = createFlat([
+          { name: "foo", type: "BOOLEAN", mode: "REQUIRED" },
+        ]);
+        let actual: string = "";
+        const output = createLogOutput({
+          formatter: createMarkdownFormatter({
+            flat,
+          }),
+          outputChannel: {
+            show() {},
+            append(value) {
+              actual += value;
+            },
+          },
+        });
+        await output.open();
+        await output.writeHeads();
+        await output.writeRows({
+          rows: [
+            {
+              foo: true,
+            },
+          ],
+          numRows: "0",
+        });
+        await output.close();
+        expect(actual).toEqual(
+          `|foo|
+|---|
+|true|
+`
+        );
+      });
     });
   });
 });
