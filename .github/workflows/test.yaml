@@ -25,3 +25,5 @@ jobs:
         uses: GabrielBB/xvfb-action@v1.0
         with:
           run: npm test
+      - name: Coverage
+        uses: codecov/codecov-action@v2
