@@ -2,6 +2,19 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## [v0.0.24]
+
+### Added
+
+- Added pagination.
+- Added an option for pagination.
+  - `bigqueryRunner.pagination.results`: number of rows per page
+- Added commands for pagination
+  - `bigqueryRunner.prevPage`: display previous page
+  - `bigqueryRunner.nextPage`: display next page
+- Added a row number column to the viewer.
+- Added page information to viewer.
+
 ## [v0.0.23]
 
 ### Added
