@@ -29,15 +29,7 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 ## Commands
 
-### BigQuery Runner: Dry Run
-
-|ID|
-|---|
-|bigqueryRunner.dryRun|
-
-Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
-
-![BigQuery Runner: Dry Run](https://storage.googleapis.com/bigquery-runner/dry-run.gif)
+![bigquery-runner-12](https://user-images.githubusercontent.com/514164/149955294-1f740196-5295-4286-8b1f-e9dfb2958cc6.gif)
 
 ### BigQuery Runner: Run
 
@@ -47,17 +39,13 @@ Run the dry run query with BigQuery and display the result. Run the query on the
 
 Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
-![BigQuery Runner: Run](https://storage.googleapis.com/bigquery-runner/run.gif)
-
 ### BigQuery Runner: Previous Page
 
 |ID|
 |---|
 |bigqueryRunner.prevPage|
 
-
-
-![BigQuery Runner: Previous Page](https://storage.googleapis.com/bigquery-runner/dry-run.gif)
+Fetch and display the previous page.
 
 ### BigQuery Runner: Next Page
 
@@ -65,9 +53,15 @@ Run the query with BigQuery and display the results. Run the query on the select
 |---|
 |bigqueryRunner.nextPage|
 
+Fetch and display the next page.
 
+### BigQuery Runner: Dry Run
 
-![BigQuery Runner: Next Page](https://storage.googleapis.com/bigquery-runner/dry-run.gif)
+|ID|
+|---|
+|bigqueryRunner.dryRun|
+
+Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
 
 ## Configuration
 
@@ -146,6 +140,14 @@ List of language IDs of the files whose queries are to be validated when the fil
 
 List of file extensions for which the query is to be validated when the file is modified.
 
+### `bigqueryRunner.pagination.results`
+
+|Type|Default|
+|---|---|
+|number &#x7C; null|100|
+
+The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`.
+
 ### `bigqueryRunner.format.type`
 
 |Type|Default|Enum|
@@ -153,14 +155,6 @@ List of file extensions for which the query is to be validated when the file is 
 |string|"table"|"table" &#x7C; "markdown" &#x7C; "json" &#x7C; "json-lines" &#x7C; "csv"|
 
 Controls the output format for query results.
-
-### `bigqueryRunner.page.results`
-
-|Type|Default|
-|---|---|
-|number &#x7C; null|null|
-
-aaa
 
 ### `bigqueryRunner.format.csv.header`
 
@@ -182,7 +176,7 @@ Set the delimiter between the fields of a record. It can be one or multiple char
 
 |Type|Default|Enum|
 |---|---|---|
-|string|"output"|"viewer" &#x7C; "output" &#x7C; "file"|
+|string|"viewer"|"viewer" &#x7C; "output" &#x7C; "file"|
 
 Controls the output destination for query results.
 

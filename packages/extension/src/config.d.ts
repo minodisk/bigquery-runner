@@ -1,9 +1,7 @@
 // DO NOT EDIT
 // This file is generated from gen-src/config.d.ts.ejs.
 
-import { WorkspaceConfiguration } from "vscode";
-
-export type Config = WorkspaceConfiguration & {
+export type Config = {
   readonly keyFilename: string | undefined;
   readonly projectId: string | undefined;
   readonly location: string | undefined;
@@ -15,15 +13,15 @@ export type Config = WorkspaceConfiguration & {
     readonly languageIds: Array<string>;
     readonly extensions: Array<string>;
   };
+  readonly pagination: {
+    readonly results: number | undefined;
+  };
   readonly format: {
     readonly type: "table" | "markdown" | "json" | "json-lines" | "csv";
     readonly csv: {
       readonly header: boolean;
       readonly delimiter: string;
     };
-  };
-  readonly page: {
-    readonly results: number | undefined;
   };
   readonly output: {
     readonly type: "viewer" | "output" | "file";

@@ -44,28 +44,24 @@
   "contributes": {
     "commands": [
       {
-        "command": "bigqueryRunner.dryRun",
-        "title": "BigQuery Runner: Dry Run",
-        "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
-        "screenshot": "dry-run.gif"
-      },
-      {
         "command": "bigqueryRunner.run",
         "title": "BigQuery Runner: Run",
-        "description": "Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.",
-        "screenshot": "run.gif"
+        "description": "Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected."
       },
       {
         "command": "bigqueryRunner.prevPage",
         "title": "BigQuery Runner: Previous Page",
-        "description": "",
-        "screenshot": "dry-run.gif"
+        "description": "Fetch and display the previous page."
       },
       {
         "command": "bigqueryRunner.nextPage",
         "title": "BigQuery Runner: Next Page",
-        "description": "",
-        "screenshot": "dry-run.gif"
+        "description": "Fetch and display the next page."
+      },
+      {
+        "command": "bigqueryRunner.dryRun",
+        "title": "BigQuery Runner: Dry Run",
+        "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected."
       }
     ],
     "configuration": {
@@ -137,6 +133,14 @@
           ],
           "description": "List of file extensions for which the query is to be validated when the file is modified."
         },
+        "bigqueryRunner.pagination.results": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": 100,
+          "description": "The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`."
+        },
         "bigqueryRunner.format.type": {
           "type": "string",
           "default": "table",
@@ -148,14 +152,6 @@
             "csv"
           ],
           "description": "Controls the output format for query results."
-        },
-        "bigqueryRunner.page.results": {
-          "type": [
-            "number",
-            "null"
-          ],
-          "default": null,
-          "description": "aaa"
         },
         "bigqueryRunner.format.csv.header": {
           "type": "boolean",
@@ -169,7 +165,7 @@
         },
         "bigqueryRunner.output.type": {
           "type": "string",
-          "default": "output",
+          "default": "viewer",
           "enum": [
             "viewer",
             "output",

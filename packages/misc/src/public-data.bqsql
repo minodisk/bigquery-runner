@@ -1,10 +1,9 @@
 select
     en_label,
-    -- labels,
-    -- descriptions,
+    labels,
 from
     `bigquery-public-data.wikipedia.wikidata`
--- where
---     en_label = 'cherry'
+where
+    array_length(labels) = 2
 limit
-    25 
+    32

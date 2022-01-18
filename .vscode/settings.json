@@ -22,7 +22,7 @@
   "bigqueryRunner.keyFilename": "/Users/minodisk/bigquery-runner-minodisk.json",
   "bigqueryRunner.page.results": 10,
   "bigqueryRunner.output.file.path": "./output",
-  "bigqueryRunner.output.type": "output",
+  // "bigqueryRunner.output.type": "output",
   "bigqueryRunner.format.type": "table",
   "bigqueryRunner.format.csv.header": true
 }

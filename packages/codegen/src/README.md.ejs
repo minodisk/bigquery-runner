@@ -30,6 +30,8 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 
 ## Commands
 
+![bigquery-runner-12](https://user-images.githubusercontent.com/514164/149955294-1f740196-5295-4286-8b1f-e9dfb2958cc6.gif)
+
 <% contributes.commands.forEach((command) => { -%>
 ### <%- command.title %>
 
@@ -38,10 +40,6 @@ By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental
 |<%- command.command %>|
 
 <%- command.description %>
-
-<% if (command.screenshot) { -%>
-![<%- command.title %>](<%- base %><%- command.screenshot %>)
-<% } -%>
 
 <% }) -%>
 ## Configuration

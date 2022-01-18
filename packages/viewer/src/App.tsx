@@ -128,7 +128,6 @@ function App() {
                 {i === 0 ? (
                   <Td
                     rowSpan={rows.length}
-                    verticalAlign="top"
                     color="var(--vscode-descriptionForeground)"
                   >
                     {rowNumber}
@@ -176,6 +175,7 @@ const Th = (props: TableColumnHeaderProps) => (
 
 const Td = (props: TableCellProps) => (
   <OrigTd
+    verticalAlign="top"
     color="var(--vscode-terminal-foreground)"
     fontFamily="var(--vscode-editor-font-family)"
     fontSize="var(--vscode-editor-font-size)"

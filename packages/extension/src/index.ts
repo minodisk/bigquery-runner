@@ -224,14 +224,15 @@ function createConfigManager(section: string) {
 type ConfigManager = ReturnType<typeof createConfigManager>;
 
 function getConfigration(section: string): Config {
-  const config = workspace.getConfiguration(section) as Config;
+  const config = workspace.getConfiguration(section) as any as Config;
   return {
     ...config,
-    page: {
+    pagination: {
       results:
-        config.page?.results === undefined || config.page?.results === null
+        config.pagination?.results === undefined ||
+        config.pagination?.results === null
           ? undefined
-          : config.page.results,
+          : config.pagination.results,
     },
     keyFilename:
       config.keyFilename === null || config.keyFilename === undefined
@@ -409,7 +410,7 @@ async function run({
     errorMarker.clear();
     job = await client.createRunJob({
       query: getQueryText({ document, range }),
-      maxResults: config.page.results,
+      maxResults: config.pagination.results,
     });
     outputChannel.appendLine(`Job ID: ${job.id}`);
     errorMarker.clear();
