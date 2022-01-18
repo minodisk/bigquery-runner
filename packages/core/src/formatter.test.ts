@@ -7,6 +7,57 @@ import {
   createTableFormatter,
 } from ".";
 
+const complexFields = [
+  { name: "a", type: "INTEGER", mode: "NULLABLE" },
+  {
+    name: "b",
+    type: "STRUCT",
+    mode: "REPEATED",
+    fields: [
+      { name: "c", type: "FLOAT", mode: "NULLABLE" },
+      { name: "d", type: "STRING", mode: "NULLABLE" },
+    ],
+  },
+  { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
+];
+const complexStructs = {
+  structs: [
+    {
+      a: 123,
+      b: [
+        {
+          c: 0.456,
+          d: "foo",
+        },
+        {
+          c: 0.789,
+          d: "bar",
+        },
+      ],
+      e: true,
+    },
+    {
+      a: 987,
+      b: [
+        {
+          c: 0.65,
+          d: "foo",
+        },
+        {
+          c: 0.43,
+          d: "bar",
+        },
+        {
+          c: 0.21,
+          d: "baz",
+        },
+      ],
+      e: false,
+    },
+  ],
+  rowNumber: 0,
+};
+
 describe("formatter", () => {
   describe("createTableFormatter", () => {
     it("should be format empty", async () => {
@@ -41,6 +92,36 @@ describe("formatter", () => {
 foo
 ---
 123
+`.trimStart()
+      );
+      expect(formatter.footer()).toEqual("");
+    });
+
+    it("should be format complex", async () => {
+      const flat = createFlat([
+        { name: "a", type: "INTEGER", mode: "NULLABLE" },
+        {
+          name: "b",
+          type: "STRUCT",
+          mode: "REPEATED",
+          fields: [
+            { name: "c", type: "FLOAT", mode: "NULLABLE" },
+            { name: "d", type: "STRING", mode: "NULLABLE" },
+          ],
+        },
+        { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
+      ]);
+      const formatter = createTableFormatter({ flat });
+      expect(formatter.header()).toEqual("");
+      expect(await formatter.rows(complexStructs)).toEqual(
+        `
+a    b.c    b.d  e    
+---  -----  ---  -----
+123  0.456  foo  true 
+     0.789  bar       
+987  0.65   foo  false
+     0.43   bar       
+     0.21   baz
 `.trimStart()
       );
       expect(formatter.footer()).toEqual("");
@@ -112,45 +193,7 @@ foo
 |---|---|---|---|
 `.trimStart()
       );
-      expect(
-        await formatter.rows({
-          structs: [
-            {
-              a: 123,
-              b: [
-                {
-                  c: 0.456,
-                  d: "foo",
-                },
-                {
-                  c: 0.789,
-                  d: "bar",
-                },
-              ],
-              e: true,
-            },
-            {
-              a: 987,
-              b: [
-                {
-                  c: 0.65,
-                  d: "foo",
-                },
-                {
-                  c: 0.43,
-                  d: "bar",
-                },
-                {
-                  c: 0.21,
-                  d: "baz",
-                },
-              ],
-              e: false,
-            },
-          ],
-          rowNumber: 0,
-        })
-      ).toEqual(
+      expect(await formatter.rows(complexStructs)).toEqual(
         `
 |123|0.456|foo|true|
 ||0.789|bar||

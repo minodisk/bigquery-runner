@@ -21,10 +21,10 @@ export function createTableFormatter({ flat }: { flat: Flat }): Formatter {
     async rows(props) {
       const t = new EasyTable();
       flat.toRows(props).forEach(({ rows }) => {
-        rows.forEach((row) =>
-          row.forEach((cell) => t.cell(cell.id, cell.value))
-        );
-        t.newRow();
+        rows.forEach((row) => {
+          row.forEach((cell) => t.cell(cell.id, cell.value));
+          t.newRow();
+        });
       });
       return t.toString().trimEnd() + "\n";
     },
