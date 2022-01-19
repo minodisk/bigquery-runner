@@ -310,6 +310,7 @@ async function _validateQuery({
       document,
     });
   } catch (err) {
+    console.log("_validateQuery:", err);
     if (err instanceof ErrorWithId) {
       outputChannel.appendLine(`${err.error} (${err.id})`);
     } else {
@@ -370,6 +371,7 @@ function wrapCallback({
       });
       resultChannel.set(result);
     } catch (err) {
+      console.log("wrapCallback:", err);
       if (err instanceof ErrorWithId) {
         outputChannel.appendLine(`${err.error} (${err.id})`);
       } else {
@@ -422,22 +424,14 @@ async function run({
     throw new Error(`no job`);
   }
 
-  try {
-    await renderRows({
-      config,
-      outputChannel,
-      document,
-      ctx,
-      results: await job.getRows(),
-    });
-    return { jobId: job.id };
-  } catch (err) {
-    if (job.id) {
-      throw new ErrorWithId(err, job.id);
-    } else {
-      throw err;
-    }
-  }
+  await renderRows({
+    config,
+    outputChannel,
+    document,
+    ctx,
+    results: await job.getRows(),
+  });
+  return { jobId: job.id };
 }
 
 async function runPrevPage({
@@ -452,24 +446,17 @@ async function runPrevPage({
   readonly ctx: ExtensionContext;
 }) {
   if (!job) {
-    return { jobId: undefined };
+    throw new Error(`no job`);
   }
-  try {
-    await renderRows({
-      config,
-      outputChannel,
-      document,
-      ctx,
-      results: await job.getPrevRows(),
-    });
-    return { jobId: job.id };
-  } catch (err) {
-    if (job.id) {
-      throw new ErrorWithId(err, job.id);
-    } else {
-      throw err;
-    }
-  }
+
+  await renderRows({
+    config,
+    outputChannel,
+    document,
+    ctx,
+    results: await job.getPrevRows(),
+  });
+  return { jobId: job.id };
 }
 
 async function runNextPage({
@@ -484,24 +471,17 @@ async function runNextPage({
   readonly ctx: ExtensionContext;
 }) {
   if (!job) {
-    return { jobId: undefined };
+    throw new Error(`no job`);
   }
-  try {
-    await renderRows({
-      config,
-      outputChannel,
-      document,
-      ctx,
-      results: await job.getNextRows(),
-    });
-    return { jobId: job.id };
-  } catch (err) {
-    if (job.id) {
-      throw new ErrorWithId(err, job.id);
-    } else {
-      throw err;
-    }
-  }
+
+  await renderRows({
+    config,
+    outputChannel,
+    document,
+    ctx,
+    results: await job.getNextRows(),
+  });
+  return { jobId: job.id };
 }
 
 async function renderRows({

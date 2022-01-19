@@ -195,13 +195,26 @@ export async function createClient(options: BigQueryOptions) {
           };
         },
         async getInfo() {
-          const metadata = await job.getMetadata();
-          const jobInfo: JobInfo | undefined = metadata.find(
-            ({ kind }) => kind === "bigquery#job"
-          );
-          if (!jobInfo) {
-            throw new Error(`no job info: ${job.id}`);
+          let jobInfo: JobInfo;
+          for (;;) {
+            console.log("getMetadata");
+            const metadata = await job.getMetadata();
+            console.log("metadata:", metadata);
+            const info: JobInfo | undefined = metadata.find(
+              ({ kind }) => kind === "bigquery#job"
+            );
+            if (!info) {
+              // throw new Error(`no job info: ${job.id}`);
+              continue;
+            }
+            console.log("state:", info.status.state);
+            if (info.status.state === "DONE") {
+              jobInfo = info;
+              break;
+            }
+            await sleep(1000);
           }
+          console.log("jobInfo:", jobInfo);
           const {
             configuration: {
               query: {
@@ -257,4 +270,8 @@ export async function createClient(options: BigQueryOptions) {
       };
     },
   };
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

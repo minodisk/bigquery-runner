@@ -12,7 +12,7 @@ import {
   Thead,
   Tr,
 } from "@chakra-ui/react";
-import React, { useEffect, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { NumberedRows, Page } from "core";
 
 type Data = {
@@ -57,23 +57,11 @@ function isRows(e: Event): e is Rows {
   return e.event === "rows";
 }
 
-function App() {
+const App: FC = () => {
   const [columns, setColumns] = useState<Array<string>>([]);
   const [numberedRows, setNumberedRows] = useState<Array<NumberedRows>>([]);
   const [page, setPage] = useState<Page | undefined>();
   const [numRows, setNumRows] = useState<string>("");
-
-  // const {
-  //   getTableProps,
-  //   getTableBodyProps,
-  //   headerGroups,
-  //   footerGroups,
-  //   rows,
-  //   prepareRow,
-  // } = useTable({
-  //   columns: columns as any,
-  //   data,
-  // });
 
   useEffect(() => {
     window.addEventListener("message", (e: MessageEvent) => {
@@ -83,6 +71,7 @@ function App() {
       const {
         data: { payload },
       } = e;
+      console.log(payload);
       if (isClear(payload)) {
         setColumns([]);
         setNumberedRows([]);
@@ -91,16 +80,10 @@ function App() {
         return;
       }
       if (isHeader(payload)) {
-        // const columns = payload.payload.map((accessor) => ({
-        //   accessor: (d: any) => d[accessor],
-        //   Header: accessor,
-        //   key: accessor,
-        // }));
         setColumns(payload.payload);
         return;
       }
       if (isRows(payload)) {
-        // setRows((data) => [...data, ...payload.payload]);
         setNumberedRows(payload.payload.rows);
         setPage(payload.payload.page);
         setNumRows(payload.payload.numRows);
@@ -110,12 +93,14 @@ function App() {
     });
   }, []);
 
+  console.log(numberedRows);
+
   return (
     <Stack m="3" display="inline-block">
       <Table size="sm">
         <Thead>
           <Tr>
-            <Th color="var(--vscode-descriptionForeground)">row</Th>
+            <Th color="var(--vscode-descriptionForeground)">Row</Th>
             {columns.map((column) => (
               <Th key={column}>{column}</Th>
             ))}
@@ -142,7 +127,7 @@ function App() {
         </Tbody>
         <Tfoot>
           <Tr>
-            <Th color="var(--vscode-descriptionForeground)">row</Th>
+            <Th color="var(--vscode-descriptionForeground)">Row</Th>
             {columns.map((column) => (
               <Th key={column}>{column}</Th>
             ))}
@@ -159,9 +144,9 @@ function App() {
       ) : null}
     </Stack>
   );
-}
+};
 
-const Th = (props: TableColumnHeaderProps) => (
+const Th: FC<TableColumnHeaderProps> = (props) => (
   <OrigTh
     textTransform="none"
     color="var(--vscode-terminal-foreground)"
@@ -173,7 +158,7 @@ const Th = (props: TableColumnHeaderProps) => (
   />
 );
 
-const Td = (props: TableCellProps) => (
+const Td: FC<TableCellProps> = (props) => (
   <OrigTd
     verticalAlign="top"
     color="var(--vscode-terminal-foreground)"
