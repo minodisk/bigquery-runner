@@ -54,27 +54,27 @@ export function createViewerOutput({
         );
       }
 
-      await panel.webview.postMessage({
-        source: "bigquery-runner",
-        payload: {
-          event: "clear",
-        },
-      });
+      // await panel.webview.postMessage({
+      //   source: "bigquery-runner",
+      //   payload: {
+      //     event: "clear",
+      //   },
+      // });
     },
     path() {
       return "";
     },
     async writeHeads() {
-      if (!panel) {
-        throw new Error(`panel is not initialized`);
-      }
-      return panel.webview.postMessage({
-        source: "bigquery-runner",
-        payload: {
-          event: "header",
-          payload: flat.heads.map(({ id }) => id),
-        },
-      });
+      // if (!panel) {
+      //   throw new Error(`panel is not initialized`);
+      // }
+      // return panel.webview.postMessage({
+      //   source: "bigquery-runner",
+      //   payload: {
+      //     event: "header",
+      //     payload: flat.heads.map(({ id }) => id),
+      //   },
+      // });
     },
     async writeRows(results) {
       if (!panel) {
@@ -85,6 +85,7 @@ export function createViewerOutput({
         payload: {
           event: "rows",
           payload: {
+            header: flat.heads.map(({ id }) => id),
             rows: flat.toRows({
               structs: results.rows,
               rowNumber: results.page

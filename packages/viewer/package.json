@@ -4,13 +4,14 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "dev": "run-p serve build:watch",
+    "dev": "run-p copy:public serve build:watch",
     "serve": "npm run build -- --servedir=../../out/viewer",
-    "build": "mkdirp ../../out && cp -rf ./public ../../out/viewer && esbuild src/index.tsx --bundle --outfile=../../out/viewer/index.js --loader:.html=text --loader:.js=jsx --loader:.svg=dataurl",
+    "build": "npm run copy:public && esbuild src/index.tsx --bundle --outfile=../../out/viewer/index.js --loader:.html=text --loader:.js=jsx --loader:.svg=dataurl",
     "build:test": "tsc -p ./",
     "build:watch": "npm run build -- --sourcemap --watch",
     "build:debug": "npm run build -- --sourcemap",
     "build:production": "npm run build -- --minify",
+    "copy:public": "mkdir -p ../../out/viewer && cp -rf ./public/* ../../out/viewer",
     "pretest": "run-p build:test lint",
     "lint": "eslint 'src/**/*.tsx'",
     "test": "node scripts/test.js"

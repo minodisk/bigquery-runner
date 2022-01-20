@@ -20,9 +20,9 @@
   "eslint.validate": ["javascript", "typescript"],
 
   "bigqueryRunner.keyFilename": "/Users/minodisk/bigquery-runner-minodisk.json",
-  "bigqueryRunner.pagination.results": 10,
+  "bigqueryRunner.pagination.results": 30,
   "bigqueryRunner.output.file.path": "./output",
-  "bigqueryRunner.output.type": "output",
+  // "bigqueryRunner.output.type": "output",
   "bigqueryRunner.format.type": "table",
   "bigqueryRunner.format.csv.header": true
 }

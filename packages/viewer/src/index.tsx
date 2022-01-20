@@ -2,11 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { ChakraProvider, extendTheme } from "@chakra-ui/react";
+import "./index.css";
+// import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 
-ReactDOM.render(
+(ReactDOM as any).createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ChakraProvider
+    {/* <ChakraProvider
       theme={extendTheme({
         styles: {
           global: {
@@ -23,11 +24,10 @@ ReactDOM.render(
           },
         },
       })}
-    >
-      <App />
-    </ChakraProvider>
-  </React.StrictMode>,
-  document.getElementById("root")
+    > */}
+    <App />
+    {/* </ChakraProvider> */}
+  </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

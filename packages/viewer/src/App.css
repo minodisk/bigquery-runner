@@ -1,38 +1,104 @@
-.App {
-  text-align: center;
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+thead {
+  /* VSCode webview does not support thead sticky yet */
+  /* position: sticky;
+  top: 0;
+  background-color: var(--vscode-editor-background); */
+}
+thead tr th {
+  position: sticky;
+  top: 0;
+  background-color: var(--vscode-editor-background);
+  border-width: 0 0 2px 0;
+  border-style: solid;
+  border-color: var(--vscode-terminal-border);
+}
+tbody tr td {
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  border-color: var(--vscode-terminal-border);
+}
+tfoot tr th {
+  position: sticky;
+  bottom: 0;
+  background-color: var(--vscode-editor-background);
+  border-width: 2px 0 0 0;
+  border-style: solid;
+  border-color: var(--vscode-terminal-border);
+  font-weight: var(--vscode-editor-font-weight);
+}
+th {
+  padding: 4px 16px;
+  text-align: left;
+  vertical-align: top;
+}
+td {
+  padding: 8px 16px;
+  text-align: left;
+  vertical-align: top;
+}
+tbody tr:last-of-type td {
+  border-width: 0;
+}
+tbody tr.lastOfRowNumber td.rowNumber {
+  border-width: 0;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.status {
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.rowNumber {
+  color: var(--vscode-descriptionForeground);
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.box {
+}
+.stack {
   display: flex;
+}
+.stack-vertical {
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+}
+.stack-horizontal {
+  flex-direction: row;
+}
+.px-1 {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.px-2 {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.px-3 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.py-1 {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.py-2 {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.py-3 {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+.gap-1 {
+  gap: 4px;
+}
+.gap-2 {
+  gap: 8px;
+}
+.gap-3 {
+  gap: 16px;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.weakColor {
+  color: var(--vscode-descriptionForeground);
 }
