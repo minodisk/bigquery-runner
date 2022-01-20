@@ -1,4 +1,4 @@
-import React, { FC, HTMLProps, Suspense, useEffect, useState } from "react";
+import React, { FC, HTMLProps, useEffect, useState } from "react";
 import { NumberedRows, Page } from "core";
 import cx from "classnames";
 import "./App.css";
@@ -63,8 +63,10 @@ const App: FC = () => {
       const {
         data: { payload },
       } = e;
+      console.log(payload);
       if (isOpenEvent(payload)) {
         setLoading("Fetching");
+        return;
       }
       if (isRowsEvent(payload)) {
         setLoading(undefined);
@@ -75,6 +77,7 @@ const App: FC = () => {
       }
       if (isCloseEvent(payload)) {
         setLoading(undefined);
+        return;
       }
       throw new Error(`undefined data payload '${payload}'`);
     });
@@ -97,57 +100,55 @@ const App: FC = () => {
         </HStack>
       ) : null}
       <VStack p={3}>
-        <Suspense fallback={<div>table</div>}>
-          <>
-            <table>
-              <thead>
-                <Tr>
-                  <RowNumberTh>Row</RowNumberTh>
-                  {data?.header.map((head) => (
-                    <Th key={head}>{head}</Th>
-                  ))}
-                </Tr>
-              </thead>
-              <tbody>
-                {data?.rows.map(({ rowNumber, rows }, i) => {
-                  const lastRow = i === data.rows.length - 1;
-                  return rows.map((row, j) => (
-                    <Tr
-                      key={j}
-                      className={cx({
-                        lastOfRowNumber: lastRow && j === 0,
-                      })}
-                    >
-                      {j === 0 ? (
-                        <RowNumberTd rowSpan={rows.length}>
-                          {rowNumber}
-                        </RowNumberTd>
-                      ) : null}
-                      {row.map((cell) => (
-                        <Td key={cell.id}>{cell.value}</Td>
-                      ))}
-                    </Tr>
-                  ));
-                })}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <Th colSpan={data ? data.header.length + 1 : undefined}>
-                    <HStack className="spacebetween">
-                      {data?.page ? (
-                        <Pagination
-                          page={data.page}
-                          rowsInPage={data.rows.length}
-                          totalRows={data.numRows}
-                        />
-                      ) : null}
-                    </HStack>
-                  </Th>
-                </tr>
-              </tfoot>
-            </table>
-          </>
-        </Suspense>
+        {data ? (
+          <table>
+            <thead>
+              <Tr>
+                <RowNumberTh>Row</RowNumberTh>
+                {data.header.map((head) => (
+                  <Th key={head}>{head}</Th>
+                ))}
+              </Tr>
+            </thead>
+            <tbody>
+              {data.rows.map(({ rowNumber, rows }, i) => {
+                const lastRow = i === data.rows.length - 1;
+                return rows.map((row, j) => (
+                  <Tr
+                    key={j}
+                    className={cx({
+                      lastOfRowNumber: lastRow && j === 0,
+                    })}
+                  >
+                    {j === 0 ? (
+                      <RowNumberTd rowSpan={rows.length}>
+                        {rowNumber}
+                      </RowNumberTd>
+                    ) : null}
+                    {row.map((cell) => (
+                      <Td key={cell.id}>{cell.value}</Td>
+                    ))}
+                  </Tr>
+                ));
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <Th colSpan={data.header.length + 1}>
+                  <HStack className="spacebetween">
+                    {data.page ? (
+                      <Pagination
+                        page={data.page}
+                        rowsInPage={data.rows.length}
+                        totalRows={data.numRows}
+                      />
+                    ) : null}
+                  </HStack>
+                </Th>
+              </tr>
+            </tfoot>
+          </table>
+        ) : null}
       </VStack>
     </Box>
   );

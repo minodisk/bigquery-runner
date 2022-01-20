@@ -13,7 +13,8 @@ export type Output = {
       readonly numRows: string;
     }
   ) => Promise<unknown>;
-  readonly close: () => Promise<number | void>;
+  readonly bytesWritten: () => Promise<number | void>;
+  readonly close: () => Promise<void>;
   readonly dispose: () => unknown;
 };
 
@@ -86,11 +87,12 @@ export function createViewerOutput({
         },
       });
     },
+    async bytesWritten() {},
     async close() {
       if (!panel) {
         return;
       }
-      await panel.webview.postMessage({
+      panel.webview.postMessage({
         source: "bigquery-runner",
         payload: {
           event: "close",
@@ -129,6 +131,7 @@ export function createLogOutput({
         await formatter.rows({ structs: rows, rowNumber: 0, flat })
       );
     },
+    async bytesWritten() {},
     async close() {
       outputChannel.append(formatter.footer());
     },
@@ -168,13 +171,14 @@ export function createFileOutput({
     async writeRows({ rows, flat }) {
       stream.write(await formatter.rows({ structs: rows, rowNumber: 0, flat }));
     },
-    async close() {
+    async bytesWritten() {
       stream.write(formatter.footer());
       await new Promise((resolve, reject) => {
         stream.on("error", reject).on("finish", resolve).end();
       });
       return stream.bytesWritten;
     },
+    async close() {},
     async dispose() {
       stream.end();
       stream = undefined!;

@@ -24,10 +24,9 @@ describe("formatter", () => {
             onDidDispose() {},
           };
         },
-        flat,
       });
       await output.open();
-      await output.writeHeads();
+      await output.writeHeads({ flat });
       await output.writeRows({
         rows: [
           {
@@ -35,9 +34,15 @@ describe("formatter", () => {
           },
         ],
         numRows: "0",
+        flat,
       });
-      await output.close();
       expect(messages).toEqual([
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "open",
+          },
+        },
         {
           source: "bigquery-runner",
           payload: {
@@ -74,9 +79,7 @@ describe("formatter", () => {
         ]);
         let actual: string = "";
         const output = createLogOutput({
-          formatter: createMarkdownFormatter({
-            flat,
-          }),
+          formatter: createMarkdownFormatter(),
           outputChannel: {
             show() {},
             append(value) {
@@ -85,7 +88,9 @@ describe("formatter", () => {
           },
         });
         await output.open();
-        await output.writeHeads();
+        await output.writeHeads({
+          flat,
+        });
         await output.writeRows({
           rows: [
             {
@@ -93,6 +98,7 @@ describe("formatter", () => {
             },
           ],
           numRows: "0",
+          flat,
         });
         await output.close();
         expect(actual).toEqual(

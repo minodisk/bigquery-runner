@@ -197,9 +197,7 @@ export async function createClient(options: BigQueryOptions) {
         async getInfo() {
           let jobInfo: JobInfo;
           for (;;) {
-            console.log("getMetadata");
             const metadata = await job.getMetadata();
-            console.log("metadata:", metadata);
             const info: JobInfo | undefined = metadata.find(
               ({ kind }) => kind === "bigquery#job"
             );
@@ -207,14 +205,12 @@ export async function createClient(options: BigQueryOptions) {
               // throw new Error(`no job info: ${job.id}`);
               continue;
             }
-            console.log("state:", info.status.state);
             if (info.status.state === "DONE") {
               jobInfo = info;
               break;
             }
             await sleep(1000);
           }
-          console.log("jobInfo:", jobInfo);
           const {
             configuration: {
               query: {

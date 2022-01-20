@@ -309,7 +309,6 @@ async function _validateQuery({
       document,
     });
   } catch (err) {
-    console.log("_validateQuery:", err);
     if (err instanceof ErrorWithId) {
       outputChannel.appendLine(`${err.error} (${err.id})`);
     } else {
@@ -370,7 +369,6 @@ function wrapCallback({
       });
       resultChannel.set(result);
     } catch (err) {
-      console.log("wrapCallback:", err);
       if (err instanceof ErrorWithId) {
         outputChannel.appendLine(`${err.error} (${err.id})`);
       } else {
@@ -555,7 +553,7 @@ async function renderRows({
     const flat = createFlat(schema.fields);
     await output.writeHeads({ flat });
     await output.writeRows({ ...results, numRows, flat });
-    const bytesWritten = await output.close();
+    const bytesWritten = await output.bytesWritten();
     if (bytesWritten !== undefined) {
       outputChannel.appendLine(
         `Total bytes written: ${formatBytes(bytesWritten)}`

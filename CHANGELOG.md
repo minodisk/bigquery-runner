@@ -2,6 +2,19 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## [v0.0.25]
+
+### Added
+
+- Added a spinner to show the loading status.
+
+### Changed
+
+- Optimized data messaging for fast rendering.
+- Changed the rendering engine to use React v18β for asynchronous rendering.
+- Changed the table header to stick to the top of the panel.
+- Changed the table footer to stick to the bottom of the panel.
+
 ## [v0.0.24]
 
 ### Added
