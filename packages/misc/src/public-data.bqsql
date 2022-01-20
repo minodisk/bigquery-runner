@@ -3,7 +3,5 @@ select
     labels,
 from
     `bigquery-public-data.wikipedia.wikidata`
-where
-    array_length(labels) = 2
 limit
-    32
+    1000

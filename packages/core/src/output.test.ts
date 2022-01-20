@@ -41,21 +41,9 @@ describe("formatter", () => {
         {
           source: "bigquery-runner",
           payload: {
-            event: "clear",
-          },
-        },
-        {
-          source: "bigquery-runner",
-          payload: {
-            event: "header",
-            payload: ["foo"],
-          },
-        },
-        {
-          source: "bigquery-runner",
-          payload: {
             event: "rows",
             payload: {
+              header: ["foo"],
               rows: [
                 {
                   rowNumber: 1,
