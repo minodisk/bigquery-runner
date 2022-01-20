@@ -5,7 +5,7 @@
     "ecmaVersion": 12,
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint", "import", "unused-imports"],
+  "plugins": ["@typescript-eslint", "import", "unused-imports", "react-hooks"],
   "extends": [
     // "eslint:recommended",
     // "plugin:@typescript-eslint/recommended",

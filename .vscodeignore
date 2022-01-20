@@ -10,3 +10,4 @@ screenshots
 .eslintrc.json
 .gitignore
 package-lock.json
+service-account.json
