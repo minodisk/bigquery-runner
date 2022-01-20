@@ -12,24 +12,24 @@ function isData(data: any): data is Rows {
   return data.source === "bigquery-runner";
 }
 
-type Event = Clear | Header | RowsEvent;
+type Event = OpenEvent | CloseEvent | RowsEvent;
 
-type Clear = {
-  event: "clear";
+type OpenEvent = {
+  event: "open";
   payload: undefined;
 };
 
-function isClear(e: Event): e is Clear {
-  return e.event === "clear";
+function isOpenEvent(e: Event): e is OpenEvent {
+  return e.event === "open";
 }
 
-type Header = {
-  event: "header";
-  payload: Array<string>;
+type CloseEvent = {
+  event: "close";
+  payload: undefined;
 };
 
-function isHeader(e: Event): e is Header {
-  return e.event === "header";
+function isCloseEvent(e: Event): e is CloseEvent {
+  return e.event === "close";
 }
 
 type Data = {
@@ -50,11 +50,9 @@ function isRowsEvent(e: Event): e is RowsEvent {
 
 const App: FC = () => {
   const [data, setData] = useState<Data | undefined>(defaultData);
-  const [loading, setLoading] = useState<{ reason: string } | undefined>({
-    reason: "Initializing",
-  });
+  const [loading, setLoading] = useState<string | undefined>("Initializing");
   const [isPending, startTransition] = (React as any).useTransition({
-    timeoutMs: 3000,
+    timeoutMs: 5000,
   });
 
   useEffect(() => {
@@ -65,11 +63,18 @@ const App: FC = () => {
       const {
         data: { payload },
       } = e;
+      if (isOpenEvent(payload)) {
+        setLoading("Fetching");
+      }
       if (isRowsEvent(payload)) {
+        setLoading(undefined);
         startTransition(() => {
           setData(payload.payload);
         });
         return;
+      }
+      if (isCloseEvent(payload)) {
+        setLoading(undefined);
       }
       throw new Error(`undefined data payload '${payload}'`);
     });
@@ -77,72 +82,74 @@ const App: FC = () => {
 
   useEffect(() => {
     if (isPending) {
-      setLoading({ reason: "Rendering" });
+      setLoading("Rendering");
     } else {
       setLoading(undefined);
     }
   }, [isPending]);
 
   return (
-    <VStack p={3}>
-      <Suspense fallback={<div>table</div>}>
-        <>
-          <table>
-            <thead>
-              <Tr>
-                <RowNumberTh>Row</RowNumberTh>
-                {data?.header.map((head) => (
-                  <Th key={head}>{head}</Th>
-                ))}
-              </Tr>
-            </thead>
-            <tbody>
-              {data?.rows.map(({ rowNumber, rows }, i) => {
-                const lastRow = i === data.rows.length - 1;
-                return rows.map((row, j) => (
-                  <Tr
-                    key={j}
-                    className={cx({
-                      lastOfRowNumber: lastRow && j === 0,
-                    })}
-                  >
-                    {j === 0 ? (
-                      <RowNumberTd rowSpan={rows.length}>
-                        {rowNumber}
-                      </RowNumberTd>
-                    ) : null}
-                    {row.map((cell) => (
-                      <Td key={cell.id}>{cell.value}</Td>
-                    ))}
-                  </Tr>
-                ));
-              })}
-            </tbody>
-            <tfoot>
-              <tr>
-                <Th colSpan={data ? data.header.length + 1 : undefined}>
-                  <HStack className="spacebetween">
-                    {data?.page ? (
-                      <Pagination
-                        page={data.page}
-                        rowsInPage={data.rows.length}
-                        totalRows={data.numRows}
-                      />
-                    ) : null}
-                    {loading ? (
-                      <HStack gap={1}>
-                        <Spinner />
-                        <Text color="weak">{loading.reason}</Text>
-                      </HStack>
-                    ) : null}
-                  </HStack>
-                </Th>
-              </tr>
-            </tfoot>
-          </table>
-        </>
-      </Suspense>
-    </VStack>
+    <Box>
+      {loading ? (
+        <HStack className="loading" p={2} gap={1}>
+          <Spinner />
+          <Text color="weak">{loading}</Text>
+        </HStack>
+      ) : null}
+      <VStack p={3}>
+        <Suspense fallback={<div>table</div>}>
+          <>
+            <table>
+              <thead>
+                <Tr>
+                  <RowNumberTh>Row</RowNumberTh>
+                  {data?.header.map((head) => (
+                    <Th key={head}>{head}</Th>
+                  ))}
+                </Tr>
+              </thead>
+              <tbody>
+                {data?.rows.map(({ rowNumber, rows }, i) => {
+                  const lastRow = i === data.rows.length - 1;
+                  return rows.map((row, j) => (
+                    <Tr
+                      key={j}
+                      className={cx({
+                        lastOfRowNumber: lastRow && j === 0,
+                      })}
+                    >
+                      {j === 0 ? (
+                        <RowNumberTd rowSpan={rows.length}>
+                          {rowNumber}
+                        </RowNumberTd>
+                      ) : null}
+                      {row.map((cell) => (
+                        <Td key={cell.id}>{cell.value}</Td>
+                      ))}
+                    </Tr>
+                  ));
+                })}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <Th colSpan={data ? data.header.length + 1 : undefined}>
+                    <HStack className="spacebetween">
+                      {data?.page ? (
+                        <Pagination
+                          page={data.page}
+                          rowsInPage={data.rows.length}
+                          totalRows={data.numRows}
+                        />
+                      ) : null}
+                    </HStack>
+                  </Th>
+                </tr>
+              </tfoot>
+            </table>
+          </>
+        </Suspense>
+      </VStack>
+    </Box>
   );
 };
 
@@ -230,213 +237,213 @@ const Text: XFC<{ color?: "weak" }> = ({ className, color, ...props }) => (
 
 const Spinner: FC = () => <div className="spinner" />;
 
-// const defaultData = undefined;
-const defaultData = {
-  header: [
-    "order_id",
-    "items.product_id",
-    "items.quantity",
-    "items.name",
-    "items.price",
-  ],
-  rows: [
-    {
-      rowNumber: 0,
-      rows: [
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-      ],
-    },
-    {
-      rowNumber: 0,
-      rows: [
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-      ],
-    },
-    {
-      rowNumber: 0,
-      rows: [
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-      ],
-    },
-    {
-      rowNumber: 0,
-      rows: [
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-      ],
-    },
-    {
-      rowNumber: 0,
-      rows: [
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-      ],
-    },
-    {
-      rowNumber: 0,
-      rows: [
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-      ],
-    },
-    {
-      rowNumber: 1,
-      rows: [
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-      ],
-    },
-    {
-      rowNumber: 1,
-      rows: [
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-        [
-          { id: "order_id", value: 1 },
-          { id: "items.product_id", value: 1001 },
-          { id: "items.quantity", value: 4 },
-          { id: "items.name", value: "wallet" },
-          { id: "items.price", value: 30000 },
-        ],
-      ],
-    },
-  ],
-  page: { rowsPerPage: 100, current: 2 },
-  numRows: "123000",
-};
+const defaultData = undefined;
+// const defaultData = {
+//   header: [
+//     "order_id",
+//     "items.product_id",
+//     "items.quantity",
+//     "items.name",
+//     "items.price",
+//   ],
+//   rows: [
+//     {
+//       rowNumber: 0,
+//       rows: [
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//       ],
+//     },
+//     {
+//       rowNumber: 0,
+//       rows: [
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//       ],
+//     },
+//     {
+//       rowNumber: 0,
+//       rows: [
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//       ],
+//     },
+//     {
+//       rowNumber: 0,
+//       rows: [
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//       ],
+//     },
+//     {
+//       rowNumber: 0,
+//       rows: [
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//       ],
+//     },
+//     {
+//       rowNumber: 0,
+//       rows: [
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//       ],
+//     },
+//     {
+//       rowNumber: 1,
+//       rows: [
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//       ],
+//     },
+//     {
+//       rowNumber: 1,
+//       rows: [
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//         [
+//           { id: "order_id", value: 1 },
+//           { id: "items.product_id", value: 1001 },
+//           { id: "items.quantity", value: 4 },
+//           { id: "items.name", value: "wallet" },
+//           { id: "items.price", value: 30000 },
+//         ],
+//       ],
+//     },
+//   ],
+//   page: { rowsPerPage: 100, current: 2 },
+//   numRows: "123000",
+// };
 
 export default App;

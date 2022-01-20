@@ -6,9 +6,12 @@ import { Flat, Formatter, Results } from ".";
 export type Output = {
   readonly open: () => Promise<string | void>;
   readonly path: () => string | void;
-  readonly writeHeads: () => Promise<unknown>;
+  readonly writeHeads: (props: { readonly flat: Flat }) => Promise<unknown>;
   readonly writeRows: (
-    results: Results & { numRows: string }
+    results: Results & {
+      readonly flat: Flat;
+      readonly numRows: string;
+    }
   ) => Promise<unknown>;
   readonly close: () => Promise<number | void>;
   readonly dispose: () => unknown;
@@ -33,12 +36,10 @@ export function createViewerOutput({
   html,
   subscriptions,
   createWebviewPanel,
-  flat,
 }: {
   readonly html: string;
   readonly subscriptions: Array<{ dispose(): any }>;
   createWebviewPanel(): WebviewPanel;
-  readonly flat: Flat;
 }): Output {
   return {
     async open() {
@@ -54,29 +55,18 @@ export function createViewerOutput({
         );
       }
 
-      // await panel.webview.postMessage({
-      //   source: "bigquery-runner",
-      //   payload: {
-      //     event: "clear",
-      //   },
-      // });
+      await panel.webview.postMessage({
+        source: "bigquery-runner",
+        payload: {
+          event: "open",
+        },
+      });
     },
     path() {
       return "";
     },
-    async writeHeads() {
-      // if (!panel) {
-      //   throw new Error(`panel is not initialized`);
-      // }
-      // return panel.webview.postMessage({
-      //   source: "bigquery-runner",
-      //   payload: {
-      //     event: "header",
-      //     payload: flat.heads.map(({ id }) => id),
-      //   },
-      // });
-    },
-    async writeRows(results) {
+    async writeHeads() {},
+    async writeRows({ rows, page, flat, numRows }) {
       if (!panel) {
         throw new Error(`panel is not initialized`);
       }
@@ -87,19 +77,25 @@ export function createViewerOutput({
           payload: {
             header: flat.heads.map(({ id }) => id),
             rows: flat.toRows({
-              structs: results.rows,
-              rowNumber: results.page
-                ? results.page.rowsPerPage * results.page.current + 1
-                : 1,
+              structs: rows,
+              rowNumber: page ? page.rowsPerPage * page.current + 1 : 1,
             }),
-            page: results.page,
-            numRows: results.numRows,
+            page: page,
+            numRows: numRows,
           },
         },
       });
     },
     async close() {
-      // do nothing
+      if (!panel) {
+        return;
+      }
+      await panel.webview.postMessage({
+        source: "bigquery-runner",
+        payload: {
+          event: "close",
+        },
+      });
     },
     dispose() {
       if (!panel) {
@@ -125,12 +121,12 @@ export function createLogOutput({
       outputChannel.show(true);
     },
     path() {},
-    async writeHeads() {
-      outputChannel.append(formatter.header());
+    async writeHeads({ flat }) {
+      outputChannel.append(formatter.header({ flat }));
     },
-    async writeRows(results) {
+    async writeRows({ rows, flat }) {
       outputChannel.append(
-        await formatter.rows({ structs: results.rows, rowNumber: 0 })
+        await formatter.rows({ structs: rows, rowNumber: 0, flat })
       );
     },
     async close() {
@@ -163,16 +159,14 @@ export function createFileOutput({
       return path;
     },
     path() {},
-    async writeHeads() {
-      const res = formatter.header();
+    async writeHeads({ flat }) {
+      const res = formatter.header({ flat });
       if (res) {
         stream.write(res);
       }
     },
-    async writeRows(results) {
-      stream.write(
-        await formatter.rows({ structs: results.rows, rowNumber: 0 })
-      );
+    async writeRows({ rows, flat }) {
+      stream.write(await formatter.rows({ structs: rows, rowNumber: 0, flat }));
     },
     async close() {
       stream.write(formatter.footer());

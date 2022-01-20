@@ -4,4 +4,4 @@ select
 from
     `bigquery-public-data.wikipedia.wikidata`
 limit
-    1000
+    3000

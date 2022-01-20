@@ -4,23 +4,24 @@ import { Flat, Struct } from ".";
 
 export type Formatter = {
   readonly type: "table" | "markdown" | "json-lines" | "json" | "csv";
-  readonly header: () => string;
+  readonly header: (props: { flat: Flat }) => string;
   readonly rows: (props: {
+    flat: Flat;
     structs: Array<Struct>;
     rowNumber: number;
   }) => Promise<string>;
   readonly footer: () => string;
 };
 
-export function createTableFormatter({ flat }: { flat: Flat }): Formatter {
+export function createTableFormatter(): Formatter {
   return {
     type: "table",
     header() {
       return "";
     },
-    async rows(props) {
+    async rows({ flat, structs, rowNumber }) {
       const t = new EasyTable();
-      flat.toRows(props).forEach(({ rows }) => {
+      flat.toRows({ structs, rowNumber }).forEach(({ rows }) => {
         rows.forEach((row) => {
           row.forEach((cell) => t.cell(cell.id, cell.value));
           t.newRow();
@@ -34,10 +35,10 @@ export function createTableFormatter({ flat }: { flat: Flat }): Formatter {
   };
 }
 
-export function createMarkdownFormatter({ flat }: { flat: Flat }): Formatter {
+export function createMarkdownFormatter(): Formatter {
   return {
     type: "markdown",
-    header() {
+    header({ flat }) {
       if (flat.heads.length === 0) {
         return "";
       }
@@ -45,10 +46,10 @@ export function createMarkdownFormatter({ flat }: { flat: Flat }): Formatter {
 |${flat.heads.map(() => "---").join("|")}|
 `;
     },
-    async rows(props) {
+    async rows({ flat, structs, rowNumber }) {
       return (
         flat
-          .toRows(props)
+          .toRows({ structs, rowNumber })
           .flatMap(({ rows }) =>
             rows.map(
               (row) =>
@@ -106,10 +107,8 @@ export function createJSONFormatter(): Formatter {
 }
 
 export function createCSVFormatter({
-  flat,
   options,
 }: {
-  flat: Flat;
   options: CSV.Options;
 }): Formatter {
   return {
@@ -117,7 +116,7 @@ export function createCSVFormatter({
     header() {
       return "";
     },
-    async rows({ structs }) {
+    async rows({ flat, structs }) {
       if (structs.length === 0) {
         return "";
       }

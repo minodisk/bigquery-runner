@@ -40,7 +40,6 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
   createViewerOutput,
-  Flat,
   Formatter,
   RunJob,
   Output,
@@ -406,17 +405,30 @@ async function run({
 }): Promise<Result> {
   outputChannel.appendLine(`Run`);
 
-  const client = await createClient(config);
+  const output = await createOutput({
+    config,
+    outputChannel,
+    filename: document.fileName,
+    ctx,
+  });
+  const path = await output.open();
+  if (path !== undefined) {
+    outputChannel.appendLine(`Output to: ${path}`);
+  }
 
   try {
     errorMarker.clear();
+
+    const client = await createClient(config);
     job = await client.createRunJob({
       query: getQueryText({ document, range }),
       maxResults: config.pagination.results,
     });
     outputChannel.appendLine(`Job ID: ${job.id}`);
+
     errorMarker.clear();
   } catch (err) {
+    output.close();
     errorMarker.mark(err);
   }
 
@@ -425,10 +437,8 @@ async function run({
   }
 
   await renderRows({
-    config,
     outputChannel,
-    document,
-    ctx,
+    output,
     results: await job.getRows(),
   });
   return { jobId: job.id };
@@ -449,13 +459,31 @@ async function runPrevPage({
     throw new Error(`no job`);
   }
 
-  await renderRows({
+  const output = await createOutput({
     config,
     outputChannel,
-    document,
+    filename: document.fileName,
     ctx,
-    results: await job.getPrevRows(),
   });
+  const path = await output.open();
+  if (path !== undefined) {
+    outputChannel.appendLine(`Output to: ${path}`);
+  }
+
+  let results: Results;
+  try {
+    results = await job.getPrevRows();
+  } catch (err) {
+    output.close();
+    throw err;
+  }
+
+  await renderRows({
+    outputChannel,
+    output,
+    results: results!,
+  });
+
   return { jobId: job.id };
 }
 
@@ -474,27 +502,41 @@ async function runNextPage({
     throw new Error(`no job`);
   }
 
-  await renderRows({
+  const output = await createOutput({
     config,
     outputChannel,
-    document,
+    filename: document.fileName,
     ctx,
-    results: await job.getNextRows(),
   });
+  const path = await output.open();
+  if (path !== undefined) {
+    outputChannel.appendLine(`Output to: ${path}`);
+  }
+
+  let results: Results;
+  try {
+    results = await job.getNextRows();
+  } catch (err) {
+    output.close();
+    throw err;
+  }
+
+  await renderRows({
+    outputChannel,
+    output,
+    results: results!,
+  });
+
   return { jobId: job.id };
 }
 
 async function renderRows({
-  config,
   outputChannel,
-  document,
-  ctx,
+  output,
   results,
 }: {
-  readonly config: Config;
   readonly outputChannel: OutputChannel;
-  readonly document: TextDocument;
-  readonly ctx: ExtensionContext;
+  readonly output: Output;
   readonly results: Results;
 }) {
   if (!job) {
@@ -511,20 +553,8 @@ async function renderRows({
     );
 
     const flat = createFlat(schema.fields);
-    const output = await createOutput({
-      config,
-      outputChannel,
-      filename: document.fileName,
-      ctx,
-      flat,
-    });
-
-    const path = await output.open();
-    if (path !== undefined) {
-      outputChannel.appendLine(`Output to: ${path}`);
-    }
-    await output.writeHeads();
-    await output.writeRows({ ...results, numRows });
+    await output.writeHeads({ flat });
+    await output.writeRows({ ...results, numRows, flat });
     const bytesWritten = await output.close();
     if (bytesWritten !== undefined) {
       outputChannel.appendLine(
@@ -657,13 +687,11 @@ async function createOutput({
   outputChannel,
   filename,
   ctx,
-  flat,
 }: {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
   readonly filename: string;
   readonly ctx: ExtensionContext;
-  readonly flat: Flat;
 }): Promise<Output> {
   switch (config.output.type) {
     case "viewer":
@@ -693,11 +721,10 @@ async function createOutput({
           ctx.subscriptions.push(panel);
           return panel;
         },
-        flat,
       });
     case "output":
       return createLogOutput({
-        formatter: createFormatter({ config, flat }),
+        formatter: createFormatter({ config }),
         outputChannel,
       });
     case "file":
@@ -705,7 +732,7 @@ async function createOutput({
         throw new Error(`no workspace folders`);
       }
       return createFileOutput({
-        formatter: createFormatter({ config, flat }),
+        formatter: createFormatter({ config }),
         dirname: join(
           workspace.workspaceFolders[0].uri.path ||
             workspace.workspaceFolders[0].uri.fsPath,
@@ -716,24 +743,18 @@ async function createOutput({
   }
 }
 
-function createFormatter({
-  config,
-  flat,
-}: {
-  config: Config;
-  flat: Flat;
-}): Formatter {
+function createFormatter({ config }: { config: Config }): Formatter {
   switch (config.format.type) {
     case "table":
-      return createTableFormatter({ flat });
+      return createTableFormatter();
     case "markdown":
-      return createMarkdownFormatter({ flat });
+      return createMarkdownFormatter();
     case "json-lines":
       return createJSONLinesFormatter();
     case "json":
       return createJSONFormatter();
     case "csv":
-      return createCSVFormatter({ flat, options: config.format.csv });
+      return createCSVFormatter({ options: config.format.csv });
     default:
       throw new Error(`Invalid format: ${config.format.type}`);
   }
