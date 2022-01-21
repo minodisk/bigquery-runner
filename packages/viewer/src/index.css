@@ -1,3 +1,23 @@
+html,
+body {
+  font-family: var(--vscode-editor-font-family);
+  color: var(--vscode-terminal-foreground);
+  font-size: var(--vscode-editor-font-size);
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--vscode-editor-background);
+  border-color: var(--vscode-terminal-border);
+}
+
+p {
+  margin: 0;
+}
+
+/* When loaded in VSCode, these settings will be overridden by variables of the same name set in the <html> of the webview. */
 :root {
   --vscode-font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   --vscode-font-weight: normal;
@@ -534,23 +554,4 @@
   --vscode-gitDecoration-stageDeletedResourceForeground: #c74e39;
   --vscode-gitDecoration-conflictingResourceForeground: #b16286;
   --vscode-gitDecoration-submoduleResourceForeground: #8db9e2;
-}
-
-html,
-body {
-  font-family: var(--vscode-editor-font-family);
-  color: var(--vscode-terminal-foreground);
-  font-size: var(--vscode-editor-font-size);
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--vscode-editor-background);
-  border-color: var(--vscode-terminal-border);
-}
-
-p {
-  margin: 0;
 }

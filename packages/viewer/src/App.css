@@ -47,18 +47,6 @@ tbody tr.lastOfRowNumber td.rowNumber {
   border-width: 0;
 }
 
-.loading {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  background-color: var(--vscode-editor-background);
-  border-color: var(--vscode-terminal-border);
-  border-style: solid;
-  border-width: 1px 0 0 1px;
-  border-radius: 2px 0 0 0;
-  z-index: 1;
-}
-
 .status {
 }
 
@@ -115,6 +103,19 @@ tbody tr.lastOfRowNumber td.rowNumber {
   color: var(--vscode-descriptionForeground);
 }
 
+.loading {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  background-color: var(--vscode-editor-background);
+  border-color: var(--vscode-terminal-border);
+  border-style: solid;
+  border-width: 1px 0 0 1px;
+  border-radius: 2px 0 0 0;
+  z-index: 1;
+}
+
 .spinner {
   display: inline-block;
   box-sizing: border-box;
@@ -125,35 +126,49 @@ tbody tr.lastOfRowNumber td.rowNumber {
   border-radius: 99999px;
   border-bottom-width: 2px;
   border-left-width: 2px;
+  border-color: var(--vscode-descriptionForeground);
   border-bottom-color: transparent;
   border-left-color: transparent;
-  animation: 0.45s linear 0s infinite normal none running animation-b7n1on;
+  animation: 0.45s linear 0s infinite normal none running animation-spinner;
   width: var(--spinner-size);
   height: var(--spinner-size);
   --spinner-size: 18px;
 }
 
-.spacebetween {
-  justify-content: space-between;
-}
-
-/* .edge {
-  border: 0px;
-  clip: rect(0px, 0px, 0px, 0px);
-  height: 1px;
-  width: 1px;
-  margin: -1px;
-  padding: 0px;
-  overflow: hidden;
-  white-space: nowrap;
-  position: absolute;
-} */
-
-@keyframes animation-b7n1on {
+@keyframes animation-spinner {
   0% {
     transform: rotate(0deg);
   }
   100% {
     transform: rotate(360deg);
   }
+}
+
+.skeleton {
+  opacity: 0.7;
+  box-shadow: none;
+  cursor: default;
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+  height: 20px;
+  border-radius: 2px;
+  border-color: rgb(237, 242, 247);
+  background: padding-box rgb(160, 174, 192);
+  animation: 0.8s linear 0s infinite alternate none running animation-skeleton;
+}
+
+@keyframes animation-skeleton {
+  0% {
+    border-color: var(--vscode-terminal-foreground);
+    background: var(--vscode-terminal-foreground);
+  }
+  100% {
+    border-color: var(--vscode-descriptionForeground);
+    background: var(--vscode-descriptionForeground);
+  }
+}
+
+.spacebetween {
+  justify-content: space-between;
 }

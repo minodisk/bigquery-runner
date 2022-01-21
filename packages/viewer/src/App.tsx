@@ -63,7 +63,6 @@ const App: FC = () => {
       const {
         data: { payload },
       } = e;
-      console.log(payload);
       if (isOpenEvent(payload)) {
         setLoading("Fetching");
         return;
@@ -99,7 +98,7 @@ const App: FC = () => {
           <Text color="weak">{loading}</Text>
         </HStack>
       ) : null}
-      <VStack p={3}>
+      <VStack px={3}>
         {data ? (
           <table>
             <thead>
@@ -148,7 +147,57 @@ const App: FC = () => {
               </tr>
             </tfoot>
           </table>
-        ) : null}
+        ) : (
+          <table>
+            <thead>
+              <Tr>
+                <Th>
+                  <Skeleton />
+                </Th>
+                <Th>
+                  <Skeleton />
+                </Th>
+                <Th>
+                  <Skeleton />
+                </Th>
+                <Th>
+                  <Skeleton />
+                </Th>
+                <Th>
+                  <Skeleton />
+                </Th>
+              </Tr>
+            </thead>
+            <tbody>
+              {new Array(3).fill(null).map((_, i) => (
+                <Tr key={i}>
+                  <Td>
+                    <Skeleton />
+                  </Td>
+                  <Td>
+                    <Skeleton />
+                  </Td>
+                  <Td>
+                    <Skeleton />
+                  </Td>
+                  <Td>
+                    <Skeleton />
+                  </Td>
+                  <Td>
+                    <Skeleton />
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <Tr>
+                <Th colSpan={5}>
+                  <Skeleton />
+                </Th>
+              </Tr>
+            </tfoot>
+          </table>
+        )}
       </VStack>
     </Box>
   );
@@ -237,6 +286,8 @@ const Text: XFC<{ color?: "weak" }> = ({ className, color, ...props }) => (
 );
 
 const Spinner: FC = () => <div className="spinner" />;
+
+const Skeleton: FC = () => <div className="skeleton" />;
 
 const defaultData = undefined;
 // const defaultData = {
