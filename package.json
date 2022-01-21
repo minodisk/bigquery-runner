@@ -108,8 +108,7 @@
         "bigqueryRunner.queryValidation.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.",
-          "screenshot": "query-validation.gif"
+          "description": "Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified."
         },
         "bigqueryRunner.queryValidation.debounceInterval": {
           "type": "number",

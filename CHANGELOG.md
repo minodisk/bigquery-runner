@@ -2,7 +2,18 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
-## [v0.0.25]
+## [v0.0.26](#user-content-v0.0.26)
+
+### Added
+
+- Display the skeleton from the initialization of the viewer until the data loading and rendering is complete.
+- Added links to each version in the change log.
+
+### Changed
+
+- Rewroted the README.
+
+## [v0.0.25](#user-content-v0.0.25)
 
 ### Added
 
@@ -15,7 +26,7 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 - Changed the table header to stick to the top of the panel.
 - Changed the table footer to stick to the bottom of the panel.
 
-## [v0.0.24]
+## [v0.0.24](#user-content-v0.0.24)
 
 ### Added
 
@@ -28,32 +39,32 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 - Added a row number column to the viewer.
 - Added page information to viewer.
 
-## [v0.0.23]
+## [v0.0.23](#user-content-v0.0.23)
 
 ### Added
 
 - Show an authentication error message.
 
-## [v0.0.22]
+## [v0.0.22](#user-content-v0.0.22)
 
 ### Changed
 
 - Fixed issue where viewer resources could not be loaded.
 
-## [v0.0.21]
+## [v0.0.21](#user-content-v0.0.21)
 
 ### Added
 
 - Add the `viewer` options to `bigqueryRunner.output.type`
   - Rendering a well-formed table to a webview
 
-## [v0.0.20]
+## [v0.0.20](#user-content-v0.0.20)
 
 ### Added
 
 - Validate already opened files when the extension is activated.
 
-## [v0.0.19]
+## [v0.0.19](#user-content-v0.0.19)
 
 ### Added
 
@@ -69,13 +80,13 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
   - `bigqueryRunner.output.format` -> `bigqueryRunner.format`
   - `bigqueryRunner.output.destination` -> `bigqueryRunner.output`
 
-## [v0.0.18]
+## [v0.0.18](#user-content-v0.0.18)
 
 ### Changed
 
 - Changed the message to correctly state that the amount of data to be read by dry run has been estimated.
 
-## [v0.0.17]
+## [v0.0.17](#user-content-v0.0.17)
 
 ### Added
 
@@ -90,26 +101,26 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 - Removed support for json space
 
-## [v0.0.16]
+## [v0.0.16](#user-content-v0.0.16)
 
 ### Added
 
 - Added markdown table format.
 
-## [v0.0.15]
+## [v0.0.15](#user-content-v0.0.15)
 
 ### Changed
 
 - Rename option `checkErrorOnSave` to `validateOnSave`.
 - Changed to put a new line in the Output Channel for each execution.
 
-## [v0.0.14]
+## [v0.0.14](#user-content-v0.0.14)
 
 ### Changed
 
 - Changed screenshot for `checkErrorOnSave` option in README.
 
-## [v0.0.13]
+## [v0.0.13](#user-content-v0.0.13)
 
 ### Added
 
@@ -119,25 +130,25 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 - Changed to add units to bytes output in logs.
 
-## [v0.0.12]
+## [v0.0.12](#user-content-v0.0.12)
 
 ### Added
 
 - Mark the location of errors encountered during the execution of a query job in the editor.
 
-## [v0.0.11]
+## [v0.0.11](#user-content-v0.0.11)
 
 ### Changed
 
 - Added a new line to the last line of output.
 
-## [v0.0.10]
+## [v0.0.10](#user-content-v0.0.10)
 
 ### Changed
 
 - Show output window when outputting error log.
 
-## [v0.0.9]
+## [v0.0.9](#user-content-v0.0.9)
 
 ### Added
 
@@ -154,14 +165,14 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 - Removed JSON pretty option.
 
-## [v0.0.8]
+## [v0.0.8](#user-content-v0.0.8)
 
 ### Added
 
 - Add a screenshot to the README.
 - Add the recommended settings to the README.
 
-## [v0.0.7]
+## [v0.0.7](#user-content-v0.0.7)
 
 ### Added
 
@@ -171,25 +182,25 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 - Removed the command dedicated to the selected text.
 
-## [v0.0.6]
+## [v0.0.6](#user-content-v0.0.6)
 
 ### Bug
 
 - Capture errors that were not captured and printed in the output window.
 
-## [v0.0.5]
+## [v0.0.5](#user-content-v0.0.5)
 
 ### Changed
 
 - Unify the signature of the extension with bigqueryRunner.
 
-## [v0.0.4]
+## [v0.0.4](#user-content-v0.0.4)
 
 ### Changed
 
 - Update repository URL.
 
-## [v0.0.3]
+## [v0.0.3](#user-content-v0.0.3)
 
 ### Added
 
@@ -201,7 +212,7 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 - Print error to output window.
 
-## [v0.0.2]
+## [v0.0.2](#user-content-v0.0.2)
 
 ### Changed
 

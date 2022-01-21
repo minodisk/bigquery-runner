@@ -2,34 +2,33 @@
 This file is generated from gen-src/README.md.ejs. -->
 # BigQuery Runner
 
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/minodisk.bigquery-runner?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
 [![GitHub Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fminodisk%2Fbigquery-runner%2Fbadge%3Fref%3Dmain&style=flat-square)](https://actions-badge.atrox.dev/minodisk/bigquery-runner/goto?ref=main)
 [![Codecov](https://img.shields.io/codecov/c/github/minodisk/bigquery-runner?style=flat-square)](https://app.codecov.io/gh/minodisk/bigquery-runner/)
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/minodisk.bigquery-runner?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
 
-A Visual Studio Code extension that can query Google Cloud Platform's [BigQuery](https://cloud.google.com/bigquery/) from, and return results to, your editor. This extension allows you to:
+## Installation
 
-- Write SQL in VSCode and query BigQuery datasets directly
-- Create queries from selected text
-- Capture results into VSCode window to manipulate them further
-- Mark the location of errors encountered during the execution of a query job in the editor
+[![Open in Visual Studio Code](https://open.vscode.dev/badges/open-in-vscode.svg)](vscode:extension/minodisk.bigquery-runner)
 
-This extension is great if you're exploring BigQuery and prefer VSCode's editing environment, or for cases where you're writing documentation (hint: use "Run selected text as query") and want to double check that the query is valid.
+## Authentication
 
-This extension was forked from [google/vscode-bigquery](https://github.com/google/vscode-bigquery).
+This extension requires authentication to the Google Cloud API. You can start using it in the following two steps.
 
-## Installing
-
-[BigQuery Runner \- Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
+1. [Create a service account and its key](https://cloud.google.com/docs/authentication/getting-started)
+    - Give the service account the role of [`roles.bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#permissions_and_roles)
+2. Tell the key path to this extension in one of the following two ways:
+    - Set the path to the key `bigqueryRunner.keyFilename` in settings.json
+    - [Set the environment variable](https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable)
 
 ## Usage
 
-The BigQuery extension adds a number of commands to the command palette (Cmd/Ctrl+Shift+P).
-
-By default, it will look for your `GOOGLE_APPLICATION_CREDENTIALS` environmental variable (if set) and use the service account described in that JSON file. You can also explicitly set `bigqueryRunner.keyFilename` to the path of your [Service Account key file](https://cloud.google.com/docs/authentication/getting-started). Unless necessary, it's recommended that you scope this key to the [`roles.bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#permissions_and_roles) role, which is sufficient for querying and most related tasks.
-
-## Commands
+1. Open the query file
+2. Open the command palette
+3. Run `BigQuery Runner: Run`
 
 ![bigquery-runner-12](https://user-images.githubusercontent.com/514164/149955294-1f740196-5295-4286-8b1f-e9dfb2958cc6.gif)
+
+## Commands
 
 ### BigQuery Runner: Run
 
@@ -114,7 +113,6 @@ Limits the bytes billed for this query. Queries with bytes billed above this lim
 |boolean|true|
 
 Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.
-![bigqueryRunner.queryValidation.enabled](https://storage.googleapis.com/bigquery-runner/query-validation.gif)
 
 ### `bigqueryRunner.queryValidation.debounceInterval`
 
@@ -189,9 +187,53 @@ Controls the output destination for query results.
 Controls the output file path for query results when output.type is specified as file.
 
 
+## Features
+
+- Write SQL in VSCode and query BigQuery datasets directly
+- Query from selected text
+- Marking errors in a query
+- Fast rendering of huge results
+- Pagination
+- Format in a variety of formats
+    - HTML `<table/>`
+    - Text neatly formatted into a table
+    - JSON
+    - JSON Lines
+    - CSV
+- Output to various destinations
+    - Viewer that is highly compatible with the themes and fonts set in your VSCode
+    - Log window, the UI of VSCode
+    - File
+
 ## Recommended Setting
 
-It is recommended to set the settings in settings.json to avoid wrapping when outputting a table with a large number of fields.
+### To use keyboard shortcuts for run and paging:
+
+The `key` is an example, but it should be set in keybindings.json.
+
+```json:keybindings.json
+{
+  {
+    "key": "cmd+enter",
+    "command": "bigqueryRunner.run",
+    "when": "resourceExtname == '.bqsql'"
+  },
+  {
+    "key": "space h",
+    "command": "bigqueryRunner.prevPage",
+    "when": "resourceExtname == '.bqsql' && vim.mode == 'Normal' || vim.mode == 'Visual' || vim.mode == 'VisualBlock' || vim.mode == 'VisualLine'"
+  },
+  {
+    "key": "space l",
+    "command": "bigqueryRunner.nextPage",
+    "when": "resourceExtname == '.bqsql' && vim.mode == 'Normal' || vim.mode == 'Visual' || vim.mode == 'VisualBlock' || vim.mode == 'VisualLine'"
+  }
+}
+```
+
+### When set the output destination to the Log window:
+
+To avoid long horizontal tables from being broken, add the following settings to settings.json.
 
 ```json:settings.json
 {
@@ -200,12 +242,6 @@ It is recommended to set the settings in settings.json to avoid wrapping when ou
   }
 }
 ```
-
-## Contributing
-
-Feature requests are accepted, but please raise an issue describing your feature before sending a PR. This extension focuses on _querying_ BigQuery, rather than dataset- and/or table- level functionality.
-
-This is not an officially supported Google product.
 
 ## License
 
