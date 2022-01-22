@@ -8,7 +8,7 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 - Styled the padding around the table.
 - Renamed the value of settings `bigqueryRunner.output.type` from `output` to `log`.
-- Update README
+- Update descriptions for commands and configurations.
 
 ## v0.0.26
 
