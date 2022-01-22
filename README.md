@@ -205,9 +205,9 @@ Controls the output file path for query results when output.type is specified as
 
 ## Recommended Setting
 
-### To use keyboard shortcuts for run and paging:
+### To use keyboard shortcuts for run and paging
 
-The `key` is an example, but it should be set in keybindings.json.
+Just an example of keybindings.json:
 
 ```json:keybindings.json
 {
@@ -219,17 +219,17 @@ The `key` is an example, but it should be set in keybindings.json.
   {
     "key": "space h",
     "command": "bigqueryRunner.prevPage",
-    "when": "resourceExtname == '.bqsql' && vim.mode == 'Normal' || vim.mode == 'Visual' || vim.mode == 'VisualBlock' || vim.mode == 'VisualLine'"
+    "when": "!terminalFocus && resourceExtname == '.bqsql' && vim.mode == 'Normal' || vim.mode == 'Visual' || vim.mode == 'VisualBlock' || vim.mode == 'VisualLine'"
   },
   {
     "key": "space l",
     "command": "bigqueryRunner.nextPage",
-    "when": "resourceExtname == '.bqsql' && vim.mode == 'Normal' || vim.mode == 'Visual' || vim.mode == 'VisualBlock' || vim.mode == 'VisualLine'"
+    "when": "!terminalFocus && resourceExtname == '.bqsql' && vim.mode == 'Normal' || vim.mode == 'Visual' || vim.mode == 'VisualBlock' || vim.mode == 'VisualLine'"
   }
 }
 ```
 
-### When set the output destination to the log window:
+### When `bigqueryRunner.output.type` is set as `log`
 
 To avoid long horizontal tables from being broken, add the following settings to settings.json.
 

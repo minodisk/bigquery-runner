@@ -31,7 +31,7 @@
     "erorr"
   ],
   "main": "out/extension/index.js",
-  "icon": "icon.png",
+  "icon": "out/assets/icon.png",
   "activationEvents": [
     "workspaceContains:**/*.bqsql",
     "workspaceContains:**/*.bqddl",
@@ -195,6 +195,7 @@
     "build:codegen": "npm run -w codegen build",
     "build:extension": "npm run -w extension build:production",
     "build:viewer": "npm run -w viewer build:production",
+    "build:misc": "npm run -w misc build",
     "debug": "run-s package:debug install:debug",
     "package": "mkdir -p dist && vsce package -o ./dist/",
     "package:debug": "mkdir -p dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
