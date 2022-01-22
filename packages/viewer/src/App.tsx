@@ -98,7 +98,7 @@ const App: FC = () => {
           <Text color="weak">{loading}</Text>
         </HStack>
       ) : null}
-      <VStack px={3}>
+      <VStack>
         {data ? (
           <table>
             <thead>

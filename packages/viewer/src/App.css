@@ -40,6 +40,12 @@ td {
   text-align: left;
   vertical-align: top;
 }
+thead th {
+  padding-top: 8px;
+}
+tfoot th {
+  padding-bottom: 8px;
+}
 tbody tr:last-of-type td {
   border-width: 0;
 }
