@@ -4,18 +4,19 @@ This file is generated from gen-src/README.md.ejs. -->
 
 ## Installation
 
-1. Go to [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
-2. Press the Install button
+1. Go to [the page of this extension in Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
+2. Click the `Install` button
+3. This will open the VSCode page for this extension, and click the `Install` button
 
 ## Authentication
 
 This extension requires authentication to the Google Cloud API. You can start using it in the following two steps.
 
 1. [Create a service account and its key](https://cloud.google.com/docs/authentication/getting-started)
-    - Give the service account the role of [`roles.bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#permissions_and_roles)
+    - Give the service account the role of [`roles/bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#bigquery.user)
 2. Tell the key path to this extension in one of the following two ways:
     - Set the path to the key `bigqueryRunner.keyFilename` in settings.json
-    - [Set the environment variable](https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable)
+    - [Set the path to environment variable `GOOGLE_APPLICATION_CREDENTIALS`](https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable)
 
 ## Usage
 
@@ -34,7 +35,7 @@ This extension requires authentication to the Google Cloud API. You can start us
 |---|
 |bigqueryRunner.run|
 
-Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
+Run a query in BigQuery and display the results. If text is selected, it will run the selected text as a query. If no text is selected, the entire file will be executed as a query.
 
 ### BigQuery Runner: Previous Page
 
@@ -42,7 +43,7 @@ Run the query with BigQuery and display the results. Run the query on the select
 |---|
 |bigqueryRunner.prevPage|
 
-Fetch and display the previous page.
+Fetch and display the results of the previous page.
 
 ### BigQuery Runner: Next Page
 
@@ -50,7 +51,7 @@ Fetch and display the previous page.
 |---|
 |bigqueryRunner.nextPage|
 
-Fetch and display the next page.
+Fetch and display the results of the next page.
 
 ### BigQuery Runner: Dry Run
 
@@ -58,7 +59,7 @@ Fetch and display the next page.
 |---|
 |bigqueryRunner.dryRun|
 
-Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected.
+Dry-run a query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked.
 
 ## Configuration
 
@@ -70,7 +71,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 |---|---|
 |string &#x7C; null|null|
 
-The path to the JSON file for the service account. When specifying a relative path, specify the path from the root folder that is open in VSCode. If it is not specified, the path specified in `GOOGLE_APPLICATION_CREDENTIALS` is used.
+The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VSCode. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used.
 
 ### `bigqueryRunner.projectId`
 
@@ -86,7 +87,7 @@ Project ID for Google Cloud Platform. If not specified, the value of `project_id
 |---|---|
 |string &#x7C; null|null|
 
-The geographic location where the job should run. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
+The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
 
 ### `bigqueryRunner.useLegacySql`
 
@@ -142,7 +143,7 @@ List of file extensions for which the query is to be validated when the file is 
 |---|---|
 |number &#x7C; null|100|
 
-The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`.
+The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`.
 
 ### `bigqueryRunner.format.type`
 
@@ -150,7 +151,7 @@ The number of rows per page. If a number is specified, only that number of rows 
 |---|---|---|
 |string|"table"|"table" &#x7C; "markdown" &#x7C; "json" &#x7C; "json-lines" &#x7C; "csv"|
 
-Controls the output format for query results.
+Formatting method.
 
 ### `bigqueryRunner.format.csv.header`
 
@@ -158,7 +159,7 @@ Controls the output format for query results.
 |---|---|
 |boolean|false|
 
-Columns names are automatically discovered from the first record if it is provided as a literal object.
+The flag whether to add column names to CSV.
 
 ### `bigqueryRunner.format.csv.delimiter`
 
@@ -166,7 +167,7 @@ Columns names are automatically discovered from the first record if it is provid
 |---|---|
 |string|","|
 
-Set the delimiter between the fields of a record. It can be one or multiple characters. The default value is a comma `,`
+The delimiter for CSV. For example, if set to 	, the output will be formatted as TSV.
 
 ### `bigqueryRunner.output.type`
 
@@ -174,7 +175,7 @@ Set the delimiter between the fields of a record. It can be one or multiple char
 |---|---|---|
 |string|"viewer"|"viewer" &#x7C; "log" &#x7C; "file"|
 
-Controls the output destination for query results.
+The output destination for the query results.  When set to `viewer`, this extension opens the webview pane and renders the results with <table> tags. When set to `log`, this extension opens the output panel and outputs the results in the format set in `bigqueryRunner.format.type`. When set to `file`, this extension outputs the results as a file in the directory set in `bigqueryRunner.output.file.path`, in the format set in  `bigqueryRunner.format.type`.
 
 ### `bigqueryRunner.output.file.path`
 
@@ -182,7 +183,7 @@ Controls the output destination for query results.
 |---|---|
 |string|"."|
 
-Controls the output file path for query results when output.type is specified as file.
+The output directory of the file when `bigqueryRunner.output.type` is specified as `file`.
 
 
 ## Features

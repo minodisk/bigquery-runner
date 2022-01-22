@@ -5,18 +5,19 @@ This file is generated from gen-src/README.md.ejs. -->
 
 ## Installation
 
-1. Go to [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
-2. Press the Install button
+1. Go to [the page of this extension in Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
+2. Click the `Install` button
+3. This will open the VSCode page for this extension, and click the `Install` button
 
 ## Authentication
 
 This extension requires authentication to the Google Cloud API. You can start using it in the following two steps.
 
 1. [Create a service account and its key](https://cloud.google.com/docs/authentication/getting-started)
-    - Give the service account the role of [`roles.bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#permissions_and_roles)
+    - Give the service account the role of [`roles/bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#bigquery.user)
 2. Tell the key path to this extension in one of the following two ways:
     - Set the path to the key `bigqueryRunner.keyFilename` in settings.json
-    - [Set the environment variable](https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable)
+    - [Set the path to environment variable `GOOGLE_APPLICATION_CREDENTIALS`](https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable)
 
 ## Usage
 

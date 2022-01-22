@@ -46,22 +46,22 @@
       {
         "command": "bigqueryRunner.run",
         "title": "BigQuery Runner: Run",
-        "description": "Run the query with BigQuery and display the results. Run the query on the selected text if text is selected, or on the entire file if no text is selected."
+        "description": "Run a query in BigQuery and display the results. If text is selected, it will run the selected text as a query. If no text is selected, the entire file will be executed as a query."
       },
       {
         "command": "bigqueryRunner.prevPage",
         "title": "BigQuery Runner: Previous Page",
-        "description": "Fetch and display the previous page."
+        "description": "Fetch and display the results of the previous page."
       },
       {
         "command": "bigqueryRunner.nextPage",
         "title": "BigQuery Runner: Next Page",
-        "description": "Fetch and display the next page."
+        "description": "Fetch and display the results of the next page."
       },
       {
         "command": "bigqueryRunner.dryRun",
         "title": "BigQuery Runner: Dry Run",
-        "description": "Run the dry run query with BigQuery and display the result. Run the query on the selected text if text is selected, or on the entire file if no text is selected."
+        "description": "Dry-run a query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked."
       }
     ],
     "configuration": {
@@ -74,7 +74,7 @@
             "null"
           ],
           "default": null,
-          "description": "The path to the JSON file for the service account. When specifying a relative path, specify the path from the root folder that is open in VSCode. If it is not specified, the path specified in `GOOGLE_APPLICATION_CREDENTIALS` is used."
+          "description": "The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VSCode. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used."
         },
         "bigqueryRunner.projectId": {
           "type": [
@@ -90,7 +90,7 @@
             "null"
           ],
           "default": null,
-          "description": "The geographic location where the job should run. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location."
+          "description": "The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location."
         },
         "bigqueryRunner.useLegacySql": {
           "type": "boolean",
@@ -138,7 +138,7 @@
             "null"
           ],
           "default": 100,
-          "description": "The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`."
+          "description": "The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`."
         },
         "bigqueryRunner.format.type": {
           "type": "string",
@@ -150,17 +150,17 @@
             "json-lines",
             "csv"
           ],
-          "description": "Controls the output format for query results."
+          "description": "Formatting method."
         },
         "bigqueryRunner.format.csv.header": {
           "type": "boolean",
           "default": false,
-          "description": "Columns names are automatically discovered from the first record if it is provided as a literal object."
+          "description": "The flag whether to add column names to CSV."
         },
         "bigqueryRunner.format.csv.delimiter": {
           "type": "string",
           "default": ",",
-          "description": "Set the delimiter between the fields of a record. It can be one or multiple characters. The default value is a comma `,`"
+          "description": "The delimiter for CSV. For example, if set to \t, the output will be formatted as TSV."
         },
         "bigqueryRunner.output.type": {
           "type": "string",
@@ -170,12 +170,12 @@
             "log",
             "file"
           ],
-          "description": "Controls the output destination for query results."
+          "description": "The output destination for the query results.  When set to `viewer`, this extension opens the webview pane and renders the results with <table> tags. When set to `log`, this extension opens the output panel and outputs the results in the format set in `bigqueryRunner.format.type`. When set to `file`, this extension outputs the results as a file in the directory set in `bigqueryRunner.output.file.path`, in the format set in  `bigqueryRunner.format.type`."
         },
         "bigqueryRunner.output.file.path": {
           "type": "string",
           "default": ".",
-          "description": "Controls the output file path for query results when output.type is specified as file."
+          "description": "The output directory of the file when `bigqueryRunner.output.type` is specified as `file`."
         }
       }
     }
