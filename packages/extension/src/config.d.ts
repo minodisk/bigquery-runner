@@ -24,7 +24,7 @@ export type Config = {
     };
   };
   readonly output: {
-    readonly type: "viewer" | "output" | "file";
+    readonly type: "viewer" | "log" | "file";
     readonly file: {
       readonly path: string;
     };

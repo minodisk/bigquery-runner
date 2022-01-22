@@ -167,7 +167,7 @@
           "default": "viewer",
           "enum": [
             "viewer",
-            "output",
+            "log",
             "file"
           ],
           "description": "Controls the output destination for query results."

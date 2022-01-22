@@ -1,14 +1,11 @@
 <!-- DO NOT EDIT
 This file is generated from gen-src/README.md.ejs. -->
-# BigQuery Runner
-
-[![GitHub Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fminodisk%2Fbigquery-runner%2Fbadge%3Fref%3Dmain&style=flat-square)](https://actions-badge.atrox.dev/minodisk/bigquery-runner/goto?ref=main)
-[![Codecov](https://img.shields.io/codecov/c/github/minodisk/bigquery-runner?style=flat-square)](https://app.codecov.io/gh/minodisk/bigquery-runner/)
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/minodisk.bigquery-runner?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
+# BigQuery Runner [![GitHub Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fminodisk%2Fbigquery-runner%2Fbadge%3Fref%3Dmain&style=flat-square)](https://actions-badge.atrox.dev/minodisk/bigquery-runner/goto?ref=main) [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/minodisk.bigquery-runner?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner) [![Codecov](https://img.shields.io/codecov/c/github/minodisk/bigquery-runner?style=flat-square)](https://app.codecov.io/gh/minodisk/bigquery-runner/)
 
 ## Installation
 
-[![Open in Visual Studio Code](https://img.shields.io/badge/Visual_Studio_Code-Install_BigQuery_Runner-007ACC?style=flat-square&logo=visualstudiocode)](vscode:extension/minodisk.bigquery-runner)
+1. Go to [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
+2. Press the Install button
 
 ## Authentication
 
@@ -26,7 +23,8 @@ This extension requires authentication to the Google Cloud API. You can start us
 2. Open the command palette
 3. Run `BigQuery Runner: Run`
 
-![bigquery-runner-12](https://user-images.githubusercontent.com/514164/149955294-1f740196-5295-4286-8b1f-e9dfb2958cc6.gif)
+![bigquery-runner-12 1](https://user-images.githubusercontent.com/514164/150627625-2cca91ec-c0fc-47f2-a157-4704b44b8e04.gif)
+
 
 ## Commands
 
@@ -174,7 +172,7 @@ Set the delimiter between the fields of a record. It can be one or multiple char
 
 |Type|Default|Enum|
 |---|---|---|
-|string|"viewer"|"viewer" &#x7C; "output" &#x7C; "file"|
+|string|"viewer"|"viewer" &#x7C; "log" &#x7C; "file"|
 
 Controls the output destination for query results.
 
@@ -231,7 +229,7 @@ The `key` is an example, but it should be set in keybindings.json.
 }
 ```
 
-### When set the output destination to the Log window:
+### When set the output destination to the log window:
 
 To avoid long horizontal tables from being broken, add the following settings to settings.json.
 

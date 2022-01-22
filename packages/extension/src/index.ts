@@ -720,7 +720,7 @@ async function createOutput({
           return panel;
         },
       });
-    case "output":
+    case "log":
       return createLogOutput({
         formatter: createFormatter({ config }),
         outputChannel,
