@@ -194,7 +194,7 @@ The output directory of the file when `bigqueryRunner.output.type` is specified 
 - Fast rendering of huge results
 - Pagination
 - Format in a variety of formats
-    - HTML `<table/>`
+    - HTML `<table>`
     - Text neatly formatted into a table
     - JSON
     - JSON Lines
