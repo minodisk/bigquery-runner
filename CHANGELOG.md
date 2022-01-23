@@ -2,11 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
-## v0.0.27
+## v0.0.28
 
 ### Added
 
 - Display the amount of data to be processed or billed in the status bar.
+
+## v0.0.27
 
 ### Changed
 
