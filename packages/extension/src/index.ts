@@ -20,9 +20,12 @@ import {
   DiagnosticCollection,
   ExtensionContext,
   languages,
+  MarkdownString,
   OutputChannel as OrigOutputChannel,
   Position,
   Range,
+  StatusBarAlignment,
+  StatusBarItem,
   TextDocument,
   Uri,
   window,
@@ -103,6 +106,11 @@ export async function activate(
     const configManager = createConfigManager(section);
     ctx.subscriptions.push(configManager);
 
+    const statusManager = createStatusManager({
+      statusBarItem: window.createStatusBarItem(StatusBarAlignment.Right, 9999),
+    });
+    ctx.subscriptions.push(statusManager);
+
     // Register all available commands and their actions.
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
@@ -114,6 +122,7 @@ export async function activate(
           diagnosticCollection,
           outputChannel,
           resultChannel,
+          statusManager,
           ctx,
           callback: dryRun,
         }),
@@ -125,6 +134,7 @@ export async function activate(
           diagnosticCollection,
           outputChannel,
           resultChannel,
+          statusManager,
           ctx,
           callback: run,
         }),
@@ -136,6 +146,7 @@ export async function activate(
           diagnosticCollection,
           outputChannel,
           resultChannel,
+          statusManager,
           ctx,
           callback: runPrevPage,
         }),
@@ -147,6 +158,7 @@ export async function activate(
           diagnosticCollection,
           outputChannel,
           resultChannel,
+          statusManager,
           ctx,
           callback: runNextPage,
         }),
@@ -159,16 +171,38 @@ export async function activate(
       validateQuery({
         config: configManager.get(),
         diagnosticCollection,
-        outputChannel: outputChannel,
+        outputChannel,
+        statusManager,
         document,
       })
     );
     ctx.subscriptions.push(
+      window.onDidChangeActiveTextEditor((editor) => {
+        if (
+          !editor ||
+          !isBigQuery({
+            config: configManager.get(),
+            document: editor.document,
+          })
+        ) {
+          statusManager.hide();
+          return;
+        }
+
+        validateQuery({
+          config: configManager.get(),
+          diagnosticCollection,
+          outputChannel,
+          statusManager,
+          document: editor.document,
+        });
+      }),
       workspace.onDidOpenTextDocument((document) =>
         validateQuery({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel: outputChannel,
+          outputChannel,
+          statusManager,
           document,
         })
       ),
@@ -176,7 +210,8 @@ export async function activate(
         validateQuery({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel: outputChannel,
+          outputChannel,
+          statusManager,
           document,
         })
       ),
@@ -184,7 +219,8 @@ export async function activate(
         validateQuery({
           config: configManager.get(),
           diagnosticCollection,
-          outputChannel: outputChannel,
+          outputChannel,
+          statusManager,
           document,
         })
       ),
@@ -205,6 +241,42 @@ export async function activate(
 export function deactivate() {
   // do nothing
 }
+
+function createStatusManager({
+  statusBarItem,
+}: {
+  statusBarItem: StatusBarItem;
+}) {
+  let messages = new Map<
+    string,
+    { text: string; tooltip: string | MarkdownString }
+  >();
+  return {
+    set(
+      document: TextDocument,
+      text: string,
+      tooltip: string | MarkdownString
+    ) {
+      messages.set(document.fileName, { text, tooltip });
+      if (document.fileName === window.activeTextEditor?.document.fileName) {
+        statusBarItem.text = text;
+        statusBarItem.tooltip = tooltip;
+        statusBarItem.show();
+      }
+    },
+    hide() {
+      statusBarItem.hide();
+      statusBarItem.text = "";
+      statusBarItem.tooltip = undefined;
+    },
+    dispose() {
+      statusBarItem.dispose();
+      messages.forEach((_, key) => messages.delete(key));
+      messages = undefined!;
+    },
+  };
+}
+type StatusManager = ReturnType<typeof createStatusManager>;
 
 function createConfigManager(section: string) {
   let config = getConfigration(section);
@@ -251,13 +323,19 @@ async function validateQuery({
   config,
   diagnosticCollection,
   outputChannel,
+  statusManager,
   document,
 }: {
   readonly config: Config;
   readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
+  readonly statusManager: StatusManager;
   readonly document: TextDocument;
 }): Promise<void> {
+  if (!isBigQuery({ config, document })) {
+    return;
+  }
+
   const timeoutId = pathTimeoutId.get(document.uri.path);
   if (timeoutId) {
     clearTimeout(timeoutId);
@@ -271,6 +349,7 @@ async function validateQuery({
           config,
           diagnosticCollection,
           outputChannel,
+          statusManager,
           document,
         }),
       config.queryValidation.debounceInterval
@@ -282,18 +361,17 @@ async function _validateQuery({
   config,
   diagnosticCollection,
   outputChannel,
+  statusManager,
   document,
 }: {
   readonly config: Config;
   readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
+  readonly statusManager: StatusManager;
   readonly document: TextDocument;
 }): Promise<void> {
   try {
     if (!config.queryValidation.enabled) {
-      return;
-    }
-    if (!isBigQuery({ config, document })) {
       return;
     }
     outputChannel.appendLine(`Validate`);
@@ -306,6 +384,7 @@ async function _validateQuery({
           // do nothing
         },
       },
+      statusManager,
       document,
     });
   } catch (err) {
@@ -334,6 +413,7 @@ function wrapCallback({
   configManager,
   diagnosticCollection,
   outputChannel,
+  statusManager,
   resultChannel,
   ctx,
   callback,
@@ -342,11 +422,13 @@ function wrapCallback({
   readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
   readonly resultChannel: ResultChannel;
+  readonly statusManager: StatusManager;
   readonly ctx: ExtensionContext;
   readonly callback: (params: {
     readonly config: Config;
     readonly errorMarker: ErrorMarker;
     readonly outputChannel: OutputChannel;
+    readonly statusManager: StatusManager;
     readonly document: TextDocument;
     readonly range?: Range;
     readonly ctx: ExtensionContext;
@@ -363,6 +445,7 @@ function wrapCallback({
         config,
         errorMarker: createErrorMarker({ diagnosticCollection, document }),
         outputChannel,
+        statusManager,
         document,
         range: selection,
         ctx,
@@ -390,6 +473,7 @@ async function run({
   config,
   errorMarker,
   outputChannel,
+  statusManager,
   document,
   range,
   ctx,
@@ -397,6 +481,7 @@ async function run({
   readonly config: Config;
   readonly errorMarker: ErrorMarker;
   readonly outputChannel: OutputChannel;
+  readonly statusManager: StatusManager;
   readonly document: TextDocument;
   readonly range?: Range;
   readonly ctx: ExtensionContext;
@@ -436,6 +521,8 @@ async function run({
 
   await renderRows({
     outputChannel,
+    statusManager,
+    document,
     output,
     results: await job.getRows(),
   });
@@ -445,11 +532,13 @@ async function run({
 async function runPrevPage({
   config,
   outputChannel,
+  statusManager,
   document,
   ctx,
 }: {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
+  readonly statusManager: StatusManager;
   readonly document: TextDocument;
   readonly ctx: ExtensionContext;
 }) {
@@ -478,6 +567,8 @@ async function runPrevPage({
 
   await renderRows({
     outputChannel,
+    statusManager,
+    document,
     output,
     results: results!,
   });
@@ -488,11 +579,13 @@ async function runPrevPage({
 async function runNextPage({
   config,
   outputChannel,
+  statusManager,
   document,
   ctx,
 }: {
   readonly config: Config;
   readonly outputChannel: OutputChannel;
+  readonly statusManager: StatusManager;
   readonly document: TextDocument;
   readonly ctx: ExtensionContext;
 }) {
@@ -521,6 +614,8 @@ async function runNextPage({
 
   await renderRows({
     outputChannel,
+    statusManager,
+    document,
     output,
     results: results!,
   });
@@ -530,10 +625,14 @@ async function runNextPage({
 
 async function renderRows({
   outputChannel,
+  statusManager,
+  document,
   output,
   results,
 }: {
   readonly outputChannel: OutputChannel;
+  readonly statusManager: StatusManager;
+  readonly document: TextDocument;
   readonly output: Output;
   readonly results: Results;
 }) {
@@ -544,10 +643,14 @@ async function renderRows({
   try {
     outputChannel.appendLine(`Result: ${results.rows.length} rows`);
     const { query, schema, numRows } = await job.getInfo();
+    const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
     outputChannel.appendLine(
-      `Result: ${formatBytes(
-        parseInt(query.totalBytesBilled, 10)
-      )} to be billed (cache: ${query.cacheHit})`
+      `Result: ${bytes} to be billed (cache: ${query.cacheHit})`
+    );
+    statusManager.set(
+      document,
+      `$(run) ${bytes}`,
+      `${bytes} billed for the job (cache: ${query.cacheHit})`
     );
 
     const flat = createFlat(schema.fields);
@@ -572,12 +675,14 @@ async function dryRun({
   config,
   errorMarker,
   outputChannel,
+  statusManager,
   document,
   range,
 }: {
   readonly config: Config;
   readonly errorMarker: ErrorMarker;
   readonly outputChannel: OutputChannel;
+  readonly statusManager: StatusManager;
   readonly document: TextDocument;
   readonly range?: Range;
 }): Promise<Result> {
@@ -598,8 +703,13 @@ async function dryRun({
 
   outputChannel.appendLine(`Job ID: ${job.id}`);
   const { totalBytesProcessed } = job.getInfo();
-  outputChannel.appendLine(
-    `Result: ${formatBytes(totalBytesProcessed)} estimated to be read`
+  const bytes = formatBytes(totalBytesProcessed);
+  outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
+
+  statusManager.set(
+    document,
+    `$(dashboard) ${bytes}`,
+    `This query will process ${bytes} when run.`
   );
 
   return { jobId: job.id };

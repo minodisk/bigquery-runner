@@ -121,7 +121,7 @@
             "bigquery",
             "sql-bigquery"
           ],
-          "description": "List of language IDs of the files whose queries are to be validated when the files are modified."
+          "description": "List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
         },
         "bigqueryRunner.queryValidation.extensions": {
           "type": "array",

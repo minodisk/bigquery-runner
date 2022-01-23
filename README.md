@@ -127,7 +127,7 @@ Debounce interval in milliseconds to validate the query when the file is modifie
 |---|---|
 |array|["bigquery","sql-bigquery"]|
 
-List of language IDs of the files whose queries are to be validated when the files are modified.
+List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified.
 
 ### `bigqueryRunner.queryValidation.extensions`
 
