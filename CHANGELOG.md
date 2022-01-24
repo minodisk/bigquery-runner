@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.29
+
+### Added
+
+- Enabling the setting of status bar items position.
+
 ## v0.0.28
 
 ### Added

@@ -20,11 +20,9 @@ import {
   DiagnosticCollection,
   ExtensionContext,
   languages,
-  MarkdownString,
   OutputChannel as OrigOutputChannel,
   Position,
   Range,
-  StatusBarAlignment,
   TextDocument,
   Uri,
   window,
@@ -51,6 +49,11 @@ import {
   NoPageTokenError,
 } from "core";
 import { readFile } from "fs/promises";
+import {
+  createStatusBarItemCreator,
+  createStatusManager,
+  StatusManager,
+} from "./status";
 
 type OutputChannel = Pick<
   OrigOutputChannel,
@@ -107,6 +110,7 @@ export async function activate(
 
     const statusManager = createStatusManager({
       options: configManager.get().statusBarItem,
+      createStatusBarItem: createStatusBarItemCreator(window),
     });
     ctx.subscriptions.push(statusManager);
 
@@ -241,61 +245,6 @@ export async function activate(
 export function deactivate() {
   // do nothing
 }
-
-function createStatusManager({
-  options,
-}: {
-  options: Config["statusBarItem"];
-}) {
-  let statusBarItem = window.createStatusBarItem(
-    options.align === "left"
-      ? StatusBarAlignment.Left
-      : options.align === "right"
-      ? StatusBarAlignment.Right
-      : undefined,
-    options.priority
-  );
-  let messages = new Map<
-    string,
-    { text: string; tooltip: string | MarkdownString }
-  >();
-  return {
-    set(
-      document: TextDocument,
-      text: string,
-      tooltip: string | MarkdownString
-    ) {
-      messages.set(document.fileName, { text, tooltip });
-      if (document.fileName === window.activeTextEditor?.document.fileName) {
-        statusBarItem.text = text;
-        statusBarItem.tooltip = tooltip;
-        statusBarItem.show();
-      }
-    },
-    hide() {
-      statusBarItem.hide();
-      statusBarItem.text = "";
-      statusBarItem.tooltip = undefined;
-    },
-    updateOptions(options: Config["statusBarItem"]) {
-      statusBarItem.dispose();
-      statusBarItem = window.createStatusBarItem(
-        options.align === "left"
-          ? StatusBarAlignment.Left
-          : options.align === "right"
-          ? StatusBarAlignment.Right
-          : undefined,
-        options.priority
-      );
-    },
-    dispose() {
-      statusBarItem.dispose();
-      messages.forEach((_, key) => messages.delete(key));
-      messages = undefined!;
-    },
-  };
-}
-type StatusManager = ReturnType<typeof createStatusManager>;
 
 function createConfigManager(section: string) {
   let config = getConfigration(section);
