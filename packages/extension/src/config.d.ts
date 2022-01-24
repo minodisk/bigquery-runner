@@ -29,4 +29,8 @@ export type Config = {
       readonly path: string;
     };
   };
+  readonly statusBarItem: {
+    readonly align: "left" | "right" | undefined;
+    readonly priority: number | undefined;
+  };
 };

@@ -176,6 +176,27 @@
           "type": "string",
           "default": ".",
           "description": "The output directory of the file when `bigqueryRunner.output.type` is specified as `file`."
+        },
+        "bigqueryRunner.statusBarItem.align": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "enum": [
+            "left",
+            "right",
+            null
+          ],
+          "description": "Represents the alignment of the status bar item."
+        },
+        "bigqueryRunner.statusBarItem.priority": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": null,
+          "description": "Represents the alignment of the status bar item."
         }
       }
     }

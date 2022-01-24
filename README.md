@@ -185,6 +185,22 @@ The output destination for the query results.  When set to `viewer`, this extens
 
 The output directory of the file when `bigqueryRunner.output.type` is specified as `file`.
 
+### `bigqueryRunner.statusBarItem.align`
+
+|Type|Default|Enum|
+|---|---|---|
+|string &#x7C; null|null|"left" &#x7C; "right" &#x7C; null|
+
+Represents the alignment of the status bar item.
+
+### `bigqueryRunner.statusBarItem.priority`
+
+|Type|Default|
+|---|---|
+|number &#x7C; null|null|
+
+Represents the alignment of the status bar item.
+
 
 ## Features
 

@@ -30,7 +30,7 @@ ${'  '.repeat(indent)}}`
 }
 function buildType(value) {
   if (value.enum) {
-    return value.enum.map(JSON.stringify, JSON).join(' | ') 
+    return value.enum.map(JSON.stringify, JSON).map((t) => t === 'null' ? 'undefined' : t).join(' | ') 
   }
   if (Array.isArray(value.type)) {
     return value.type.map((t) => t === 'null' ? 'undefined' : t).join(' | ')

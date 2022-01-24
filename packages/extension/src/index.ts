@@ -25,7 +25,6 @@ import {
   Position,
   Range,
   StatusBarAlignment,
-  StatusBarItem,
   TextDocument,
   Uri,
   window,
@@ -107,7 +106,7 @@ export async function activate(
     ctx.subscriptions.push(configManager);
 
     const statusManager = createStatusManager({
-      statusBarItem: window.createStatusBarItem(StatusBarAlignment.Right, 9999),
+      options: configManager.get().statusBarItem,
     });
     ctx.subscriptions.push(statusManager);
 
@@ -231,6 +230,7 @@ export async function activate(
           return;
         }
         configManager.refresh();
+        statusManager.updateOptions(configManager.get().statusBarItem);
       })
     );
   } catch (err) {
@@ -243,10 +243,18 @@ export function deactivate() {
 }
 
 function createStatusManager({
-  statusBarItem,
+  options,
 }: {
-  statusBarItem: StatusBarItem;
+  options: Config["statusBarItem"];
 }) {
+  let statusBarItem = window.createStatusBarItem(
+    options.align === "left"
+      ? StatusBarAlignment.Left
+      : options.align === "right"
+      ? StatusBarAlignment.Right
+      : undefined,
+    options.priority
+  );
   let messages = new Map<
     string,
     { text: string; tooltip: string | MarkdownString }
@@ -268,6 +276,17 @@ function createStatusManager({
       statusBarItem.hide();
       statusBarItem.text = "";
       statusBarItem.tooltip = undefined;
+    },
+    updateOptions(options: Config["statusBarItem"]) {
+      statusBarItem.dispose();
+      statusBarItem = window.createStatusBarItem(
+        options.align === "left"
+          ? StatusBarAlignment.Left
+          : options.align === "right"
+          ? StatusBarAlignment.Right
+          : undefined,
+        options.priority
+      );
     },
     dispose() {
       statusBarItem.dispose();
@@ -314,6 +333,18 @@ function getConfigration(section: string): Config {
           workspace.workspaceFolders.length === 0
         ? config.keyFilename
         : join(workspace.workspaceFolders[0].uri.fsPath, config.keyFilename),
+    statusBarItem: {
+      align:
+        config.statusBarItem.align === null ||
+        config.statusBarItem.align === undefined
+          ? undefined
+          : config.statusBarItem.align,
+      priority:
+        config.statusBarItem.priority === null ||
+        config.statusBarItem.priority === undefined
+          ? undefined
+          : config.statusBarItem.priority,
+    },
   };
 }
 
@@ -501,6 +532,7 @@ async function run({
 
   try {
     errorMarker.clear();
+    statusManager.set(document, `$(loading~spin) Querying`, `creating job`);
 
     const client = await createClient(config);
     job = await client.createRunJob({
@@ -512,6 +544,7 @@ async function run({
     errorMarker.clear();
   } catch (err) {
     output.close();
+    statusManager.hide();
     errorMarker.mark(err);
   }
 
@@ -519,12 +552,14 @@ async function run({
     throw new Error(`no job`);
   }
 
+  statusManager.set(document, `$(loading~spin) Fetching`, `getting results`);
+  const results = await job.getRows();
   await renderRows({
     outputChannel,
     statusManager,
     document,
     output,
-    results: await job.getRows(),
+    results,
   });
   return { jobId: job.id };
 }
@@ -641,16 +676,23 @@ async function renderRows({
   }
 
   try {
+    statusManager.set(
+      document,
+      `$(loading~spin) Formatting`,
+      `formatting results`
+    );
+
     outputChannel.appendLine(`Result: ${results.rows.length} rows`);
     const { query, schema, numRows } = await job.getInfo();
     const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
     outputChannel.appendLine(
       `Result: ${bytes} to be billed (cache: ${query.cacheHit})`
     );
+
     statusManager.set(
       document,
-      `$(run) ${bytes}`,
-      `${bytes} billed for the job (cache: ${query.cacheHit})`
+      `$(loading~spin) Rendering`,
+      `rendering results`
     );
 
     const flat = createFlat(schema.fields);
@@ -662,7 +704,14 @@ async function renderRows({
         `Total bytes written: ${formatBytes(bytesWritten)}`
       );
     }
+
+    statusManager.set(
+      document,
+      `$(credit-card) ${bytes}`,
+      `${bytes} billed for the job (cache: ${query.cacheHit})`
+    );
   } catch (err) {
+    statusManager.hide();
     if (job.id) {
       throw new ErrorWithId(err, job.id);
     } else {
@@ -708,7 +757,7 @@ async function dryRun({
 
   statusManager.set(
     document,
-    `$(dashboard) ${bytes}`,
+    `$(pulse) ${bytes}`,
     `This query will process ${bytes} when run.`
   );
 
