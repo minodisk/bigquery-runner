@@ -191,7 +191,7 @@ The output directory of the file when `bigqueryRunner.output.type` is specified 
 |---|---|---|
 |string &#x7C; null|null|"left" &#x7C; "right" &#x7C; null|
 
-Represents the alignment of the status bar item.
+The alignment of the status bar item.
 
 ### `bigqueryRunner.statusBarItem.priority`
 
@@ -199,7 +199,7 @@ Represents the alignment of the status bar item.
 |---|---|
 |number &#x7C; null|null|
 
-Represents the alignment of the status bar item.
+The priority of status bar item. Higher value means the item should be shown more to the left.
 
 
 ## Features

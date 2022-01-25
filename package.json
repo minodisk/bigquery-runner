@@ -188,7 +188,7 @@
             "right",
             null
           ],
-          "description": "Represents the alignment of the status bar item."
+          "description": "The alignment of the status bar item."
         },
         "bigqueryRunner.statusBarItem.priority": {
           "type": [
@@ -196,7 +196,7 @@
             "null"
           ],
           "default": null,
-          "description": "Represents the alignment of the status bar item."
+          "description": "The priority of status bar item. Higher value means the item should be shown more to the left."
         }
       }
     }

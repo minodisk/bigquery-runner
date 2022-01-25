@@ -7,6 +7,8 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 ### Added
 
 - Enabling the setting of status bar items position.
+  - `bigqueryRunner.statusBarItem.align`: The alignment of the status bar item
+  - `bigqueryRunner.statusBarItem.priority`: The priority of status bar item. Higher value means the item should be shown more to the left.
 
 ### Changed
 
