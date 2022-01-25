@@ -192,6 +192,7 @@ export async function activate(
           return;
         }
 
+        statusManager.onFocus({ document: editor.document });
         validateQuery({
           config: configManager.get(),
           diagnosticCollection,
@@ -481,7 +482,9 @@ async function run({
 
   try {
     errorMarker.clear();
-    statusManager.set(document, `$(loading~spin) Querying`, `creating job`);
+    statusManager.enableBilledLoading({
+      document,
+    });
 
     const client = await createClient(config);
     job = await client.createRunJob({
@@ -501,7 +504,6 @@ async function run({
     throw new Error(`no job`);
   }
 
-  statusManager.set(document, `$(loading~spin) Fetching`, `getting results`);
   const results = await job.getRows();
   await renderRows({
     outputChannel,
@@ -625,23 +627,13 @@ async function renderRows({
   }
 
   try {
-    statusManager.set(
-      document,
-      `$(loading~spin) Formatting`,
-      `formatting results`
-    );
+    statusManager.enableBilledLoading({ document });
 
     outputChannel.appendLine(`Result: ${results.rows.length} rows`);
     const { query, schema, numRows } = await job.getInfo();
     const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
     outputChannel.appendLine(
       `Result: ${bytes} to be billed (cache: ${query.cacheHit})`
-    );
-
-    statusManager.set(
-      document,
-      `$(loading~spin) Rendering`,
-      `rendering results`
     );
 
     const flat = createFlat(schema.fields);
@@ -654,11 +646,10 @@ async function renderRows({
       );
     }
 
-    statusManager.set(
+    statusManager.setBilledState({
       document,
-      `$(credit-card) ${bytes}`,
-      `${bytes} billed for the job (cache: ${query.cacheHit})`
-    );
+      billed: { bytes, cacheHit: query.cacheHit },
+    });
   } catch (err) {
     statusManager.hide();
     if (job.id) {
@@ -686,6 +677,10 @@ async function dryRun({
 }): Promise<Result> {
   outputChannel.appendLine(`Dry run`);
 
+  statusManager.enableProcessedLoading({
+    document,
+  });
+
   const client = await createClient(config);
 
   let job!: DryRunJob;
@@ -704,11 +699,12 @@ async function dryRun({
   const bytes = formatBytes(totalBytesProcessed);
   outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
 
-  statusManager.set(
+  statusManager.setProcessedState({
     document,
-    `$(pulse) ${bytes}`,
-    `This query will process ${bytes} when run.`
-  );
+    processed: {
+      bytes,
+    },
+  });
 
   return { jobId: job.id };
 }

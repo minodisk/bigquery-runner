@@ -1,10 +1,19 @@
 import {
-  MarkdownString,
   StatusBarAlignment,
+  StatusBarItem,
   TextDocument,
   window,
 } from "vscode";
 import { Config } from "./config";
+
+type Processed = {
+  bytes: string;
+};
+
+type Billed = {
+  bytes: string;
+  cacheHit: boolean;
+};
 
 export function createStatusManager({
   options,
@@ -14,23 +23,76 @@ export function createStatusManager({
   createStatusBarItem: ReturnType<typeof createStatusBarItemCreator>;
 }) {
   let statusBarItem = createStatusBarItem(options);
-  let messages = new Map<
+  let processedMap = new Map<
     string,
-    { text: string; tooltip: string | MarkdownString }
+    { loading: boolean; status?: Processed }
   >();
+  let billedMap = new Map<string, { loading: boolean; status?: Billed }>();
 
   return {
-    set(
-      document: TextDocument,
-      text: string,
-      tooltip: string | MarkdownString
-    ) {
-      messages.set(document.fileName, { text, tooltip });
-      if (document.fileName === window.activeTextEditor?.document.fileName) {
-        statusBarItem.text = text;
-        statusBarItem.tooltip = tooltip;
-        statusBarItem.show();
-      }
+    enableProcessedLoading({ document }: { document: TextDocument }) {
+      const current = processedMap.get(document.fileName);
+      processedMap.set(document.fileName, { ...current, loading: true });
+      update({
+        document,
+        statusBarItem,
+        processed: processedMap.get(document.fileName),
+        billed: billedMap.get(document.fileName),
+      });
+    },
+    setProcessedState({
+      document,
+      processed,
+    }: {
+      document: TextDocument;
+      processed: Processed;
+    }) {
+      processedMap.set(document.fileName, {
+        loading: false,
+        status: processed,
+      });
+      update({
+        document,
+        statusBarItem,
+        processed: processedMap.get(document.fileName),
+        billed: billedMap.get(document.fileName),
+      });
+    },
+    enableBilledLoading({ document }: { document: TextDocument }) {
+      const current = billedMap.get(document.fileName);
+      billedMap.set(document.fileName, { ...current, loading: true });
+      update({
+        document,
+        statusBarItem,
+        processed: processedMap.get(document.fileName),
+        billed: billedMap.get(document.fileName),
+      });
+    },
+    setBilledState({
+      document,
+      billed,
+    }: {
+      document: TextDocument;
+      billed: Billed;
+    }) {
+      billedMap.set(document.fileName, {
+        loading: false,
+        status: billed,
+      });
+      update({
+        document,
+        statusBarItem,
+        processed: processedMap.get(document.fileName),
+        billed: billedMap.get(document.fileName),
+      });
+    },
+    onFocus({ document }: { document: TextDocument }) {
+      update({
+        document,
+        statusBarItem,
+        processed: processedMap.get(document.fileName),
+        billed: billedMap.get(document.fileName),
+      });
     },
     hide() {
       statusBarItem.hide();
@@ -43,8 +105,10 @@ export function createStatusManager({
     },
     dispose() {
       statusBarItem.dispose();
-      messages.forEach((_, key) => messages.delete(key));
-      messages = undefined!;
+      processedMap.forEach((_, key) => processedMap.delete(key));
+      processedMap = undefined!;
+      billedMap.forEach((_, key) => billedMap.delete(key));
+      billedMap = undefined!;
     },
   };
 }
@@ -61,4 +125,47 @@ export function createStatusBarItemCreator(w: typeof window) {
       options.priority
     );
   };
+}
+
+function update({
+  document,
+  statusBarItem,
+  processed,
+  billed,
+}: {
+  document: TextDocument;
+  statusBarItem: StatusBarItem;
+  processed?: { loading: boolean; status?: Processed };
+  billed?: { loading: boolean; status?: Billed };
+}) {
+  if (document.fileName !== window.activeTextEditor?.document.fileName) {
+    return;
+  }
+
+  statusBarItem.text = [
+    processed?.loading
+      ? `$(loading~spin)`
+      : processed?.status
+      ? `$(database)`
+      : undefined,
+    processed?.status?.bytes,
+    billed?.loading
+      ? `$(loading~spin)`
+      : billed?.status
+      ? `$(credit-card)`
+      : undefined,
+    billed?.status?.bytes,
+  ].join(" ");
+  statusBarItem.tooltip = [
+    processed?.status
+      ? `This query will process ${processed.status.bytes} when run.`
+      : undefined,
+    billed?.status
+      ? `In the last query that ran,
+the cache ${billed.status.cacheHit ? "was" : "wasn't"} applied and ${
+          billed.status.bytes
+        } was the target of the bill.`
+      : undefined,
+  ].join("\n");
+  statusBarItem.show();
 }
