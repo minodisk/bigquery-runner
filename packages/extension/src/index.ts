@@ -16,7 +16,6 @@ import {
   commands,
   DiagnosticCollection,
   ExtensionContext,
-  languages,
   OutputChannel as OrigOutputChannel,
   Range,
   TextDocument,
@@ -27,7 +26,7 @@ import { AuthenticationError, NoPageTokenError } from "core";
 import { createStatusBarItemCreator, createStatusManager } from "./status";
 import { createConfigManager } from "./configManager";
 import { createDryRunner, createRunner, ErrorWithId } from "./runner";
-import { createErrorMarker, ErrorMarker } from "./errorMarker";
+import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
 import { createValidator } from "./validator";
 
@@ -72,11 +71,6 @@ export async function activate(
       },
     };
 
-    const diagnosticCollection =
-      dependencies?.diagnosticCollection ??
-      languages.createDiagnosticCollection(section);
-    ctx.subscriptions.push(diagnosticCollection);
-
     const configManager = createConfigManager(section);
     ctx.subscriptions.push(configManager);
 
@@ -86,21 +80,27 @@ export async function activate(
     });
     ctx.subscriptions.push(statusManager);
 
+    const errorMarker = createErrorMarker({
+      section,
+    });
+    ctx.subscriptions.push(errorMarker);
+
     const runner = createRunner({
       ctx,
       outputChannel,
       configManager,
       statusManager,
+      errorMarker,
     });
     const dryRunner = createDryRunner({
       outputChannel,
       configManager,
       statusManager,
+      errorMarker,
     });
     ctx.subscriptions.push(runner, dryRunner);
 
     const validator = createValidator({
-      diagnosticCollection,
       outputChannel,
       configManager,
       dryRunner,
@@ -114,7 +114,6 @@ export async function activate(
       [
         `${section}.dryRun`,
         wrapCallback({
-          diagnosticCollection,
           outputChannel,
           resultChannel,
           callback: dryRunner.run,
@@ -123,7 +122,6 @@ export async function activate(
       [
         `${section}.run`,
         wrapCallback({
-          diagnosticCollection,
           outputChannel,
           resultChannel,
           callback: runner.run,
@@ -132,7 +130,6 @@ export async function activate(
       [
         `${section}.prevPage`,
         wrapCallback({
-          diagnosticCollection,
           outputChannel,
           resultChannel,
           callback: runner.gotoPrevPage,
@@ -141,7 +138,6 @@ export async function activate(
       [
         `${section}.nextPage`,
         wrapCallback({
-          diagnosticCollection,
           outputChannel,
           resultChannel,
           callback: runner.gotoNextPage,
@@ -209,16 +205,13 @@ export function deactivate() {
 }
 
 function wrapCallback({
-  diagnosticCollection,
   outputChannel,
   resultChannel,
   callback,
 }: {
-  readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
   readonly resultChannel: ResultChannel;
   readonly callback: (params: {
-    readonly errorMarker: ErrorMarker;
     readonly document: TextDocument;
     readonly range?: Range;
   }) => Promise<Result>;
@@ -230,7 +223,6 @@ function wrapCallback({
       }
       const { document, selection } = window.activeTextEditor;
       const result = await callback({
-        errorMarker: createErrorMarker({ diagnosticCollection, document }),
         document,
         range: selection,
       });

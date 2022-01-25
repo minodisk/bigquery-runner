@@ -40,11 +40,13 @@ export function createRunner({
   outputChannel,
   configManager,
   statusManager,
+  errorMarker,
 }: {
   readonly ctx: ExtensionContext;
   readonly outputChannel: OutputChannel;
   readonly configManager: ConfigManager;
   readonly statusManager: StatusManager;
+  readonly errorMarker: ErrorMarker;
 }) {
   let job: RunJob | undefined;
 
@@ -97,11 +99,9 @@ export function createRunner({
 
   return {
     async run({
-      errorMarker,
       document,
       range,
     }: {
-      readonly errorMarker: ErrorMarker;
       readonly document: TextDocument;
       readonly range?: Range;
     }): Promise<Result> {
@@ -121,7 +121,7 @@ export function createRunner({
       }
 
       try {
-        errorMarker.clear();
+        errorMarker.clear({ document });
         statusManager.enableBilledLoading({
           document,
         });
@@ -133,11 +133,11 @@ export function createRunner({
         });
         outputChannel.appendLine(`Job ID: ${job.id}`);
 
-        errorMarker.clear();
+        errorMarker.clear({ document });
       } catch (err) {
         output.close();
         statusManager.hide();
-        errorMarker.mark(err);
+        errorMarker.mark({ document, err });
       }
 
       if (!job) {
@@ -234,18 +234,18 @@ export function createDryRunner({
   outputChannel,
   configManager,
   statusManager,
+  errorMarker,
 }: {
   readonly outputChannel: OutputChannel;
   readonly configManager: ConfigManager;
   readonly statusManager: StatusManager;
+  readonly errorMarker: ErrorMarker;
 }) {
   return {
     async run({
-      errorMarker,
       document,
       range,
     }: {
-      readonly errorMarker: ErrorMarker;
       readonly document: TextDocument;
       readonly range?: Range;
     }): Promise<Result> {
@@ -260,13 +260,13 @@ export function createDryRunner({
 
       let job!: DryRunJob;
       try {
-        errorMarker.clear();
+        errorMarker.clear({ document });
         job = await client.createDryRunJob({
           query: getQueryText({ document, range }),
         });
-        errorMarker.clear();
+        errorMarker.clear({ document });
       } catch (err) {
-        errorMarker.mark(err);
+        errorMarker.mark({ document, err });
       }
 
       outputChannel.appendLine(`Job ID: ${job.id}`);

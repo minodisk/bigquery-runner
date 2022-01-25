@@ -1,25 +1,16 @@
-import {
-  Diagnostic,
-  DiagnosticCollection,
-  Position,
-  Range,
-  TextDocument,
-} from "vscode";
+import { Diagnostic, languages, Position, Range, TextDocument } from "vscode";
 
 export type ErrorMarker = ReturnType<typeof createErrorMarker>;
 
-export function createErrorMarker({
-  diagnosticCollection,
-  document,
-}: {
-  readonly diagnosticCollection: DiagnosticCollection;
-  readonly document: TextDocument;
-}) {
+export function createErrorMarker({ section }: { section: string }) {
+  const diagnosticCollection = languages.createDiagnosticCollection(section);
+
   return {
-    clear() {
+    clear({ document }: { readonly document: TextDocument }) {
       diagnosticCollection.delete(document.uri);
     },
-    mark(err: unknown) {
+
+    mark({ document, err }: { readonly document: TextDocument; err: unknown }) {
       if (!(err instanceof Error)) {
         const first = document.lineAt(0);
         const last = document.lineAt(document.lineCount - 1);
@@ -62,6 +53,10 @@ export function createErrorMarker({
         ),
       ]);
       throw err;
+    },
+
+    dispose() {
+      diagnosticCollection.dispose();
     },
   };
 }

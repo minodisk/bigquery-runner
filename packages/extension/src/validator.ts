@@ -1,17 +1,14 @@
-import { DiagnosticCollection, TextDocument } from "vscode";
+import { TextDocument } from "vscode";
 import { OutputChannel } from ".";
 import { ConfigManager } from "./configManager";
-import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
 import { DryRunner, ErrorWithId } from "./runner";
 
 export function createValidator({
-  diagnosticCollection,
   outputChannel,
   configManager,
   dryRunner,
 }: {
-  readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
   readonly configManager: ConfigManager;
   readonly dryRunner: DryRunner;
@@ -26,7 +23,6 @@ export function createValidator({
     try {
       outputChannel.appendLine(`Validate`);
       await dryRunner.run({
-        errorMarker: createErrorMarker({ diagnosticCollection, document }),
         document,
       });
     } catch (err) {
