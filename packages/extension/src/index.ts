@@ -12,50 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { format as formatBytes } from "bytes";
-import { extname, isAbsolute, join } from "path";
 import {
   commands,
-  Diagnostic,
   DiagnosticCollection,
   ExtensionContext,
   languages,
   OutputChannel as OrigOutputChannel,
-  Position,
   Range,
   TextDocument,
-  Uri,
   window,
   workspace,
 } from "vscode";
-import { Config } from "./config";
-import {
-  createClient,
-  createCSVFormatter,
-  createFileOutput,
-  createFlat,
-  createJSONFormatter,
-  createJSONLinesFormatter,
-  createLogOutput,
-  createMarkdownFormatter,
-  createTableFormatter,
-  createViewerOutput,
-  Formatter,
-  RunJob,
-  Output,
-  DryRunJob,
-  AuthenticationError,
-  Results,
-  NoPageTokenError,
-} from "core";
-import { readFile } from "fs/promises";
-import {
-  createStatusBarItemCreator,
-  createStatusManager,
-  StatusManager,
-} from "./status";
+import { AuthenticationError, NoPageTokenError } from "core";
+import { createStatusBarItemCreator, createStatusManager } from "./status";
+import { createConfigManager } from "./configManager";
+import { createDryRunner, createRunner, ErrorWithId } from "./runner";
+import { createErrorMarker, ErrorMarker } from "./errorMarker";
+import { isBigQuery } from "./isBigQuery";
+import { createValidator } from "./validator";
 
-type OutputChannel = Pick<
+export type OutputChannel = Pick<
   OrigOutputChannel,
   "append" | "appendLine" | "show" | "dispose"
 >;
@@ -68,10 +44,6 @@ type ResultChannel = {
 export type Result = {
   readonly jobId?: string;
 };
-
-class ErrorWithId {
-  constructor(public error: unknown, public id: string) {}
-}
 
 export type Dependencies = {
   readonly outputChannel: OutputChannel;
@@ -114,6 +86,27 @@ export async function activate(
     });
     ctx.subscriptions.push(statusManager);
 
+    const runner = createRunner({
+      ctx,
+      outputChannel,
+      configManager,
+      statusManager,
+    });
+    const dryRunner = createDryRunner({
+      outputChannel,
+      configManager,
+      statusManager,
+    });
+    ctx.subscriptions.push(runner, dryRunner);
+
+    const validator = createValidator({
+      diagnosticCollection,
+      outputChannel,
+      configManager,
+      dryRunner,
+    });
+    ctx.subscriptions.push(validator);
+
     // Register all available commands and their actions.
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
@@ -121,49 +114,37 @@ export async function activate(
       [
         `${section}.dryRun`,
         wrapCallback({
-          configManager,
           diagnosticCollection,
           outputChannel,
           resultChannel,
-          statusManager,
-          ctx,
-          callback: dryRun,
+          callback: dryRunner.run,
         }),
       ],
       [
         `${section}.run`,
         wrapCallback({
-          configManager,
           diagnosticCollection,
           outputChannel,
           resultChannel,
-          statusManager,
-          ctx,
-          callback: run,
+          callback: runner.run,
         }),
       ],
       [
         `${section}.prevPage`,
         wrapCallback({
-          configManager,
           diagnosticCollection,
           outputChannel,
           resultChannel,
-          statusManager,
-          ctx,
-          callback: runPrevPage,
+          callback: runner.gotoPrevPage,
         }),
       ],
       [
         `${section}.nextPage`,
         wrapCallback({
-          configManager,
           diagnosticCollection,
           outputChannel,
           resultChannel,
-          statusManager,
-          ctx,
-          callback: runNextPage,
+          callback: runner.gotoNextPage,
         }),
       ],
     ]).forEach((action, name) => {
@@ -171,11 +152,7 @@ export async function activate(
     });
 
     workspace.textDocuments.forEach((document) =>
-      validateQuery({
-        config: configManager.get(),
-        diagnosticCollection,
-        outputChannel,
-        statusManager,
+      validator.validate({
         document,
       })
     );
@@ -193,38 +170,22 @@ export async function activate(
         }
 
         statusManager.onFocus({ document: editor.document });
-        validateQuery({
-          config: configManager.get(),
-          diagnosticCollection,
-          outputChannel,
-          statusManager,
+        validator.validate({
           document: editor.document,
         });
       }),
       workspace.onDidOpenTextDocument((document) =>
-        validateQuery({
-          config: configManager.get(),
-          diagnosticCollection,
-          outputChannel,
-          statusManager,
+        validator.validate({
           document,
         })
       ),
       workspace.onDidChangeTextDocument(({ document }) =>
-        validateQuery({
-          config: configManager.get(),
-          diagnosticCollection,
-          outputChannel,
-          statusManager,
+        validator.validate({
           document,
         })
       ),
       workspace.onDidSaveTextDocument((document) =>
-        validateQuery({
-          config: configManager.get(),
-          diagnosticCollection,
-          outputChannel,
-          statusManager,
+        validator.validate({
           document,
         })
       ),
@@ -247,172 +208,19 @@ export function deactivate() {
   // do nothing
 }
 
-function createConfigManager(section: string) {
-  let config = getConfigration(section);
-  return {
-    get(): Config {
-      return config;
-    },
-    refresh(): void {
-      config = getConfigration(section);
-    },
-    dispose(): void {
-      // do nothing
-    },
-  };
-}
-type ConfigManager = ReturnType<typeof createConfigManager>;
-
-function getConfigration(section: string): Config {
-  const config = workspace.getConfiguration(section) as any as Config;
-  return {
-    ...config,
-    pagination: {
-      results:
-        config.pagination?.results === undefined ||
-        config.pagination?.results === null
-          ? undefined
-          : config.pagination.results,
-    },
-    keyFilename:
-      config.keyFilename === null || config.keyFilename === undefined
-        ? undefined
-        : isAbsolute(config.keyFilename) ||
-          !workspace.workspaceFolders ||
-          !workspace.workspaceFolders[0] ||
-          workspace.workspaceFolders.length === 0
-        ? config.keyFilename
-        : join(workspace.workspaceFolders[0].uri.fsPath, config.keyFilename),
-    statusBarItem: {
-      align:
-        config.statusBarItem.align === null ||
-        config.statusBarItem.align === undefined
-          ? undefined
-          : config.statusBarItem.align,
-      priority:
-        config.statusBarItem.priority === null ||
-        config.statusBarItem.priority === undefined
-          ? undefined
-          : config.statusBarItem.priority,
-    },
-  };
-}
-
-const pathTimeoutId = new Map<string, NodeJS.Timeout>();
-
-async function validateQuery({
-  config,
-  diagnosticCollection,
-  outputChannel,
-  statusManager,
-  document,
-}: {
-  readonly config: Config;
-  readonly diagnosticCollection: DiagnosticCollection;
-  readonly outputChannel: OutputChannel;
-  readonly statusManager: StatusManager;
-  readonly document: TextDocument;
-}): Promise<void> {
-  if (!isBigQuery({ config, document })) {
-    return;
-  }
-
-  const timeoutId = pathTimeoutId.get(document.uri.path);
-  if (timeoutId) {
-    clearTimeout(timeoutId);
-    pathTimeoutId.delete(document.uri.path);
-  }
-  pathTimeoutId.set(
-    document.uri.path,
-    setTimeout(
-      () =>
-        _validateQuery({
-          config,
-          diagnosticCollection,
-          outputChannel,
-          statusManager,
-          document,
-        }),
-      config.queryValidation.debounceInterval
-    )
-  );
-}
-
-async function _validateQuery({
-  config,
-  diagnosticCollection,
-  outputChannel,
-  statusManager,
-  document,
-}: {
-  readonly config: Config;
-  readonly diagnosticCollection: DiagnosticCollection;
-  readonly outputChannel: OutputChannel;
-  readonly statusManager: StatusManager;
-  readonly document: TextDocument;
-}): Promise<void> {
-  try {
-    if (!config.queryValidation.enabled) {
-      return;
-    }
-    outputChannel.appendLine(`Validate`);
-    await dryRun({
-      config,
-      errorMarker: createErrorMarker({ diagnosticCollection, document }),
-      outputChannel: {
-        ...outputChannel,
-        show(): void {
-          // do nothing
-        },
-      },
-      statusManager,
-      document,
-    });
-  } catch (err) {
-    if (err instanceof ErrorWithId) {
-      outputChannel.appendLine(`${err.error} (${err.id})`);
-    } else {
-      outputChannel.appendLine(`${err}`);
-    }
-  }
-}
-
-function isBigQuery({
-  config,
-  document,
-}: {
-  readonly config: Config;
-  readonly document: TextDocument;
-}): boolean {
-  return (
-    config.queryValidation.languageIds.includes(document.languageId) ||
-    config.queryValidation.extensions.includes(extname(document.fileName))
-  );
-}
-
 function wrapCallback({
-  configManager,
   diagnosticCollection,
   outputChannel,
-  statusManager,
   resultChannel,
-  ctx,
   callback,
 }: {
-  readonly configManager: ConfigManager;
   readonly diagnosticCollection: DiagnosticCollection;
   readonly outputChannel: OutputChannel;
   readonly resultChannel: ResultChannel;
-  readonly statusManager: StatusManager;
-  readonly ctx: ExtensionContext;
   readonly callback: (params: {
-    readonly config: Config;
     readonly errorMarker: ErrorMarker;
-    readonly outputChannel: OutputChannel;
-    readonly statusManager: StatusManager;
     readonly document: TextDocument;
     readonly range?: Range;
-    readonly ctx: ExtensionContext;
   }) => Promise<Result>;
 }): () => Promise<void> {
   return async () => {
@@ -421,15 +229,10 @@ function wrapCallback({
         throw new Error("no active text editor");
       }
       const { document, selection } = window.activeTextEditor;
-      const config = configManager.get();
       const result = await callback({
-        config,
         errorMarker: createErrorMarker({ diagnosticCollection, document }),
-        outputChannel,
-        statusManager,
         document,
         range: selection,
-        ctx,
       });
       resultChannel.set(result);
     } catch (err) {
@@ -446,418 +249,4 @@ function wrapCallback({
       }
     }
   };
-}
-
-let job: RunJob | undefined;
-
-async function run({
-  config,
-  errorMarker,
-  outputChannel,
-  statusManager,
-  document,
-  range,
-  ctx,
-}: {
-  readonly config: Config;
-  readonly errorMarker: ErrorMarker;
-  readonly outputChannel: OutputChannel;
-  readonly statusManager: StatusManager;
-  readonly document: TextDocument;
-  readonly range?: Range;
-  readonly ctx: ExtensionContext;
-}): Promise<Result> {
-  outputChannel.appendLine(`Run`);
-
-  const output = await createOutput({
-    config,
-    outputChannel,
-    filename: document.fileName,
-    ctx,
-  });
-  const path = await output.open();
-  if (path !== undefined) {
-    outputChannel.appendLine(`Output to: ${path}`);
-  }
-
-  try {
-    errorMarker.clear();
-    statusManager.enableBilledLoading({
-      document,
-    });
-
-    const client = await createClient(config);
-    job = await client.createRunJob({
-      query: getQueryText({ document, range }),
-      maxResults: config.pagination.results,
-    });
-    outputChannel.appendLine(`Job ID: ${job.id}`);
-
-    errorMarker.clear();
-  } catch (err) {
-    output.close();
-    statusManager.hide();
-    errorMarker.mark(err);
-  }
-
-  if (!job) {
-    throw new Error(`no job`);
-  }
-
-  const results = await job.getRows();
-  await renderRows({
-    outputChannel,
-    statusManager,
-    document,
-    output,
-    results,
-  });
-  return { jobId: job.id };
-}
-
-async function runPrevPage({
-  config,
-  outputChannel,
-  statusManager,
-  document,
-  ctx,
-}: {
-  readonly config: Config;
-  readonly outputChannel: OutputChannel;
-  readonly statusManager: StatusManager;
-  readonly document: TextDocument;
-  readonly ctx: ExtensionContext;
-}) {
-  if (!job) {
-    throw new Error(`no job`);
-  }
-
-  const output = await createOutput({
-    config,
-    outputChannel,
-    filename: document.fileName,
-    ctx,
-  });
-  const path = await output.open();
-  if (path !== undefined) {
-    outputChannel.appendLine(`Output to: ${path}`);
-  }
-
-  let results: Results;
-  try {
-    results = await job.getPrevRows();
-  } catch (err) {
-    output.close();
-    throw err;
-  }
-
-  await renderRows({
-    outputChannel,
-    statusManager,
-    document,
-    output,
-    results: results!,
-  });
-
-  return { jobId: job.id };
-}
-
-async function runNextPage({
-  config,
-  outputChannel,
-  statusManager,
-  document,
-  ctx,
-}: {
-  readonly config: Config;
-  readonly outputChannel: OutputChannel;
-  readonly statusManager: StatusManager;
-  readonly document: TextDocument;
-  readonly ctx: ExtensionContext;
-}) {
-  if (!job) {
-    throw new Error(`no job`);
-  }
-
-  const output = await createOutput({
-    config,
-    outputChannel,
-    filename: document.fileName,
-    ctx,
-  });
-  const path = await output.open();
-  if (path !== undefined) {
-    outputChannel.appendLine(`Output to: ${path}`);
-  }
-
-  let results: Results;
-  try {
-    results = await job.getNextRows();
-  } catch (err) {
-    output.close();
-    throw err;
-  }
-
-  await renderRows({
-    outputChannel,
-    statusManager,
-    document,
-    output,
-    results: results!,
-  });
-
-  return { jobId: job.id };
-}
-
-async function renderRows({
-  outputChannel,
-  statusManager,
-  document,
-  output,
-  results,
-}: {
-  readonly outputChannel: OutputChannel;
-  readonly statusManager: StatusManager;
-  readonly document: TextDocument;
-  readonly output: Output;
-  readonly results: Results;
-}) {
-  if (!job) {
-    throw new Error(`no job`);
-  }
-
-  try {
-    statusManager.enableBilledLoading({ document });
-
-    outputChannel.appendLine(`Result: ${results.rows.length} rows`);
-    const { query, schema, numRows } = await job.getInfo();
-    const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
-    outputChannel.appendLine(
-      `Result: ${bytes} to be billed (cache: ${query.cacheHit})`
-    );
-
-    const flat = createFlat(schema.fields);
-    await output.writeHeads({ flat });
-    await output.writeRows({ ...results, numRows, flat });
-    const bytesWritten = await output.bytesWritten();
-    if (bytesWritten !== undefined) {
-      outputChannel.appendLine(
-        `Total bytes written: ${formatBytes(bytesWritten)}`
-      );
-    }
-
-    statusManager.setBilledState({
-      document,
-      billed: { bytes, cacheHit: query.cacheHit },
-    });
-  } catch (err) {
-    statusManager.hide();
-    if (job.id) {
-      throw new ErrorWithId(err, job.id);
-    } else {
-      throw err;
-    }
-  }
-}
-
-async function dryRun({
-  config,
-  errorMarker,
-  outputChannel,
-  statusManager,
-  document,
-  range,
-}: {
-  readonly config: Config;
-  readonly errorMarker: ErrorMarker;
-  readonly outputChannel: OutputChannel;
-  readonly statusManager: StatusManager;
-  readonly document: TextDocument;
-  readonly range?: Range;
-}): Promise<Result> {
-  outputChannel.appendLine(`Dry run`);
-
-  statusManager.enableProcessedLoading({
-    document,
-  });
-
-  const client = await createClient(config);
-
-  let job!: DryRunJob;
-  try {
-    errorMarker.clear();
-    job = await client.createDryRunJob({
-      query: getQueryText({ document, range }),
-    });
-    errorMarker.clear();
-  } catch (err) {
-    errorMarker.mark(err);
-  }
-
-  outputChannel.appendLine(`Job ID: ${job.id}`);
-  const { totalBytesProcessed } = job.getInfo();
-  const bytes = formatBytes(totalBytesProcessed);
-  outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
-
-  statusManager.setProcessedState({
-    document,
-    processed: {
-      bytes,
-    },
-  });
-
-  return { jobId: job.id };
-}
-
-function getQueryText({
-  document,
-  range,
-}: {
-  readonly document: TextDocument;
-  readonly range?: Range;
-}): string {
-  const text = range?.isEmpty ? document.getText() : document.getText(range);
-
-  if (text.trim() === "") {
-    throw new Error("text is empty");
-  }
-
-  return text;
-}
-
-function createErrorMarker({
-  diagnosticCollection,
-  document,
-}: {
-  readonly diagnosticCollection: DiagnosticCollection;
-  readonly document: TextDocument;
-}) {
-  return {
-    clear() {
-      diagnosticCollection.delete(document.uri);
-    },
-    mark(err: unknown) {
-      if (!(err instanceof Error)) {
-        const first = document.lineAt(0);
-        const last = document.lineAt(document.lineCount - 1);
-        diagnosticCollection.set(document.uri, [
-          new Diagnostic(
-            new Range(first.range.start, last.range.end),
-            `${err}`
-          ),
-        ]);
-        throw err;
-      }
-      const { message } = err;
-      const rMessage = /^(.*?) at \[(\d+):(\d+)\]$/;
-      const res = rMessage.exec(message);
-      if (!res) {
-        const first = document.lineAt(0);
-        const last = document.lineAt(document.lineCount - 1);
-        diagnosticCollection.set(document.uri, [
-          new Diagnostic(
-            new Range(first.range.start, last.range.end),
-            `${err}`
-          ),
-        ]);
-        throw err;
-      }
-      const [_, m, l, c] = res;
-      const line = Number(l) - 1;
-      const character = Number(c) - 1;
-      const range = document.getWordRangeAtPosition(
-        new Position(line, character)
-      );
-      diagnosticCollection.set(document.uri, [
-        new Diagnostic(
-          range ??
-            new Range(
-              new Position(line, character),
-              new Position(line, character + 1)
-            ),
-          m ?? ""
-        ),
-      ]);
-      throw err;
-    },
-  };
-}
-type ErrorMarker = ReturnType<typeof createErrorMarker>;
-
-async function createOutput({
-  config,
-  outputChannel,
-  filename,
-  ctx,
-}: {
-  readonly config: Config;
-  readonly outputChannel: OutputChannel;
-  readonly filename: string;
-  readonly ctx: ExtensionContext;
-}): Promise<Output> {
-  switch (config.output.type) {
-    case "viewer":
-      const root = join(ctx.extensionPath, "out/viewer");
-      const base = Uri.file(root)
-        .with({
-          scheme: "vscode-resource",
-        })
-        .toString();
-      const html = (await readFile(join(root, "index.html"), "utf-8")).replace(
-        "<head>",
-        `<head><base href="${base}/" />`
-      );
-      return createViewerOutput({
-        html,
-        subscriptions: ctx.subscriptions,
-        createWebviewPanel: () => {
-          const panel = window.createWebviewPanel(
-            "bigqueryRunner",
-            "BigQuery Runner",
-            { viewColumn: -2, preserveFocus: true },
-            {
-              enableScripts: true,
-              localResourceRoots: [Uri.file(root)],
-            }
-          );
-          ctx.subscriptions.push(panel);
-          return panel;
-        },
-      });
-    case "log":
-      return createLogOutput({
-        formatter: createFormatter({ config }),
-        outputChannel,
-      });
-    case "file":
-      if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
-        throw new Error(`no workspace folders`);
-      }
-      return createFileOutput({
-        formatter: createFormatter({ config }),
-        dirname: join(
-          workspace.workspaceFolders[0].uri.path ||
-            workspace.workspaceFolders[0].uri.fsPath,
-          config.output.file.path
-        ),
-        filename,
-      });
-  }
-}
-
-function createFormatter({ config }: { config: Config }): Formatter {
-  switch (config.format.type) {
-    case "table":
-      return createTableFormatter();
-    case "markdown":
-      return createMarkdownFormatter();
-    case "json-lines":
-      return createJSONLinesFormatter();
-    case "json":
-      return createJSONFormatter();
-    case "csv":
-      return createCSVFormatter({ options: config.format.csv });
-    default:
-      throw new Error(`Invalid format: ${config.format.type}`);
-  }
 }

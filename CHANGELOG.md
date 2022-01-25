@@ -8,6 +8,10 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 - Enabling the setting of status bar items position.
 
+### Changed
+
+- Display the previous status in the status bar even while loading.
+
 ## v0.0.28
 
 ### Added
