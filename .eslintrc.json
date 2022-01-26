@@ -49,6 +49,10 @@
       }
     ],
     "@typescript-eslint/semi": "warn",
+
+    "no-useless-rename": "error",
+    "object-shorthand": "error",
+
     // "import/order": "off",
     "import/no-unresolved": "off",
     "unused-imports/no-unused-imports": "error",

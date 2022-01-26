@@ -1,5 +1,5 @@
 import { BigQuery, BigQueryOptions, Query } from "@google-cloud/bigquery";
-import { Field } from ".";
+import { Field, Struct } from ".";
 
 export type JobInfo = {
   kind: string;
@@ -95,7 +95,7 @@ export class NoPageTokenError extends Error {
 }
 
 export type Results = {
-  readonly rows: Array<unknown>;
+  readonly structs: Array<Struct>;
   readonly page?: Page;
 };
 
@@ -132,14 +132,14 @@ export async function createClient(options: BigQueryOptions) {
       return {
         id: job.id,
         async getRows(): Promise<Results> {
-          const [rows, next] = await job.getQueryResults({
+          const [structs, next] = await job.getQueryResults({
             maxResults: query.maxResults,
           });
           if (next?.pageToken) {
             tokens.set(page + 1, next.pageToken);
           }
           return {
-            rows,
+            structs,
             page: query.maxResults
               ? {
                   rowsPerPage: query.maxResults,
@@ -162,7 +162,7 @@ export async function createClient(options: BigQueryOptions) {
             tokens.set(page + 1, next.pageToken);
           }
           return {
-            rows,
+            structs: rows,
             page: query.maxResults
               ? {
                   rowsPerPage: query.maxResults,
@@ -185,7 +185,7 @@ export async function createClient(options: BigQueryOptions) {
             tokens.set(page + 1, next.pageToken);
           }
           return {
-            rows,
+            structs: rows,
             page: query.maxResults
               ? {
                   rowsPerPage: query.maxResults,

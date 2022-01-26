@@ -69,7 +69,7 @@ export function createViewerOutput({
     async writeHeads() {
       // do nothing
     },
-    async writeRows({ rows, page, flat, numRows }) {
+    async writeRows({ structs, page, flat, numRows }) {
       if (!panel) {
         throw new Error(`panel is not initialized`);
       }
@@ -80,11 +80,11 @@ export function createViewerOutput({
           payload: {
             header: flat.heads.map(({ id }) => id),
             rows: flat.toRows({
-              structs: rows,
+              structs,
               rowNumber: page ? page.rowsPerPage * page.current + 1 : 1,
             }),
-            page: page,
-            numRows: numRows,
+            page,
+            numRows,
           },
         },
       });
@@ -132,7 +132,7 @@ export function createLogOutput({
     async writeHeads({ flat }) {
       outputChannel.append(formatter.header({ flat }));
     },
-    async writeRows({ rows, flat }) {
+    async writeRows({ structs: rows, flat }) {
       outputChannel.append(
         await formatter.rows({ structs: rows, rowNumber: 0, flat })
       );
@@ -180,7 +180,7 @@ export function createFileOutput({
         stream.write(res);
       }
     },
-    async writeRows({ rows, flat }) {
+    async writeRows({ structs: rows, flat }) {
       stream.write(await formatter.rows({ structs: rows, rowNumber: 0, flat }));
     },
     async bytesWritten() {
