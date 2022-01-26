@@ -20,7 +20,7 @@ export function createConfigManager(section: string) {
 }
 
 function getConfigration(section: string): Config {
-  const config = workspace.getConfiguration(section) as any as Config;
+  const config = workspace.getConfiguration(section) as unknown as Config;
   return {
     ...config,
     pagination: {

@@ -12,7 +12,7 @@
     "build:debug": "npm run build -- --sourcemap",
     "build:production": "npm run build -- --minify",
     "pretest": "run-p build:test lint",
-    "lint": "eslint 'src/**/*.ts'",
+    "lint": "eslint './src/**/*.ts'",
     "test": "node ../../out/test/runTest.js"
   }
 }

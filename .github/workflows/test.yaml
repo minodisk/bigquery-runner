@@ -21,6 +21,8 @@ jobs:
         uses: "google-github-actions/auth@v0.4.0"
         with:
           credentials_json: "${{ secrets.GOOGLE_CREDENTIALS }}"
+      - name: Lint
+        run: npm run lint
       - name: Run headless test
         uses: GabrielBB/xvfb-action@v1.0
         with:

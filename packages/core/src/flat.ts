@@ -6,6 +6,8 @@ import {
   BigQueryTimestamp,
 } from "@google-cloud/bigquery";
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 export type Field = PrimitiveField | StructField;
 export type PrimitiveField = {
   name: string;

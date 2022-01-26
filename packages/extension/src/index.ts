@@ -23,7 +23,10 @@ import {
   workspace,
 } from "vscode";
 import { AuthenticationError, NoPageTokenError } from "core";
-import { createStatusBarItemCreator, createStatusManager } from "./status";
+import {
+  createStatusBarItemCreator,
+  createStatusManager,
+} from "./statusManager";
 import { createConfigManager } from "./configManager";
 import { createDryRunner, createRunner, ErrorWithId } from "./runner";
 import { createErrorMarker } from "./errorMarker";

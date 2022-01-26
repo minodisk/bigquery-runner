@@ -23,11 +23,11 @@ export function createStatusManager({
   createStatusBarItem: ReturnType<typeof createStatusBarItemCreator>;
 }) {
   let statusBarItem = createStatusBarItem(options);
-  let processedMap = new Map<
+  const processedMap = new Map<
     string,
     { loading: boolean; status?: Processed }
   >();
-  let billedMap = new Map<string, { loading: boolean; status?: Billed }>();
+  const billedMap = new Map<string, { loading: boolean; status?: Billed }>();
 
   return {
     enableProcessedLoading({ document }: { document: TextDocument }) {
@@ -106,9 +106,7 @@ export function createStatusManager({
     dispose() {
       statusBarItem.dispose();
       processedMap.forEach((_, key) => processedMap.delete(key));
-      processedMap = undefined!;
       billedMap.forEach((_, key) => billedMap.delete(key));
-      billedMap = undefined!;
     },
   };
 }

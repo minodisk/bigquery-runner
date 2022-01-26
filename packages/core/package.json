@@ -5,6 +5,7 @@
   "license": "Apach-2",
   "main": "src/index.ts",
   "scripts": {
+    "lint": "eslint './src/**/*.ts'",
     "test": "jest --silent=false",
     "test-coverage": "npm run test -- --coverage --coverageDirectory ../../coverage/core",
     "test-watch": "npm run test -- --watchAll"

@@ -1,4 +1,9 @@
-import React, { FC, HTMLProps, useEffect, useState } from "react";
+import React, {
+  HTMLProps,
+  PropsWithChildren,
+  useEffect,
+  useState,
+} from "react";
 import { NumberedRows, Page } from "core";
 import cx from "classnames";
 import "./App.css";
@@ -8,7 +13,7 @@ type Rows = {
   payload: Event;
 };
 
-function isData(data: any): data is Rows {
+function isData(data: { source?: string }): data is Rows {
   return data.source === "bigquery-runner";
 }
 
@@ -48,10 +53,23 @@ function isRowsEvent(e: Event): e is RowsEvent {
   return e.event === "rows";
 }
 
+// type VFC<P = {}> = (props: P) => JSX.Element;
+type FC<P = {}> = (props: PropsWithChildren<P>) => JSX.Element;
+type XFC<P = {}> = FC<P & { className?: string }>;
+
 const App: FC = () => {
   const [data, setData] = useState<Data | undefined>(defaultData);
   const [loading, setLoading] = useState<string | undefined>("Initializing");
-  const [isPending, startTransition] = (React as any).useTransition({
+  const [isPending, startTransition] = (
+    React as unknown as {
+      useTransition: (props: {
+        timeoutMs: number;
+      }) => [
+        isPending: boolean,
+        startTransition: (callback: () => unknown) => void
+      ];
+    }
+  ).useTransition({
     timeoutMs: 5000,
   });
 
@@ -217,8 +235,6 @@ const Pagination: FC<{ page: Page; rowsInPage: number; totalRows: string }> = ({
     <Text color="weak">{totalRows}</Text>
   </HStack>
 );
-
-type XFC<P = {}> = FC<P & { className?: string }>;
 
 type BoxProps = {
   readonly p?: 1 | 2 | 3;

@@ -21,13 +21,13 @@ export type Output = {
 export type WebviewPanel = {
   readonly webview: {
     html: string;
-    postMessage(message: any): Thenable<boolean>;
+    postMessage(message: unknown): Thenable<boolean>;
   };
   dispose(): unknown;
   onDidDispose(
     callback: () => void,
-    hoge: any,
-    subscriptions: Array<{ dispose(): any }>
+    hoge: unknown,
+    subscriptions: Array<{ dispose(): unknown }>
   ): void;
 };
 
@@ -39,7 +39,7 @@ export function createViewerOutput({
   createWebviewPanel,
 }: {
   readonly html: string;
-  readonly subscriptions: Array<{ dispose(): any }>;
+  readonly subscriptions: Array<{ dispose(): unknown }>;
   createWebviewPanel(): WebviewPanel;
 }): Output {
   return {
@@ -66,7 +66,9 @@ export function createViewerOutput({
     path() {
       return "";
     },
-    async writeHeads() {},
+    async writeHeads() {
+      // do nothing
+    },
     async writeRows({ rows, page, flat, numRows }) {
       if (!panel) {
         throw new Error(`panel is not initialized`);
@@ -87,7 +89,9 @@ export function createViewerOutput({
         },
       });
     },
-    async bytesWritten() {},
+    async bytesWritten() {
+      // do nothing
+    },
     async close() {
       if (!panel) {
         return;
@@ -122,7 +126,9 @@ export function createLogOutput({
     async open() {
       outputChannel.show(true);
     },
-    path() {},
+    path() {
+      // do nothing
+    },
     async writeHeads({ flat }) {
       outputChannel.append(formatter.header({ flat }));
     },
@@ -131,11 +137,15 @@ export function createLogOutput({
         await formatter.rows({ structs: rows, rowNumber: 0, flat })
       );
     },
-    async bytesWritten() {},
+    async bytesWritten() {
+      // do nothing
+    },
     async close() {
       outputChannel.append(formatter.footer());
     },
-    async dispose() {},
+    async dispose() {
+      // do nothing
+    },
   };
 }
 
@@ -161,7 +171,9 @@ export function createFileOutput({
       stream = createWriteStream(path);
       return path;
     },
-    path() {},
+    path() {
+      // do nothing
+    },
     async writeHeads({ flat }) {
       const res = formatter.header({ flat });
       if (res) {
@@ -178,10 +190,11 @@ export function createFileOutput({
       });
       return stream.bytesWritten;
     },
-    async close() {},
+    async close() {
+      // do nothing
+    },
     async dispose() {
       stream.end();
-      stream = undefined!;
     },
   };
 }

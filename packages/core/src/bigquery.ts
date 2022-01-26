@@ -95,7 +95,7 @@ export class NoPageTokenError extends Error {
 }
 
 export type Results = {
-  readonly rows: Array<any>;
+  readonly rows: Array<unknown>;
   readonly page?: Page;
 };
 
@@ -127,8 +127,8 @@ export async function createClient(options: BigQueryOptions) {
         throw new Error(`no job ID`);
       }
 
-      let tokens: Map<number, string | null> = new Map([[0, null]]);
-      let page: number = 0;
+      const tokens: Map<number, string | null> = new Map([[0, null]]);
+      let page = 0;
       return {
         id: job.id,
         async getRows(): Promise<Results> {

@@ -13,7 +13,7 @@ export function createValidator({
   readonly configManager: ConfigManager;
   readonly dryRunner: DryRunner;
 }) {
-  let pathTimeoutId = new Map<string, NodeJS.Timeout>();
+  const pathTimeoutId = new Map<string, NodeJS.Timeout>();
 
   async function exec({
     document,
@@ -70,7 +70,6 @@ export function createValidator({
         clearTimeout(timeoutId);
         pathTimeoutId.delete(key);
       });
-      pathTimeoutId = undefined!;
     },
   };
 }

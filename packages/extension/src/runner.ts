@@ -30,7 +30,7 @@ import { OutputChannel, Result } from ".";
 import { Config } from "./config";
 import { ConfigManager } from "./configManager";
 import { ErrorMarker } from "./errorMarker";
-import { StatusManager } from "./status";
+import { StatusManager } from "./statusManager";
 
 export type Runner = ReturnType<typeof createRunner>;
 export type DryRunner = ReturnType<typeof createDryRunner>;
@@ -177,11 +177,14 @@ export function createRunner({
         output.close();
         throw err;
       }
+      if (!results) {
+        throw new ErrorWithId("no results", job.id);
+      }
 
       await renderRows({
         document,
         output,
-        results: results!,
+        results,
       });
 
       return { jobId: job.id };
@@ -211,21 +214,21 @@ export function createRunner({
         output.close();
         throw err;
       }
+      if (!results) {
+        throw new ErrorWithId("no results", job.id);
+      }
 
       await renderRows({
         document,
         output,
-        results: results!,
+        results,
       });
 
       return { jobId: job.id };
     },
 
     dispose() {
-      if (!job) {
-        return;
-      }
-      job = undefined!;
+      job = undefined;
     },
   };
 }
@@ -284,7 +287,9 @@ export function createDryRunner({
       return { jobId: job.id };
     },
 
-    dispose() {},
+    dispose() {
+      // do nothing
+    },
   };
 }
 
@@ -300,7 +305,7 @@ async function createOutput({
   readonly ctx: ExtensionContext;
 }): Promise<Output> {
   switch (config.output.type) {
-    case "viewer":
+    case "viewer": {
       const root = join(ctx.extensionPath, "out/viewer");
       const base = Uri.file(root)
         .with({
@@ -328,6 +333,7 @@ async function createOutput({
           return panel;
         },
       });
+    }
     case "log":
       return createLogOutput({
         formatter: createFormatter({ config }),

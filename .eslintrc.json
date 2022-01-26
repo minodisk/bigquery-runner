@@ -5,24 +5,50 @@
     "ecmaVersion": 12,
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint", "import", "unused-imports", "react-hooks"],
+  "plugins": [
+    "@typescript-eslint",
+    "import",
+    "unused-imports",
+    "react",
+    "react-hooks"
+  ],
   "extends": [
-    // "eslint:recommended",
-    // "plugin:@typescript-eslint/recommended",
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
     "plugin:react/recommended"
   ],
   "rules": {
-    // "@typescript-eslint/no-unused-vars": [
-    //   "warn",
-    //   {
-    //     "vars": "all",
-    //     "varsIgnorePattern": "^_",
-    //     "args": "after-used",
-    //     "argsIgnorePattern": "^_"
-    //   }
-    // ],
-    // "@typescript-eslint/naming-convention": "warn",
-    // "@typescript-eslint/semi": "warn",
+    // Do with TypeScript
+    "no-undef": "off",
+
+    // https://github.com/typescript-eslint/typescript-eslint/issues/2063#issuecomment-675156492
+    "@typescript-eslint/ban-types": [
+      "error",
+      {
+        "extendDefaults": true,
+        "types": {
+          "{}": false
+        }
+      }
+    ],
+    "@typescript-eslint/naming-convention": [
+      "warn",
+      {
+        "selector": "function",
+        "format": ["PascalCase", "camelCase"]
+      }
+    ],
+
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "vars": "all",
+        "varsIgnorePattern": "^_",
+        "args": "after-used",
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "@typescript-eslint/semi": "warn",
     // "import/order": "off",
     "import/no-unresolved": "off",
     "unused-imports/no-unused-imports": "error",
@@ -162,5 +188,10 @@
     //   }
     // ]
   },
-  "ignorePatterns": ["out", "dist", "**/*.d.ts"]
+  "ignorePatterns": ["out", "dist", "**/*.d.ts"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
 }

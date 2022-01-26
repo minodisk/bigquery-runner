@@ -7,7 +7,7 @@ describe("formatter", () => {
       const flat = createFlat([
         { name: "foo", type: "BOOLEAN", mode: "REQUIRED" },
       ]);
-      const messages: Array<any> = [];
+      const messages: Array<unknown> = [];
       const output = createViewerOutput({
         html: "",
         subscriptions: [],
@@ -20,8 +20,12 @@ describe("formatter", () => {
                 return true;
               },
             },
-            dispose() {},
-            onDidDispose() {},
+            dispose() {
+              // do nothing
+            },
+            onDidDispose() {
+              // do nothing
+            },
           };
         },
       });
@@ -77,11 +81,13 @@ describe("formatter", () => {
         const flat = createFlat([
           { name: "foo", type: "BOOLEAN", mode: "REQUIRED" },
         ]);
-        let actual: string = "";
+        let actual = "";
         const output = createLogOutput({
           formatter: createMarkdownFormatter(),
           outputChannel: {
-            show() {},
+            show() {
+              // do nothing
+            },
             append(value) {
               actual += value;
             },

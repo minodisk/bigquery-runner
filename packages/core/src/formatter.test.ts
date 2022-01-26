@@ -7,19 +7,19 @@ import {
   createTableFormatter,
 } from ".";
 
-const complexFields = [
-  { name: "a", type: "INTEGER", mode: "NULLABLE" },
-  {
-    name: "b",
-    type: "STRUCT",
-    mode: "REPEATED",
-    fields: [
-      { name: "c", type: "FLOAT", mode: "NULLABLE" },
-      { name: "d", type: "STRING", mode: "NULLABLE" },
-    ],
-  },
-  { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
-];
+// const complexFields = [
+//   { name: "a", type: "INTEGER", mode: "NULLABLE" },
+//   {
+//     name: "b",
+//     type: "STRUCT",
+//     mode: "REPEATED",
+//     fields: [
+//       { name: "c", type: "FLOAT", mode: "NULLABLE" },
+//       { name: "d", type: "STRING", mode: "NULLABLE" },
+//     ],
+//   },
+//   { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
+// ];
 const complexStructs = {
   structs: [
     {
