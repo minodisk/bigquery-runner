@@ -32,7 +32,7 @@ describe("formatter", () => {
       await output.open();
       await output.writeHeads({ flat });
       await output.writeRows({
-        rows: [
+        structs: [
           {
             foo: true,
           },
@@ -98,7 +98,7 @@ describe("formatter", () => {
           flat,
         });
         await output.writeRows({
-          rows: [
+          structs: [
             {
               foo: true,
             },
