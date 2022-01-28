@@ -1,79 +1,15 @@
-import {
-  BigQueryDate,
-  BigQueryDatetime,
-  BigQueryInt,
-  BigQueryTime,
-  BigQueryTimestamp,
-} from "@google-cloud/bigquery";
-
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-export type Field = PrimitiveField | StructField;
-export type PrimitiveField = {
-  name: string;
-  type: PrimitiveFieldType;
-  mode: FieldMode;
-};
-export type StructField = {
-  name: string;
-  type: StructFieldType;
-  mode: FieldMode;
-  fields: Array<Field>;
-};
-
-export type FieldType = PrimitiveFieldType | StructFieldType;
-const primitiveTableFieldTypes = [
-  "STRING",
-  "BYTES",
-  "INTEGER",
-  "INT64",
-  "FLOAT",
-  "FLOAT64",
-  "NUMERIC",
-  "BIGNUMERIC",
-  "BOOLEAN",
-  "BOOL",
-  "TIMESTAMP",
-  "DATE",
-  "TIME",
-  "DATETIME",
-  "INTERVAL",
-] as const;
-type PrimitiveFieldType = typeof primitiveTableFieldTypes[number];
-const structTableFieldTypes = ["RECORD", "STRUCT"] as const;
-type StructFieldType = typeof structTableFieldTypes[number];
-
-export type FieldMode = "NULLABLE" | "REQUIRED" | "REPEATED";
-
-type Column = Array<Accessor>;
-export type Accessor = {
-  id: string;
-  name: string;
-  type: FieldType;
-  mode: FieldMode;
-};
-
-export type Struct = {
-  [name: string]: Primitive | Struct | Array<Primitive | Struct>;
-};
-export type Primitive =
-  | null
-  | number
-  | string
-  | boolean
-  | BigQueryDate
-  | BigQueryDatetime
-  | BigQueryInt
-  | BigQueryTime
-  | BigQueryTimestamp;
-
-export type Row = Array<Cell>;
-export type Cell = {
-  id: string;
-  value: undefined | null | number | string | boolean;
-};
-
-type Hash = { [id: string]: Primitive };
+import {
+  Accessor,
+  Column,
+  Field,
+  Hash,
+  NumberedRows,
+  Primitive,
+  Row,
+  Struct,
+} from "./types";
 
 export function createFlat(fields: Array<Field>) {
   const heads = fieldsToHeads(fields);
@@ -129,11 +65,6 @@ function fieldsToColumns(fields: Array<Field>): Array<Column> {
     return [[{ ...field, id: field.name }]];
   });
 }
-
-export type NumberedRows = {
-  rowNumber: number;
-  rows: Array<Row>;
-};
 
 function structsToRows({
   heads,

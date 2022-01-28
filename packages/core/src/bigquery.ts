@@ -1,5 +1,5 @@
 import { BigQuery, BigQueryOptions, Query } from "@google-cloud/bigquery";
-import { Field, Struct } from ".";
+import { Field, Results } from "./types";
 
 export type JobInfo = {
   kind: string;
@@ -93,16 +93,6 @@ export class NoPageTokenError extends Error {
     super(`no page token for page at ${page}`);
   }
 }
-
-export type Results = {
-  readonly structs: Array<Struct>;
-  readonly page?: Page;
-};
-
-export type Page = {
-  readonly rowsPerPage: number;
-  readonly current: number;
-};
 
 export async function createClient(options: BigQueryOptions) {
   const bigQuery = new BigQuery(options);

@@ -4,7 +4,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { NumberedRows, Page } from "core";
+import { NumberedRows, Page } from "core/src/types";
 import cx from "classnames";
 import "./App.css";
 
@@ -304,7 +304,5 @@ const Text: XFC<{ color?: "weak" }> = ({ className, color, ...props }) => (
 const Spinner: FC = () => <div className="spinner" />;
 
 const Skeleton: FC = () => <div className="skeleton" />;
-
-const defaultData = undefined;
 
 export default App;

@@ -215,7 +215,7 @@
     "lint-fix:extension": "npm run -w extension lint-fix",
     "lint-fix:viewer": "npm run -w viewer lint-fix",
     "test": "npm run test-coverage",
-    "test-coverage": "run-p test-coverage:*",
+    "test-coverage": "run-s test-coverage:*",
     "test-coverage:core": "npm run -w core test-coverage",
     "test-coverage:viewer": "npm run -w viewer test-coverage",
     "test-watch": "run-p test-watch:*",

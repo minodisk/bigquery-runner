@@ -13,9 +13,9 @@ import {
   DryRunJob,
   Formatter,
   Output,
-  Results,
   RunJob,
 } from "core";
+import { Results } from "core/src/types";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import {
@@ -66,7 +66,7 @@ export function createRunner({
     try {
       statusManager.enableBilledLoading({ document });
 
-      outputChannel.appendLine(`Result: ${results.rows.length} rows`);
+      outputChannel.appendLine(`Result: ${results.structs.length} rows`);
       const { query, schema, numRows } = await job.getInfo();
       const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
       outputChannel.appendLine(
