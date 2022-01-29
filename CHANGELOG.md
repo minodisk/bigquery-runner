@@ -2,6 +2,16 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.30
+
+### Changed
+
+- Fixed a bug that certain types cannot be rendered when output.type is set to viewer.
+  - `BIGNUMERIC`
+  - `NUMERIC`
+  - `BOOL`
+  - `BYTES`
+
 ## v0.0.29
 
 ### Added
