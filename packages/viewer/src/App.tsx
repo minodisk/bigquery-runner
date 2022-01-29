@@ -142,9 +142,9 @@ const App: FC = () => {
                         {rowNumber}
                       </RowNumberTd>
                     ) : null}
-                    {row.map((cell) => (
-                      <Td key={cell.id}>{cell.value}</Td>
-                    ))}
+                    {row.map((cell) => {
+                      return <Td key={cell.id}>{`${cell.value}`}</Td>;
+                    })}
                   </Tr>
                 ));
               })}

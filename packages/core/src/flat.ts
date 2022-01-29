@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { valueToPrimitive } from "./transform";
 import {
   Accessor,
   Column,
   Field,
   Hash,
   NumberedRows,
-  Primitive,
+  Value,
   Row,
   Struct,
 } from "./types";
@@ -154,7 +155,7 @@ function walk({
   struct: Struct;
   column: Column;
   accessorIndex: number;
-  fill(props: { accessor: Accessor; value: Primitive }): void;
+  fill(props: { accessor: Accessor; value: Value }): void;
 }): void {
   let s: Struct = struct;
   for (let ai = accessorIndex; ai < column.length; ai += 1) {
@@ -171,7 +172,7 @@ function walk({
         });
         break;
       }
-      (s[accessor.name] as Array<Primitive>).forEach((value) =>
+      (s[accessor.name] as Array<Value>).forEach((value) =>
         fill({
           accessor,
           value,
@@ -184,7 +185,7 @@ function walk({
       }
       fill({
         accessor,
-        value: s[accessor.name] as Primitive,
+        value: s[accessor.name] as Value,
       });
     }
   }
@@ -200,7 +201,7 @@ function createFillWithRowCreator({
   depths: Array<number>;
 }) {
   return ({ columnIndex }: { columnIndex: number }) => {
-    return ({ accessor, value }: { value: Primitive; accessor: Accessor }) => {
+    return ({ accessor, value }: { value: Value; accessor: Accessor }) => {
       if (!results[depths[columnIndex]!]) {
         results[depths[columnIndex]!] = heads.map(({ id }) => ({
           id,
@@ -209,7 +210,7 @@ function createFillWithRowCreator({
       }
       results[depths[columnIndex]!]![columnIndex] = {
         id: accessor.id,
-        value: primitiveToCell(value),
+        value: valueToPrimitive(value),
       };
       depths[columnIndex]! += 1;
     };
@@ -224,26 +225,12 @@ function createFillWithHashCreator({
   depths: Array<number>;
 }) {
   return ({ columnIndex }: { columnIndex: number }) => {
-    return ({ value, accessor }: { value: Primitive; accessor: Accessor }) => {
+    return ({ value, accessor }: { value: Value; accessor: Accessor }) => {
       if (!results[depths[columnIndex]!]) {
         results[depths[columnIndex]!] = {};
       }
-      results[depths[columnIndex]!]![accessor.id] = primitiveToCell(value);
+      results[depths[columnIndex]!]![accessor.id] = valueToPrimitive(value);
       depths[columnIndex]! += 1;
     };
   };
-}
-
-function primitiveToCell(
-  primitive: Primitive
-): null | number | string | boolean {
-  if (
-    primitive === null ||
-    typeof primitive === "number" ||
-    typeof primitive === "string" ||
-    typeof primitive === "boolean"
-  ) {
-    return primitive;
-  }
-  return primitive.value;
 }

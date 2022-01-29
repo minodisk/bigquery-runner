@@ -53,13 +53,15 @@ export type Accessor = {
 };
 
 export type Struct = {
-  [name: string]: Primitive | Struct | Array<Primitive | Struct>;
+  [name: string]: Value | Struct | Array<Value | Struct>;
 };
-export type Primitive =
+export type Value =
   | null
   | number
   | string
   | boolean
+  | BigInt
+  | Buffer
   | BigQueryDate
   | BigQueryDatetime
   | BigQueryInt
@@ -77,7 +79,7 @@ export type Cell = {
   value: undefined | null | number | string | boolean;
 };
 
-export type Hash = { [id: string]: Primitive };
+export type Hash = { [id: string]: Value };
 
 export type Data<E extends Event> = {
   source: "bigquery-runner";

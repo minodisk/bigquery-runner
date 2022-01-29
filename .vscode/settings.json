@@ -22,7 +22,7 @@
   "bigqueryRunner.keyFilename": "./service-account.json",
   // "bigqueryRunner.pagination.results": 10,
   "bigqueryRunner.output.file.path": "./output",
-  // "bigqueryRunner.output.type": "output",
+  // "bigqueryRunner.output.type": "log",
   "bigqueryRunner.format.type": "json-lines",
   "bigqueryRunner.format.csv.header": true
 }

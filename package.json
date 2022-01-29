@@ -244,7 +244,7 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.1",
-    "@testing-library/react": "^12.1.2",
+    "@testing-library/react": "^13.0.0-alpha.5",
     "@testing-library/user-event": "^13.5.0",
     "@types/bytes": "^3.1.1",
     "@types/csv-stringify": "^3.1.0",
