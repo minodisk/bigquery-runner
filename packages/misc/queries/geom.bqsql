@@ -1,0 +1,6 @@
+select 
+    *
+from 
+    `bigquery-public-data.geo_us_boundaries.metropolitan_divisions`
+limit
+    10
