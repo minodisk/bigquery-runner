@@ -4,6 +4,7 @@ import {
   BigQueryInt,
   BigQueryTime,
   BigQueryTimestamp,
+  Geography,
 } from "@google-cloud/bigquery";
 
 export type Field = PrimitiveField | StructField;
@@ -62,6 +63,7 @@ export type Value =
   | boolean
   | BigInt
   | Buffer
+  | Geography
   | BigQueryDate
   | BigQueryDatetime
   | BigQueryInt

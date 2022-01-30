@@ -1,14 +1,16 @@
+import {
+  BigQueryDate,
+  BigQueryDatetime,
+  BigQueryInt,
+  BigQueryTime,
+  BigQueryTimestamp,
+  Geography,
+} from "@google-cloud/bigquery";
 import { Value } from "./types";
 
 export function valueToPrimitive(
   value: Value
 ): null | number | string | boolean {
-  // console.log(
-  //   primitive,
-  //   primitive?.toString(),
-  //   Object.prototype.toString.call(primitive)
-  // );
-  // console.log(value.toJSON());
   if (
     value === null ||
     typeof value === "number" ||
@@ -17,14 +19,18 @@ export function valueToPrimitive(
   ) {
     return value;
   }
+  if (
+    value instanceof BigQueryDate ||
+    value instanceof BigQueryDatetime ||
+    value instanceof BigQueryInt ||
+    value instanceof BigQueryTime ||
+    value instanceof BigQueryTimestamp ||
+    value instanceof Geography
+  ) {
+    return value.value;
+  }
   if (Buffer.isBuffer(value)) {
     return value.toString();
-  }
-  if (typeof value === "bigint" || value instanceof BigInt) {
-    return `${value}`;
-  }
-  if (value.value) {
-    return `${value.value}`;
   }
   return `${value}`;
 }

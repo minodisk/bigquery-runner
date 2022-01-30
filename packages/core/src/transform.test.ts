@@ -4,12 +4,20 @@ import {
   BigQueryInt,
   BigQueryTime,
   BigQueryTimestamp,
+  Geography,
 } from "@google-cloud/bigquery";
 import { valueToPrimitive } from "./transform";
+import { Value } from "./types";
 
 describe("transform", () => {
   describe("valueToPrimitive", () => {
-    [
+    const cases: Array<
+      Readonly<{
+        message: string;
+        value: Value;
+        expected: null | boolean | number | string;
+      }>
+    > = [
       {
         message: "should return boolean when boolean is input",
         value: true,
@@ -42,6 +50,11 @@ describe("transform", () => {
       },
       {
         message: "should return string when BigQueryDate is input",
+        value: new Geography("POINT(-70.8754261 42.0625498)"),
+        expected: "POINT(-70.8754261 42.0625498)",
+      },
+      {
+        message: "should return string when BigQueryDate is input",
         value: new BigQueryDate("2006-01-02"),
         expected: "2006-01-02",
       },
@@ -65,7 +78,8 @@ describe("transform", () => {
         value: new BigQueryTimestamp("2006-01-02T15:04:05Z"),
         expected: "2006-01-02T15:04:05.000Z",
       },
-    ].map(({ message, value, expected }) =>
+    ];
+    cases.forEach(({ message, value, expected }) =>
       it(message, () => {
         expect(valueToPrimitive(value)).toStrictEqual(expected);
       })
