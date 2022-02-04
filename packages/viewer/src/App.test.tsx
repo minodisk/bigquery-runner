@@ -43,6 +43,42 @@ describe("App", () => {
         expect(screen.getByText(/foo/i)).toBeInTheDocument();
       });
     });
+
+    it("should not render undefined", async () => {
+      render(<App />);
+      window.postMessage(
+        JSON.stringify({
+          source: "bigquery-runner",
+          payload: {
+            event: "rows",
+            payload: {
+              page: { rowsPerPage: 100, current: 2 },
+              numRows: "123000",
+              header: ["a", "b", "c", "d", "e"],
+              rows: [
+                {
+                  rowNumber: 0,
+                  rows: [
+                    [
+                      { id: "a", value: 100 },
+                      { id: "b", value: 200 },
+                      { id: "c", value: undefined },
+                      { id: "d", value: 300 },
+                      { id: "e", value: 400 },
+                    ],
+                  ],
+                },
+              ],
+            },
+          },
+        }),
+        "*"
+      );
+
+      await waitFor(() => {
+        expect(() => screen.getByText(/undefined/i)).toThrow();
+      });
+    });
   });
 
   it("should render complex table", async () => {
