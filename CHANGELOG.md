@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.32
+
+### Changed
+
+- Fix the bug that boolean is not correctly output to CSV.
+
 ## v0.0.31
 
 ### Changed
