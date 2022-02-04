@@ -143,7 +143,11 @@ const App: FC = () => {
                       </RowNumberTd>
                     ) : null}
                     {row.map((cell) => {
-                      return <Td key={cell.id}>{`${cell.value}`}</Td>;
+                      return (
+                        <Td key={cell.id}>
+                          {cell.value === undefined ? null : `${cell.value}`}
+                        </Td>
+                      );
                     })}
                   </Tr>
                 ));
