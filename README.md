@@ -20,7 +20,7 @@ This extension requires authentication to the Google Cloud API. You can start us
 
 ## Usage
 
-1. Open the query file
+1. Open a query file with `.bqsql` extension
 2. Open the command palette
 3. Run `BigQuery Runner: Run`
 
@@ -220,11 +220,11 @@ The priority of status bar item. Higher value means the item should be shown mor
     - Log window, the UI of VSCode
     - File
 
-## Recommended Setting
+## Additional Settings
 
-### To use keyboard shortcuts for run and paging
+### If you want to use keyboard shortcuts for running and paging
 
-Just an example of keybindings.json:
+`keybindings.json`:
 
 ```json:keybindings.json
 {
@@ -246,9 +246,21 @@ Just an example of keybindings.json:
 }
 ```
 
-### When `bigqueryRunner.output.type` is set as `log`
+### If you want to syntax highlight a file with `.bqsql` extension as SQL
 
-To avoid long horizontal tables from being broken, add the following settings to settings.json.
+`settings.json`:
+
+```json:settings.json
+{
+  "files.associations": {
+    "*.bqsql": "sql"
+  }
+}
+```
+
+### If `bigqueryRunner.output.type` is set as `log` and word wrap causes the table to collapse
+
+`settings.json`:
 
 ```json:settings.json
 {

@@ -16,8 +16,10 @@ import {
   RunJob,
 } from "core";
 import { Results } from "core/src/types";
+import { createWriteStream } from "fs";
 import { readFile } from "fs/promises";
-import { join } from "path";
+import mkdirp from "mkdirp";
+import { basename, extname, join } from "path";
 import {
   ExtensionContext,
   Range,
@@ -76,12 +78,13 @@ export function createRunner({
       const flat = createFlat(schema.fields);
       await output.writeHeads({ flat });
       await output.writeRows({ ...results, numRows, flat });
-      const bytesWritten = await output.bytesWritten();
-      if (bytesWritten !== undefined) {
-        outputChannel.appendLine(
-          `Total bytes written: ${formatBytes(bytesWritten)}`
-        );
-      }
+
+      // const bytesWritten = await output.bytesWritten();
+      // if (bytesWritten !== undefined) {
+      //   outputChannel.appendLine(
+      //     `Total bytes written: ${formatBytes(bytesWritten)}`
+      //   );
+      // }
 
       statusManager.setBilledState({
         document,
@@ -339,20 +342,42 @@ async function createOutput({
         formatter: createFormatter({ config }),
         outputChannel,
       });
-    case "file":
+    case "file": {
       if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
         throw new Error(`no workspace folders`);
       }
+
+      const formatter = createFormatter({ config });
+      const dirname = join(
+        workspace.workspaceFolders[0].uri.path ||
+          workspace.workspaceFolders[0].uri.fsPath,
+        config.output.file.path
+      );
+      const path = join(
+        dirname,
+        `${basename(filename, extname(filename))}${formatToExtension(
+          formatter.type
+        )}`
+      );
+      const stream = createWriteStream(path, "utf-8");
+
+      await mkdirp(dirname);
       return createFileOutput({
-        formatter: createFormatter({ config }),
-        dirname: join(
-          workspace.workspaceFolders[0].uri.path ||
-            workspace.workspaceFolders[0].uri.fsPath,
-          config.output.file.path
-        ),
-        filename,
+        formatter,
+        stream,
       });
+    }
   }
+}
+
+function formatToExtension(format: Formatter["type"]): string {
+  return {
+    table: ".txt",
+    markdown: ".md",
+    "json-lines": ".jsonl",
+    json: ".json",
+    csv: ".csv",
+  }[format];
 }
 
 function createFormatter({ config }: { config: Config }): Formatter {

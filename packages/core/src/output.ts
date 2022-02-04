@@ -1,12 +1,9 @@
-import { createWriteStream, WriteStream } from "fs";
-import mkdirp from "mkdirp";
-import { basename, extname, join } from "path";
+import { Writable } from "stream";
 import { Flat, Formatter } from ".";
 import { Results } from "./types";
 
 export type Output = {
   readonly open: () => Promise<string | void>;
-  readonly path: () => string | void;
   readonly writeHeads: (props: { readonly flat: Flat }) => Promise<unknown>;
   readonly writeRows: (
     results: Results & {
@@ -14,7 +11,6 @@ export type Output = {
       readonly numRows: string;
     }
   ) => Promise<unknown>;
-  readonly bytesWritten: () => Promise<number | void>;
   readonly close: () => Promise<void>;
   readonly dispose: () => unknown;
 };
@@ -64,9 +60,6 @@ export function createViewerOutput({
         },
       });
     },
-    path() {
-      return "";
-    },
     async writeHeads() {
       // do nothing
     },
@@ -89,9 +82,6 @@ export function createViewerOutput({
           },
         },
       });
-    },
-    async bytesWritten() {
-      // do nothing
     },
     async close() {
       if (!panel) {
@@ -127,9 +117,6 @@ export function createLogOutput({
     async open() {
       outputChannel.show(true);
     },
-    path() {
-      // do nothing
-    },
     async writeHeads({ flat }) {
       outputChannel.append(formatter.header({ flat }));
     },
@@ -137,9 +124,6 @@ export function createLogOutput({
       outputChannel.append(
         await formatter.rows({ structs: rows, rowNumber: 0, flat })
       );
-    },
-    async bytesWritten() {
-      // do nothing
     },
     async close() {
       outputChannel.append(formatter.footer());
@@ -152,27 +136,13 @@ export function createLogOutput({
 
 export function createFileOutput({
   formatter,
-  dirname,
-  filename,
+  stream,
 }: {
   readonly formatter: Formatter;
-  readonly dirname: string;
-  readonly filename: string;
+  readonly stream: Writable;
 }): Output {
-  let stream: WriteStream;
   return {
     async open() {
-      await mkdirp(dirname);
-      const path = join(
-        dirname,
-        `${basename(filename, extname(filename))}${formatToExtension(
-          formatter.type
-        )}`
-      );
-      stream = createWriteStream(path);
-      return path;
-    },
-    path() {
       // do nothing
     },
     async writeHeads({ flat }) {
@@ -184,28 +154,14 @@ export function createFileOutput({
     async writeRows({ structs: rows, flat }) {
       stream.write(await formatter.rows({ structs: rows, rowNumber: 0, flat }));
     },
-    async bytesWritten() {
+    async close() {
       stream.write(formatter.footer());
       await new Promise((resolve, reject) => {
         stream.on("error", reject).on("finish", resolve).end();
       });
-      return stream.bytesWritten;
-    },
-    async close() {
-      // do nothing
     },
     async dispose() {
       stream.end();
     },
   };
-}
-
-function formatToExtension(format: Formatter["type"]): string {
-  return {
-    table: ".txt",
-    markdown: ".md",
-    "json-lines": ".jsonl",
-    json: ".json",
-    csv: ".csv",
-  }[format];
 }

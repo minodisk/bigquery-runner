@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.31
+
+### Changed
+
+- Fixed a bug where undefined was displayed in empty cells when output.type is set to viewer.
+- Added extension setting to README to automatic validation.
+
 ## v0.0.30
 
 ### Changed

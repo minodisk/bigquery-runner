@@ -6,6 +6,66 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
 } from ".";
+import { Field, Struct } from "./types";
+
+const fields: Array<Field> = [
+  { name: "bool", type: "BOOL", mode: "NULLABLE" },
+  { name: "int64", type: "INT64", mode: "NULLABLE" },
+  { name: "float64", type: "FLOAT64", mode: "NULLABLE" },
+  { name: "numeric", type: "NUMERIC", mode: "NULLABLE" },
+  { name: "bignumeric", type: "BIGNUMERIC", mode: "NULLABLE" },
+  { name: "string", type: "STRING", mode: "NULLABLE" },
+  { name: "bytes", type: "BYTES", mode: "NULLABLE" },
+  { name: "date", type: "DATE", mode: "NULLABLE" },
+  { name: "datetime", type: "DATETIME", mode: "NULLABLE" },
+  { name: "time", type: "TIME", mode: "NULLABLE" },
+  { name: "timestamp", type: "TIMESTAMP", mode: "NULLABLE" },
+  { name: "interval", type: "INTERVAL", mode: "NULLABLE" },
+];
+const structs: Array<Struct> = [
+  {
+    bool: true,
+    int64: 123,
+    float64: 123.45,
+    numeric: 123,
+    bignumeric: 99999999,
+    string: "foo",
+    bytes: "bar",
+    date: "2016-01-02",
+    datetime: "2016-01-02T15:04:05Z",
+    time: "15:04:05Z",
+    timestamp: "2016-01-02T15:04:05Z",
+    interval: "01 01-02 15:04:05",
+  },
+  {
+    bool: false,
+    int64: 0,
+    float64: 0,
+    numeric: 0,
+    bignumeric: 0,
+    string: "",
+    bytes: "",
+    date: "2016-01-02",
+    datetime: "2016-01-02T15:04:05Z",
+    time: "15:04:05Z",
+    timestamp: "2016-01-02T15:04:05Z",
+    interval: "0",
+  },
+  {
+    bool: null,
+    int64: null,
+    float64: null,
+    numeric: null,
+    bignumeric: null,
+    string: null,
+    bytes: null,
+    date: null,
+    datetime: null,
+    time: null,
+    timestamp: null,
+    interval: null,
+  },
+];
 
 // const complexFields = [
 //   { name: "a", type: "INTEGER", mode: "NULLABLE" },
@@ -289,34 +349,24 @@ a    b.c    b.d  e
       expect(formatter.footer()).toEqual(``);
     });
 
-    it("should be format simple", async () => {
-      const formatter = createCSVFormatter({
-        options: {},
-      });
-      const flat = createFlat([
-        { name: "a", type: "STRING", mode: "NULLABLE" },
-        { name: "b", type: "STRING", mode: "NULLABLE" },
-      ]);
-      expect(formatter.header({ flat })).toEqual("");
-      expect(
-        await formatter.rows({
-          structs: [
-            {
-              a: "foo",
-              b: "bar",
-            },
-            {
-              a: "baz",
-              b: "qux",
-            },
-          ],
-          rowNumber: 0,
-          flat,
-        })
-      ).toEqual(`foo,bar
-baz,qux
-`);
-      expect(formatter.footer()).toEqual(``);
-    });
+    //     it("should be format simple", async () => {
+    //       const formatter = createCSVFormatter({
+    //         options: {},
+    //       });
+    //       const flat = createFlat(fields);
+    //       expect(formatter.header({ flat })).toEqual("");
+    //       expect(
+    //         await formatter.rows({
+    //           structs,
+    //           rowNumber: 0,
+    //           flat,
+    //         })
+    //       )
+    //         .toEqual(`true,123,123.45,123,99999999,foo,bar,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,01 01-02 15:04:05
+    // false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
+    // ,,,,,,,,,,,
+    // `);
+    //       expect(formatter.footer()).toEqual(``);
+    //     });
   });
 });
