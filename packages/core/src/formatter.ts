@@ -123,7 +123,10 @@ export function createCSVFormatter({
       }
       return await new Promise<string>((resolve, reject) => {
         CSV.stringify(
-          flat.toHashes(structs),
+          flat.toHashes({
+            structs,
+            transform: (p) => (p === null ? "" : `${p}`),
+          }),
           options,
           (err?: Error, res?: string) => {
             if (err) {

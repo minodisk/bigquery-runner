@@ -70,6 +70,8 @@ export type Value =
   | BigQueryTime
   | BigQueryTimestamp;
 
+export type Primitive = null | number | string | boolean;
+
 export type NumberedRows = {
   rowNumber: number;
   rows: Array<Row>;
@@ -78,7 +80,7 @@ export type NumberedRows = {
 export type Row = Array<Cell>;
 export type Cell = {
   id: string;
-  value: undefined | null | number | string | boolean;
+  value?: Primitive;
 };
 
 export type Hash = { [id: string]: Value };

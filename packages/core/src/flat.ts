@@ -10,7 +10,10 @@ import {
   Value,
   Row,
   Struct,
+  Primitive,
 } from "./types";
+
+type Transform = (primitive: Primitive) => Primitive;
 
 export function createFlat(fields: Array<Field>) {
   const heads = fieldsToHeads(fields);
@@ -21,14 +24,22 @@ export function createFlat(fields: Array<Field>) {
     toRows({
       structs,
       rowNumber,
+      transform,
     }: {
-      structs: Array<Struct>;
-      rowNumber: number;
+      readonly structs: Array<Struct>;
+      readonly rowNumber: number;
+      readonly transform?: Transform;
     }) {
-      return structsToRows({ heads, columns, structs, rowNumber });
+      return structsToRows({ heads, columns, structs, rowNumber, transform });
     },
-    toHashes(structs: Array<Struct>) {
-      return structsToHashes({ columns, structs });
+    toHashes({
+      structs,
+      transform,
+    }: {
+      readonly structs: Array<Struct>;
+      readonly transform?: Transform;
+    }) {
+      return structsToHashes({ columns, structs, transform });
     },
   };
 }
@@ -72,14 +83,16 @@ function structsToRows({
   columns,
   structs,
   rowNumber,
+  transform,
 }: {
   readonly heads: Array<Accessor>;
   readonly columns: Array<Column>;
   readonly structs: Array<Struct>;
   readonly rowNumber: number;
+  readonly transform?: Transform;
 }): Array<NumberedRows> {
   return structs.map((struct, i) => {
-    const rows = structToRows({ heads, columns, struct });
+    const rows = structToRows({ heads, columns, struct, transform });
     return {
       rowNumber: rowNumber + i,
       rows,
@@ -91,16 +104,19 @@ function structToRows({
   heads,
   columns,
   struct,
+  transform,
 }: {
   readonly heads: Array<Accessor>;
   readonly columns: Array<Column>;
   readonly struct: Struct;
+  readonly transform?: Transform;
 }): Array<Row> {
   const rows: Array<Row> = [];
   const createFillWithRow = createFillWithRowCreator({
     heads,
     results: rows,
     depths: new Array(columns.length).fill(0),
+    transform,
   });
   columns.forEach((column, columnIndex) =>
     walk({
@@ -116,24 +132,31 @@ function structToRows({
 function structsToHashes({
   columns,
   structs,
+  transform,
 }: {
-  columns: Array<Column>;
-  structs: Array<Struct>;
+  readonly columns: Array<Column>;
+  readonly structs: Array<Struct>;
+  readonly transform?: Transform;
 }): Array<Hash> {
-  return structs.flatMap((struct) => structToHashes({ columns, struct }));
+  return structs.flatMap((struct) =>
+    structToHashes({ columns, struct, transform })
+  );
 }
 
 function structToHashes({
   columns,
   struct,
+  transform,
 }: {
-  columns: Array<Column>;
-  struct: Struct;
+  readonly columns: Array<Column>;
+  readonly struct: Struct;
+  readonly transform?: Transform;
 }): Array<Hash> {
   const results: Array<Hash> = [];
   const createFillWithHash = createFillWithHashCreator({
     results,
     depths: new Array(columns.length).fill(0),
+    transform,
   });
   columns.forEach((column, columnIndex) =>
     walk({
@@ -152,9 +175,9 @@ function walk({
   accessorIndex,
   fill,
 }: {
-  struct: Struct;
-  column: Column;
-  accessorIndex: number;
+  readonly struct: Struct;
+  readonly column: Column;
+  readonly accessorIndex: number;
   fill(props: { accessor: Accessor; value: Value }): void;
 }): void {
   let s: Struct = struct;
@@ -195,10 +218,12 @@ function createFillWithRowCreator({
   heads,
   results,
   depths,
+  transform = (primitive) => primitive,
 }: {
-  heads: Array<Accessor>;
-  results: Array<Row>;
-  depths: Array<number>;
+  readonly heads: Array<Accessor>;
+  readonly results: Array<Row>;
+  readonly depths: Array<number>;
+  readonly transform?: Transform;
 }) {
   return ({ columnIndex }: { columnIndex: number }) => {
     return ({ accessor, value }: { value: Value; accessor: Accessor }) => {
@@ -210,7 +235,7 @@ function createFillWithRowCreator({
       }
       results[depths[columnIndex]!]![columnIndex] = {
         id: accessor.id,
-        value: valueToPrimitive(value),
+        value: transform(valueToPrimitive(value)),
       };
       depths[columnIndex]! += 1;
     };
@@ -220,16 +245,20 @@ function createFillWithRowCreator({
 function createFillWithHashCreator({
   results,
   depths,
+  transform = (primitive) => primitive,
 }: {
-  results: Array<Hash>;
-  depths: Array<number>;
+  readonly results: Array<Hash>;
+  readonly depths: Array<number>;
+  readonly transform?: Transform;
 }) {
   return ({ columnIndex }: { columnIndex: number }) => {
     return ({ value, accessor }: { value: Value; accessor: Accessor }) => {
       if (!results[depths[columnIndex]!]) {
         results[depths[columnIndex]!] = {};
       }
-      results[depths[columnIndex]!]![accessor.id] = valueToPrimitive(value);
+      results[depths[columnIndex]!]![accessor.id] = transform(
+        valueToPrimitive(value)
+      );
       depths[columnIndex]! += 1;
     };
   };

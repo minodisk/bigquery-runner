@@ -6,11 +6,9 @@ import {
   BigQueryTimestamp,
   Geography,
 } from "@google-cloud/bigquery";
-import { Value } from "./types";
+import { Primitive, Value } from "./types";
 
-export function valueToPrimitive(
-  value: Value
-): null | number | string | boolean {
+export function valueToPrimitive(value: Value): Primitive {
   if (
     value === null ||
     typeof value === "number" ||

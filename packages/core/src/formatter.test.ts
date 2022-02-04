@@ -349,24 +349,24 @@ a    b.c    b.d  e
       expect(formatter.footer()).toEqual(``);
     });
 
-    //     it("should be format simple", async () => {
-    //       const formatter = createCSVFormatter({
-    //         options: {},
-    //       });
-    //       const flat = createFlat(fields);
-    //       expect(formatter.header({ flat })).toEqual("");
-    //       expect(
-    //         await formatter.rows({
-    //           structs,
-    //           rowNumber: 0,
-    //           flat,
-    //         })
-    //       )
-    //         .toEqual(`true,123,123.45,123,99999999,foo,bar,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,01 01-02 15:04:05
-    // false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
-    // ,,,,,,,,,,,
-    // `);
-    //       expect(formatter.footer()).toEqual(``);
-    //     });
+    it("should be format simple", async () => {
+      const formatter = createCSVFormatter({
+        options: {},
+      });
+      const flat = createFlat(fields);
+      expect(formatter.header({ flat })).toEqual("");
+      expect(
+        await formatter.rows({
+          structs,
+          rowNumber: 0,
+          flat,
+        })
+      )
+        .toEqual(`true,123,123.45,123,99999999,foo,bar,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,01 01-02 15:04:05
+false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
+,,,,,,,,,,,
+`);
+      expect(formatter.footer()).toEqual(``);
+    });
   });
 });
