@@ -4,54 +4,16 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { NumberedRows, Page } from "core/src/types";
+import {
+  isCloseEvent,
+  isData,
+  isOpenEvent,
+  isRowsEvent,
+  Page,
+  Rows,
+} from "core/src/types";
 import cx from "classnames";
 import "./App.css";
-
-type Data = {
-  source: "bigquery-runner";
-  payload: Event;
-};
-
-function isData(data: { source?: string }): data is Data {
-  return data.source === "bigquery-runner";
-}
-
-type Event = OpenEvent | CloseEvent | RowsEvent;
-
-type OpenEvent = {
-  event: "open";
-  payload: undefined;
-};
-
-function isOpenEvent(e: Event): e is OpenEvent {
-  return e.event === "open";
-}
-
-type CloseEvent = {
-  event: "close";
-  payload: undefined;
-};
-
-function isCloseEvent(e: Event): e is CloseEvent {
-  return e.event === "close";
-}
-
-type Rows = {
-  header: Array<string>;
-  rows: Array<NumberedRows>;
-  page?: Page;
-  numRows: string;
-};
-
-type RowsEvent = {
-  event: "rows";
-  payload: Rows;
-};
-
-function isRowsEvent(e: Event): e is RowsEvent {
-  return e.event === "rows";
-}
 
 // type VFC<P = {}> = (props: P) => JSX.Element;
 type FC<P = {}> = (props: PropsWithChildren<P>) => JSX.Element;
