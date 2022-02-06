@@ -187,6 +187,28 @@ a    b.c    b.d  e
       );
       expect(formatter.footer()).toEqual("");
     });
+
+    it("should be format all types", async () => {
+      const formatter = createTableFormatter();
+      const flat = createFlat(fields);
+      expect(formatter.header({ flat })).toEqual(``);
+      expect(
+        await formatter.rows({
+          structs,
+          rowNumber: 0,
+          flat,
+        })
+      ).toEqual(
+        `
+bool   int64  float64  numeric  bignumeric  string  bytes  date        datetime              time       timestamp             interval         
+-----  -----  -------  -------  ----------  ------  -----  ----------  --------------------  ---------  --------------------  -----------------
+true   123    123.45   123      99999999    foo     bar    2016-01-02  2016-01-02T15:04:05Z  15:04:05Z  2016-01-02T15:04:05Z  01 01-02 15:04:05
+false  0      0        0        0                          2016-01-02  2016-01-02T15:04:05Z  15:04:05Z  2016-01-02T15:04:05Z  0                
+null   null   null     null     null        null    null   null        null                  null       null                  null
+`.trimStart()
+      );
+      expect(formatter.footer()).toEqual(``);
+    });
   });
 
   describe("createMarkdownFormatter", () => {
@@ -268,6 +290,28 @@ a    b.c    b.d  e
       );
       expect(formatter.footer()).toEqual("");
     });
+
+    it("should be format all types", async () => {
+      const formatter = createMarkdownFormatter();
+      const flat = createFlat(fields);
+      expect(formatter.header({ flat }))
+        .toEqual(`|bool|int64|float64|numeric|bignumeric|string|bytes|date|datetime|time|timestamp|interval|
+|---|---|---|---|---|---|---|---|---|---|---|---|
+`);
+      expect(
+        await formatter.rows({
+          structs,
+          rowNumber: 0,
+          flat,
+        })
+      ).toEqual(
+        `|true|123|123.45|123|99999999|foo|bar|2016-01-02|2016-01-02T15:04:05Z|15:04:05Z|2016-01-02T15:04:05Z|01 01-02 15:04:05|
+|false|0|0|0|0|||2016-01-02|2016-01-02T15:04:05Z|15:04:05Z|2016-01-02T15:04:05Z|0|
+|null|null|null|null|null|null|null|null|null|null|null|null|
+`
+      );
+      expect(formatter.footer()).toEqual(``);
+    });
   });
 
   describe("createJSONLinesFormatter", () => {
@@ -281,26 +325,23 @@ a    b.c    b.d  e
       expect(formatter.footer()).toEqual("");
     });
 
-    it("should be format simple", async () => {
+    it("should be format all types", async () => {
       const formatter = createJSONLinesFormatter();
       const flat = createFlat([]);
       expect(formatter.header({ flat })).toEqual("");
       expect(
         await formatter.rows({
-          structs: [
-            {
-              foo: 123,
-            },
-          ],
+          structs,
           rowNumber: 0,
           flat,
         })
       ).toEqual(
-        `
-{"foo":123}
-`.trimStart()
+        `{"bool":true,"int64":123,"float64":123.45,"numeric":123,"bignumeric":99999999,"string":"foo","bytes":"bar","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"01 01-02 15:04:05"}
+{"bool":false,"int64":0,"float64":0,"numeric":0,"bignumeric":0,"string":"","bytes":"","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"0"}
+{"bool":null,"int64":null,"float64":null,"numeric":null,"bignumeric":null,"string":null,"bytes":null,"date":null,"datetime":null,"time":null,"timestamp":null,"interval":null}
+`
       );
-      expect(formatter.footer()).toEqual("");
+      expect(formatter.footer()).toEqual(``);
     });
   });
 
@@ -316,21 +357,19 @@ a    b.c    b.d  e
 `);
     });
 
-    it("should be format simple", async () => {
+    it("should be format all types", async () => {
       const formatter = createJSONFormatter();
       const flat = createFlat([]);
       expect(formatter.header({ flat })).toEqual("[");
       expect(
         await formatter.rows({
-          structs: [
-            {
-              foo: 123,
-            },
-          ],
+          structs,
           rowNumber: 0,
           flat,
         })
-      ).toEqual(`{"foo":123}`);
+      ).toEqual(
+        `{"bool":true,"int64":123,"float64":123.45,"numeric":123,"bignumeric":99999999,"string":"foo","bytes":"bar","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"01 01-02 15:04:05"},{"bool":false,"int64":0,"float64":0,"numeric":0,"bignumeric":0,"string":"","bytes":"","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"0"},{"bool":null,"int64":null,"float64":null,"numeric":null,"bignumeric":null,"string":null,"bytes":null,"date":null,"datetime":null,"time":null,"timestamp":null,"interval":null}`
+      );
       expect(formatter.footer()).toEqual(`]
 `);
     });
@@ -349,7 +388,7 @@ a    b.c    b.d  e
       expect(formatter.footer()).toEqual(``);
     });
 
-    it("should be format simple", async () => {
+    it("should be format all types", async () => {
       const formatter = createCSVFormatter({
         options: {},
       });
