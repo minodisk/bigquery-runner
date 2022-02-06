@@ -1,6 +1,6 @@
 import { Writable } from "stream";
 import { Flat, Formatter } from ".";
-import { Results } from "./types";
+import { CloseEvent, Data, OpenEvent, Results, RowsEvent } from "./types";
 
 export type Output = {
   readonly open: () => Promise<string | void>;
@@ -58,7 +58,7 @@ export function createViewerOutput({
         payload: {
           event: "open",
         },
-      });
+      } as Data<OpenEvent>);
     },
     async writeHeads() {
       // do nothing
@@ -81,7 +81,7 @@ export function createViewerOutput({
             numRows,
           },
         },
-      });
+      } as Data<RowsEvent>);
     },
     async close() {
       if (!panel) {
@@ -92,7 +92,7 @@ export function createViewerOutput({
         payload: {
           event: "close",
         },
-      });
+      } as Data<CloseEvent>);
     },
     dispose() {
       if (!panel) {

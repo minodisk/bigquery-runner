@@ -1,11 +1,21 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
+import { CloseEvent, Data, OpenEvent } from "core/src/types";
 
 describe("App", () => {
   describe("types", () => {
     it("should render null, boolean, number and string", async () => {
       render(<App />);
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "open",
+          },
+        } as Data<OpenEvent>,
+        "*"
+      );
       window.postMessage(
         JSON.stringify({
           source: "bigquery-runner",
@@ -32,6 +42,15 @@ describe("App", () => {
             },
           },
         }),
+        "*"
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "close",
+          },
+        } as Data<CloseEvent>,
         "*"
       );
 

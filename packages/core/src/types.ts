@@ -105,7 +105,7 @@ export function isOpenEvent(e: Event): e is OpenEvent {
   return e.event === "open";
 }
 
-type CloseEvent = {
+export type CloseEvent = {
   event: "close";
   payload: undefined;
 };
