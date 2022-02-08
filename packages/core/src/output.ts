@@ -28,8 +28,6 @@ export type WebviewPanel = {
   ): void;
 };
 
-let panel: WebviewPanel | undefined;
-
 export function createViewerOutput({
   html,
   subscriptions,
@@ -39,6 +37,7 @@ export function createViewerOutput({
   readonly subscriptions: Array<{ dispose(): unknown }>;
   createWebviewPanel(): WebviewPanel;
 }): Output {
+  let panel: WebviewPanel | undefined;
   return {
     async open() {
       if (!panel) {

@@ -8,8 +8,92 @@ import {
 } from ".";
 import { createViewerOutput, WebviewPanel } from "./output";
 
+const viewerOptions = {
+  html: "",
+  subscriptions: [],
+  createWebviewPanel() {
+    return webviewPanel;
+  },
+};
+
+const webviewPanel: WebviewPanel = {
+  webview: {
+    html: "",
+    async postMessage() {
+      return true;
+    },
+  },
+  dispose() {
+    // do nothing
+  },
+  onDidDispose() {
+    // do nothing
+  },
+};
+
 describe("output", () => {
   describe("createViewerOutput", () => {
+    it("should throw an error if it is written before being opened", async () => {
+      const output = createViewerOutput(viewerOptions);
+      await expect(
+        output.writeRows({
+          structs: [],
+          numRows: "0",
+          flat: createFlat([]),
+        })
+      ).rejects.toThrow();
+    });
+
+    it("should post close event to webview if output is closed", async () => {
+      const postMessage = jest.fn();
+      const output = createViewerOutput({
+        ...viewerOptions,
+        createWebviewPanel() {
+          return {
+            ...webviewPanel,
+            webview: {
+              html: "",
+              postMessage,
+            },
+          };
+        },
+      });
+      await output.open();
+      await output.close();
+      expect(postMessage).toBeCalledWith({
+        source: "bigquery-runner",
+        payload: {
+          event: "close",
+        },
+      });
+    });
+
+    it("should dispose webview panel if output is disposed", async () => {
+      const dispose = jest.fn();
+      const output = createViewerOutput({
+        ...viewerOptions,
+        createWebviewPanel() {
+          return {
+            ...webviewPanel,
+            dispose,
+          };
+        },
+      });
+      await output.open();
+      await output.dispose();
+      expect(dispose).toBeCalled();
+    });
+
+    it("should not throw an error if it is closed before being opened", async () => {
+      const output = createViewerOutput(viewerOptions);
+      await output.close();
+    });
+
+    it("should not throw an error if it is disposed before being opened", async () => {
+      const output = createViewerOutput(viewerOptions);
+      await output.dispose();
+    });
+
     it("should be format", async () => {
       const flat = createFlat([
         { name: "foo", type: "BOOLEAN", mode: "REQUIRED" },
