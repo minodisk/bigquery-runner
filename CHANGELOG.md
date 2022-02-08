@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.33
+
+### Changed
+
+- Fixed an irreproducible bug that could cause the viewer instance of the output destination to be disposed during processing.
+
 ## v0.0.32
 
 ### Changed
