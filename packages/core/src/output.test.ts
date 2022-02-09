@@ -5,6 +5,7 @@ import {
   createFlat,
   createLogOutput,
   createMarkdownFormatter,
+  createTableFormatter,
 } from ".";
 import { createViewerOutput, WebviewPanel } from "./output";
 
@@ -82,6 +83,31 @@ describe("output", () => {
       await output.open();
       await output.dispose();
       expect(dispose).toBeCalled();
+    });
+
+    it("should dispose webview panel if output is disposed", async () => {
+      let dispose!: () => void;
+      const onDidDispose = (cb: () => void) => {
+        dispose = cb;
+      };
+      const output = createViewerOutput({
+        ...viewerOptions,
+        createWebviewPanel() {
+          return {
+            ...webviewPanel,
+            onDidDispose,
+          };
+        },
+      });
+      await output.open();
+      dispose();
+      await expect(
+        output.writeRows({
+          structs: [],
+          numRows: "0",
+          flat: createFlat([]),
+        })
+      ).rejects.toThrow();
     });
 
     it("should not throw an error if it is closed before being opened", async () => {
@@ -209,46 +235,142 @@ describe("output", () => {
   });
 
   describe("createFileOutput", () => {
-    describe("format csv", () => {
-      it("should be output", async () => {
-        const flat = createFlat([
-          { name: "foo", type: "STRING", mode: "REQUIRED" },
-          { name: "bar", type: "BOOL", mode: "REQUIRED" },
-        ]);
-        let actual = "";
-        const stream = new PassThrough();
-        stream.on("data", (chunk) => (actual += chunk.toString("utf-8")));
-        const output = createFileOutput({
-          formatter: createCSVFormatter({
-            options: {},
-          }),
-          stream,
-        });
-        await output.open();
-        await output.writeHeads({
-          flat,
-        });
-        await output.writeRows({
-          structs: [
-            {
-              foo: "FOO",
-              bar: true,
-            },
-            {
-              foo: "FOO2",
-              bar: false,
-            },
-          ],
-          numRows: "0",
-          flat,
-        });
-        await output.close();
-        expect(actual).toEqual(
-          `FOO,true
+    it("should end the stream when it is disposed", async () => {
+      let actual = "";
+      const stream = new PassThrough();
+      stream.on("data", (chunk) => (actual += chunk.toString("utf-8")));
+      const output = createFileOutput({
+        formatter: createCSVFormatter({
+          options: {},
+        }),
+        stream,
+      });
+      await output.open();
+      expect(stream.writableEnded).toEqual(false);
+      output.dispose();
+      expect(stream.writableEnded).toEqual(true);
+    });
+
+    it("should be output table", async () => {
+      const flat = createFlat([
+        { name: "foo", type: "STRING", mode: "REQUIRED" },
+        { name: "bar", type: "BOOL", mode: "REQUIRED" },
+      ]);
+      let actual = "";
+      const stream = new PassThrough();
+      stream.on("data", (chunk) => (actual += chunk.toString("utf-8")));
+      const output = createFileOutput({
+        formatter: createTableFormatter(),
+        stream,
+      });
+      await output.open();
+      await output.writeHeads({
+        flat,
+      });
+      await output.writeRows({
+        structs: [
+          {
+            foo: "FOO",
+            bar: true,
+          },
+          {
+            foo: "FOO2",
+            bar: false,
+          },
+        ],
+        numRows: "0",
+        flat,
+      });
+      await output.close();
+      expect(actual).toEqual(
+        `
+foo   bar  
+----  -----
+FOO   true 
+FOO2  false
+`.trimStart()
+      );
+    });
+
+    it("should be output markdown", async () => {
+      const flat = createFlat([
+        { name: "foo", type: "STRING", mode: "REQUIRED" },
+        { name: "bar", type: "BOOL", mode: "REQUIRED" },
+      ]);
+      let actual = "";
+      const stream = new PassThrough();
+      stream.on("data", (chunk) => (actual += chunk.toString("utf-8")));
+      const output = createFileOutput({
+        formatter: createMarkdownFormatter(),
+        stream,
+      });
+      await output.open();
+      await output.writeHeads({
+        flat,
+      });
+      await output.writeRows({
+        structs: [
+          {
+            foo: "FOO",
+            bar: true,
+          },
+          {
+            foo: "FOO2",
+            bar: false,
+          },
+        ],
+        numRows: "0",
+        flat,
+      });
+      await output.close();
+      expect(actual).toEqual(
+        `
+|foo|bar|
+|---|---|
+|FOO|true|
+|FOO2|false|
+`.trimStart()
+      );
+    });
+
+    it("should be output CSV", async () => {
+      const flat = createFlat([
+        { name: "foo", type: "STRING", mode: "REQUIRED" },
+        { name: "bar", type: "BOOL", mode: "REQUIRED" },
+      ]);
+      let actual = "";
+      const stream = new PassThrough();
+      stream.on("data", (chunk) => (actual += chunk.toString("utf-8")));
+      const output = createFileOutput({
+        formatter: createCSVFormatter({
+          options: {},
+        }),
+        stream,
+      });
+      await output.open();
+      await output.writeHeads({
+        flat,
+      });
+      await output.writeRows({
+        structs: [
+          {
+            foo: "FOO",
+            bar: true,
+          },
+          {
+            foo: "FOO2",
+            bar: false,
+          },
+        ],
+        numRows: "0",
+        flat,
+      });
+      await output.close();
+      expect(actual).toEqual(
+        `FOO,true
 FOO2,false
 `
-        );
-      });
+      );
     });
   });
 });
