@@ -10,9 +10,7 @@ import {
 import { createViewerOutput, WebviewPanel } from "./output";
 
 const viewerOptions = {
-  html: "",
-  subscriptions: [],
-  createWebviewPanel() {
+  async createWebviewPanel() {
     return webviewPanel;
   },
 };
@@ -49,7 +47,7 @@ describe("output", () => {
       const postMessage = jest.fn();
       const output = createViewerOutput({
         ...viewerOptions,
-        createWebviewPanel() {
+        async createWebviewPanel() {
           return {
             ...webviewPanel,
             webview: {
@@ -73,7 +71,7 @@ describe("output", () => {
       const dispose = jest.fn();
       const output = createViewerOutput({
         ...viewerOptions,
-        createWebviewPanel() {
+        async createWebviewPanel() {
           return {
             ...webviewPanel,
             dispose,
@@ -83,31 +81,6 @@ describe("output", () => {
       await output.open();
       await output.dispose();
       expect(dispose).toBeCalled();
-    });
-
-    it("should dispose webview panel if output is disposed", async () => {
-      let dispose!: () => void;
-      const onDidDispose = (cb: () => void) => {
-        dispose = cb;
-      };
-      const output = createViewerOutput({
-        ...viewerOptions,
-        createWebviewPanel() {
-          return {
-            ...webviewPanel,
-            onDidDispose,
-          };
-        },
-      });
-      await output.open();
-      dispose();
-      await expect(
-        output.writeRows({
-          structs: [],
-          numRows: "0",
-          flat: createFlat([]),
-        })
-      ).rejects.toThrow();
     });
 
     it("should not throw an error if it is closed before being opened", async () => {
@@ -126,9 +99,7 @@ describe("output", () => {
       ]);
       const messages: Array<unknown> = [];
       const output = createViewerOutput({
-        html: "",
-        subscriptions: [],
-        createWebviewPanel(): WebviewPanel {
+        async createWebviewPanel() {
           return {
             webview: {
               html: "",

@@ -29,27 +29,17 @@ export type WebviewPanel = {
 };
 
 export function createViewerOutput({
-  html,
-  subscriptions,
   createWebviewPanel,
 }: {
-  readonly html: string;
-  readonly subscriptions: Array<{ dispose(): unknown }>;
-  createWebviewPanel(): WebviewPanel;
+  createWebviewPanel(onDidDispose: () => unknown): Promise<WebviewPanel>;
 }): Output {
   let panel: WebviewPanel | undefined;
   return {
     async open() {
       if (!panel) {
-        panel = createWebviewPanel();
-        panel.webview.html = html;
-        panel.onDidDispose(
-          () => {
-            panel = undefined;
-          },
-          null,
-          subscriptions
-        );
+        panel = await createWebviewPanel(() => {
+          panel = undefined;
+        });
       }
 
       await panel.webview.postMessage({

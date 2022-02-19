@@ -309,20 +309,17 @@ async function createOutput({
 }): Promise<Output> {
   switch (config.output.type) {
     case "viewer": {
-      const root = join(ctx.extensionPath, "out/viewer");
-      const base = Uri.file(root)
-        .with({
-          scheme: "vscode-resource",
-        })
-        .toString();
-      const html = (await readFile(join(root, "index.html"), "utf-8")).replace(
-        "<head>",
-        `<head><base href="${base}/" />`
-      );
       return createViewerOutput({
-        html,
-        subscriptions: ctx.subscriptions,
-        createWebviewPanel: () => {
+        createWebviewPanel: async (onDidDispose) => {
+          const root = join(ctx.extensionPath, "out/viewer");
+          const base = Uri.file(root)
+            .with({
+              scheme: "vscode-resource",
+            })
+            .toString();
+          const html = (
+            await readFile(join(root, "index.html"), "utf-8")
+          ).replace("<head>", `<head><base href="${base}/" />`);
           const panel = window.createWebviewPanel(
             "bigqueryRunner",
             "BigQuery Runner",
@@ -332,6 +329,8 @@ async function createOutput({
               localResourceRoots: [Uri.file(root)],
             }
           );
+          panel.webview.html = html;
+          panel.onDidDispose(onDidDispose, null, ctx.subscriptions);
           ctx.subscriptions.push(panel);
           return panel;
         },
