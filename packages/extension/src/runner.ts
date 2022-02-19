@@ -25,6 +25,7 @@ import {
   Range,
   TextDocument,
   Uri,
+  WebviewPanel,
   window,
   workspace,
 } from "vscode";
@@ -51,6 +52,12 @@ export function createRunner({
   readonly errorMarker: ErrorMarker;
 }) {
   let job: RunJob | undefined;
+
+  const createOutput = createOutputCreator({
+    ctx,
+    outputChannel,
+    configManager,
+  });
 
   async function renderRows({
     document,
@@ -113,10 +120,7 @@ export function createRunner({
       const config = configManager.get();
 
       const output = await createOutput({
-        config,
-        outputChannel,
         filename: document.fileName,
-        ctx,
       });
       const path = await output.open();
       if (path !== undefined) {
@@ -161,12 +165,8 @@ export function createRunner({
         throw new Error(`no job`);
       }
 
-      const config = configManager.get();
       const output = await createOutput({
-        config,
-        outputChannel,
         filename: document.fileName,
-        ctx,
       });
       const path = await output.open();
       if (path !== undefined) {
@@ -198,12 +198,8 @@ export function createRunner({
         throw new Error(`no job`);
       }
 
-      const config = configManager.get();
       const output = await createOutput({
-        config,
-        outputChannel,
         filename: document.fileName,
-        ctx,
       });
       const path = await output.open();
       if (path !== undefined) {
@@ -296,21 +292,25 @@ export function createDryRunner({
   };
 }
 
-async function createOutput({
-  config,
-  outputChannel,
-  filename,
+function createOutputCreator({
   ctx,
+  outputChannel,
+  configManager,
 }: {
-  readonly config: Config;
-  readonly outputChannel: OutputChannel;
-  readonly filename: string;
   readonly ctx: ExtensionContext;
-}): Promise<Output> {
-  switch (config.output.type) {
-    case "viewer": {
-      return createViewerOutput({
-        createWebviewPanel: async (onDidDispose) => {
+  readonly outputChannel: OutputChannel;
+  readonly configManager: ConfigManager;
+}) {
+  let panel: WebviewPanel | undefined;
+  return async function createOutput({
+    filename,
+  }: {
+    readonly filename: string;
+  }): Promise<Output> {
+    const config = configManager.get();
+    switch (config.output.type) {
+      case "viewer": {
+        if (!panel) {
           const root = join(ctx.extensionPath, "out/viewer");
           const base = Uri.file(root)
             .with({
@@ -320,7 +320,7 @@ async function createOutput({
           const html = (
             await readFile(join(root, "index.html"), "utf-8")
           ).replace("<head>", `<head><base href="${base}/" />`);
-          const panel = window.createWebviewPanel(
+          panel = window.createWebviewPanel(
             "bigqueryRunner",
             "BigQuery Runner",
             { viewColumn: -2, preserveFocus: true },
@@ -330,43 +330,45 @@ async function createOutput({
             }
           );
           panel.webview.html = html;
-          panel.onDidDispose(onDidDispose, null, ctx.subscriptions);
           ctx.subscriptions.push(panel);
-          return panel;
-        },
-      });
-    }
-    case "log":
-      return createLogOutput({
-        formatter: createFormatter({ config }),
-        outputChannel,
-      });
-    case "file": {
-      if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
-        throw new Error(`no workspace folders`);
+        }
+
+        return createViewerOutput({
+          postMessage: panel.webview.postMessage.bind(panel.webview),
+        });
       }
+      case "log":
+        return createLogOutput({
+          formatter: createFormatter({ config }),
+          outputChannel,
+        });
+      case "file": {
+        if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
+          throw new Error(`no workspace folders`);
+        }
 
-      const formatter = createFormatter({ config });
-      const dirname = join(
-        workspace.workspaceFolders[0].uri.path ||
-          workspace.workspaceFolders[0].uri.fsPath,
-        config.output.file.path
-      );
-      const path = join(
-        dirname,
-        `${basename(filename, extname(filename))}${formatToExtension(
-          formatter.type
-        )}`
-      );
-      const stream = createWriteStream(path, "utf-8");
+        const formatter = createFormatter({ config });
+        const dirname = join(
+          workspace.workspaceFolders[0].uri.path ||
+            workspace.workspaceFolders[0].uri.fsPath,
+          config.output.file.path
+        );
+        const path = join(
+          dirname,
+          `${basename(filename, extname(filename))}${formatToExtension(
+            formatter.type
+          )}`
+        );
+        const stream = createWriteStream(path, "utf-8");
 
-      await mkdirp(dirname);
-      return createFileOutput({
-        formatter,
-        stream,
-      });
+        await mkdirp(dirname);
+        return createFileOutput({
+          formatter,
+          stream,
+        });
+      }
     }
-  }
+  };
 }
 
 function formatToExtension(format: Formatter["type"]): string {

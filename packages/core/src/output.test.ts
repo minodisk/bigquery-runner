@@ -7,55 +7,20 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
 } from ".";
-import { createViewerOutput, WebviewPanel } from "./output";
+import { createViewerOutput } from "./output";
 
 const viewerOptions = {
-  async createWebviewPanel() {
-    return webviewPanel;
-  },
-};
-
-const webviewPanel: WebviewPanel = {
-  webview: {
-    html: "",
-    async postMessage() {
-      return true;
-    },
-  },
-  dispose() {
-    // do nothing
-  },
-  onDidDispose() {
-    // do nothing
+  async postMessage() {
+    return true;
   },
 };
 
 describe("output", () => {
   describe("createViewerOutput", () => {
-    it("should throw an error if it is written before being opened", async () => {
-      const output = createViewerOutput(viewerOptions);
-      await expect(
-        output.writeRows({
-          structs: [],
-          numRows: "0",
-          flat: createFlat([]),
-        })
-      ).rejects.toThrow();
-    });
-
     it("should post close event to webview if output is closed", async () => {
       const postMessage = jest.fn();
       const output = createViewerOutput({
-        ...viewerOptions,
-        async createWebviewPanel() {
-          return {
-            ...webviewPanel,
-            webview: {
-              html: "",
-              postMessage,
-            },
-          };
-        },
+        postMessage,
       });
       await output.open();
       await output.close();
@@ -67,20 +32,13 @@ describe("output", () => {
       });
     });
 
-    it("should dispose webview panel if output is disposed", async () => {
-      const dispose = jest.fn();
-      const output = createViewerOutput({
-        ...viewerOptions,
-        async createWebviewPanel() {
-          return {
-            ...webviewPanel,
-            dispose,
-          };
-        },
+    it("should not throw an error if it is written before being opened", async () => {
+      const output = createViewerOutput(viewerOptions);
+      await output.writeRows({
+        structs: [],
+        numRows: "0",
+        flat: createFlat([]),
       });
-      await output.open();
-      await output.dispose();
-      expect(dispose).toBeCalled();
     });
 
     it("should not throw an error if it is closed before being opened", async () => {
@@ -99,22 +57,9 @@ describe("output", () => {
       ]);
       const messages: Array<unknown> = [];
       const output = createViewerOutput({
-        async createWebviewPanel() {
-          return {
-            webview: {
-              html: "",
-              async postMessage(message) {
-                messages.push(message);
-                return true;
-              },
-            },
-            dispose() {
-              // do nothing
-            },
-            onDidDispose() {
-              // do nothing
-            },
-          };
+        async postMessage(message) {
+          messages.push(message);
+          return true;
         },
       });
       await output.open();
