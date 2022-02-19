@@ -330,6 +330,9 @@ function createOutputCreator({
             }
           );
           panel.webview.html = html;
+          panel.onDidDispose(() => {
+            panel = undefined;
+          });
           ctx.subscriptions.push(panel);
         }
 
