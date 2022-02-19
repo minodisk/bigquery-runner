@@ -15,44 +15,27 @@ export type Output = {
   readonly dispose: () => unknown;
 };
 
-export type WebviewPanel = {
-  readonly webview: {
-    html: string;
-    postMessage(message: unknown): Thenable<boolean>;
-  };
-  dispose(): unknown;
-  onDidDispose(
-    callback: () => void,
-    hoge: unknown,
-    subscriptions: Array<{ dispose(): unknown }>
-  ): void;
-};
+// export type WebviewPanel = {
+//   readonly webview: {
+//     html: string;
+//     postMessage(message: unknown): Thenable<boolean>;
+//   };
+//   dispose(): unknown;
+//   onDidDispose(
+//     callback: () => void,
+//     hoge: unknown,
+//     subscriptions: Array<{ dispose(): unknown }>
+//   ): void;
+// };
 
 export function createViewerOutput({
-  html,
-  subscriptions,
-  createWebviewPanel,
+  postMessage,
 }: {
-  readonly html: string;
-  readonly subscriptions: Array<{ dispose(): unknown }>;
-  createWebviewPanel(): WebviewPanel;
+  postMessage(message: unknown): Thenable<boolean>;
 }): Output {
-  let panel: WebviewPanel | undefined;
   return {
     async open() {
-      if (!panel) {
-        panel = createWebviewPanel();
-        panel.webview.html = html;
-        panel.onDidDispose(
-          () => {
-            panel = undefined;
-          },
-          null,
-          subscriptions
-        );
-      }
-
-      await panel.webview.postMessage({
+      await postMessage({
         source: "bigquery-runner",
         payload: {
           event: "open",
@@ -63,10 +46,7 @@ export function createViewerOutput({
       // do nothing
     },
     async writeRows({ structs, page, flat, numRows }) {
-      if (!panel) {
-        throw new Error(`panel is not initialized`);
-      }
-      return panel.webview.postMessage({
+      await postMessage({
         source: "bigquery-runner",
         payload: {
           event: "rows",
@@ -83,10 +63,7 @@ export function createViewerOutput({
       } as Data<RowsEvent>);
     },
     async close() {
-      if (!panel) {
-        return;
-      }
-      panel.webview.postMessage({
+      await postMessage({
         source: "bigquery-runner",
         payload: {
           event: "close",
@@ -94,10 +71,7 @@ export function createViewerOutput({
       } as Data<CloseEvent>);
     },
     dispose() {
-      if (!panel) {
-        return;
-      }
-      return panel.dispose();
+      // do nothing
     },
   };
 }
