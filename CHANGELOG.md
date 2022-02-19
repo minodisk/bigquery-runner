@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.34
+
+### Changed
+
+- Fix a bug that panel is created on every run.
+
 ## v0.0.33
 
 ### Changed
