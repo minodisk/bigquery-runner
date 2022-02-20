@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.35
+
+### Changed
+
+- Fixed a bug where the loading display would not stop even though it was in error.
+
 ## v0.0.34
 
 ### Changed
