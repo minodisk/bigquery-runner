@@ -20,7 +20,7 @@ export function createErrorMarker({ section }: { section: string }) {
             `${err}`
           ),
         ]);
-        throw err;
+        return;
       }
       const { message } = err;
       const rMessage = /^(.*?) at \[(\d+):(\d+)\]$/;
@@ -34,7 +34,7 @@ export function createErrorMarker({ section }: { section: string }) {
             `${err}`
           ),
         ]);
-        throw err;
+        return;
       }
       const [_, m, l, c] = res;
       const line = Number(l) - 1;
@@ -52,7 +52,6 @@ export function createErrorMarker({ section }: { section: string }) {
           m ?? ""
         ),
       ]);
-      throw err;
     },
 
     dispose() {

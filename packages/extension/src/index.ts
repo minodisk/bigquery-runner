@@ -75,19 +75,13 @@ export async function activate(
     };
 
     const configManager = createConfigManager(section);
-    ctx.subscriptions.push(configManager);
-
     const statusManager = createStatusManager({
       options: configManager.get().statusBarItem,
       createStatusBarItem: createStatusBarItemCreator(window),
     });
-    ctx.subscriptions.push(statusManager);
-
     const errorMarker = createErrorMarker({
       section,
     });
-    ctx.subscriptions.push(errorMarker);
-
     const runner = createRunner({
       ctx,
       outputChannel,
@@ -101,14 +95,19 @@ export async function activate(
       statusManager,
       errorMarker,
     });
-    ctx.subscriptions.push(runner, dryRunner);
-
     const validator = createValidator({
       outputChannel,
       configManager,
       dryRunner,
     });
-    ctx.subscriptions.push(validator);
+    ctx.subscriptions.push(
+      configManager,
+      statusManager,
+      errorMarker,
+      runner,
+      dryRunner,
+      validator
+    );
 
     // Register all available commands and their actions.
     // CommandMap describes a map of extension commands (defined in package.json)

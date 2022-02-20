@@ -73,7 +73,7 @@ export function createRunner({
     }
 
     try {
-      statusManager.enableBilledLoading({ document });
+      statusManager.loadBilled({ document });
 
       outputChannel.appendLine(`Result: ${results.structs.length} rows`);
       const { query, schema, numRows } = await job.getInfo();
@@ -93,12 +93,13 @@ export function createRunner({
       //   );
       // }
 
-      statusManager.setBilledState({
+      statusManager.succeedBilled({
         document,
         billed: { bytes, cacheHit: query.cacheHit },
       });
     } catch (err) {
-      statusManager.hide();
+      statusManager.errorBilled({ document });
+      // statusManager.hide();
       if (job.id) {
         throw new ErrorWithId(err, job.id);
       } else {
@@ -115,49 +116,54 @@ export function createRunner({
       readonly document: TextDocument;
       readonly range?: Range;
     }): Promise<Result> {
-      outputChannel.appendLine(`Run`);
-
-      const config = configManager.get();
-
-      const output = await createOutput({
-        filename: document.fileName,
-      });
-      const path = await output.open();
-      if (path !== undefined) {
-        outputChannel.appendLine(`Output to: ${path}`);
-      }
-
+      let output!: Output;
       try {
-        errorMarker.clear({ document });
-        statusManager.enableBilledLoading({
+        outputChannel.appendLine(`Run`);
+        statusManager.loadBilled({
           document,
         });
 
-        const client = await createClient(config);
-        job = await client.createRunJob({
-          query: getQueryText({ document, range }),
-          maxResults: config.pagination.results,
+        output = await createOutput({
+          filename: document.fileName,
         });
+        const path = await output.open();
+        if (path !== undefined) {
+          outputChannel.appendLine(`Output to: ${path}`);
+        }
+
+        const config = configManager.get();
+        const client = await createClient(config);
+
+        try {
+          errorMarker.clear({ document });
+          job = await client.createRunJob({
+            query: getQueryText({ document, range }),
+            maxResults: config.pagination.results,
+          });
+          errorMarker.clear({ document });
+        } catch (err) {
+          errorMarker.mark({ document, err });
+          throw err;
+        }
+        if (!job) {
+          throw new Error(`no job`);
+        }
         outputChannel.appendLine(`Job ID: ${job.id}`);
 
-        errorMarker.clear({ document });
+        const results = await job.getRows();
+        console.log(results);
+        await renderRows({
+          document,
+          output,
+          results,
+        });
+
+        return { jobId: job.id };
       } catch (err) {
         output.close();
-        statusManager.hide();
-        errorMarker.mark({ document, err });
+        statusManager.errorBilled({ document });
+        throw err;
       }
-
-      if (!job) {
-        throw new Error(`no job`);
-      }
-
-      const results = await job.getRows();
-      await renderRows({
-        document,
-        output,
-        results,
-      });
-      return { jobId: job.id };
     },
 
     async gotoPrevPage({ document }: { readonly document: TextDocument }) {
@@ -251,39 +257,44 @@ export function createDryRunner({
       readonly document: TextDocument;
       readonly range?: Range;
     }): Promise<Result> {
-      outputChannel.appendLine(`Dry run`);
-
-      statusManager.enableProcessedLoading({
-        document,
-      });
-
-      const config = configManager.get();
-      const client = await createClient(config);
-
-      let job!: DryRunJob;
       try {
-        errorMarker.clear({ document });
-        job = await client.createDryRunJob({
-          query: getQueryText({ document, range }),
+        outputChannel.appendLine(`Dry run`);
+        statusManager.loadProcessed({
+          document,
         });
-        errorMarker.clear({ document });
+
+        const config = configManager.get();
+        const client = await createClient(config);
+
+        let job!: DryRunJob;
+        try {
+          errorMarker.clear({ document });
+          job = await client.createDryRunJob({
+            query: getQueryText({ document, range }),
+          });
+          errorMarker.clear({ document });
+        } catch (err) {
+          errorMarker.mark({ document, err });
+          throw err;
+        }
+
+        outputChannel.appendLine(`Job ID: ${job.id}`);
+        const { totalBytesProcessed } = job.getInfo();
+        const bytes = formatBytes(totalBytesProcessed);
+        outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
+
+        statusManager.succeedProcessed({
+          document,
+          processed: {
+            bytes,
+          },
+        });
+
+        return { jobId: job.id };
       } catch (err) {
-        errorMarker.mark({ document, err });
+        statusManager.errorProcessed({ document });
+        throw err;
       }
-
-      outputChannel.appendLine(`Job ID: ${job.id}`);
-      const { totalBytesProcessed } = job.getInfo();
-      const bytes = formatBytes(totalBytesProcessed);
-      outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
-
-      statusManager.setProcessedState({
-        document,
-        processed: {
-          bytes,
-        },
-      });
-
-      return { jobId: job.id };
     },
 
     dispose() {

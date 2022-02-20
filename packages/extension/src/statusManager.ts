@@ -6,11 +6,17 @@ import {
 } from "vscode";
 import { Config } from "./config";
 
-type Processed = {
+type State = "loading" | "error" | "success";
+
+type Processed = { state: State; usage?: ProcessedUsage };
+
+type ProcessedUsage = {
   bytes: string;
 };
 
-type Billed = {
+type Billed = { state: State; usage?: BilledUsage };
+
+type BilledUsage = {
   bytes: string;
   cacheHit: boolean;
 };
@@ -23,16 +29,13 @@ export function createStatusManager({
   createStatusBarItem: ReturnType<typeof createStatusBarItemCreator>;
 }) {
   let statusBarItem = createStatusBarItem(options);
-  const processedMap = new Map<
-    string,
-    { loading: boolean; status?: Processed }
-  >();
-  const billedMap = new Map<string, { loading: boolean; status?: Billed }>();
+  const processedMap = new Map<string, Processed>();
+  const billedMap = new Map<string, Billed>();
 
   return {
-    enableProcessedLoading({ document }: { document: TextDocument }) {
+    loadProcessed({ document }: { document: TextDocument }) {
       const current = processedMap.get(document.fileName);
-      processedMap.set(document.fileName, { ...current, loading: true });
+      processedMap.set(document.fileName, { ...current, state: "loading" });
       update({
         document,
         statusBarItem,
@@ -40,16 +43,26 @@ export function createStatusManager({
         billed: billedMap.get(document.fileName),
       });
     },
-    setProcessedState({
+    errorProcessed({ document }: { document: TextDocument }) {
+      const current = processedMap.get(document.fileName);
+      processedMap.set(document.fileName, { ...current, state: "error" });
+      update({
+        document,
+        statusBarItem,
+        processed: processedMap.get(document.fileName),
+        billed: billedMap.get(document.fileName),
+      });
+    },
+    succeedProcessed({
       document,
       processed,
     }: {
       document: TextDocument;
-      processed: Processed;
+      processed: ProcessedUsage;
     }) {
       processedMap.set(document.fileName, {
-        loading: false,
-        status: processed,
+        state: "success",
+        usage: processed,
       });
       update({
         document,
@@ -58,9 +71,9 @@ export function createStatusManager({
         billed: billedMap.get(document.fileName),
       });
     },
-    enableBilledLoading({ document }: { document: TextDocument }) {
+    loadBilled({ document }: { document: TextDocument }) {
       const current = billedMap.get(document.fileName);
-      billedMap.set(document.fileName, { ...current, loading: true });
+      billedMap.set(document.fileName, { ...current, state: "loading" });
       update({
         document,
         statusBarItem,
@@ -68,16 +81,26 @@ export function createStatusManager({
         billed: billedMap.get(document.fileName),
       });
     },
-    setBilledState({
+    errorBilled({ document }: { document: TextDocument }) {
+      const current = billedMap.get(document.fileName);
+      billedMap.set(document.fileName, { ...current, state: "error" });
+      update({
+        document,
+        statusBarItem,
+        processed: processedMap.get(document.fileName),
+        billed: billedMap.get(document.fileName),
+      });
+    },
+    succeedBilled({
       document,
       billed,
     }: {
       document: TextDocument;
-      billed: Billed;
+      billed: BilledUsage;
     }) {
       billedMap.set(document.fileName, {
-        loading: false,
-        status: billed,
+        state: "success",
+        usage: billed,
       });
       update({
         document,
@@ -133,37 +156,55 @@ function update({
 }: {
   document: TextDocument;
   statusBarItem: StatusBarItem;
-  processed?: { loading: boolean; status?: Processed };
-  billed?: { loading: boolean; status?: Billed };
+  processed?: Processed;
+  billed?: Billed;
 }) {
   if (document.fileName !== window.activeTextEditor?.document.fileName) {
     return;
   }
 
   statusBarItem.text = [
-    processed?.loading
-      ? `$(loading~spin)`
-      : processed?.status
-      ? `$(database)`
-      : undefined,
-    processed?.status?.bytes,
-    billed?.loading
-      ? `$(loading~spin)`
-      : billed?.status
-      ? `$(credit-card)`
-      : undefined,
-    billed?.status?.bytes,
+    getProcessedIcon(processed?.state),
+    processed?.usage?.bytes,
+    getBilledIcon(billed?.state),
+    billed?.usage?.bytes,
   ].join(" ");
   statusBarItem.tooltip = [
-    processed?.status
-      ? `This query will process ${processed.status.bytes} when run.`
+    processed?.usage
+      ? `This query will process ${processed.usage.bytes} when run.`
       : undefined,
-    billed?.status
+    billed?.usage
       ? `In the last query that ran,
-the cache ${billed.status.cacheHit ? "was" : "wasn't"} applied and ${
-          billed.status.bytes
+the cache ${billed.usage.cacheHit ? "was" : "wasn't"} applied and ${
+          billed.usage.bytes
         } was the target of the bill.`
       : undefined,
   ].join("\n");
   statusBarItem.show();
+}
+
+function getProcessedIcon(state?: State) {
+  switch (state) {
+    case "loading":
+      return "$(loading~spin)";
+    case "error":
+      return "$(error)";
+    case "success":
+      return "$(database)";
+    default:
+      return "";
+  }
+}
+
+function getBilledIcon(state?: State) {
+  switch (state) {
+    case "loading":
+      return "$(loading~spin)";
+    case "error":
+      return "$(error)";
+    case "success":
+      return "$(credit-card)";
+    default:
+      return "";
+  }
 }
