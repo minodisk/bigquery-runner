@@ -151,7 +151,6 @@ export function createRunner({
         outputChannel.appendLine(`Job ID: ${job.id}`);
 
         const results = await job.getRows();
-        console.log(results);
         await renderRows({
           document,
           output,

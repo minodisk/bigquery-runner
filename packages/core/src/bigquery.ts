@@ -94,6 +94,19 @@ export class NoPageTokenError extends Error {
   }
 }
 
+export type RunInfo = {
+  readonly query: {
+    readonly totalBytesProcessed: string;
+    readonly totalBytesBilled: string;
+    readonly cacheHit: boolean;
+    readonly statementType: string;
+  };
+  readonly schema: {
+    readonly fields: Array<Field>;
+  };
+  readonly numRows: string;
+};
+
 export async function createClient(options: BigQueryOptions) {
   const bigQuery = new BigQuery(options);
   try {
@@ -110,9 +123,51 @@ export async function createClient(options: BigQueryOptions) {
   }
 
   return {
-    async createRunJob(query: Omit<Query, "dryRun">) {
-      const data = await bigQuery.createQueryJob({ ...query, dryRun: false });
-      const job = data[0];
+    async createRunJob(query: Omit<Query, "dryRun">): Promise<{
+      id: string;
+      getRows(): Promise<Results>;
+      getPrevRows(): Promise<Results>;
+      getNextRows(): Promise<Results>;
+      getInfo(): Promise<RunInfo>;
+    }> {
+      const [job, info] = await bigQuery.createQueryJob({
+        ...query,
+        dryRun: false,
+      });
+
+      if (
+        info.statistics?.query?.statementType === "CREATE_TABLE_AS_SELECT" &&
+        info.configuration?.query?.destinationTable
+      ) {
+        // Wait for completion of table creation job
+        // to get the records of the table just created.
+        for (let i = 0; i < 10; i++) {
+          const metadata = await job.getMetadata();
+          const info: JobInfo | undefined = metadata.find(
+            ({ kind }) => kind === "bigquery#job"
+          );
+          if (!info) {
+            continue;
+          }
+          if (info.status.state === "DONE") {
+            break;
+          }
+          if (i === 9) {
+            throw new Error(
+              `waiting for completion of table creation job timed out`
+            );
+          }
+          await sleep(1000);
+        }
+
+        const { projectId, datasetId, tableId } =
+          info.configuration.query.destinationTable;
+        return this.createRunJob({
+          ...query,
+          query: `select * from ${[projectId, datasetId, tableId].join(".")}`,
+        });
+      }
+
       if (!job.id) {
         throw new Error(`no job ID`);
       }
