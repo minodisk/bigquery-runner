@@ -164,7 +164,9 @@ export async function createClient(options: BigQueryOptions) {
           info.configuration.query.destinationTable;
         return this.createRunJob({
           ...query,
-          query: `select * from ${[projectId, datasetId, tableId].join(".")}`,
+          query: `select * from \`${[projectId, datasetId, tableId].join(
+            "."
+          )}\``,
         });
       }
 

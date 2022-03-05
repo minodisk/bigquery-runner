@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.37
+
+### Changed
+
+- Fixed syntax error if data source name contains hyphens.
+
 ## v0.0.36
 
 ### Added
