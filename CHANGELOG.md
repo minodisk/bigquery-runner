@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.36
+
+### Added
+
+- Support `CREATE_TABLE_AS_SELECT` statement.
+  - Added process to display all records as results after creating the table.
+
 ## v0.0.35
 
 ### Changed
