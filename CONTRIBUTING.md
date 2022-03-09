@@ -25,6 +25,8 @@ New features and feature improvements should be proposed in an issue first. This
 
 If you send a Pull Request, please test and debug it.
 
+### Install packages
+
 First, please install the dependent packages:
 
 ```
@@ -41,8 +43,8 @@ npm test
 
 ### Debug
 
-Debug it to check its behavior around the VSCode extension:
+Debug it to check its behavior around the VS Code extension:
 
-1. Run `npm run debug` to build BigQuery Runner and install it into VSCode.
-1. Run the command `Developer: Reload Window` in VSCode to activate the newly installed BigQuery Runner.
-1. Open a query file and run the command `BigQuery Runner: Run` in VSCode.
+1. Run `npm run debug` to build BigQuery Runner and install it into VS Code.
+1. Run the command `Developer: Reload Window` in VS Code to activate the newly installed BigQuery Runner.
+1. Open a query file and run the command `BigQuery Runner: Run` in VS Code.

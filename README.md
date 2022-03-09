@@ -6,7 +6,7 @@ This file is generated from gen-src/README.md.ejs. -->
 
 1. Go to [the page of this extension in Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
 2. Click the `Install` button
-3. This will open the VSCode page for this extension, and click the `Install` button
+3. This will open the VS Code page for this extension, and click the `Install` button
 
 ## Authentication
 
@@ -71,7 +71,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 |---|---|
 |string &#x7C; null|null|
 
-The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VSCode. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used.
+The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VS Code. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used.
 
 ### `bigqueryRunner.projectId`
 
@@ -204,7 +204,7 @@ The priority of status bar item. Higher value means the item should be shown mor
 
 ## Features
 
-- Write SQL in VSCode and query BigQuery datasets directly
+- Write SQL in VS Code and query BigQuery datasets directly
 - Query from selected text
 - Marking errors in a query
 - Fast rendering of huge results
@@ -216,8 +216,8 @@ The priority of status bar item. Higher value means the item should be shown mor
     - JSON Lines
     - CSV
 - Output to various destinations
-    - Viewer that is highly compatible with the themes and fonts set in your VSCode
-    - Log window, the UI of VSCode
+    - Viewer that is highly compatible with the themes and fonts set in your VS Code
+    - Log window, the UI of VS Code
     - File
 
 ## Additional Settings
