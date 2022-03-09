@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.38
+
+### Changed
+
+- Upgraded dependent packages
+
 ## v0.0.37
 
 ### Changed
