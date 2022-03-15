@@ -111,10 +111,10 @@ export function createRunner({
   return {
     async run({
       document,
-      range,
+      selection,
     }: {
       readonly document: TextDocument;
-      readonly range?: Range;
+      readonly selection?: Range;
     }): Promise<Result> {
       let output!: Output;
       try {
@@ -137,12 +137,12 @@ export function createRunner({
         try {
           errorMarker.clear({ document });
           job = await client.createRunJob({
-            query: getQueryText({ document, range }),
+            query: getQueryText({ document, range: selection }),
             maxResults: config.pagination.results,
           });
           errorMarker.clear({ document });
         } catch (err) {
-          errorMarker.mark({ document, err });
+          errorMarker.mark({ document, err, selection });
           throw err;
         }
         if (!job) {
@@ -251,10 +251,10 @@ export function createDryRunner({
   return {
     async run({
       document,
-      range,
+      selection,
     }: {
       readonly document: TextDocument;
-      readonly range?: Range;
+      readonly selection?: Range;
     }): Promise<Result> {
       try {
         outputChannel.appendLine(`Dry run`);
@@ -269,11 +269,11 @@ export function createDryRunner({
         try {
           errorMarker.clear({ document });
           job = await client.createDryRunJob({
-            query: getQueryText({ document, range }),
+            query: getQueryText({ document, range: selection }),
           });
           errorMarker.clear({ document });
         } catch (err) {
-          errorMarker.mark({ document, err });
+          errorMarker.mark({ document, err, selection });
           throw err;
         }
 

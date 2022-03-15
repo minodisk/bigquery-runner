@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.39
+
+### Changed
+
+- Fixed to mark the position of errors correctly when executing selected text as a query.
+
 ## v0.0.38
 
 ### Changed

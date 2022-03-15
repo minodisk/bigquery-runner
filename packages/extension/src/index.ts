@@ -215,7 +215,7 @@ function wrapCallback({
   readonly resultChannel: ResultChannel;
   readonly callback: (params: {
     readonly document: TextDocument;
-    readonly range?: Range;
+    readonly selection?: Range;
   }) => Promise<Result>;
 }): () => Promise<void> {
   return async () => {
@@ -226,7 +226,7 @@ function wrapCallback({
       const { document, selection } = window.activeTextEditor;
       const result = await callback({
         document,
-        range: selection,
+        selection,
       });
       resultChannel.set(result);
     } catch (err) {
