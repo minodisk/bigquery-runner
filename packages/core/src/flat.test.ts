@@ -95,6 +95,170 @@ describe("falt", () => {
       ]);
     });
 
+    it("Nullable Struct", () => {
+      const flatten = createFlat([
+        {
+          name: "a",
+          type: "STRUCT",
+          mode: "NULLABLE",
+          fields: [
+            {
+              name: "b",
+              type: "BOOLEAN",
+              mode: "REQUIRED",
+            },
+            {
+              name: "c",
+              type: "STRUCT",
+              mode: "NULLABLE",
+              fields: [
+                {
+                  name: "d",
+                  type: "INTEGER",
+                  mode: "REQUIRED",
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+      expect(
+        flatten.toRows({
+          structs: [
+            {
+              a: {
+                b: true,
+                c: {
+                  d: 1,
+                },
+              },
+            },
+            {
+              a: null,
+            },
+            {
+              a: {
+                b: true,
+                c: null,
+              },
+            },
+          ],
+          rowNumber: 0,
+        })
+      ).toEqual([
+        {
+          rowNumber: 0,
+          rows: [
+            [
+              { id: "a.b", value: true },
+              { id: "a.c.d", value: 1 },
+            ],
+          ],
+        },
+        {
+          rowNumber: 1,
+          rows: [
+            [
+              { id: "a.b", value: null },
+              { id: "a.c.d", value: null },
+            ],
+          ],
+        },
+        {
+          rowNumber: 2,
+          rows: [
+            [
+              { id: "a.b", value: true },
+              { id: "a.c.d", value: null },
+            ],
+          ],
+        },
+      ]);
+    });
+
+    it("Array<Nullable Struct>", () => {
+      const flatten = createFlat([
+        {
+          name: "a",
+          type: "STRUCT",
+          mode: "REPEATED",
+          fields: [
+            {
+              name: "b",
+              type: "BOOLEAN",
+              mode: "REQUIRED",
+            },
+            {
+              name: "c",
+              type: "STRUCT",
+              mode: "NULLABLE",
+              fields: [
+                {
+                  name: "d",
+                  type: "STRUCT",
+                  mode: "NULLABLE",
+                  fields: [
+                    {
+                      name: "e",
+                      type: "INTEGER",
+                      mode: "REQUIRED",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+      expect(
+        flatten.toRows({
+          structs: [
+            {
+              a: [
+                {
+                  b: true,
+                  c: {
+                    d: {
+                      e: 1,
+                    },
+                  },
+                },
+                {
+                  b: true,
+                  c: null,
+                },
+                {
+                  b: true,
+                  c: {
+                    d: null,
+                  },
+                },
+              ],
+            },
+          ],
+          rowNumber: 0,
+        })
+      ).toEqual([
+        {
+          rowNumber: 0,
+          rows: [
+            [
+              { id: "a.b", value: true },
+              { id: "a.c.d.e", value: 1 },
+            ],
+            [
+              { id: "a.b", value: true },
+              { id: "a.c.d.e", value: null },
+            ],
+            [
+              { id: "a.b", value: true },
+              { id: "a.c.d.e", value: null },
+            ],
+          ],
+        },
+      ]);
+    });
+
     it("Empty Array<Value>", () => {
       const flatten = createFlat([
         {

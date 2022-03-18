@@ -181,6 +181,7 @@ function walk({
   fill(props: { accessor: Accessor; value: Value }): void;
 }): void {
   let s: Struct = struct;
+  let isNull = false;
   for (let ai = accessorIndex; ai < column.length; ai += 1) {
     const accessor = column[ai]!;
     if (accessor.mode === "REPEATED") {
@@ -203,12 +204,15 @@ function walk({
       );
     } else {
       if (accessor.type === "STRUCT" || accessor.type === "RECORD") {
-        s = s[accessor.name] as Struct;
+        if (!isNull) {
+          s = s[accessor.name] as Struct;
+          isNull = s === null;
+        }
         continue;
       }
       fill({
         accessor,
-        value: s[accessor.name] as Value,
+        value: isNull ? null : (s[accessor.name] as Value),
       });
     }
   }

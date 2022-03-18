@@ -1,0 +1,18 @@
+select
+    struct(
+        1 as b,
+        struct(
+            2 as d
+        ) as c
+    ) as a
+union all
+select
+    null as a
+union all
+select
+    struct(
+        1 as b,
+        struct(
+            null as d
+        ) as c
+    ) as a
