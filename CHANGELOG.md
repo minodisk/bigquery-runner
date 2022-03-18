@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.40
+
+### Changed
+
+- Fix error when expanding nullable structs.
+
 ## v0.0.39
 
 ### Changed
