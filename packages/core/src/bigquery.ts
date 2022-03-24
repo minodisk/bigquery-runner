@@ -108,7 +108,13 @@ export type RunInfo = {
 };
 
 export async function createClient(options: BigQueryOptions) {
-  const bigQuery = new BigQuery(options);
+  const bigQuery = new BigQuery({
+    scopes: [
+      // Query Drive data: https://cloud.google.com/bigquery/external-data-drive
+      "https://www.googleapis.com/auth/drive",
+    ],
+    ...options,
+  });
   try {
     await bigQuery.authClient.getProjectId();
   } catch (err) {
