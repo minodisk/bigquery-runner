@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.41
+
+### Added
+
+- Support [Query Drive data](https://cloud.google.com/bigquery/external-data-drive)
+
 ## v0.0.40
 
 ### Changed
