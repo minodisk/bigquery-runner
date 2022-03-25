@@ -339,6 +339,9 @@ function createOutputCreator({
               localResourceRoots: [Uri.file(root)],
             }
           );
+          panel.iconPath = Uri.file(
+            join(ctx.extensionPath, "out/assets/icon.png")
+          );
           panel.webview.html = html;
           panel.onDidDispose(() => {
             panel = undefined;

@@ -6,7 +6,6 @@ dist
 node_modules
 output
 packages
-screenshots
 .eslintrc.json
 .gitignore
 package-lock.json
