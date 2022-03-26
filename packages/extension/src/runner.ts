@@ -340,7 +340,7 @@ function createOutputCreator({
             }
           );
           panel.iconPath = Uri.file(
-            join(ctx.extensionPath, "out/assets/icon.png")
+            join(ctx.extensionPath, "out/assets/icon-small.png")
           );
           panel.webview.html = html;
           panel.onDidDispose(() => {
