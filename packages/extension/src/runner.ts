@@ -312,6 +312,7 @@ function createPanelCreator({ ctx }: { readonly ctx: ExtensionContext }) {
   }): Promise<WebviewPanel> {
     const p = map.get(filename);
     if (p) {
+      p.reveal(undefined, true);
       return p;
     }
 
