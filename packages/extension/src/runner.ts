@@ -302,6 +302,52 @@ export function createDryRunner({
   };
 }
 
+function createPanelCreator({ ctx }: { readonly ctx: ExtensionContext }) {
+  const map: Map<string, WebviewPanel> = new Map();
+
+  return async function createPanel({
+    filename,
+  }: {
+    filename: string;
+  }): Promise<WebviewPanel> {
+    const p = map.get(filename);
+    if (p) {
+      return p;
+    }
+
+    const root = join(ctx.extensionPath, "out/viewer");
+    const base = Uri.file(root)
+      .with({
+        scheme: "vscode-resource",
+      })
+      .toString();
+    const html = (await readFile(join(root, "index.html"), "utf-8")).replace(
+      "<head>",
+      `<head><base href="${base}/" />`
+    );
+    const panel = window.createWebviewPanel(
+      `bigqueryRunner:${filename}`,
+      basename(filename),
+      { viewColumn: -2, preserveFocus: true },
+      {
+        enableScripts: true,
+        localResourceRoots: [Uri.file(root)],
+      }
+    );
+    map.set(filename, panel);
+    panel.iconPath = Uri.file(
+      join(ctx.extensionPath, "out/assets/icon-small.png")
+    );
+    panel.webview.html = html;
+    panel.onDidDispose(() => {
+      console.log("onDidDispose:", filename);
+      map.delete(filename);
+    });
+    ctx.subscriptions.push(panel);
+    return panel;
+  };
+}
+
 function createOutputCreator({
   ctx,
   outputChannel,
@@ -311,7 +357,8 @@ function createOutputCreator({
   readonly outputChannel: OutputChannel;
   readonly configManager: ConfigManager;
 }) {
-  let panel: WebviewPanel | undefined;
+  const createPanel = createPanelCreator({ ctx });
+
   return async function createOutput({
     filename,
   }: {
@@ -320,35 +367,7 @@ function createOutputCreator({
     const config = configManager.get();
     switch (config.output.type) {
       case "viewer": {
-        if (!panel) {
-          const root = join(ctx.extensionPath, "out/viewer");
-          const base = Uri.file(root)
-            .with({
-              scheme: "vscode-resource",
-            })
-            .toString();
-          const html = (
-            await readFile(join(root, "index.html"), "utf-8")
-          ).replace("<head>", `<head><base href="${base}/" />`);
-          panel = window.createWebviewPanel(
-            "bigqueryRunner",
-            "BigQuery Runner",
-            { viewColumn: -2, preserveFocus: true },
-            {
-              enableScripts: true,
-              localResourceRoots: [Uri.file(root)],
-            }
-          );
-          panel.iconPath = Uri.file(
-            join(ctx.extensionPath, "out/assets/icon-small.png")
-          );
-          panel.webview.html = html;
-          panel.onDidDispose(() => {
-            panel = undefined;
-          });
-          ctx.subscriptions.push(panel);
-        }
-
+        const panel = await createPanel({ filename });
         return createViewerOutput({
           postMessage: panel.webview.postMessage.bind(panel.webview),
         });

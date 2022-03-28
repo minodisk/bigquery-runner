@@ -19,8 +19,17 @@ import "./App.css";
 type FC<P = {}> = (props: PropsWithChildren<P>) => JSX.Element;
 type XFC<P = {}> = FC<P & { className?: string }>;
 
+const vscode = (
+  window as unknown as {
+    acquireVsCodeApi(): {
+      getState(): Rows;
+      setState(rows: Rows): void;
+    };
+  }
+).acquireVsCodeApi();
+
 const App: FC = () => {
-  const [data, setData] = useState<Rows | undefined>();
+  const [data, setData] = useState<Rows | undefined>(vscode.getState());
   const [loading, setLoading] = useState<string | undefined>("Initializing");
   const [isPending, startTransition] = (
     React as unknown as {
@@ -51,6 +60,7 @@ const App: FC = () => {
         setLoading(undefined);
         startTransition(() => {
           setData(payload.payload);
+          vscode.setState(payload.payload);
         });
         return;
       }
