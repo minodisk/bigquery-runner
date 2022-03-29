@@ -18,6 +18,7 @@ import {
   ExtensionContext,
   OutputChannel as OrigOutputChannel,
   Range,
+  Selection,
   TextDocument,
   window,
   workspace,
@@ -28,18 +29,14 @@ import {
   createStatusManager,
 } from "./statusManager";
 import { createConfigManager } from "./configManager";
-import {
-  createDryRunner,
-  createOutputManager,
-  createPanelManager,
-  createRenderer,
-  createRunJobManager,
-  createRunner,
-  ErrorWithId,
-} from "./runner";
+import { createOutputManager, createRunner, ErrorWithId } from "./runner";
 import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
 import { createValidator } from "./validator";
+import { createDryRunner } from "./dryRunner";
+import { createPanelManager, PanelManager } from "./panelManager";
+import { createRunJobManager } from "./runJobManager";
+import { createRenderer } from "./renderer";
 
 export type OutputChannel = Pick<
   OrigOutputChannel,
@@ -67,8 +64,15 @@ export async function activate(
       dependencies?.outputChannel ?? window.createOutputChannel(title);
     ctx.subscriptions.push(outputChannel);
 
+    const onDidDisposePanel = (e: { readonly document: TextDocument }) => {
+      runner.onDidDisposePanel(e);
+    };
+
     const configManager = createConfigManager(section);
-    const panelManager = createPanelManager({ ctx });
+    const panelManager = createPanelManager({
+      ctx,
+      onDidDisposePanel,
+    });
     const outputManager = createOutputManager({
       outputChannel,
       configManager,
@@ -92,6 +96,7 @@ export async function activate(
     const runner = createRunner({
       outputChannel,
       outputManager,
+      panelManager,
       statusManager,
       runJobManager,
       renderer,
@@ -128,6 +133,7 @@ export async function activate(
         `${section}.dryRun`,
         wrapCallback({
           outputChannel,
+          panelManager,
           callback: dryRunner.run,
         }),
       ],
@@ -135,6 +141,7 @@ export async function activate(
         `${section}.run`,
         wrapCallback({
           outputChannel,
+          panelManager,
           callback: runner.run,
         }),
       ],
@@ -142,6 +149,7 @@ export async function activate(
         `${section}.prevPage`,
         wrapCallback({
           outputChannel,
+          panelManager,
           callback: runner.gotoPrevPage,
         }),
       ],
@@ -149,6 +157,7 @@ export async function activate(
         `${section}.nextPage`,
         wrapCallback({
           outputChannel,
+          panelManager,
           callback: runner.gotoNextPage,
         }),
       ],
@@ -218,9 +227,11 @@ export function deactivate() {
 
 function wrapCallback({
   outputChannel,
+  panelManager,
   callback,
 }: {
   readonly outputChannel: OutputChannel;
+  readonly panelManager: PanelManager;
   readonly callback: (params: {
     readonly document: TextDocument;
     readonly selection?: Range;
@@ -228,10 +239,27 @@ function wrapCallback({
 }): () => Promise<void> {
   return async () => {
     try {
-      if (!window.activeTextEditor) {
-        throw new Error("no active text editor");
+      let document!: TextDocument;
+      let selection!: Selection;
+      if (window.activeTextEditor) {
+        const textEditor = window.activeTextEditor;
+        document = textEditor.document;
+        selection = textEditor.selection;
+      } else {
+        const panel = panelManager.getActive();
+        if (!panel) {
+          throw new Error("no active text editor");
+        }
+        const textEditor = window.visibleTextEditors.find(
+          (e) => e.document.fileName === panel.fileName
+        );
+        if (!textEditor) {
+          throw new Error("no active text editor");
+        }
+        document = textEditor.document;
+        selection = textEditor.selection;
       }
-      const { document, selection } = window.activeTextEditor;
+
       await callback({
         document,
         selection,
