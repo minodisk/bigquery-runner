@@ -46,18 +46,12 @@ export type OutputChannel = Pick<
   "append" | "appendLine" | "show" | "dispose"
 >;
 
-type ResultChannel = {
-  set(result: Result): void;
-  get(): Result;
-};
-
 export type Result = {
   readonly jobId?: string;
 };
 
 export type Dependencies = {
   readonly outputChannel: OutputChannel;
-  readonly resultChannel: ResultChannel;
   readonly diagnosticCollection: DiagnosticCollection;
 };
 
@@ -72,15 +66,6 @@ export async function activate(
     const outputChannel =
       dependencies?.outputChannel ?? window.createOutputChannel(title);
     ctx.subscriptions.push(outputChannel);
-
-    const resultChannel = dependencies?.resultChannel ?? {
-      get(): Result {
-        return {};
-      },
-      set() {
-        // do nothing
-      },
-    };
 
     const configManager = createConfigManager(section);
     const panelManager = createPanelManager({ ctx });
@@ -143,7 +128,6 @@ export async function activate(
         `${section}.dryRun`,
         wrapCallback({
           outputChannel,
-          resultChannel,
           callback: dryRunner.run,
         }),
       ],
@@ -151,7 +135,6 @@ export async function activate(
         `${section}.run`,
         wrapCallback({
           outputChannel,
-          resultChannel,
           callback: runner.run,
         }),
       ],
@@ -159,7 +142,6 @@ export async function activate(
         `${section}.prevPage`,
         wrapCallback({
           outputChannel,
-          resultChannel,
           callback: runner.gotoPrevPage,
         }),
       ],
@@ -167,7 +149,6 @@ export async function activate(
         `${section}.nextPage`,
         wrapCallback({
           outputChannel,
-          resultChannel,
           callback: runner.gotoNextPage,
         }),
       ],
@@ -237,11 +218,9 @@ export function deactivate() {
 
 function wrapCallback({
   outputChannel,
-  resultChannel,
   callback,
 }: {
   readonly outputChannel: OutputChannel;
-  readonly resultChannel: ResultChannel;
   readonly callback: (params: {
     readonly document: TextDocument;
     readonly selection?: Range;
@@ -253,11 +232,10 @@ function wrapCallback({
         throw new Error("no active text editor");
       }
       const { document, selection } = window.activeTextEditor;
-      const result = await callback({
+      await callback({
         document,
         selection,
       });
-      resultChannel.set(result);
     } catch (err) {
       if (err instanceof ErrorWithId) {
         outputChannel.appendLine(`${err.error} (${err.id})`);
