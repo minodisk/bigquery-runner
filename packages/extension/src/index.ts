@@ -28,7 +28,15 @@ import {
   createStatusManager,
 } from "./statusManager";
 import { createConfigManager } from "./configManager";
-import { createDryRunner, createRunner, ErrorWithId } from "./runner";
+import {
+  createDryRunner,
+  createOutputManager,
+  createPanelManager,
+  createRenderer,
+  createRunJobManager,
+  createRunner,
+  ErrorWithId,
+} from "./runner";
 import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
 import { createValidator } from "./validator";
@@ -75,6 +83,12 @@ export async function activate(
     };
 
     const configManager = createConfigManager(section);
+    const panelManager = createPanelManager({ ctx });
+    const outputManager = createOutputManager({
+      outputChannel,
+      configManager,
+      panelManager,
+    });
     const statusManager = createStatusManager({
       options: configManager.get().statusBarItem,
       createStatusBarItem: createStatusBarItemCreator(window),
@@ -82,12 +96,20 @@ export async function activate(
     const errorMarker = createErrorMarker({
       section,
     });
-    const runner = createRunner({
-      ctx,
-      outputChannel,
+    const runJobManager = createRunJobManager({
       configManager,
-      statusManager,
       errorMarker,
+    });
+    const renderer = createRenderer({
+      outputChannel,
+      statusManager,
+    });
+    const runner = createRunner({
+      outputChannel,
+      outputManager,
+      statusManager,
+      runJobManager,
+      renderer,
     });
     const dryRunner = createDryRunner({
       outputChannel,

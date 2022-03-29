@@ -13,6 +13,7 @@ import {
   DryRunJob,
   Formatter,
   Output,
+  RunInfo,
   RunJob,
 } from "core";
 import { Results } from "core/src/types";
@@ -39,75 +40,18 @@ export type Runner = ReturnType<typeof createRunner>;
 export type DryRunner = ReturnType<typeof createDryRunner>;
 
 export function createRunner({
-  ctx,
   outputChannel,
-  configManager,
+  outputManager,
   statusManager,
-  errorMarker,
+  runJobManager,
+  renderer,
 }: {
-  readonly ctx: ExtensionContext;
   readonly outputChannel: OutputChannel;
-  readonly configManager: ConfigManager;
+  readonly outputManager: OutputManager;
   readonly statusManager: StatusManager;
-  readonly errorMarker: ErrorMarker;
+  readonly runJobManager: RunJobManager;
+  readonly renderer: Renderer;
 }) {
-  let job: RunJob | undefined;
-
-  const createOutput = createOutputCreator({
-    ctx,
-    outputChannel,
-    configManager,
-  });
-
-  async function renderRows({
-    document,
-    output,
-    results,
-  }: {
-    readonly document: TextDocument;
-    readonly output: Output;
-    readonly results: Results;
-  }) {
-    if (!job) {
-      throw new Error(`no job`);
-    }
-
-    try {
-      statusManager.loadBilled({ document });
-
-      outputChannel.appendLine(`Result: ${results.structs.length} rows`);
-      const { query, schema, numRows } = await job.getInfo();
-      const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
-      outputChannel.appendLine(
-        `Result: ${bytes} to be billed (cache: ${query.cacheHit})`
-      );
-
-      const flat = createFlat(schema.fields);
-      await output.writeHeads({ flat });
-      await output.writeRows({ ...results, numRows, flat });
-
-      // const bytesWritten = await output.bytesWritten();
-      // if (bytesWritten !== undefined) {
-      //   outputChannel.appendLine(
-      //     `Total bytes written: ${formatBytes(bytesWritten)}`
-      //   );
-      // }
-
-      statusManager.succeedBilled({
-        document,
-        billed: { bytes, cacheHit: query.cacheHit },
-      });
-    } catch (err) {
-      statusManager.errorBilled({ document });
-      // statusManager.hide();
-      if (job.id) {
-        throw new ErrorWithId(err, job.id);
-      } else {
-        throw err;
-      }
-    }
-  }
-
   return {
     async run({
       document,
@@ -123,7 +67,7 @@ export function createRunner({
           document,
         });
 
-        output = await createOutput({
+        output = await outputManager({
           filename: document.fileName,
         });
         const path = await output.open();
@@ -131,33 +75,15 @@ export function createRunner({
           outputChannel.appendLine(`Output to: ${path}`);
         }
 
-        const config = configManager.get();
-        const client = await createClient(config);
-
-        try {
-          errorMarker.clear({ document });
-          job = await client.createRunJob({
-            query: getQueryText({ document, range: selection }),
-            maxResults: config.pagination.results,
-          });
-          errorMarker.clear({ document });
-        } catch (err) {
-          errorMarker.mark({ document, err, selection });
-          throw err;
-        }
-        if (!job) {
-          throw new Error(`no job`);
-        }
-        outputChannel.appendLine(`Job ID: ${job.id}`);
-
-        const results = await job.getRows();
-        await renderRows({
+        const response = await runJobManager.rows({ document, selection });
+        outputChannel.appendLine(`Job ID: ${response.jobId}`);
+        await renderer.render({
           document,
           output,
-          results,
+          response,
         });
 
-        return { jobId: job.id };
+        return { jobId: response.jobId };
       } catch (err) {
         output.close();
         statusManager.errorBilled({ document });
@@ -166,11 +92,7 @@ export function createRunner({
     },
 
     async gotoPrevPage({ document }: { readonly document: TextDocument }) {
-      if (!job) {
-        throw new Error(`no job`);
-      }
-
-      const output = await createOutput({
+      const output = await outputManager({
         filename: document.fileName,
       });
       const path = await output.open();
@@ -178,32 +100,28 @@ export function createRunner({
         outputChannel.appendLine(`Output to: ${path}`);
       }
 
-      let results: Results;
+      let response: RunJobResponse;
       try {
-        results = await job.getPrevRows();
+        response = await runJobManager.prevRows({ document });
       } catch (err) {
         output.close();
         throw err;
       }
-      if (!results) {
-        throw new ErrorWithId("no results", job.id);
+      if (!response.results) {
+        throw new ErrorWithId("no results", response.jobId);
       }
 
-      await renderRows({
+      await renderer.render({
         document,
         output,
-        results,
+        response,
       });
 
-      return { jobId: job.id };
+      return { jobId: response.jobId };
     },
 
     async gotoNextPage({ document }: { readonly document: TextDocument }) {
-      if (!job) {
-        throw new Error(`no job`);
-      }
-
-      const output = await createOutput({
+      const output = await outputManager({
         filename: document.fileName,
       });
       const path = await output.open();
@@ -211,28 +129,28 @@ export function createRunner({
         outputChannel.appendLine(`Output to: ${path}`);
       }
 
-      let results: Results;
+      let response: RunJobResponse;
       try {
-        results = await job.getNextRows();
+        response = await runJobManager.nextRows({ document });
       } catch (err) {
         output.close();
         throw err;
       }
-      if (!results) {
-        throw new ErrorWithId("no results", job.id);
+      if (!response.results) {
+        throw new ErrorWithId("no results", response.jobId);
       }
 
-      await renderRows({
+      await renderer.render({
         document,
         output,
-        results,
+        response,
       });
 
-      return { jobId: job.id };
+      return { jobId: response.jobId };
     },
 
-    dispose() {
-      job = undefined;
+    dispose({ document }: { readonly document: TextDocument }) {
+      runJobManager.dispose({ document });
     },
   };
 }
@@ -302,64 +220,17 @@ export function createDryRunner({
   };
 }
 
-function createPanelCreator({ ctx }: { readonly ctx: ExtensionContext }) {
-  const map: Map<string, WebviewPanel> = new Map();
+export type OutputManager = ReturnType<typeof createOutputManager>;
 
-  return async function createPanel({
-    filename,
-  }: {
-    filename: string;
-  }): Promise<WebviewPanel> {
-    const p = map.get(filename);
-    if (p) {
-      p.reveal(undefined, true);
-      return p;
-    }
-
-    const root = join(ctx.extensionPath, "out/viewer");
-    const base = Uri.file(root)
-      .with({
-        scheme: "vscode-resource",
-      })
-      .toString();
-    const html = (await readFile(join(root, "index.html"), "utf-8")).replace(
-      "<head>",
-      `<head><base href="${base}/" />`
-    );
-    const panel = window.createWebviewPanel(
-      `bigqueryRunner:${filename}`,
-      basename(filename),
-      { viewColumn: -2, preserveFocus: true },
-      {
-        enableScripts: true,
-        localResourceRoots: [Uri.file(root)],
-      }
-    );
-    map.set(filename, panel);
-    panel.iconPath = Uri.file(
-      join(ctx.extensionPath, "out/assets/icon-small.png")
-    );
-    panel.webview.html = html;
-    panel.onDidDispose(() => {
-      console.log("onDidDispose:", filename);
-      map.delete(filename);
-    });
-    ctx.subscriptions.push(panel);
-    return panel;
-  };
-}
-
-function createOutputCreator({
-  ctx,
+export function createOutputManager({
   outputChannel,
   configManager,
+  panelManager,
 }: {
-  readonly ctx: ExtensionContext;
   readonly outputChannel: OutputChannel;
   readonly configManager: ConfigManager;
+  readonly panelManager: PanelManager;
 }) {
-  const createPanel = createPanelCreator({ ctx });
-
   return async function createOutput({
     filename,
   }: {
@@ -368,7 +239,7 @@ function createOutputCreator({
     const config = configManager.get();
     switch (config.output.type) {
       case "viewer": {
-        const panel = await createPanel({ filename });
+        const panel = await panelManager.get({ filename });
         return createViewerOutput({
           postMessage: panel.webview.postMessage.bind(panel.webview),
         });
@@ -404,6 +275,202 @@ function createOutputCreator({
         });
       }
     }
+  };
+}
+
+export type PanelManager = ReturnType<typeof createPanelManager>;
+
+export function createPanelManager({
+  ctx,
+}: {
+  readonly ctx: ExtensionContext;
+}) {
+  const map: Map<string, WebviewPanel> = new Map();
+
+  return {
+    async get({ filename }: { filename: string }): Promise<WebviewPanel> {
+      const p = map.get(filename);
+      if (p) {
+        p.reveal(undefined, true);
+        return p;
+      }
+
+      const root = join(ctx.extensionPath, "out/viewer");
+      const base = Uri.file(root)
+        .with({
+          scheme: "vscode-resource",
+        })
+        .toString();
+      const html = (await readFile(join(root, "index.html"), "utf-8")).replace(
+        "<head>",
+        `<head><base href="${base}/" />`
+      );
+      const panel = window.createWebviewPanel(
+        `bigqueryRunner:${filename}`,
+        basename(filename),
+        { viewColumn: -2, preserveFocus: true },
+        {
+          enableScripts: true,
+          localResourceRoots: [Uri.file(root)],
+        }
+      );
+      map.set(filename, panel);
+      panel.iconPath = Uri.file(
+        join(ctx.extensionPath, "out/assets/icon-small.png")
+      );
+      panel.webview.html = html;
+      panel.onDidDispose(() => {
+        console.log("onDidDispose:", filename);
+        map.delete(filename);
+      });
+      ctx.subscriptions.push(panel);
+      return panel;
+    },
+  };
+}
+
+export type RunJobManager = ReturnType<typeof createRunJobManager>;
+
+export type RunJobResponse = {
+  jobId: string;
+  results: Results;
+  info: RunInfo;
+};
+
+export function createRunJobManager({
+  configManager,
+  errorMarker,
+}: {
+  readonly configManager: ConfigManager;
+  readonly errorMarker: ErrorMarker;
+}) {
+  const map: Map<string, RunJob> = new Map();
+
+  return {
+    async rows({
+      document,
+      selection,
+    }: {
+      readonly document: TextDocument;
+      readonly selection?: Range;
+    }): Promise<RunJobResponse> {
+      const config = configManager.get();
+      const client = await createClient(config);
+      let job: RunJob | undefined;
+      try {
+        errorMarker.clear({ document });
+        job = await client.createRunJob({
+          query: getQueryText({ document, range: selection }),
+          maxResults: config.pagination.results,
+        });
+        errorMarker.clear({ document });
+      } catch (err) {
+        errorMarker.mark({ document, err, selection });
+        throw err;
+      }
+      if (!job) {
+        throw new Error(`no job`);
+      }
+      map.set(document.fileName, job);
+      return {
+        jobId: job.id,
+        results: await job.getRows(),
+        info: await job.getInfo(),
+      };
+    },
+    async prevRows({
+      document,
+    }: {
+      readonly document: TextDocument;
+    }): Promise<RunJobResponse> {
+      const job = map.get(document.fileName);
+      if (!job) {
+        throw new Error(`no job`);
+      }
+      return {
+        jobId: job.id,
+        results: await job.getPrevRows(),
+        info: await job.getInfo(),
+      };
+    },
+    async nextRows({
+      document,
+    }: {
+      readonly document: TextDocument;
+    }): Promise<RunJobResponse> {
+      const job = map.get(document.fileName);
+      if (!job) {
+        throw new Error(`no job`);
+      }
+      return {
+        jobId: job.id,
+        results: await job.getNextRows(),
+        info: await job.getInfo(),
+      };
+    },
+    dispose({ document }: { readonly document: TextDocument }) {
+      return map.delete(document.fileName);
+    },
+  };
+}
+
+export type Renderer = ReturnType<typeof createRenderer>;
+
+export function createRenderer({
+  outputChannel,
+  statusManager,
+}: {
+  readonly outputChannel: OutputChannel;
+  readonly statusManager: StatusManager;
+}) {
+  return {
+    async render({
+      document,
+      output,
+      response: {
+        jobId,
+        results,
+        info: { query, schema, numRows },
+      },
+    }: {
+      readonly document: TextDocument;
+      readonly output: Output;
+      readonly response: RunJobResponse;
+    }) {
+      try {
+        statusManager.loadBilled({ document });
+
+        outputChannel.appendLine(`Result: ${results.structs.length} rows`);
+        const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
+        outputChannel.appendLine(
+          `Result: ${bytes} to be billed (cache: ${query.cacheHit})`
+        );
+
+        const flat = createFlat(schema.fields);
+        await output.writeHeads({ flat });
+        await output.writeRows({ ...results, numRows, flat });
+
+        // const bytesWritten = await output.bytesWritten();
+        // if (bytesWritten !== undefined) {
+        //   outputChannel.appendLine(
+        //     `Total bytes written: ${formatBytes(bytesWritten)}`
+        //   );
+        // }
+
+        statusManager.succeedBilled({
+          document,
+          billed: { bytes, cacheHit: query.cacheHit },
+        });
+      } catch (err) {
+        statusManager.errorBilled({ document });
+        // statusManager.hide();
+        if (jobId) {
+          throw new ErrorWithId(err, jobId);
+        } else {
+          throw err;
+        }
+      }
+    },
   };
 }
 
