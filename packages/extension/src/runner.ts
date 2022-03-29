@@ -67,9 +67,7 @@ export function createRunner({
           document,
         });
 
-        output = await outputManager({
-          filename: document.fileName,
-        });
+        output = await outputManager.createOutput({ document });
         const path = await output.open();
         if (path !== undefined) {
           outputChannel.appendLine(`Output to: ${path}`);
@@ -92,8 +90,8 @@ export function createRunner({
     },
 
     async gotoPrevPage({ document }: { readonly document: TextDocument }) {
-      const output = await outputManager({
-        filename: document.fileName,
+      const output = await outputManager.createOutput({
+        document,
       });
       const path = await output.open();
       if (path !== undefined) {
@@ -121,8 +119,8 @@ export function createRunner({
     },
 
     async gotoNextPage({ document }: { readonly document: TextDocument }) {
-      const output = await outputManager({
-        filename: document.fileName,
+      const output = await outputManager.createOutput({
+        document,
       });
       const path = await output.open();
       if (path !== undefined) {
@@ -149,8 +147,13 @@ export function createRunner({
       return { jobId: response.jobId };
     },
 
-    dispose({ document }: { readonly document: TextDocument }) {
-      runJobManager.dispose({ document });
+    onDidCloseTextDocument({ document }: { readonly document: TextDocument }) {
+      outputManager.delete({ document });
+      runJobManager.delete({ document });
+    },
+
+    dispose() {
+      // do nothing
     },
   };
 }
@@ -231,50 +234,61 @@ export function createOutputManager({
   readonly configManager: ConfigManager;
   readonly panelManager: PanelManager;
 }) {
-  return async function createOutput({
-    filename,
-  }: {
-    readonly filename: string;
-  }): Promise<Output> {
-    const config = configManager.get();
-    switch (config.output.type) {
-      case "viewer": {
-        const panel = await panelManager.get({ filename });
-        return createViewerOutput({
-          postMessage: panel.webview.postMessage.bind(panel.webview),
-        });
-      }
-      case "log":
-        return createLogOutput({
-          formatter: createFormatter({ config }),
-          outputChannel,
-        });
-      case "file": {
-        if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
-          throw new Error(`no workspace folders`);
+  return {
+    async createOutput({
+      document,
+    }: {
+      readonly document: TextDocument;
+    }): Promise<Output> {
+      const config = configManager.get();
+      switch (config.output.type) {
+        case "viewer": {
+          const panel = await panelManager.get({ document });
+          return createViewerOutput({
+            postMessage: panel.webview.postMessage.bind(panel.webview),
+          });
         }
+        case "log":
+          return createLogOutput({
+            formatter: createFormatter({ config }),
+            outputChannel,
+          });
+        case "file": {
+          if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
+            throw new Error(`no workspace folders`);
+          }
 
-        const formatter = createFormatter({ config });
-        const dirname = join(
-          workspace.workspaceFolders[0].uri.path ||
-            workspace.workspaceFolders[0].uri.fsPath,
-          config.output.file.path
-        );
-        const path = join(
-          dirname,
-          `${basename(filename, extname(filename))}${formatToExtension(
-            formatter.type
-          )}`
-        );
-        const stream = createWriteStream(path, "utf-8");
+          const formatter = createFormatter({ config });
+          const dirname = join(
+            workspace.workspaceFolders[0].uri.path ||
+              workspace.workspaceFolders[0].uri.fsPath,
+            config.output.file.path
+          );
+          const path = join(
+            dirname,
+            `${basename(
+              document.fileName,
+              extname(document.fileName)
+            )}${formatToExtension(formatter.type)}`
+          );
+          const stream = createWriteStream(path, "utf-8");
 
-        await mkdirp(dirname);
-        return createFileOutput({
-          formatter,
-          stream,
-        });
+          await mkdirp(dirname);
+          return createFileOutput({
+            formatter,
+            stream,
+          });
+        }
       }
-    }
+    },
+
+    delete({ document }: { readonly document: TextDocument }) {
+      panelManager.delete({ document });
+    },
+
+    dispose() {
+      // do nothing
+    },
   };
 }
 
@@ -288,8 +302,12 @@ export function createPanelManager({
   const map: Map<string, WebviewPanel> = new Map();
 
   return {
-    async get({ filename }: { filename: string }): Promise<WebviewPanel> {
-      const p = map.get(filename);
+    async get({
+      document,
+    }: {
+      readonly document: TextDocument;
+    }): Promise<WebviewPanel> {
+      const p = map.get(document.fileName);
       if (p) {
         p.reveal(undefined, true);
         return p;
@@ -306,25 +324,33 @@ export function createPanelManager({
         `<head><base href="${base}/" />`
       );
       const panel = window.createWebviewPanel(
-        `bigqueryRunner:${filename}`,
-        basename(filename),
+        `bigqueryRunner:${document.fileName}`,
+        basename(document.fileName),
         { viewColumn: -2, preserveFocus: true },
         {
           enableScripts: true,
           localResourceRoots: [Uri.file(root)],
         }
       );
-      map.set(filename, panel);
+      map.set(document.fileName, panel);
       panel.iconPath = Uri.file(
         join(ctx.extensionPath, "out/assets/icon-small.png")
       );
       panel.webview.html = html;
       panel.onDidDispose(() => {
-        console.log("onDidDispose:", filename);
-        map.delete(filename);
+        console.log("onDidDispose:", document.fileName);
+        map.delete(document.fileName);
       });
       ctx.subscriptions.push(panel);
       return panel;
+    },
+
+    delete({ document }: { readonly document: TextDocument }) {
+      map.delete(document.fileName);
+    },
+
+    dispose() {
+      map.clear();
     },
   };
 }
@@ -378,6 +404,7 @@ export function createRunJobManager({
         info: await job.getInfo(),
       };
     },
+
     async prevRows({
       document,
     }: {
@@ -393,6 +420,7 @@ export function createRunJobManager({
         info: await job.getInfo(),
       };
     },
+
     async nextRows({
       document,
     }: {
@@ -408,8 +436,13 @@ export function createRunJobManager({
         info: await job.getInfo(),
       };
     },
-    dispose({ document }: { readonly document: TextDocument }) {
+
+    delete({ document }: { readonly document: TextDocument }) {
       return map.delete(document.fileName);
+    },
+
+    dispose() {
+      map.clear();
     },
   };
 }
@@ -470,6 +503,10 @@ export function createRenderer({
           throw err;
         }
       }
+    },
+
+    dispose() {
+      // do nothing
     },
   };
 }

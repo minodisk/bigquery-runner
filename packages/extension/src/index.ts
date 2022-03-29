@@ -124,8 +124,12 @@ export async function activate(
     });
     ctx.subscriptions.push(
       configManager,
+      panelManager,
+      outputManager,
       statusManager,
       errorMarker,
+      runJobManager,
+      renderer,
       runner,
       dryRunner,
       validator
@@ -209,6 +213,9 @@ export async function activate(
           document,
         })
       ),
+      workspace.onDidCloseTextDocument((document) => {
+        runner.onDidCloseTextDocument({ document });
+      }),
       // Listen for configuration changes and trigger an update, so that users don't
       // have to reload the VS Code environment after a config update.
       workspace.onDidChangeConfiguration((e) => {
