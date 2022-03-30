@@ -1,12 +1,6 @@
 import { readFile } from "fs/promises";
 import { basename, join } from "path";
-import {
-  ExtensionContext,
-  TextDocument,
-  Uri,
-  WebviewPanel,
-  window,
-} from "vscode";
+import { ExtensionContext, Uri, WebviewPanel, window } from "vscode";
 
 export type PanelManager = ReturnType<typeof createPanelManager>;
 
@@ -15,19 +9,17 @@ export function createPanelManager({
   onDidDisposePanel,
 }: {
   readonly ctx: ExtensionContext;
-  readonly onDidDisposePanel: (e: {
-    readonly document: TextDocument;
-  }) => unknown;
+  readonly onDidDisposePanel: (e: { readonly fileName: string }) => unknown;
 }) {
   const map: Map<string, WebviewPanel> = new Map();
 
   return {
     async get({
-      document,
+      fileName,
     }: {
-      readonly document: TextDocument;
+      readonly fileName: string;
     }): Promise<WebviewPanel> {
-      const p = map.get(document.fileName);
+      const p = map.get(fileName);
       if (p) {
         p.reveal(undefined, true);
         return p;
@@ -44,29 +36,29 @@ export function createPanelManager({
         `<head><base href="${base}/" />`
       );
       const panel = window.createWebviewPanel(
-        `bigqueryRunner:${document.fileName}`,
-        basename(document.fileName),
+        `bigqueryRunner:${fileName}`,
+        basename(fileName),
         { viewColumn: -2, preserveFocus: true },
         {
           enableScripts: true,
           localResourceRoots: [Uri.file(root)],
         }
       );
-      map.set(document.fileName, panel);
+      map.set(fileName, panel);
       panel.iconPath = Uri.file(
         join(ctx.extensionPath, "out/assets/icon-small.png")
       );
       panel.webview.html = html;
       panel.onDidDispose(() => {
-        onDidDisposePanel({ document });
+        onDidDisposePanel({ fileName });
       });
       ctx.subscriptions.push(panel);
       return panel;
     },
 
-    exists({ document }: { readonly document: TextDocument }) {
-      console.log("exists:", document, map);
-      return map.has(document.fileName);
+    exists({ fileName }: { readonly fileName: string }) {
+      console.log("exists:", fileName, map);
+      return map.has(fileName);
     },
 
     getActive() {
@@ -81,8 +73,8 @@ export function createPanelManager({
       };
     },
 
-    delete({ document }: { readonly document: TextDocument }) {
-      return map.delete(document.fileName);
+    delete({ fileName }: { readonly fileName: string }) {
+      return map.delete(fileName);
     },
 
     dispose() {

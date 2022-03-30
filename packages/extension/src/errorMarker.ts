@@ -1,4 +1,4 @@
-import { Diagnostic, languages, Position, Range, TextDocument } from "vscode";
+import { Diagnostic, languages, Position, Range, workspace } from "vscode";
 
 export type ErrorMarker = ReturnType<typeof createErrorMarker>;
 
@@ -6,23 +6,36 @@ export function createErrorMarker({ section }: { section: string }) {
   const diagnosticCollection = languages.createDiagnosticCollection(section);
 
   return {
-    clear({ document }: { readonly document: TextDocument }) {
+    clear({ fileName }: { readonly fileName: string }) {
+      const document = workspace.textDocuments.find(
+        (document) => document.fileName === fileName
+      );
+      if (!document) {
+        return;
+      }
       diagnosticCollection.delete(document.uri);
     },
 
     mark({
-      document,
+      fileName,
       err,
       selection,
     }: {
-      readonly document: TextDocument;
+      readonly fileName: string;
       readonly err: unknown;
       readonly selection?: Range;
     }) {
+      const document = workspace.textDocuments.find(
+        (document) => document.fileName === fileName
+      );
+      if (!document) {
+        return;
+      }
+
       if (!(err instanceof Error)) {
         diagnosticCollection.set(document.uri, [
           new Diagnostic(
-            selection
+            selection && !selection.isEmpty
               ? new Range(selection.start, selection.end)
               : new Range(
                   document.lineAt(0).range.start,
@@ -40,7 +53,7 @@ export function createErrorMarker({ section }: { section: string }) {
       if (!res) {
         diagnosticCollection.set(document.uri, [
           new Diagnostic(
-            selection
+            selection && !selection.isEmpty
               ? new Range(selection.start, selection.end)
               : new Range(
                   document.lineAt(0).range.start,
@@ -53,9 +66,14 @@ export function createErrorMarker({ section }: { section: string }) {
       }
 
       const [_, m, l, c] = res;
-      const line = (selection ? selection.start.line : 0) + Number(l) - 1;
+      const line =
+        (selection && !selection.isEmpty ? selection.start.line : 0) +
+        Number(l) -
+        1;
       const character =
-        (selection ? selection.start.character : 0) + Number(c) - 1;
+        (selection && !selection.isEmpty ? selection.start.character : 0) +
+        Number(c) -
+        1;
       const range = document.getWordRangeAtPosition(
         new Position(line, character)
       );

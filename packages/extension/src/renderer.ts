@@ -1,6 +1,5 @@
 import { format as formatBytes } from "bytes";
 import { createFlat, Output } from "core";
-import { TextDocument } from "vscode";
 import { OutputChannel } from ".";
 import { RunJobResponse } from "./runJobManager";
 import { ErrorWithId } from "./runner";
@@ -17,7 +16,7 @@ export function createRenderer({
 }) {
   return {
     async render({
-      document,
+      fileName,
       output,
       response: {
         jobId,
@@ -25,12 +24,12 @@ export function createRenderer({
         info: { query, schema, numRows },
       },
     }: {
-      readonly document: TextDocument;
+      readonly fileName: string;
       readonly output: Output;
       readonly response: RunJobResponse;
     }) {
       try {
-        statusManager.loadBilled({ document });
+        statusManager.loadBilled({ fileName });
 
         outputChannel.appendLine(`Result: ${results.structs.length} rows`);
         const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
@@ -50,11 +49,11 @@ export function createRenderer({
         // }
 
         statusManager.succeedBilled({
-          document,
+          fileName,
           billed: { bytes, cacheHit: query.cacheHit },
         });
       } catch (err) {
-        statusManager.errorBilled({ document });
+        statusManager.errorBilled({ fileName });
         // statusManager.hide();
         if (jobId) {
           throw new ErrorWithId(err, jobId);

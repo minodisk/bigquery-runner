@@ -17,26 +17,23 @@ import {
   DiagnosticCollection,
   ExtensionContext,
   OutputChannel as OrigOutputChannel,
-  Range,
-  Selection,
-  TextDocument,
   window,
   workspace,
 } from "vscode";
-import { AuthenticationError, NoPageTokenError } from "core";
 import {
   createStatusBarItemCreator,
   createStatusManager,
 } from "./statusManager";
 import { createConfigManager } from "./configManager";
-import { createOutputManager, createRunner, ErrorWithId } from "./runner";
+import { createRunner } from "./runner";
 import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
 import { createValidator } from "./validator";
 import { createDryRunner } from "./dryRunner";
-import { createPanelManager, PanelManager } from "./panelManager";
+import { createPanelManager } from "./panelManager";
 import { createRunJobManager } from "./runJobManager";
 import { createRenderer } from "./renderer";
+import { createOutputManager } from "./outputManager";
 
 export type OutputChannel = Pick<
   OrigOutputChannel,
@@ -64,7 +61,7 @@ export async function activate(
       dependencies?.outputChannel ?? window.createOutputChannel(title);
     ctx.subscriptions.push(outputChannel);
 
-    const onDidDisposePanel = (e: { readonly document: TextDocument }) => {
+    const onDidDisposePanel = (e: { readonly fileName: string }) => {
       runner.onDidDisposePanel(e);
     };
 
@@ -87,7 +84,6 @@ export async function activate(
     });
     const runJobManager = createRunJobManager({
       configManager,
-      errorMarker,
     });
     const renderer = createRenderer({
       outputChannel,
@@ -100,6 +96,7 @@ export async function activate(
       statusManager,
       runJobManager,
       renderer,
+      errorMarker,
     });
     const dryRunner = createDryRunner({
       outputChannel,
@@ -129,38 +126,10 @@ export async function activate(
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
     new Map<string, () => void>([
-      [
-        `${section}.dryRun`,
-        wrapCallback({
-          outputChannel,
-          panelManager,
-          callback: dryRunner.run,
-        }),
-      ],
-      [
-        `${section}.run`,
-        wrapCallback({
-          outputChannel,
-          panelManager,
-          callback: runner.run,
-        }),
-      ],
-      [
-        `${section}.prevPage`,
-        wrapCallback({
-          outputChannel,
-          panelManager,
-          callback: runner.gotoPrevPage,
-        }),
-      ],
-      [
-        `${section}.nextPage`,
-        wrapCallback({
-          outputChannel,
-          panelManager,
-          callback: runner.gotoNextPage,
-        }),
-      ],
+      [`${section}.dryRun`, dryRunner.run],
+      [`${section}.run`, runner.run],
+      [`${section}.prevPage`, runner.gotoPrevPage],
+      [`${section}.nextPage`, runner.gotoNextPage],
     ]).forEach((action, name) => {
       ctx.subscriptions.push(commands.registerCommand(name, action));
     });
@@ -183,7 +152,7 @@ export async function activate(
           return;
         }
 
-        statusManager.onFocus({ document: editor.document });
+        statusManager.onFocus({ fileName: editor.document.fileName });
         validator.validate({
           document: editor.document,
         });
@@ -204,7 +173,7 @@ export async function activate(
         })
       ),
       workspace.onDidCloseTextDocument((document) => {
-        runner.onDidCloseTextDocument({ document });
+        runner.onDidCloseTextDocument({ fileName: document.fileName });
       }),
       // Listen for configuration changes and trigger an update, so that users don't
       // have to reload the VS Code environment after a config update.
@@ -223,59 +192,4 @@ export async function activate(
 
 export function deactivate() {
   // do nothing
-}
-
-function wrapCallback({
-  outputChannel,
-  panelManager,
-  callback,
-}: {
-  readonly outputChannel: OutputChannel;
-  readonly panelManager: PanelManager;
-  readonly callback: (params: {
-    readonly document: TextDocument;
-    readonly selection?: Range;
-  }) => Promise<Result>;
-}): () => Promise<void> {
-  return async () => {
-    try {
-      let document!: TextDocument;
-      let selection!: Selection;
-      if (window.activeTextEditor) {
-        const textEditor = window.activeTextEditor;
-        document = textEditor.document;
-        selection = textEditor.selection;
-      } else {
-        const panel = panelManager.getActive();
-        if (!panel) {
-          throw new Error("no active text editor");
-        }
-        const textEditor = window.visibleTextEditors.find(
-          (e) => e.document.fileName === panel.fileName
-        );
-        if (!textEditor) {
-          throw new Error("no active text editor");
-        }
-        document = textEditor.document;
-        selection = textEditor.selection;
-      }
-
-      await callback({
-        document,
-        selection,
-      });
-    } catch (err) {
-      if (err instanceof ErrorWithId) {
-        outputChannel.appendLine(`${err.error} (${err.id})`);
-      } else {
-        outputChannel.appendLine(`${err}`);
-      }
-      if (
-        err instanceof AuthenticationError ||
-        err instanceof NoPageTokenError
-      ) {
-        window.showErrorMessage(`${err.message}`);
-      }
-    }
-  };
 }

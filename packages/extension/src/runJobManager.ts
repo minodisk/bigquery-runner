@@ -1,9 +1,6 @@
 import { createClient, RunInfo, RunJob } from "core";
 import { Results } from "core/src/types";
-import { Range, TextDocument } from "vscode";
 import { ConfigManager } from "./configManager";
-import { ErrorMarker } from "./errorMarker";
-import { getQueryText } from "./runner";
 
 export type RunJobManager = ReturnType<typeof createRunJobManager>;
 
@@ -15,39 +12,29 @@ export type RunJobResponse = {
 
 export function createRunJobManager({
   configManager,
-  errorMarker,
 }: {
   readonly configManager: ConfigManager;
-  readonly errorMarker: ErrorMarker;
 }) {
   const map: Map<string, RunJob> = new Map();
 
   return {
     async rows({
-      document,
-      selection,
+      fileName,
+      query,
     }: {
-      readonly document: TextDocument;
-      readonly selection?: Range;
+      readonly fileName: string;
+      readonly query: string;
     }): Promise<RunJobResponse> {
       const config = configManager.get();
       const client = await createClient(config);
-      let job: RunJob | undefined;
-      try {
-        errorMarker.clear({ document });
-        job = await client.createRunJob({
-          query: getQueryText({ document, range: selection }),
-          maxResults: config.pagination.results,
-        });
-        errorMarker.clear({ document });
-      } catch (err) {
-        errorMarker.mark({ document, err, selection });
-        throw err;
-      }
+      const job = await client.createRunJob({
+        query,
+        maxResults: config.pagination.results,
+      });
       if (!job) {
         throw new Error(`no job`);
       }
-      map.set(document.fileName, job);
+      map.set(fileName, job);
       return {
         jobId: job.id,
         results: await job.getRows(),
@@ -56,11 +43,11 @@ export function createRunJobManager({
     },
 
     async prevRows({
-      document,
+      fileName,
     }: {
-      readonly document: TextDocument;
+      readonly fileName: string;
     }): Promise<RunJobResponse> {
-      const job = map.get(document.fileName);
+      const job = map.get(fileName);
       if (!job) {
         throw new Error(`no job`);
       }
@@ -72,11 +59,11 @@ export function createRunJobManager({
     },
 
     async nextRows({
-      document,
+      fileName,
     }: {
-      readonly document: TextDocument;
+      readonly fileName: string;
     }): Promise<RunJobResponse> {
-      const job = map.get(document.fileName);
+      const job = map.get(fileName);
       if (!job) {
         throw new Error(`no job`);
       }
@@ -87,8 +74,8 @@ export function createRunJobManager({
       };
     },
 
-    delete({ document }: { readonly document: TextDocument }) {
-      return map.delete(document.fileName);
+    delete({ fileName }: { readonly fileName: string }) {
+      return map.delete(fileName);
     },
 
     dispose() {

@@ -1,8 +1,9 @@
 import { TextDocument } from "vscode";
 import { OutputChannel } from ".";
 import { ConfigManager } from "./configManager";
+import { DryRunner } from "./dryRunner";
 import { isBigQuery } from "./isBigQuery";
-import { DryRunner, ErrorWithId } from "./runner";
+import { ErrorWithId } from "./runner";
 
 export function createValidator({
   outputChannel,
@@ -23,7 +24,7 @@ export function createValidator({
     try {
       outputChannel.appendLine(`Validate`);
       await dryRunner.run({
-        document,
+        fileName: document,
       });
     } catch (err) {
       if (err instanceof ErrorWithId) {

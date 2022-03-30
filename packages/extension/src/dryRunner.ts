@@ -1,10 +1,16 @@
 import { format as formatBytes } from "bytes";
-import { createClient, DryRunJob } from "core";
-import { Range, TextDocument } from "vscode";
-import { OutputChannel, Result } from ".";
+import {
+  AuthenticationError,
+  createClient,
+  DryRunJob,
+  NoPageTokenError,
+} from "core";
+import { window } from "vscode";
+import { OutputChannel } from ".";
 import { ConfigManager } from "./configManager";
 import { ErrorMarker } from "./errorMarker";
-import { getQueryText } from "./runner";
+import { getQueryText } from "./getQueryText";
+import { ErrorWithId } from "./runner";
 import { StatusManager } from "./statusManager";
 
 export type DryRunner = ReturnType<typeof createDryRunner>;
@@ -21,50 +27,67 @@ export function createDryRunner({
   readonly errorMarker: ErrorMarker;
 }) {
   return {
-    async run({
-      document,
-      selection,
-    }: {
-      readonly document: TextDocument;
-      readonly selection?: Range;
-    }): Promise<Result> {
+    async run(): Promise<void> {
       try {
-        outputChannel.appendLine(`Dry run`);
-        statusManager.loadProcessed({
-          document,
+        if (!window.activeTextEditor) {
+          return;
+        }
+        const textEditor = window.activeTextEditor;
+        const query = await getQueryText({
+          document: textEditor.document,
+          range: textEditor.selection,
         });
+        const fileName = textEditor.document.fileName;
+        const selection = textEditor.selection;
 
-        const config = configManager.get();
-        const client = await createClient(config);
-
-        let job!: DryRunJob;
         try {
-          errorMarker.clear({ document });
-          job = await client.createDryRunJob({
-            query: getQueryText({ document, range: selection }),
+          outputChannel.appendLine(`Dry run`);
+          statusManager.loadProcessed({
+            fileName,
           });
-          errorMarker.clear({ document });
+
+          const config = configManager.get();
+          const client = await createClient(config);
+
+          let job!: DryRunJob;
+          try {
+            errorMarker.clear({ fileName });
+            job = await client.createDryRunJob({
+              query,
+            });
+            errorMarker.clear({ fileName });
+          } catch (err) {
+            errorMarker.mark({ fileName, err, selection });
+            throw err;
+          }
+
+          outputChannel.appendLine(`Job ID: ${job.id}`);
+          const { totalBytesProcessed } = job.getInfo();
+          const bytes = formatBytes(totalBytesProcessed);
+          outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
+
+          statusManager.succeedProcessed({
+            fileName,
+            processed: {
+              bytes,
+            },
+          });
         } catch (err) {
-          errorMarker.mark({ document, err, selection });
+          statusManager.errorProcessed({ fileName });
           throw err;
         }
-
-        outputChannel.appendLine(`Job ID: ${job.id}`);
-        const { totalBytesProcessed } = job.getInfo();
-        const bytes = formatBytes(totalBytesProcessed);
-        outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
-
-        statusManager.succeedProcessed({
-          document,
-          processed: {
-            bytes,
-          },
-        });
-
-        return { jobId: job.id };
       } catch (err) {
-        statusManager.errorProcessed({ document });
-        throw err;
+        if (err instanceof ErrorWithId) {
+          outputChannel.appendLine(`${err.error} (${err.id})`);
+        } else {
+          outputChannel.appendLine(`${err}`);
+        }
+        if (
+          err instanceof AuthenticationError ||
+          err instanceof NoPageTokenError
+        ) {
+          window.showErrorMessage(`${err.message}`);
+        }
       }
     },
 

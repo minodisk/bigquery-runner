@@ -1,22 +1,10 @@
-import {
-  createCSVFormatter,
-  createFileOutput,
-  createJSONFormatter,
-  createJSONLinesFormatter,
-  createLogOutput,
-  createMarkdownFormatter,
-  createTableFormatter,
-  createViewerOutput,
-  Formatter,
-  Output,
-} from "core";
-import { createWriteStream } from "fs";
-import mkdirp from "mkdirp";
-import { basename, extname, join } from "path";
-import { Range, TextDocument, workspace } from "vscode";
-import { OutputChannel, Result } from ".";
-import { Config } from "./config";
-import { ConfigManager } from "./configManager";
+import { AuthenticationError, NoPageTokenError, Output } from "core";
+import { readFile } from "fs/promises";
+import { Selection, window, workspace } from "vscode";
+import { OutputChannel } from ".";
+import { ErrorMarker } from "./errorMarker";
+import { getQueryText } from "./getQueryText";
+import { OutputManager } from "./outputManager";
 import { PanelManager } from "./panelManager";
 import { Renderer } from "./renderer";
 import { RunJobManager, RunJobResponse } from "./runJobManager";
@@ -31,6 +19,7 @@ export function createRunner({
   statusManager,
   runJobManager,
   renderer,
+  errorMarker,
 }: {
   readonly outputChannel: OutputChannel;
   readonly outputManager: OutputManager;
@@ -38,232 +27,209 @@ export function createRunner({
   readonly statusManager: StatusManager;
   readonly runJobManager: RunJobManager;
   readonly renderer: Renderer;
+  readonly errorMarker: ErrorMarker;
 }) {
   return {
-    async run({
-      document,
-      selection,
-    }: {
-      readonly document: TextDocument;
-      readonly selection?: Range;
-    }): Promise<Result> {
-      let output!: Output;
+    async run(): Promise<void> {
       try {
+        let query: string;
+        let fileName: string;
+        let selection: Selection | undefined;
+        if (window.activeTextEditor) {
+          const textEditor = window.activeTextEditor;
+          query = await getQueryText({
+            document: textEditor.document,
+            range: textEditor.selection,
+          });
+          fileName = textEditor.document.fileName;
+          selection = textEditor.selection;
+        } else {
+          const panel = panelManager.getActive();
+          if (!panel) {
+            throw new Error("no active text editor");
+          }
+          query = await readFile(panel.fileName, "utf-8");
+          fileName = panel.fileName;
+        }
+
         outputChannel.appendLine(`Run`);
         statusManager.loadBilled({
-          document,
+          fileName,
         });
 
-        output = await outputManager.createOutput({ document });
+        let output!: Output;
+        try {
+          output = await outputManager.createOutput({ fileName });
+          const path = await output.open();
+          if (path !== undefined) {
+            outputChannel.appendLine(`Output to: ${path}`);
+          }
+
+          let response: RunJobResponse;
+          try {
+            errorMarker.clear({ fileName });
+            response = await runJobManager.rows({
+              fileName,
+              query,
+            });
+            errorMarker.clear({ fileName });
+          } catch (err) {
+            errorMarker.mark({ fileName, err, selection });
+            throw err;
+          }
+
+          outputChannel.appendLine(`Job ID: ${response.jobId}`);
+          await renderer.render({
+            fileName,
+            output,
+            response,
+          });
+        } catch (err) {
+          output.close();
+          statusManager.errorBilled({ fileName });
+          throw err;
+        }
+      } catch (err) {
+        if (err instanceof ErrorWithId) {
+          outputChannel.appendLine(`${err.error} (${err.id})`);
+        } else {
+          outputChannel.appendLine(`${err}`);
+        }
+        if (
+          err instanceof AuthenticationError ||
+          err instanceof NoPageTokenError
+        ) {
+          window.showErrorMessage(`${err.message}`);
+        }
+      }
+    },
+
+    async gotoPrevPage(): Promise<void> {
+      try {
+        let fileName: string;
+        if (window.activeTextEditor) {
+          const textEditor = window.activeTextEditor;
+          fileName = textEditor.document.fileName;
+        } else {
+          const panel = panelManager.getActive();
+          if (!panel) {
+            throw new Error("no active text editor");
+          }
+          fileName = panel.fileName;
+        }
+
+        const output = await outputManager.createOutput({
+          fileName,
+        });
         const path = await output.open();
         if (path !== undefined) {
           outputChannel.appendLine(`Output to: ${path}`);
         }
 
-        const response = await runJobManager.rows({ document, selection });
-        outputChannel.appendLine(`Job ID: ${response.jobId}`);
+        let response: RunJobResponse;
+        try {
+          response = await runJobManager.prevRows({ fileName });
+        } catch (err) {
+          output.close();
+          throw err;
+        }
+        if (!response.results) {
+          throw new ErrorWithId("no results", response.jobId);
+        }
+
         await renderer.render({
-          document,
+          fileName,
           output,
           response,
         });
-
-        return { jobId: response.jobId };
       } catch (err) {
-        output.close();
-        statusManager.errorBilled({ document });
-        throw err;
-      }
-    },
-
-    async gotoPrevPage({ document }: { readonly document: TextDocument }) {
-      const output = await outputManager.createOutput({
-        document,
-      });
-      const path = await output.open();
-      if (path !== undefined) {
-        outputChannel.appendLine(`Output to: ${path}`);
-      }
-
-      let response: RunJobResponse;
-      try {
-        response = await runJobManager.prevRows({ document });
-      } catch (err) {
-        output.close();
-        throw err;
-      }
-      if (!response.results) {
-        throw new ErrorWithId("no results", response.jobId);
-      }
-
-      await renderer.render({
-        document,
-        output,
-        response,
-      });
-
-      return { jobId: response.jobId };
-    },
-
-    async gotoNextPage({ document }: { readonly document: TextDocument }) {
-      const output = await outputManager.createOutput({
-        document,
-      });
-      const path = await output.open();
-      if (path !== undefined) {
-        outputChannel.appendLine(`Output to: ${path}`);
-      }
-
-      let response: RunJobResponse;
-      try {
-        response = await runJobManager.nextRows({ document });
-      } catch (err) {
-        output.close();
-        throw err;
-      }
-      if (!response.results) {
-        throw new ErrorWithId("no results", response.jobId);
-      }
-
-      await renderer.render({
-        document,
-        output,
-        response,
-      });
-
-      return { jobId: response.jobId };
-    },
-
-    onDidCloseTextDocument({ document }: { readonly document: TextDocument }) {
-      if (panelManager.exists({ document })) {
-        return;
-      }
-      runJobManager.delete({ document });
-      panelManager.delete({ document });
-    },
-
-    onDidDisposePanel({ document }: { readonly document: TextDocument }) {
-      if (
-        workspace.textDocuments.some((d) => d.fileName === document.fileName)
-      ) {
-        return;
-      }
-      runJobManager.delete({ document });
-      panelManager.delete({ document });
-    },
-
-    dispose() {
-      // do nothing
-    },
-  };
-}
-
-export type OutputManager = ReturnType<typeof createOutputManager>;
-
-export function createOutputManager({
-  outputChannel,
-  configManager,
-  panelManager,
-}: {
-  readonly outputChannel: OutputChannel;
-  readonly configManager: ConfigManager;
-  readonly panelManager: PanelManager;
-}) {
-  return {
-    async createOutput({
-      document,
-    }: {
-      readonly document: TextDocument;
-    }): Promise<Output> {
-      const config = configManager.get();
-      switch (config.output.type) {
-        case "viewer": {
-          const panel = await panelManager.get({ document });
-          return createViewerOutput({
-            postMessage: panel.webview.postMessage.bind(panel.webview),
-          });
+        if (err instanceof ErrorWithId) {
+          outputChannel.appendLine(`${err.error} (${err.id})`);
+        } else {
+          outputChannel.appendLine(`${err}`);
         }
-        case "log":
-          return createLogOutput({
-            formatter: createFormatter({ config }),
-            outputChannel,
-          });
-        case "file": {
-          if (!workspace.workspaceFolders || !workspace.workspaceFolders[0]) {
-            throw new Error(`no workspace folders`);
+        if (
+          err instanceof AuthenticationError ||
+          err instanceof NoPageTokenError
+        ) {
+          window.showErrorMessage(`${err.message}`);
+        }
+      }
+    },
+
+    async gotoNextPage(): Promise<void> {
+      try {
+        let fileName: string;
+        if (window.activeTextEditor) {
+          const textEditor = window.activeTextEditor;
+          fileName = textEditor.document.fileName;
+        } else {
+          const panel = panelManager.getActive();
+          if (!panel) {
+            throw new Error("no active text editor");
           }
+          fileName = panel.fileName;
+        }
 
-          const formatter = createFormatter({ config });
-          const dirname = join(
-            workspace.workspaceFolders[0].uri.path ||
-              workspace.workspaceFolders[0].uri.fsPath,
-            config.output.file.path
-          );
-          const path = join(
-            dirname,
-            `${basename(
-              document.fileName,
-              extname(document.fileName)
-            )}${formatToExtension(formatter.type)}`
-          );
-          const stream = createWriteStream(path, "utf-8");
+        const output = await outputManager.createOutput({
+          fileName,
+        });
+        const path = await output.open();
+        if (path !== undefined) {
+          outputChannel.appendLine(`Output to: ${path}`);
+        }
 
-          await mkdirp(dirname);
-          return createFileOutput({
-            formatter,
-            stream,
-          });
+        let response: RunJobResponse;
+        try {
+          response = await runJobManager.nextRows({ fileName });
+        } catch (err) {
+          output.close();
+          throw err;
+        }
+        if (!response.results) {
+          throw new ErrorWithId("no results", response.jobId);
+        }
+
+        await renderer.render({
+          fileName,
+          output,
+          response,
+        });
+      } catch (err) {
+        if (err instanceof ErrorWithId) {
+          outputChannel.appendLine(`${err.error} (${err.id})`);
+        } else {
+          outputChannel.appendLine(`${err}`);
+        }
+        if (
+          err instanceof AuthenticationError ||
+          err instanceof NoPageTokenError
+        ) {
+          window.showErrorMessage(`${err.message}`);
         }
       }
+    },
+
+    onDidCloseTextDocument({ fileName }: { readonly fileName: string }) {
+      if (panelManager.exists({ fileName })) {
+        return;
+      }
+      runJobManager.delete({ fileName });
+      panelManager.delete({ fileName });
+    },
+
+    onDidDisposePanel({ fileName }: { readonly fileName: string }) {
+      if (workspace.textDocuments.some((d) => d.fileName === fileName)) {
+        return;
+      }
+      runJobManager.delete({ fileName });
+      panelManager.delete({ fileName });
     },
 
     dispose() {
       // do nothing
     },
   };
-}
-
-function formatToExtension(format: Formatter["type"]): string {
-  return {
-    table: ".txt",
-    markdown: ".md",
-    "json-lines": ".jsonl",
-    json: ".json",
-    csv: ".csv",
-  }[format];
-}
-
-function createFormatter({ config }: { config: Config }): Formatter {
-  switch (config.format.type) {
-    case "table":
-      return createTableFormatter();
-    case "markdown":
-      return createMarkdownFormatter();
-    case "json-lines":
-      return createJSONLinesFormatter();
-    case "json":
-      return createJSONFormatter();
-    case "csv":
-      return createCSVFormatter({ options: config.format.csv });
-    default:
-      throw new Error(`Invalid format: ${config.format.type}`);
-  }
-}
-
-export function getQueryText({
-  document,
-  range,
-}: {
-  readonly document: TextDocument;
-  readonly range?: Range;
-}): string {
-  const text = range?.isEmpty ? document.getText() : document.getText(range);
-
-  if (text.trim() === "") {
-    throw new Error("text is empty");
-  }
-
-  return text;
 }
 
 export class ErrorWithId {
