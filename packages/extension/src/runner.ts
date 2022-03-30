@@ -1,6 +1,6 @@
 import { AuthenticationError, NoPageTokenError, Output } from "core";
 import { readFile } from "fs/promises";
-import { Selection, window, workspace } from "vscode";
+import { Selection, window } from "vscode";
 import { OutputChannel } from ".";
 import { ErrorMarker } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
@@ -32,24 +32,24 @@ export function createRunner({
   return {
     async run(): Promise<void> {
       try {
-        let query: string;
         let fileName: string;
+        let query: string;
         let selection: Selection | undefined;
         if (window.activeTextEditor) {
           const textEditor = window.activeTextEditor;
+          fileName = textEditor.document.fileName;
           query = await getQueryText({
             document: textEditor.document,
             range: textEditor.selection,
           });
-          fileName = textEditor.document.fileName;
           selection = textEditor.selection;
         } else {
           const panel = panelManager.getActive();
           if (!panel) {
             throw new Error("no active text editor");
           }
-          query = await readFile(panel.fileName, "utf-8");
           fileName = panel.fileName;
+          query = await readFile(panel.fileName, "utf-8");
         }
 
         outputChannel.appendLine(`Run`);
@@ -219,9 +219,6 @@ export function createRunner({
     },
 
     onDidDisposePanel({ fileName }: { readonly fileName: string }) {
-      if (workspace.textDocuments.some((d) => d.fileName === fileName)) {
-        return;
-      }
       runJobManager.delete({ fileName });
       panelManager.delete({ fileName });
     },

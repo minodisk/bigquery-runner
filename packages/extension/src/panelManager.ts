@@ -57,7 +57,6 @@ export function createPanelManager({
     },
 
     exists({ fileName }: { readonly fileName: string }) {
-      console.log("exists:", fileName, map);
       return map.has(fileName);
     },
 
