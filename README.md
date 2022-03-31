@@ -185,6 +185,14 @@ The output destination for the query results.  When set to `viewer`, this extens
 
 The output directory of the file when `bigqueryRunner.output.type` is specified as `file`.
 
+### `bigqueryRunner.output.viewer.column`
+
+|Type|Default|
+|---|---|
+|string &#x7C; number|"+1"|
+
+A string such as '+N', '-N' can be set to specify a position relative to the column where the query file is opened. Then, if you set a number greater than 1, the viewer will appear in the specified number of columns from the left. A number of -1 means the viewer will appear in the same column as the query file, and a number of -2 means the viewer will appear in the column farthest to the right.
+
 ### `bigqueryRunner.statusBarItem.align`
 
 |Type|Default|Enum|

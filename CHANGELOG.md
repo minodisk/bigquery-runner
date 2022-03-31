@@ -2,6 +2,14 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.43
+
+### Added
+
+- Open one viewer per query file. Now open as many viewers as the number of queries.
+- The position of the column to open the viewer can be set as relative or absolute value: `bigqueryRunner.output.viewer.column`.
+- Run / Prev Page / Next Page commands can be executed on the viewer.
+
 ## v0.0.42
 
 ### Added

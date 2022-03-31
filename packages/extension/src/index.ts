@@ -17,31 +17,28 @@ import {
   DiagnosticCollection,
   ExtensionContext,
   OutputChannel as OrigOutputChannel,
-  Range,
-  TextDocument,
   window,
   workspace,
 } from "vscode";
-import { AuthenticationError, NoPageTokenError } from "core";
 import {
   createStatusBarItemCreator,
   createStatusManager,
 } from "./statusManager";
 import { createConfigManager } from "./configManager";
-import { createDryRunner, createRunner, ErrorWithId } from "./runner";
+import { createRunner } from "./runner";
 import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
 import { createValidator } from "./validator";
+import { createDryRunner } from "./dryRunner";
+import { createPanelManager } from "./panelManager";
+import { createRunJobManager } from "./runJobManager";
+import { createRenderer } from "./renderer";
+import { createOutputManager } from "./outputManager";
 
 export type OutputChannel = Pick<
   OrigOutputChannel,
   "append" | "appendLine" | "show" | "dispose"
 >;
-
-type ResultChannel = {
-  set(result: Result): void;
-  get(): Result;
-};
 
 export type Result = {
   readonly jobId?: string;
@@ -49,7 +46,6 @@ export type Result = {
 
 export type Dependencies = {
   readonly outputChannel: OutputChannel;
-  readonly resultChannel: ResultChannel;
   readonly diagnosticCollection: DiagnosticCollection;
 };
 
@@ -65,16 +61,21 @@ export async function activate(
       dependencies?.outputChannel ?? window.createOutputChannel(title);
     ctx.subscriptions.push(outputChannel);
 
-    const resultChannel = dependencies?.resultChannel ?? {
-      get(): Result {
-        return {};
-      },
-      set() {
-        // do nothing
-      },
+    const onDidDisposePanel = (e: { readonly fileName: string }) => {
+      runner.onDidDisposePanel(e);
     };
 
     const configManager = createConfigManager(section);
+    const panelManager = createPanelManager({
+      ctx,
+      configManager,
+      onDidDisposePanel,
+    });
+    const outputManager = createOutputManager({
+      outputChannel,
+      configManager,
+      panelManager,
+    });
     const statusManager = createStatusManager({
       options: configManager.get().statusBarItem,
       createStatusBarItem: createStatusBarItemCreator(window),
@@ -82,11 +83,20 @@ export async function activate(
     const errorMarker = createErrorMarker({
       section,
     });
-    const runner = createRunner({
-      ctx,
-      outputChannel,
+    const runJobManager = createRunJobManager({
       configManager,
+    });
+    const renderer = createRenderer({
+      outputChannel,
       statusManager,
+    });
+    const runner = createRunner({
+      outputChannel,
+      outputManager,
+      panelManager,
+      statusManager,
+      runJobManager,
+      renderer,
       errorMarker,
     });
     const dryRunner = createDryRunner({
@@ -102,8 +112,12 @@ export async function activate(
     });
     ctx.subscriptions.push(
       configManager,
+      panelManager,
+      outputManager,
       statusManager,
       errorMarker,
+      runJobManager,
+      renderer,
       runner,
       dryRunner,
       validator
@@ -113,38 +127,10 @@ export async function activate(
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
     new Map<string, () => void>([
-      [
-        `${section}.dryRun`,
-        wrapCallback({
-          outputChannel,
-          resultChannel,
-          callback: dryRunner.run,
-        }),
-      ],
-      [
-        `${section}.run`,
-        wrapCallback({
-          outputChannel,
-          resultChannel,
-          callback: runner.run,
-        }),
-      ],
-      [
-        `${section}.prevPage`,
-        wrapCallback({
-          outputChannel,
-          resultChannel,
-          callback: runner.gotoPrevPage,
-        }),
-      ],
-      [
-        `${section}.nextPage`,
-        wrapCallback({
-          outputChannel,
-          resultChannel,
-          callback: runner.gotoNextPage,
-        }),
-      ],
+      [`${section}.dryRun`, dryRunner.run],
+      [`${section}.run`, runner.run],
+      [`${section}.prevPage`, runner.gotoPrevPage],
+      [`${section}.nextPage`, runner.gotoNextPage],
     ]).forEach((action, name) => {
       ctx.subscriptions.push(commands.registerCommand(name, action));
     });
@@ -167,7 +153,7 @@ export async function activate(
           return;
         }
 
-        statusManager.onFocus({ document: editor.document });
+        statusManager.onFocus({ fileName: editor.document.fileName });
         validator.validate({
           document: editor.document,
         });
@@ -187,6 +173,9 @@ export async function activate(
           document,
         })
       ),
+      workspace.onDidCloseTextDocument((document) => {
+        runner.onDidCloseTextDocument({ fileName: document.fileName });
+      }),
       // Listen for configuration changes and trigger an update, so that users don't
       // have to reload the VS Code environment after a config update.
       workspace.onDidChangeConfiguration((e) => {
@@ -204,43 +193,4 @@ export async function activate(
 
 export function deactivate() {
   // do nothing
-}
-
-function wrapCallback({
-  outputChannel,
-  resultChannel,
-  callback,
-}: {
-  readonly outputChannel: OutputChannel;
-  readonly resultChannel: ResultChannel;
-  readonly callback: (params: {
-    readonly document: TextDocument;
-    readonly selection?: Range;
-  }) => Promise<Result>;
-}): () => Promise<void> {
-  return async () => {
-    try {
-      if (!window.activeTextEditor) {
-        throw new Error("no active text editor");
-      }
-      const { document, selection } = window.activeTextEditor;
-      const result = await callback({
-        document,
-        selection,
-      });
-      resultChannel.set(result);
-    } catch (err) {
-      if (err instanceof ErrorWithId) {
-        outputChannel.appendLine(`${err.error} (${err.id})`);
-      } else {
-        outputChannel.appendLine(`${err}`);
-      }
-      if (
-        err instanceof AuthenticationError ||
-        err instanceof NoPageTokenError
-      ) {
-        window.showErrorMessage(`${err.message}`);
-      }
-    }
-  };
 }

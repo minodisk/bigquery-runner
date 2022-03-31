@@ -1,8 +1,9 @@
 import { TextDocument } from "vscode";
 import { OutputChannel } from ".";
 import { ConfigManager } from "./configManager";
+import { DryRunner } from "./dryRunner";
 import { isBigQuery } from "./isBigQuery";
-import { DryRunner, ErrorWithId } from "./runner";
+import { ErrorWithId } from "./runner";
 
 export function createValidator({
   outputChannel,
@@ -15,16 +16,10 @@ export function createValidator({
 }) {
   const pathTimeoutId = new Map<string, NodeJS.Timeout>();
 
-  async function exec({
-    document,
-  }: {
-    readonly document: TextDocument;
-  }): Promise<void> {
+  async function exec(): Promise<void> {
     try {
       outputChannel.appendLine(`Validate`);
-      await dryRunner.run({
-        document,
-      });
+      await dryRunner.run();
     } catch (err) {
       if (err instanceof ErrorWithId) {
         outputChannel.appendLine(`${err.error} (${err.id})`);
@@ -55,13 +50,7 @@ export function createValidator({
       }
       pathTimeoutId.set(
         document.uri.path,
-        setTimeout(
-          () =>
-            exec({
-              document,
-            }),
-          config.queryValidation.debounceInterval
-        )
+        setTimeout(exec, config.queryValidation.debounceInterval)
       );
     },
 

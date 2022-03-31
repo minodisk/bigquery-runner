@@ -1,9 +1,4 @@
-import {
-  StatusBarAlignment,
-  StatusBarItem,
-  TextDocument,
-  window,
-} from "vscode";
+import { StatusBarAlignment, StatusBarItem, window } from "vscode";
 import { Config } from "./config";
 
 type State = "loading" | "error" | "success";
@@ -33,88 +28,88 @@ export function createStatusManager({
   const billedMap = new Map<string, Billed>();
 
   return {
-    loadProcessed({ document }: { document: TextDocument }) {
-      const current = processedMap.get(document.fileName);
-      processedMap.set(document.fileName, { ...current, state: "loading" });
+    loadProcessed({ fileName }: { fileName: string }) {
+      const current = processedMap.get(fileName);
+      processedMap.set(fileName, { ...current, state: "loading" });
       update({
-        document,
+        fileName,
         statusBarItem,
-        processed: processedMap.get(document.fileName),
-        billed: billedMap.get(document.fileName),
+        processed: processedMap.get(fileName),
+        billed: billedMap.get(fileName),
       });
     },
-    errorProcessed({ document }: { document: TextDocument }) {
-      const current = processedMap.get(document.fileName);
-      processedMap.set(document.fileName, { ...current, state: "error" });
+    errorProcessed({ fileName }: { fileName: string }) {
+      const current = processedMap.get(fileName);
+      processedMap.set(fileName, { ...current, state: "error" });
       update({
-        document,
+        fileName,
         statusBarItem,
-        processed: processedMap.get(document.fileName),
-        billed: billedMap.get(document.fileName),
+        processed: processedMap.get(fileName),
+        billed: billedMap.get(fileName),
       });
     },
     succeedProcessed({
-      document,
+      fileName,
       processed,
     }: {
-      document: TextDocument;
+      fileName: string;
       processed: ProcessedUsage;
     }) {
-      processedMap.set(document.fileName, {
+      processedMap.set(fileName, {
         state: "success",
         usage: processed,
       });
       update({
-        document,
+        fileName,
         statusBarItem,
-        processed: processedMap.get(document.fileName),
-        billed: billedMap.get(document.fileName),
+        processed: processedMap.get(fileName),
+        billed: billedMap.get(fileName),
       });
     },
-    loadBilled({ document }: { document: TextDocument }) {
-      const current = billedMap.get(document.fileName);
-      billedMap.set(document.fileName, { ...current, state: "loading" });
+    loadBilled({ fileName }: { fileName: string }) {
+      const current = billedMap.get(fileName);
+      billedMap.set(fileName, { ...current, state: "loading" });
       update({
-        document,
+        fileName,
         statusBarItem,
-        processed: processedMap.get(document.fileName),
-        billed: billedMap.get(document.fileName),
+        processed: processedMap.get(fileName),
+        billed: billedMap.get(fileName),
       });
     },
-    errorBilled({ document }: { document: TextDocument }) {
-      const current = billedMap.get(document.fileName);
-      billedMap.set(document.fileName, { ...current, state: "error" });
+    errorBilled({ fileName }: { fileName: string }) {
+      const current = billedMap.get(fileName);
+      billedMap.set(fileName, { ...current, state: "error" });
       update({
-        document,
+        fileName,
         statusBarItem,
-        processed: processedMap.get(document.fileName),
-        billed: billedMap.get(document.fileName),
+        processed: processedMap.get(fileName),
+        billed: billedMap.get(fileName),
       });
     },
     succeedBilled({
-      document,
+      fileName,
       billed,
     }: {
-      document: TextDocument;
+      fileName: string;
       billed: BilledUsage;
     }) {
-      billedMap.set(document.fileName, {
+      billedMap.set(fileName, {
         state: "success",
         usage: billed,
       });
       update({
-        document,
+        fileName,
         statusBarItem,
-        processed: processedMap.get(document.fileName),
-        billed: billedMap.get(document.fileName),
+        processed: processedMap.get(fileName),
+        billed: billedMap.get(fileName),
       });
     },
-    onFocus({ document }: { document: TextDocument }) {
+    onFocus({ fileName }: { fileName: string }) {
       update({
-        document,
+        fileName,
         statusBarItem,
-        processed: processedMap.get(document.fileName),
-        billed: billedMap.get(document.fileName),
+        processed: processedMap.get(fileName),
+        billed: billedMap.get(fileName),
       });
     },
     hide() {
@@ -149,17 +144,17 @@ export function createStatusBarItemCreator(w: typeof window) {
 }
 
 function update({
-  document,
+  fileName,
   statusBarItem,
   processed,
   billed,
 }: {
-  document: TextDocument;
+  fileName: string;
   statusBarItem: StatusBarItem;
   processed?: Processed;
   billed?: Billed;
 }) {
-  if (document.fileName !== window.activeTextEditor?.document.fileName) {
+  if (fileName !== window.activeTextEditor?.document.fileName) {
     return;
   }
 
