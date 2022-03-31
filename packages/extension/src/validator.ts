@@ -16,16 +16,10 @@ export function createValidator({
 }) {
   const pathTimeoutId = new Map<string, NodeJS.Timeout>();
 
-  async function exec({
-    document,
-  }: {
-    readonly document: TextDocument;
-  }): Promise<void> {
+  async function exec(): Promise<void> {
     try {
       outputChannel.appendLine(`Validate`);
-      await dryRunner.run({
-        fileName: document,
-      });
+      await dryRunner.run();
     } catch (err) {
       if (err instanceof ErrorWithId) {
         outputChannel.appendLine(`${err.error} (${err.id})`);
@@ -56,13 +50,7 @@ export function createValidator({
       }
       pathTimeoutId.set(
         document.uri.path,
-        setTimeout(
-          () =>
-            exec({
-              document,
-            }),
-          config.queryValidation.debounceInterval
-        )
+        setTimeout(exec, config.queryValidation.debounceInterval)
       );
     },
 
