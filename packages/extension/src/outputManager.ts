@@ -13,7 +13,7 @@ import {
 import { createWriteStream } from "fs";
 import mkdirp from "mkdirp";
 import { basename, extname, join } from "path";
-import { workspace } from "vscode";
+import { ViewColumn, workspace } from "vscode";
 import { OutputChannel } from ".";
 import { Config } from "./config";
 import { ConfigManager } from "./configManager";
@@ -31,15 +31,20 @@ export function createOutputManager({
   readonly panelManager: PanelManager;
 }) {
   return {
-    async createOutput({
+    async create({
       fileName,
+      viewColumn,
     }: {
       readonly fileName: string;
+      readonly viewColumn?: ViewColumn;
     }): Promise<Output> {
       const config = configManager.get();
       switch (config.output.type) {
         case "viewer": {
-          const panel = await panelManager.get({ fileName });
+          const panel = await panelManager.create({
+            fileName,
+            viewColumn,
+          });
           return createViewerOutput({
             postMessage: panel.webview.postMessage.bind(panel.webview),
           });

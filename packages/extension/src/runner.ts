@@ -1,6 +1,6 @@
 import { AuthenticationError, NoPageTokenError, Output } from "core";
 import { readFile } from "fs/promises";
-import { Selection, window } from "vscode";
+import { Selection, ViewColumn, window } from "vscode";
 import { OutputChannel } from ".";
 import { ErrorMarker } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
@@ -35,6 +35,7 @@ export function createRunner({
         let fileName: string;
         let query: string;
         let selection: Selection | undefined;
+        let viewColumn: ViewColumn | undefined;
         if (window.activeTextEditor) {
           const textEditor = window.activeTextEditor;
           fileName = textEditor.document.fileName;
@@ -43,6 +44,7 @@ export function createRunner({
             range: textEditor.selection,
           });
           selection = textEditor.selection;
+          viewColumn = textEditor.viewColumn;
         } else {
           const panel = panelManager.getActive();
           if (!panel) {
@@ -59,7 +61,10 @@ export function createRunner({
 
         let output!: Output;
         try {
-          output = await outputManager.createOutput({ fileName });
+          output = await outputManager.create({
+            fileName,
+            viewColumn,
+          });
           const path = await output.open();
           if (path !== undefined) {
             outputChannel.appendLine(`Output to: ${path}`);
@@ -118,7 +123,7 @@ export function createRunner({
           fileName = panel.fileName;
         }
 
-        const output = await outputManager.createOutput({
+        const output = await outputManager.create({
           fileName,
         });
         const path = await output.open();
@@ -171,7 +176,7 @@ export function createRunner({
           fileName = panel.fileName;
         }
 
-        const output = await outputManager.createOutput({
+        const output = await outputManager.create({
           fileName,
         });
         const path = await output.open();

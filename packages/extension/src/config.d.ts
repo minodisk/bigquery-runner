@@ -28,6 +28,9 @@ export type Config = {
     readonly file: {
       readonly path: string;
     };
+    readonly viewer: {
+      readonly column: string | number;
+    };
   };
   readonly statusBarItem: {
     readonly align: "left" | "right" | undefined;

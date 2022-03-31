@@ -68,6 +68,7 @@ export async function activate(
     const configManager = createConfigManager(section);
     const panelManager = createPanelManager({
       ctx,
+      configManager,
       onDidDisposePanel,
     });
     const outputManager = createOutputManager({
