@@ -1,17 +1,19 @@
 import { isAbsolute, join } from "path";
-import { workspace } from "vscode";
+import { commands, workspace } from "vscode";
 import { Config } from "./config";
 
 export type ConfigManager = ReturnType<typeof createConfigManager>;
 
 export function createConfigManager(section: string) {
   let config = getConfigration(section);
+  setContext(config);
   return {
     get(): Config {
       return config;
     },
     refresh(): void {
       config = getConfigration(section);
+      setContext(config);
     },
     dispose(): void {
       // do nothing
@@ -52,4 +54,29 @@ function getConfigration(section: string): Config {
           : config.statusBarItem.priority,
     },
   };
+}
+
+function setContext(config: Config): void {
+  const map = flatten(config, "bigqueryRunner");
+  Object.keys(map).forEach((k) =>
+    commands.executeCommand("setContext", k, map[k])
+  );
+}
+
+function flatten(
+  source: { [key: string]: any },
+  parentKey: string,
+  target: { [key: string]: any } = {}
+): { [key: string]: any } {
+  Object.keys(source).reduce((o, k) => {
+    const v = source[k];
+    const type = Object.prototype.toString.call(v);
+    if (type === "[object Object]" && !Array.isArray(v)) {
+      o = flatten(v, parentKey + "." + k, o);
+    } else if (type !== "[object Function]") {
+      o[parentKey + "." + k] = v;
+    }
+    return o;
+  }, target);
+  return target;
 }

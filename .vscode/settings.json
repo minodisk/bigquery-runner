@@ -20,10 +20,13 @@
   "eslint.validate": ["javascript", "typescript"],
 
   "bigqueryRunner.keyFilename": "./service-account.json",
-  "bigqueryRunner.pagination.results": 10,
+  // "bigqueryRunner.icon": false,
+  // "bigqueryRunner.pagination.results": 10,
   "bigqueryRunner.output.file.path": "./output",
   // "bigqueryRunner.output.type": "log",
   // "bigqueryRunner.output.viewer.column": 0,
   "bigqueryRunner.format.type": "json-lines",
-  "bigqueryRunner.format.csv.header": true
+  "bigqueryRunner.format.csv.header": true,
+
+  "code-runner.showRunIconInEditorTitleMenu": false
 }

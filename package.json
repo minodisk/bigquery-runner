@@ -46,6 +46,7 @@
       {
         "command": "bigqueryRunner.run",
         "title": "BigQuery Runner: Run",
+        "icon": "$(play)",
         "description": "Run a query in BigQuery and display the results. If text is selected, it will run the selected text as a query. If no text is selected, the entire file will be executed as a query."
       },
       {
@@ -64,6 +65,15 @@
         "description": "Dry-run a query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked."
       }
     ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceLangId in bigqueryRunner.queryValidation.languageIds || resourceExtname in bigqueryRunner.queryValidation.extensions && bigqueryRunner.icon",
+          "command": "bigqueryRunner.run",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "type": "object",
       "title": "BigQuery Runner",
@@ -184,6 +194,11 @@
           ],
           "default": "+1",
           "description": "A string such as '+N', '-N' can be set to specify a position relative to the column where the query file is opened. Then, if you set a number greater than 1, the viewer will appear in the specified number of columns from the left. A number of -1 means the viewer will appear in the same column as the query file, and a number of -2 means the viewer will appear in the column farthest to the right."
+        },
+        "bigqueryRunner.icon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display GUI button to run on the editor title menu bar."
         },
         "bigqueryRunner.statusBarItem.align": {
           "type": [

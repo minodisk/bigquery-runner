@@ -32,6 +32,7 @@ export type Config = {
       readonly column: string | number;
     };
   };
+  readonly icon: boolean;
   readonly statusBarItem: {
     readonly align: "left" | "right" | undefined;
     readonly priority: number | undefined;
