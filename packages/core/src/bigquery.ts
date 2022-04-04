@@ -142,7 +142,9 @@ export async function createClient(options: BigQueryOptions) {
       });
 
       if (
-        info.statistics?.query?.statementType === "CREATE_TABLE_AS_SELECT" &&
+        ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
+          (type) => info.statistics?.query?.statementType === type
+        ) &&
         info.configuration?.query?.destinationTable
       ) {
         // Wait for completion of table creation job
