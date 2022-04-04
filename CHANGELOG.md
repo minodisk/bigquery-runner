@@ -2,6 +2,14 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.44
+
+### Added
+
+- Added a GUI button to run the query on the editor title menu bar.
+- Supported `MERGE` statement.
+  - Added process to display all records as results after creating the table.
+
 ## v0.0.43
 
 ### Added
@@ -20,13 +28,13 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ### Added
 
-- Support [Query Drive data](https://cloud.google.com/bigquery/external-data-drive).
+- Supported [Query Drive data](https://cloud.google.com/bigquery/external-data-drive).
 
 ## v0.0.40
 
 ### Changed
 
-- Fix error when expanding nullable structs.
+- Fixed error when expanding nullable structs.
 
 ## v0.0.39
 
@@ -50,7 +58,7 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ### Added
 
-- Support `CREATE_TABLE_AS_SELECT` statement.
+- Supported `CREATE TABLE AS SELECT` statement.
   - Added process to display all records as results after creating the table.
 
 ## v0.0.35
@@ -63,7 +71,7 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ### Changed
 
-- Fix a bug that panel is created on every run.
+- Fixed a bug that panel is created on every run.
 
 ## v0.0.33
 
@@ -75,7 +83,7 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ### Changed
 
-- Fix the bug that boolean is not correctly output to CSV.
+- Fixed the bug that boolean is not correctly output to CSV.
 
 ## v0.0.31
 
