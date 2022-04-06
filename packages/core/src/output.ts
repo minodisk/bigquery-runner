@@ -1,6 +1,7 @@
 import { Writable } from "stream";
 import { Flat, Formatter } from ".";
 import { CloseEvent, Data, OpenEvent, Results, RowsEvent } from "./types";
+import { Edge } from "extension/src/runJobManager";
 
 export type Output = {
   readonly open: () => Promise<string | void>;
@@ -9,6 +10,8 @@ export type Output = {
     results: Results & {
       readonly flat: Flat;
       readonly numRows: string;
+      readonly destinationTable?: string;
+      readonly edge: Edge;
     }
   ) => Promise<unknown>;
   readonly close: () => Promise<void>;
@@ -42,10 +45,12 @@ export function createViewerOutput({
         },
       } as Data<OpenEvent>);
     },
+
     async writeHeads() {
       // do nothing
     },
-    async writeRows({ structs, page, flat, numRows }) {
+
+    async writeRows({ structs, page, edge, flat, numRows, destinationTable }) {
       await postMessage({
         source: "bigquery-runner",
         payload: {
@@ -54,14 +59,19 @@ export function createViewerOutput({
             header: flat.heads.map(({ id }) => id),
             rows: flat.toRows({
               structs,
-              rowNumber: page ? page.rowsPerPage * page.current + 1 : 1,
+              rowNumber: page.maxResults
+                ? page.maxResults * page.current + 1
+                : 1,
             }),
             page,
             numRows,
+            destinationTable,
+            edge,
           },
         },
       } as Data<RowsEvent>);
     },
+
     async close() {
       await postMessage({
         source: "bigquery-runner",
@@ -70,6 +80,7 @@ export function createViewerOutput({
         },
       } as Data<CloseEvent>);
     },
+
     dispose() {
       // do nothing
     },

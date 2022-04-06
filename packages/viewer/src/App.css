@@ -1,16 +1,94 @@
+.nav {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 35px;
+}
+.tabs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: var(--vscode-editor-background);
+  box-sizing: border-box;
+}
+.tabs::after {
+  display: block;
+  width: 100%;
+  content: "";
+  border-bottom: 1px solid var(--vscode-editorGroupHeader-tabsBorder);
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.tab {
+  position: relative;
+  white-space: nowrap;
+  cursor: pointer;
+  height: 35px;
+  box-sizing: border-box;
+  padding-left: 10px;
+  padding-right: 10px;
+
+  width: 120px;
+  min-width: fit-content;
+  min-width: -moz-fit-content;
+  flex-shrink: 0;
+
+  left: auto;
+  border-right: 1px solid var(--vscode-tab-border);
+  background-color: var(--vscode-tab-inactiveBackground);
+  color: var(--vscode-tab-inactiveForeground);
+  --tab-border-bottom-color: transparent;
+
+  line-height: 35px;
+}
+.tab:hover {
+  background-color: unset;
+}
+.tab.pressed {
+  background-color: unset;
+}
+.tab.current {
+  cursor: default;
+  background-color: var(--vscode-tab-activeBackground);
+  color: var(--vscode-tab-activeForeground);
+  --tab-border-bottom-color: var(--vscode-tab-activeBorder);
+}
+.tab-border {
+  display: block;
+  position: absolute;
+  left: 0;
+  pointer-events: none;
+  width: 100%;
+
+  z-index: 10;
+  bottom: 0;
+  height: 1px;
+  background-color: var(--tab-border-bottom-color);
+}
+
+.tabContent {
+  display: none;
+}
+.tabContent.show {
+  display: block;
+}
+
 table {
   border-collapse: separate;
   border-spacing: 0;
 }
 thead {
   /* VSCode webview does not support thead sticky yet */
-  /* position: sticky;
-  top: 0;
-  background-color: var(--vscode-editor-background); */
+  position: sticky;
+  top: 35px;
+  background-color: var(--vscode-editor-background);
 }
 thead tr th {
-  position: sticky;
-  top: 0;
+  /* position: sticky; */
+  /* top: 0; */
   background-color: var(--vscode-editor-background);
   border-width: 0 0 2px 0;
   border-style: solid;
@@ -21,15 +99,7 @@ tbody tr td {
   border-style: solid;
   border-color: var(--vscode-terminal-border);
 }
-tfoot tr th {
-  position: sticky;
-  bottom: 0;
-  background-color: var(--vscode-editor-background);
-  border-width: 2px 0 0 0;
-  border-style: solid;
-  border-color: var(--vscode-terminal-border);
-  font-weight: var(--vscode-editor-font-weight);
-}
+
 th {
   padding: 4px 16px;
   text-align: left;
@@ -43,14 +113,32 @@ td {
 thead th {
   padding-top: 8px;
 }
-tfoot th {
-  padding-bottom: 8px;
-}
 tbody tr:last-of-type td {
   border-width: 0;
 }
 tbody tr.lastOfRowNumber td.rowNumber {
   border-width: 0;
+}
+
+.paginationWrapper {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  height: 35px;
+}
+.pagination {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 35px;
+  box-sizing: border-box;
+  padding: 4px 16px;
+  border-color: var(--vscode-terminal-border);
+  border-style: solid;
+  font-weight: var(--vscode-editor-font-weight);
+  border-width: 2px 0 0 0;
+  background-color: var(--vscode-editor-background);
 }
 
 .status {
@@ -60,8 +148,6 @@ tbody tr.lastOfRowNumber td.rowNumber {
   color: var(--vscode-descriptionForeground);
 }
 
-.box {
-}
 .stack {
   display: flex;
 }
@@ -71,6 +157,39 @@ tbody tr.lastOfRowNumber td.rowNumber {
 .stack-horizontal {
   flex-direction: row;
 }
+
+.flex.justify-start {
+  justify-content: flex-start;
+}
+.flex.justify-end {
+  justify-content: flex-end;
+}
+.flex.justify-center {
+  justify-content: center;
+}
+.flex.justify-between {
+  justify-content: space-between;
+}
+.flex.justify-around {
+  justify-content: space-around;
+}
+
+.flex.align-strech {
+  align-items: stretch;
+}
+.flex.align-start {
+  align-items: flex-start;
+}
+.flex.align-end {
+  align-items: flex-end;
+}
+.flex.align-center {
+  align-items: center;
+}
+.flex.align-baseline {
+  align-items: baseline;
+}
+
 .px-1 {
   padding-left: 4px;
   padding-right: 4px;
@@ -105,8 +224,55 @@ tbody tr.lastOfRowNumber td.rowNumber {
   gap: 16px;
 }
 
-.weakColor {
+.text.alignCenter {
+  text-align: center;
+}
+.text.weakColor {
   color: var(--vscode-descriptionForeground);
+}
+.text.breakable {
+  line-break: anywhere;
+}
+
+.button {
+  padding: unset;
+  border: unset;
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  font-family: var(--vscode-font-family);
+  background-color: unset;
+}
+.button:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+.button.pressed {
+  background-color: var(--vscode-toolbar-activeBackground);
+}
+.button:disabled {
+  cursor: default;
+}
+.button:disabled:hover {
+  background-color: unset;
+}
+
+.iconButton {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+.iconButton:hover {
+}
+.iconButton svg {
+  fill: var(--vscode-tab-activeForeground);
+  stroke: var(--vscode-tab-activeForeground);
+}
+.iconButton:disabled svg {
+  fill: var(--vscode-tab-inactiveForeground);
+  stroke: unset;
 }
 
 .loading {

@@ -6,6 +6,7 @@ import {
   BigQueryTimestamp,
   Geography,
 } from "@google-cloud/bigquery";
+import { Edge } from "extension/src/runJobManager";
 
 export type Field = PrimitiveField | StructField;
 export type PrimitiveField = {
@@ -124,6 +125,8 @@ export type Rows = {
   rows: Array<NumberedRows>;
   page?: Page;
   numRows: string;
+  destinationTable: string | undefined;
+  edge: Edge;
 };
 
 export function isRowsEvent(e: Event): e is RowsEvent {
@@ -132,10 +135,37 @@ export function isRowsEvent(e: Event): e is RowsEvent {
 
 export type Results = {
   readonly structs: Array<Struct>;
-  readonly page?: Page;
+  readonly page: Page;
 };
 
 export type Page = {
-  readonly rowsPerPage: number;
+  readonly maxResults?: number;
   readonly current: number;
 };
+
+export type ViewerEvent = StartEvent | EndEvent | PrevEvent | NextEvent;
+export type StartEvent = {
+  event: "start";
+};
+export type EndEvent = {
+  event: "end";
+};
+export type PrevEvent = {
+  event: "prev";
+};
+export type NextEvent = {
+  event: "next";
+};
+
+export function isStartEvent(e: ViewerEvent): e is StartEvent {
+  return e.event === "start";
+}
+export function isEndEvent(e: ViewerEvent): e is EndEvent {
+  return e.event === "end";
+}
+export function isPrevEvent(e: ViewerEvent): e is PrevEvent {
+  return e.event === "prev";
+}
+export function isNextEvent(e: ViewerEvent): e is NextEvent {
+  return e.event === "next";
+}

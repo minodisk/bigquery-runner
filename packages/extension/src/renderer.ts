@@ -20,8 +20,10 @@ export function createRenderer({
       output,
       response: {
         jobId,
+        destinationTable,
         results,
         info: { query, schema, numRows },
+        edge,
       },
     }: {
       readonly fileName: string;
@@ -39,7 +41,13 @@ export function createRenderer({
 
         const flat = createFlat(schema.fields);
         await output.writeHeads({ flat });
-        await output.writeRows({ ...results, numRows, flat });
+        await output.writeRows({
+          ...results,
+          numRows,
+          flat,
+          destinationTable,
+          edge,
+        });
 
         // const bytesWritten = await output.bytesWritten();
         // if (bytesWritten !== undefined) {

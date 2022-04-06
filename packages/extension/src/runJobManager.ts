@@ -5,9 +5,11 @@ import { ConfigManager } from "./configManager";
 export type RunJobManager = ReturnType<typeof createRunJobManager>;
 
 export type RunJobResponse = {
-  jobId: string;
-  results: Results;
-  info: RunInfo;
+  readonly jobId: string;
+  readonly destinationTable?: string;
+  readonly results: Results;
+  readonly info: RunInfo;
+  readonly edge: Edge;
 };
 
 export function createRunJobManager({
@@ -35,10 +37,17 @@ export function createRunJobManager({
         throw new Error(`no job`);
       }
       map.set(fileName, job);
+
+      const results = await job.getRows();
+      const info = await job.getInfo();
+      const edge = getEdge({ results, info });
+
       return {
         jobId: job.id,
-        results: await job.getRows(),
-        info: await job.getInfo(),
+        destinationTable: job.destinationTable,
+        results,
+        info,
+        edge,
       };
     },
 
@@ -51,10 +60,17 @@ export function createRunJobManager({
       if (!job) {
         throw new Error(`no job`);
       }
+
+      const results = await job.getPrevRows();
+      const info = await job.getInfo();
+      const edge = getEdge({ results, info });
+
       return {
         jobId: job.id,
-        results: await job.getPrevRows(),
-        info: await job.getInfo(),
+        destinationTable: job.destinationTable,
+        results,
+        info,
+        edge,
       };
     },
 
@@ -67,10 +83,17 @@ export function createRunJobManager({
       if (!job) {
         throw new Error(`no job`);
       }
+
+      const results = await job.getNextRows();
+      const info = await job.getInfo();
+      const edge = getEdge({ results, info });
+
       return {
         jobId: job.id,
-        results: await job.getNextRows(),
-        info: await job.getInfo(),
+        destinationTable: job.destinationTable,
+        results,
+        info,
+        edge,
       };
     },
 
@@ -83,3 +106,24 @@ export function createRunJobManager({
     },
   };
 }
+
+export type Edge = {
+  readonly hasPrev: boolean;
+  readonly hasNext: boolean;
+};
+const getEdge = ({
+  results,
+  info,
+}: {
+  results: Results;
+  info: RunInfo;
+}): Edge => {
+  if (results.page.maxResults === undefined) {
+    return { hasPrev: false, hasNext: false };
+  }
+  const hasPrev = 0 < results.page.current;
+  const hasNext =
+    BigInt(results.page.maxResults) * BigInt(results.page.current + 1) <
+    BigInt(info.numRows);
+  return { hasPrev, hasNext };
+};

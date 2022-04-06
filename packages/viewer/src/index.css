@@ -11,6 +11,7 @@ body {
   padding: 0;
   background-color: var(--vscode-editor-background);
   border-color: var(--vscode-terminal-border);
+  line-height: 22px;
 }
 
 p {

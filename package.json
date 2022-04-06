@@ -11,7 +11,7 @@
   },
   "homepage": "https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner",
   "engines": {
-    "vscode": "^1.65.0"
+    "vscode": "^1.66.0"
   },
   "workspaces": [
     "packages/codegen",

@@ -1,4 +1,5 @@
 import { AuthenticationError, NoPageTokenError, Output } from "core";
+import { isNextEvent, isPrevEvent, ViewerEvent } from "core/src/types";
 import { readFile } from "fs/promises";
 import { Selection, ViewColumn, window } from "vscode";
 import { OutputChannel } from ".";
@@ -221,6 +222,17 @@ export function createRunner({
       }
       runJobManager.delete({ fileName });
       panelManager.delete({ fileName });
+    },
+
+    async onDidReceiveMessage(e: ViewerEvent) {
+      if (isPrevEvent(e)) {
+        await this.gotoPrevPage();
+        return;
+      }
+      if (isNextEvent(e)) {
+        await this.gotoNextPage();
+        return;
+      }
     },
 
     onDidDisposePanel({ fileName }: { readonly fileName: string }) {
