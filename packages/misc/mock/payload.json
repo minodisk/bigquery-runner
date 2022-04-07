@@ -3548,7 +3548,8 @@
       ]
     }
   ],
-  "page": { "rowsPerPage": 100, "current": 0 },
+  "page": { "maxResults": 100, "current": 0 },
   "numRows": "500",
-  "destinationTable": "minodisk-api._974002322e1183b3df64c0f31d9b6832d25246ef.anon813b4fb5cf5ec0dff7793dc57f07608737d8eebc"
+  "destinationTable": "minodisk-api._974002322e1183b3df64c0f31d9b6832d25246ef.anon813b4fb5cf5ec0dff7793dc57f07608737d8eebc",
+  "edge": { "hasPrev": false, "hasNext": true }
 }

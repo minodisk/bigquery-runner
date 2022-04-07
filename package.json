@@ -123,7 +123,7 @@
         "bigqueryRunner.queryValidation.debounceInterval": {
           "type": "number",
           "default": 600,
-          "description": "Debounce interval in milliseconds to validate the query when the file is modified."
+          "description": "[WILL BE RENAMED] Debounce interval in milliseconds to validate the query when the file is modified."
         },
         "bigqueryRunner.queryValidation.languageIds": {
           "type": "array",
@@ -131,7 +131,7 @@
             "bigquery",
             "sql-bigquery"
           ],
-          "description": "List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
+          "description": "[WILL BE RENAMED] List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
         },
         "bigqueryRunner.queryValidation.extensions": {
           "type": "array",

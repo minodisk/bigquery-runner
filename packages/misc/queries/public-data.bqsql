@@ -6,4 +6,4 @@ from
 where
     array_length(labels) < 3
 limit
-    500
+    580

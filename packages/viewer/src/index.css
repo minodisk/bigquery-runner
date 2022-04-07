@@ -19,7 +19,7 @@ p {
 }
 
 /* When loaded in VSCode, these settings will be overridden by variables of the same name set in the <html> of the webview. */
-:root {
+/* :root {
   --vscode-font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   --vscode-font-weight: normal;
   --vscode-font-size: 13px;
@@ -555,4 +555,4 @@ p {
   --vscode-gitDecoration-stageDeletedResourceForeground: #c74e39;
   --vscode-gitDecoration-conflictingResourceForeground: #b16286;
   --vscode-gitDecoration-submoduleResourceForeground: #8db9e2;
-}
+} */

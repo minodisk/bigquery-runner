@@ -95,13 +95,22 @@ export function isData(data: { source?: string }): data is Data<Event> {
   return data.source === "bigquery-runner";
 }
 
-export type Event = OpenEvent | CloseEvent | RowsEvent;
+export type Event = FocusedEvent | OpenEvent | CloseEvent | RowsEvent;
+
+export type FocusedEvent = {
+  event: "focused";
+  payload: {
+    focused: boolean;
+  };
+};
+export function isFocusedEvent(e: Event): e is FocusedEvent {
+  return e.event === "focused";
+}
 
 export type OpenEvent = {
   event: "open";
   payload: undefined;
 };
-
 export function isOpenEvent(e: Event): e is OpenEvent {
   return e.event === "open";
 }
@@ -110,7 +119,6 @@ export type CloseEvent = {
   event: "close";
   payload: undefined;
 };
-
 export function isCloseEvent(e: Event): e is CloseEvent {
   return e.event === "close";
 }
@@ -119,7 +127,6 @@ export type RowsEvent = {
   event: "rows";
   payload: Rows;
 };
-
 export type Rows = {
   header: Array<string>;
   rows: Array<NumberedRows>;
@@ -128,7 +135,6 @@ export type Rows = {
   destinationTable: string | undefined;
   edge: Edge;
 };
-
 export function isRowsEvent(e: Event): e is RowsEvent {
   return e.event === "rows";
 }

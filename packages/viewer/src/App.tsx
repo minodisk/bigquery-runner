@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import {
+  isFocusedEvent,
   isCloseEvent,
   isData,
   isOpenEvent,
@@ -33,8 +34,9 @@ const w = window as unknown as {
 const vscode = w.acquireVsCodeApi ? w.acquireVsCodeApi() : undefined;
 
 const App: FC = () => {
+  const [focused, setFocused] = useState(false);
   const [data, setData] = useState<Rows | undefined>(
-    /*payload ??*/ vscode?.getState()
+    /*payload ?? */ vscode?.getState()
   );
   const [loading, setLoading] = useState<string | undefined>("Initializing");
   const [isPending, startTransition] = (
@@ -60,6 +62,10 @@ const App: FC = () => {
         return;
       }
       const { payload } = data;
+      if (isFocusedEvent(payload)) {
+        setFocused(payload.payload.focused);
+        return;
+      }
       if (isOpenEvent(payload)) {
         setLoading("Fetching");
         return;
@@ -89,16 +95,10 @@ const App: FC = () => {
   }, [isPending]);
 
   return (
-    <Box>
-      <Nav current={current} onChange={setCurrent} />
+    <Box className={cx({ focused })}>
+      <Header current={current} loading={loading} onChange={setCurrent} />
       <div>
         <TabContent name="results" current={current}>
-          {loading ? (
-            <HStack className="loading" p={2} gap={1}>
-              <Spinner />
-              <Text color="weak">{loading}</Text>
-            </HStack>
-          ) : null}
           {data ? (
             <VStack>
               <table>
@@ -139,66 +139,14 @@ const App: FC = () => {
                   })}
                 </tbody>
               </table>
-              <Pagination
+              <Footer
                 page={data.page}
                 edge={data.edge}
                 rowsInPage={data.rows.length}
                 totalRows={data.numRows}
               />
             </VStack>
-          ) : (
-            <VStack>
-              <table>
-                <thead>
-                  <Tr>
-                    <Th>
-                      <Skeleton />
-                    </Th>
-                    <Th>
-                      <Skeleton />
-                    </Th>
-                    <Th>
-                      <Skeleton />
-                    </Th>
-                    <Th>
-                      <Skeleton />
-                    </Th>
-                    <Th>
-                      <Skeleton />
-                    </Th>
-                  </Tr>
-                </thead>
-                <tbody>
-                  {new Array(3).fill(null).map((_, i) => (
-                    <Tr key={i}>
-                      <Td>
-                        <Skeleton />
-                      </Td>
-                      <Td>
-                        <Skeleton />
-                      </Td>
-                      <Td>
-                        <Skeleton />
-                      </Td>
-                      <Td>
-                        <Skeleton />
-                      </Td>
-                      <Td>
-                        <Skeleton />
-                      </Td>
-                    </Tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <Tr>
-                    <Th colSpan={5}>
-                      <Skeleton />
-                    </Th>
-                  </Tr>
-                </tfoot>
-              </table>
-            </VStack>
-          )}
+          ) : null}
         </TabContent>
         <TabContent name="information" current={current}>
           {data ? (
@@ -236,38 +184,47 @@ const App: FC = () => {
   );
 };
 
-const Nav: FC<{
+const Header: FC<{
   readonly current: string;
+  readonly loading?: string;
   readonly onChange: (current: string) => void;
-}> = ({ current, onChange }) => (
-  <div className="nav">
-    <HStack className="tabs">
-      <Tab name="results" current={current} onChange={onChange}>
-        <Text align="center">Results</Text>
-      </Tab>
-      <Tab name="information" current={current} onChange={onChange}>
-        Job Information
-      </Tab>
-      {/* <Tab
+}> = ({ current, loading, onChange }) => (
+  <Box className="header">
+    <Flex justify="between" className="nav">
+      <HStack>
+        <Tab name="results" current={current} onChange={onChange}>
+          <UIText>Results</UIText>
+        </Tab>
+        <Tab name="information" current={current} onChange={onChange}>
+          <UIText>Job Information</UIText>
+        </Tab>
+        {/* <Tab
           name="formats"
           current={current}
           onChange={onChange}
         >
           Formats
         </Tab> */}
-    </HStack>
-  </div>
+      </HStack>
+      {loading ? (
+        <HStack reverse align="center" gap={1} px={2}>
+          <Spinner />
+          <UIText color="weak">{loading}</UIText>
+        </HStack>
+      ) : null}
+    </Flex>
+  </Box>
 );
 
-const Pagination: FC<{
+const Footer: FC<{
   readonly page?: Page;
   readonly edge: Edge;
   readonly rowsInPage: number;
   readonly totalRows: string;
 }> = ({ page, edge, rowsInPage, totalRows, ...props }) =>
   page?.maxResults === undefined ? null : (
-    <div className="paginationWrapper">
-      <Flex justify="between" className="pagination">
+    <Box className="footer">
+      <Flex justify="between" className="pagination" px={2}>
         <HStack gap={2} {...props}>
           {/* <StartButton onClick={() => vscode?.postMessage({ event: "start" })} /> */}
           <PrevButton
@@ -281,16 +238,16 @@ const Pagination: FC<{
           {/* <EndButton onClick={() => vscode?.postMessage({ event: "end" })} /> */}
         </HStack>
         <HStack gap={2} {...props}>
-          <Text color="weak">{page.maxResults * page.current + 1}</Text>
-          <Text color="weak">-</Text>
-          <Text color="weak">
+          <UIText color="weak">{page.maxResults * page.current + 1}</UIText>
+          <UIText color="weak">-</UIText>
+          <UIText color="weak">
             {page.maxResults * page.current + rowsInPage}
-          </Text>
-          <Text color="weak">/</Text>
-          <Text color="weak">{totalRows}</Text>
+          </UIText>
+          <UIText color="weak">of</UIText>
+          <UIText color="weak">{totalRows}</UIText>
         </HStack>
       </Flex>
-    </div>
+    </Box>
   );
 
 type BoxProps = {
@@ -314,14 +271,36 @@ const Box: XFC<BoxProps> = ({ className, p, px, py, gap, ...props }) => (
   />
 );
 
-type StackProps = BoxProps & {
-  readonly direction?: "vertical" | "horizontal";
+type FlexProps = BoxProps & {
+  readonly direction?: "horizontal" | "vertical";
+  readonly reverse?: boolean;
+  readonly justify?: "start" | "end" | "center" | "between" | "around";
+  readonly align?: "strech" | "start" | "end" | "center" | "baseline";
 };
-const Stack: XFC<StackProps> = ({ className, direction, ...props }) => (
+const Flex: XFC<FlexProps> = ({
+  className,
+  direction = "horizontal",
+  reverse = false,
+  justify = "start",
+  align = "strech",
+  ...props
+}) => (
   <Box
-    className={cx("stack", { [`stack-${direction}`]: true }, className)}
+    className={cx(
+      "flex",
+      `direction-${direction}`,
+      { reverse },
+      `justify-${justify}`,
+      `align-${align}`,
+      className
+    )}
     {...props}
   />
+);
+
+type StackProps = Omit<FlexProps, "justify">;
+const Stack: XFC<StackProps> = ({ className, ...props }) => (
+  <Flex className={cx("stack", className)} {...props} />
 );
 
 type VStackProps = Omit<StackProps, "direction">;
@@ -332,21 +311,6 @@ const VStack: XFC<VStackProps> = (props) => (
 type HStackProps = Omit<StackProps, "direction">;
 const HStack: XFC<HStackProps> = ({ ...props }) => (
   <Stack direction="horizontal" {...props} />
-);
-
-type FlexProps = StackProps & {
-  readonly justify?: "start" | "end" | "center" | "between" | "around";
-  readonly align?: "strech" | "start" | "end" | "center" | "baseline";
-};
-const Flex: XFC<FlexProps> = ({ className, justify, align, ...props }) => (
-  <Stack
-    className={cx(
-      "flex",
-      { [`justify-${justify}`]: !!justify, [`align-${align}`]: !!align },
-      className
-    )}
-    {...props}
-  />
 );
 
 const Tr: XFC<HTMLProps<HTMLTableRowElement>> = ({ className, ...props }) => (
@@ -369,20 +333,28 @@ const RowNumberTd: typeof Td = ({ className, ...props }) => (
   <Td className={cx("rowNumber", className)} {...props} />
 );
 
-const Text: XFC<{ color?: "weak"; align?: "center" }> = ({
-  className,
-  color,
-  align,
-  ...props
-}) => (
+type TextProps = {
+  color?: "weak";
+  align?: "center";
+  size?: 1 | 2 | 3;
+};
+const Text: XFC<TextProps> = ({ className, color, align, ...props }) => (
   <span
     className={cx(
       "text",
-      { weakColor: color === "weak", alignCenter: align === "center" },
+      {
+        weakColor: color === "weak",
+        alignCenter: align === "center",
+      },
       className
     )}
     {...props}
   />
+);
+
+type UITextProps = TextProps;
+const UIText: XFC<UITextProps> = ({ className, ...props }) => (
+  <Text className={cx("ui", className)} {...props} />
 );
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>;
@@ -430,7 +402,7 @@ const IconButton: XFC<IconButtonProps> = ({ className, ...props }) => (
 //       strokeLinejoin="round"
 //       strokeMiterlimit="2"
 //     >
-//       <path d="m7.225 8 4.357 4.357-.618.62-4.667-4.67V7.69l4.667-4.667.618.62L7.225 8ZM4.418 3.024h.879v9.953h-.88z" />
+//       <path d="M6 12.976H5V3.023h1zm1-4.592 4.593 4.592.707-.707L8.031 8 12.3 3.731l-.707-.708L7 7.616v.768Z" />
 //     </svg>
 //   </IconButton>
 // );
@@ -447,13 +419,13 @@ const IconButton: XFC<IconButtonProps> = ({ className, ...props }) => (
 //       strokeLinejoin="round"
 //       strokeMiterlimit="2"
 //     >
-//       <path d="M8.775 8 4.418 3.643l.618-.62 4.667 4.67v.617l-4.667 4.666-.618-.619L8.775 8Zm1.928-4.976h.879v9.953h-.88z" />
+//       <path d="M10 3.024h1v9.953h-1zM9 7.616 4.407 3.024l-.707.707L7.969 8 3.7 12.269l.707.708L9 8.384v-.768Z" />
 //     </svg>
 //   </IconButton>
 // );
 
 const PrevButton: VFC<IconButtonProps> = (props) => (
-  <IconButton {...props}>
+  <IconButton title="Previous" {...props}>
     <svg
       width="16"
       height="16"
@@ -464,13 +436,13 @@ const PrevButton: VFC<IconButtonProps> = (props) => (
       strokeLinejoin="round"
       strokeMiterlimit="2"
     >
-      <path d="m6.285 8 4.357 4.357-.617.62-4.668-4.67V7.69l4.667-4.667.619.62L6.285 8Z" />
+      <path d="m5 8.384 4.593 4.592.707-.707L6.031 8 10.3 3.731l-.707-.708L5 7.616v.768Z" />
     </svg>
   </IconButton>
 );
 
 const NextButton: VFC<IconButtonProps> = (props) => (
-  <IconButton {...props}>
+  <IconButton title="Next" {...props}>
     <svg
       width="16"
       height="16"
@@ -481,13 +453,13 @@ const NextButton: VFC<IconButtonProps> = (props) => (
       strokeLinejoin="round"
       strokeMiterlimit="2"
     >
-      <path d="M9.714 8 5.357 3.643l.619-.62 4.667 4.67v.617l-4.668 4.666-.617-.619L9.713 8Z" />
+      <path d="M11 7.616 6.407 3.024l-.707.707L9.969 8 5.7 12.269l.707.708L11 8.384v-.768Z" />
     </svg>
   </IconButton>
 );
 
 const CopyButton: VFC<IconButtonProps> = (props) => (
-  <IconButton {...props}>
+  <IconButton title="Copy" {...props}>
     <svg
       width="16"
       height="16"
@@ -508,6 +480,23 @@ const CopyButton: VFC<IconButtonProps> = (props) => (
   </IconButton>
 );
 
+const Spinner: FC = () => (
+  <svg
+    width="16"
+    height="16"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlSpace="preserve"
+    fillRule="evenodd"
+    clipRule="evenodd"
+    strokeLinejoin="round"
+    strokeMiterlimit="2"
+    fill="currentColor"
+    className="spinner"
+  >
+    <path d="M1.07 7A7.009 7.009 0 0 1 8 1.006 7.009 7.009 0 0 1 14.93 7h-1.006A6.005 6.005 0 0 0 8 1.957 6.005 6.005 0 0 0 2.076 7H1.07Z" />
+  </svg>
+);
+
 const Tab: XFC<
   Omit<ButtonProps, "onChange"> & {
     name: string;
@@ -525,7 +514,7 @@ const Tab: XFC<
   >
     <VStack>
       {children}
-      <span className="tab-border" />
+      <Box className="tabBorder" />
     </VStack>
   </Button>
 );
@@ -544,8 +533,6 @@ const TabContent: XFC<{
   );
 };
 
-const Spinner: FC = () => <div className="spinner" />;
-
-const Skeleton: FC = () => <div className="skeleton" />;
+// const Skeleton: FC = () => <div className="skeleton" />;
 
 export default App;

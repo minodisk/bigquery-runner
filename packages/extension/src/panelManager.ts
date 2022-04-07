@@ -1,4 +1,4 @@
-import { ViewerEvent } from "core/src/types";
+import { Data, FocusedEvent, ViewerEvent } from "core/src/types";
 import { readFile } from "fs/promises";
 import { basename, join } from "path";
 import {
@@ -80,6 +80,18 @@ export function createPanelManager({
       panel.webview.onDidReceiveMessage((e: ViewerEvent) => {
         onDidReceiveMessage(e);
       });
+      panel.onDidChangeViewState(
+        async (e) =>
+          await panel.webview.postMessage({
+            source: "bigquery-runner",
+            payload: {
+              event: "focused",
+              payload: {
+                focused: e.webviewPanel.active,
+              },
+            },
+          } as Data<FocusedEvent>)
+      );
       panel.onDidDispose(() => {
         onDidDisposePanel({ fileName });
       });
