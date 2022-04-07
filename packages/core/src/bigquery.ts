@@ -131,6 +131,7 @@ export async function createClient(options: BigQueryOptions) {
   return {
     async createRunJob(query: Omit<Query, "dryRun">): Promise<{
       id: string;
+      destinationTable: string | undefined;
       getRows(): Promise<Results>;
       getPrevRows(): Promise<Results>;
       getNextRows(): Promise<Results>;
@@ -168,12 +169,10 @@ export async function createClient(options: BigQueryOptions) {
           await sleep(1000);
         }
 
-        const { projectId, datasetId, tableId } =
-          info.configuration.query.destinationTable;
         return this.createRunJob({
           ...query,
-          query: `select * from \`${[projectId, datasetId, tableId].join(
-            "."
+          query: `select * from \`${datasourceName(
+            info.configuration.query.destinationTable
           )}\``,
         });
       }
@@ -183,72 +182,75 @@ export async function createClient(options: BigQueryOptions) {
       }
 
       const tokens: Map<number, string | null> = new Map([[0, null]]);
-      let page = 0;
+      let current = 0;
+
       return {
         id: job.id,
+
+        destinationTable: datasourceName(
+          info.configuration?.query?.destinationTable
+        ),
+
         async getRows(): Promise<Results> {
           const [structs, next] = await job.getQueryResults({
             maxResults: query.maxResults,
           });
           if (next?.pageToken) {
-            tokens.set(page + 1, next.pageToken);
+            tokens.set(current + 1, next.pageToken);
           }
           return {
             structs,
-            page: query.maxResults
-              ? {
-                  rowsPerPage: query.maxResults,
-                  current: page,
-                }
-              : undefined,
+            page: {
+              maxResults: query.maxResults,
+              current,
+            },
           };
         },
+
         async getPrevRows(): Promise<Results> {
-          const pageToken = tokens.get(page - 1);
+          const pageToken = tokens.get(current - 1);
           if (pageToken === undefined) {
-            throw new NoPageTokenError(page - 1);
+            throw new NoPageTokenError(current - 1);
           }
-          page -= 1;
+          current -= 1;
           const [rows, next] = await job.getQueryResults({
             maxResults: query.maxResults,
             pageToken: pageToken ?? undefined,
           });
           if (next?.pageToken) {
-            tokens.set(page + 1, next.pageToken);
+            tokens.set(current + 1, next.pageToken);
           }
           return {
             structs: rows,
-            page: query.maxResults
-              ? {
-                  rowsPerPage: query.maxResults,
-                  current: page,
-                }
-              : undefined,
+            page: {
+              maxResults: query.maxResults,
+              current,
+            },
           };
         },
+
         async getNextRows(): Promise<Results> {
-          const pageToken = tokens.get(page + 1);
+          const pageToken = tokens.get(current + 1);
           if (pageToken === undefined) {
-            throw new NoPageTokenError(page + 1);
+            throw new NoPageTokenError(current + 1);
           }
-          page += 1;
+          current += 1;
           const [rows, next] = await job.getQueryResults({
             maxResults: query.maxResults,
             pageToken: pageToken ?? undefined,
           });
           if (next?.pageToken) {
-            tokens.set(page + 1, next.pageToken);
+            tokens.set(current + 1, next.pageToken);
           }
           return {
             structs: rows,
-            page: query.maxResults
-              ? {
-                  rowsPerPage: query.maxResults,
-                  current: page,
-                }
-              : undefined,
+            page: {
+              maxResults: query.maxResults,
+              current,
+            },
           };
         },
+
         async getInfo() {
           let jobInfo: JobInfo;
           for (;;) {
@@ -299,6 +301,7 @@ export async function createClient(options: BigQueryOptions) {
         },
       };
     },
+
     async createDryRunJob(query: Omit<Query, "dryRun">) {
       const data = await bigQuery.createQueryJob({ ...query, dryRun: true });
       const job = data[0];
@@ -321,6 +324,18 @@ export async function createClient(options: BigQueryOptions) {
       };
     },
   };
+}
+
+function datasourceName(table?: {
+  projectId?: string;
+  datasetId?: string;
+  tableId?: string;
+}): string | undefined {
+  if (!table) {
+    return;
+  }
+  const { projectId, datasetId, tableId } = table;
+  return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
 }
 
 async function sleep(ms: number): Promise<void> {

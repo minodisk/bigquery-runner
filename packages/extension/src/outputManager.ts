@@ -71,9 +71,9 @@ export function createOutputManager({
               formatter.type
             )}`
           );
+          await mkdirp(dirname);
           const stream = createWriteStream(path, "utf-8");
 
-          await mkdirp(dirname);
           return createFileOutput({
             formatter,
             stream,

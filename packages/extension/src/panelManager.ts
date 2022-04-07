@@ -1,3 +1,4 @@
+import { Data, FocusedEvent, ViewerEvent } from "core/src/types";
 import { readFile } from "fs/promises";
 import { basename, join } from "path";
 import {
@@ -14,10 +15,12 @@ export type PanelManager = ReturnType<typeof createPanelManager>;
 export function createPanelManager({
   ctx,
   configManager,
+  onDidReceiveMessage,
   onDidDisposePanel,
 }: {
   readonly ctx: ExtensionContext;
   readonly configManager: ConfigManager;
+  readonly onDidReceiveMessage: (e: ViewerEvent) => unknown;
   readonly onDidDisposePanel: (e: { readonly fileName: string }) => unknown;
 }) {
   const map: Map<string, WebviewPanel> = new Map();
@@ -74,6 +77,21 @@ export function createPanelManager({
         join(ctx.extensionPath, "out/assets/icon-small.png")
       );
       panel.webview.html = html;
+      panel.webview.onDidReceiveMessage((e: ViewerEvent) => {
+        onDidReceiveMessage(e);
+      });
+      panel.onDidChangeViewState(
+        async (e) =>
+          await panel.webview.postMessage({
+            source: "bigquery-runner",
+            payload: {
+              event: "focused",
+              payload: {
+                focused: e.webviewPanel.active,
+              },
+            },
+          } as Data<FocusedEvent>)
+      );
       panel.onDidDispose(() => {
         onDidDisposePanel({ fileName });
       });

@@ -34,6 +34,7 @@ import { createPanelManager } from "./panelManager";
 import { createRunJobManager } from "./runJobManager";
 import { createRenderer } from "./renderer";
 import { createOutputManager } from "./outputManager";
+import { ViewerEvent } from "core/src/types";
 
 export type OutputChannel = Pick<
   OrigOutputChannel,
@@ -61,6 +62,10 @@ export async function activate(
       dependencies?.outputChannel ?? window.createOutputChannel(title);
     ctx.subscriptions.push(outputChannel);
 
+    const onDidReceiveMessage = (e: ViewerEvent) => {
+      runner.onDidReceiveMessage(e);
+    };
+
     const onDidDisposePanel = (e: { readonly fileName: string }) => {
       runner.onDidDisposePanel(e);
     };
@@ -69,6 +74,7 @@ export async function activate(
     const panelManager = createPanelManager({
       ctx,
       configManager,
+      onDidReceiveMessage,
       onDidDisposePanel,
     });
     const outputManager = createOutputManager({

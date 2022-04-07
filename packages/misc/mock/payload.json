@@ -1,0 +1,3555 @@
+{
+  "header": ["en_label", "descriptions.language", "descriptions.value"],
+  "rows": [
+    {
+      "rowNumber": 1,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Sylhet Royals" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "cricket team from Sylhet, Bangladesh"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bn" },
+          {
+            "id": "descriptions.value",
+            "value": "বাংলাদেশের সিলেটের একটি ক্রিকেট দল"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 2,
+      "rows": [
+        [
+          { "id": "en_label", "value": "dialogic management" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "management theory developed by Jendrik Petersen"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 3,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Gibraltar Cruise Terminal" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "haven" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "pelabuhan" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "Hafen im Vereinigten Königreich"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 4,
+      "rows": [
+        [
+          { "id": "en_label", "value": "In Blue Tour" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "concert tour" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "cs" },
+          {
+            "id": "descriptions.value",
+            "value": "koncertní turné skupiny The Corrs"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 5,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Royal Gibraltar Yacht Club" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "yacht club" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 6,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Block DM-5 17S40" },
+          { "id": "descriptions.language", "value": "gl" },
+          { "id": "descriptions.value", "value": "Foguete espacial ruso." }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Russian space rocket used as a space tug"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 7,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Block L Molniya 8K78M" },
+          { "id": "descriptions.language", "value": "gl" },
+          { "id": "descriptions.value", "value": "Foguete espacial soviético." }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Russian space rocket used as a space tug"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 8,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Block L Molniya 8K78" },
+          { "id": "descriptions.language", "value": "gl" },
+          { "id": "descriptions.value", "value": "Foguete espacial soviético." }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Russian space rocket used as a space tug"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 9,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Block DM-2 11S861" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Foguete espacial ruso/soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Russian space rocket used as a space tug"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 10,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Block D 11S824" },
+          { "id": "descriptions.language", "value": "gl" },
+          { "id": "descriptions.value", "value": "Foguete espacial soviético." }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Russian space rocket used as a space tug"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 11,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Block DM-2M 11S861-01" },
+          { "id": "descriptions.language", "value": "gl" },
+          { "id": "descriptions.value", "value": "Foguete espacial ruso." }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Russian space rocket used as a space tug"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 12,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Block DM 11S86" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Foguete espacial ruso/soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Russian space rocket used as a space tug"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 13,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Block D-2 11S824F" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Foguete espacial ruso/soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Russian space rocket used as a space tug"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 14,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Federal Office for Goods Transport" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "die für das (gewerbliche) Güter-Verkehrswesen in Deutschland zuständige selbstständige Bundesoberbehörde im Geschäftsbereich des Bundesministeriums für Verkehr und digitale Infrastruktur"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "German federal authority" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 15,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Yearbook for Media and History" },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "medienhistorische Buchreihe" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "annual academic journal" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 16,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Victoria Jubilee Town Hall" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "city hall" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "gemeentehuis in India" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "balai kota" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ace" },
+          { "id": "descriptions.value", "value": "balè banda" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "bâtiment en Inde" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 17,
+      "rows": [
+        [
+          { "id": "en_label", "value": "White English Bulldog" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "dog bread" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "hondenras" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 18,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Murray River Curly Coated Retriever" },
+          { "id": "descriptions.language", "value": "ja" },
+          { "id": "descriptions.value", "value": "犬種" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "Breed of dog" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "hondenras" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 19,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Abramov Klin" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "Упразднённая деревня в Ленинградской области России"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "abolished village in the Leningrad region , burned by German troops during World War II"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 20,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Morning offering" },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "preghiera cattolica detta da un individuo all'inizio della giornata"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "catholic prayer said at the start of the day"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 21,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "Encyclopedia of Transbaikalia person ID"
+          },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "identifier for a person in the online encyclopedia of Transbaikalia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "идентификатор персоналии в Энциклопедии Забайкалья"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 22,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Encyclopedia of Transbaikalia ID" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "identifier of an article in the online encyclopedia of Transbaikalia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "идентификатор статьи в Энциклопедии Забайкалья"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 23,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "Madrean Discovery Expeditions Fauna Database ID"
+          },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "identifier of an animal species in the Madrean Discovery Expeditions Fauna Database"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 24,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "Madrean Discovery Expeditions Flora Database ID"
+          },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "identifier of a plant species in the Madrean Discovery Expeditions Flora Database"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 25,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "Thorngate's postulate of commensurate complexity"
+          },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "description of a phenomenon in social science theorizing"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "Beschreibung eines sozialwissenschaftlichen Phänomens"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 26,
+      "rows": [
+        [
+          { "id": "en_label", "value": "GEONAM Austria" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "database for geographic place names"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "Datenbank für geographische Ortsbezeichnungen (Toponymika) in Österreich"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 27,
+      "rows": [
+        [
+          { "id": "en_label", "value": "DÖF sun-wire system of caves" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "cave system in Austria" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "Höhlensystem des Toten Gebirges unweit der Tauplitzalm, Steiermark, Österreich"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "كهف في شتايرمارك، النمسا" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 28,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Austrian signaling network" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "coordinate system" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "kartesisches Koordinatensystem einen Punkt der Erde eine Koordinate zuzuordnen"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 29,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Berger cave" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "cave in Tennengebirge, Salzburg"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "Höhlensystem im Tennengebirge im österreichischen Bundesland Salzburg"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "كهف في سالزبورغ، النمسا" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 30,
+      "rows": [
+        [
+          { "id": "en_label", "value": "1998 JGTC season" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "season of the All-Japan Grand Touring Car Championship"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "sportseizoen van een competitie"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 31,
+      "rows": [
+        [
+          { "id": "en_label", "value": "USCGC Burton Island" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "United States Navy Wind-class icebreaker"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 32,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "Brown coal mining limits in North Bohemia"
+          },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 33,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Order of Railroad Telegraphers" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "United States labor union established in the late nineteenth century to promote the interests of telegraph operators working for the railroads"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 34,
+      "rows": [
+        [
+          { "id": "en_label", "value": "DS-U2-MG" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Modelo de satélite artificial soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "soviet satelite model" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 35,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Hallila" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Neighbourhood of Seinäjoki, Finland"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fi" },
+          { "id": "descriptions.value", "value": "kaupunginosa Seinäjoella" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 36,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Kultavuori" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Neighbourhood of Seinäjoki, Finland"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fi" },
+          { "id": "descriptions.value", "value": "asuinalue Seinäjoella" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 37,
+      "rows": [
+        [
+          { "id": "en_label", "value": "DS-U2-V" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Modelo de satélite artificial soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "soviet satelite model" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 38,
+      "rows": [
+        [
+          { "id": "en_label", "value": "DS-U2-D" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Modelo de satélites artificiais soviéticos."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "soviet satelite model" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 39,
+      "rows": [
+        [
+          { "id": "en_label", "value": "DS-U2-M" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Modelo de satélite artificial soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "soviet satelite model" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 40,
+      "rows": [
+        [
+          { "id": "en_label", "value": "DS-U2-GKA" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Modelo de satélite artificial soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "soviet satelite model" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 41,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Bacino carbonifero del Sulcis" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Mining area located in the south-west coast of Sardinia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "it" },
+          { "id": "descriptions.value", "value": "zona mineraria sarda" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 42,
+      "rows": [
+        [
+          { "id": "en_label", "value": "DS-U2-GK" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Modelo de satélite artificial soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "soviet satelite model" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 43,
+      "rows": [
+        [
+          { "id": "en_label", "value": "DS-U2-MP" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "Modelo de satélite artificial soviético."
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "soviet satelite model" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 44,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "1996 Argentina rugby union tour of England"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 45,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2003 Argentina rugby union tour of South Africa"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 46,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "1999 Argentina rugby union tour of Scotland and Ireland"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 47,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2000 Argentina rugby union tour of Australia and England"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 48,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "1994 Argentina rugby union tour of South Africa"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 49,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2002 Argentina rugby union tour of South Africa and Europe"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 50,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2001 Argentina rugby union tour of New Zealand and Great Britain"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 51,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "1998 Argentina rugby union tour of Japan and Europe"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 52,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "1992 Argentina rugby union tour of Europe"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 53,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "1997 Argentina rugby union tour of New Zealand"
+          },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "serie di incontri di rugby disputati dalla nazionale argentina"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "series of sporting events" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 54,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2009 KNSB Dutch Allround Championships"
+          },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 55,
+      "rows": [
+        [
+          { "id": "en_label", "value": "St. Andreas" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "Evangelisches Kirchengebäude in Weißenburg in Bayern"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "église allemande" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "kerkgebouw in Duitsland" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "church in Weißenburg in Bayern, Franconia, Germany"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "kishë" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          {
+            "id": "descriptions.value",
+            "value": "موقع أثري في فايسنبورغ إن بايرن، ألمانيا"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 56,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Ipoh–Lumut Expressway" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "road" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "he" },
+          { "id": "descriptions.value", "value": "כביש במלזיה" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "weg in Maleisië" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "rrugë" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "jalan di Malaysia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Straße in Malaysia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ga" },
+          { "id": "descriptions.value", "value": "bóthar" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 57,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Rakitinsky sanctuary" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "Региональный ботанический заказник в Ленинградской области России"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 58,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Krasnogvardeysk Fortified Region" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "воинское формирование РККА СССР в Великой Отечественной войне"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 59,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "squadra di pallacanestro di Bologna"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "es" },
+          { "id": "descriptions.value", "value": "equipo de baloncesto" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "basketbal-vereniging uit Italië"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "ناد رياضي في إيطاليا" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 60,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "Protocol Amending the Single Convention on Narcotic Drugs"
+          },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Völkerrechtlicher Vertrag" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "1972 drug control treaty" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 61,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Buena Vista Winery" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "winery in California" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "wijngoed in Sonoma, Verenigde Staten van Amerika"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 62,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Freehold tram stop" },
+          { "id": "descriptions.language", "value": "fr" },
+          {
+            "id": "descriptions.value",
+            "value": "gare ferroviaire britannique"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "spoorwegstation in het Verenigd Koninkrijk"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ja" },
+          { "id": "descriptions.value", "value": "イングランドの鉄道駅" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "railway station" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 63,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Kasperi" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Neighbourhood of Seinäjoki, Finland"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fi" },
+          { "id": "descriptions.value", "value": "Seinäjoen kaupunginosa" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 64,
+      "rows": [
+        [
+          { "id": "en_label", "value": "House of the station master" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "Литературно-мемориальный музей в деревне Выра Гатчинского района Ленинградской области России"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "literary-memorial museum" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "museum" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "متحف في روسيا" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "museum in Gattsjinskiy rayon, Rusland"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Museum in Russland" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pt" },
+          {
+            "id": "descriptions.value",
+            "value": "Museu em Distrito de Gatchinski, Rússia"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 65,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "University Hospitals of the Ruhr-University of Bochum"
+          },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "Verband von acht Universitätskliniken"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "syndicate of eight university hospitals and associated facilities of the Ruhr University of Bochum"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "ziekenhuis in Duitsland" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "he" },
+          { "id": "descriptions.value", "value": "בית חולים בגרמניה" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "rumah sakit di Jerman" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "مستشفى" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ko" },
+          { "id": "descriptions.value", "value": "병원" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 66,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Antisemitism" },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bg" },
+          { "id": "descriptions.value", "value": "Уикимедия списък" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "eo" },
+          { "id": "descriptions.value", "value": "Listartikolo en Vikipedio" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pl" },
+          { "id": "descriptions.value", "value": "lista w projekcie Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "قائمة ويكيميديا" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "es" },
+          {
+            "id": "descriptions.value",
+            "value": "artículo de lista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "si" },
+          { "id": "descriptions.value", "value": "විකිමීඩියා ලැයිස්තු ලිපිය" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "liste d'un projet Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "el" },
+          {
+            "id": "descriptions.value",
+            "value": "κατάλογος εγχειρήματος Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "uk" },
+          {
+            "id": "descriptions.value",
+            "value": "стаття-список у проекті Вікімедіа"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hant" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de-at" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sk" },
+          {
+            "id": "descriptions.value",
+            "value": "zoznamový článok projektov Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bs" },
+          { "id": "descriptions.value", "value": "spisak na Wikimediji" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "yi" },
+          { "id": "descriptions.value", "value": "וויקימעדיע ליסטע" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ta" },
+          { "id": "descriptions.value", "value": "விக்கிப்பீடியா:பட்டியலிடல்" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hk" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "Wikimedia-lijst" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "lista di un progetto Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "he" },
+          { "id": "descriptions.value", "value": "רשימת ערכים" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "vi" },
+          {
+            "id": "descriptions.value",
+            "value": "bài viết danh sách Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "artigo de listas da Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-tw" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hans" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "lb" },
+          { "id": "descriptions.value", "value": "Wikimedia-Lëschtenartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "oc" },
+          {
+            "id": "descriptions.value",
+            "value": "lista d'un projècte Wikimèdia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-mo" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ca" },
+          {
+            "id": "descriptions.value",
+            "value": "article de llista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sl" },
+          { "id": "descriptions.value", "value": "seznam Wikimedije" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de-ch" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "cs" },
+          {
+            "id": "descriptions.value",
+            "value": "seznam na projektech Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "as" },
+          {
+            "id": "descriptions.value",
+            "value": "ৱিকিপিডিয়া:ৰচনাশৈলীৰ হাতপুথি"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "be" },
+          {
+            "id": "descriptions.value",
+            "value": "спіс артыкулаў у адным з праектаў Вікімедыя"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "hr" },
+          { "id": "descriptions.value", "value": "popis na Wikimediji" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nb" },
+          { "id": "descriptions.value", "value": "Wikimedia-listeartikkel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ja" },
+          { "id": "descriptions.value", "value": "ウィキメディアの一覧記事" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ko" },
+          { "id": "descriptions.value", "value": "위키미디어 목록 항목" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sr" },
+          { "id": "descriptions.value", "value": "списак на Викимедији" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "статья-список в проекте Викимедиа"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bn" },
+          { "id": "descriptions.value", "value": "উইকিমিডিয়ার তালিকা নিবন্ধ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "hy" },
+          { "id": "descriptions.value", "value": "Վիքիմեդիայի նախագծի ցանկ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "da" },
+          { "id": "descriptions.value", "value": "Wikimedia liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-my" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-sg" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sv" },
+          { "id": "descriptions.value", "value": "Wikimedia-listartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-cn" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fi" },
+          { "id": "descriptions.value", "value": "Wikimedia-luetteloartikkeli" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en-ca" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ia" },
+          {
+            "id": "descriptions.value",
+            "value": "lista de un projecto de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "af" },
+          { "id": "descriptions.value", "value": "Wikimedia lysartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ace" },
+          { "id": "descriptions.value", "value": "teunuléh dapeuta Wikimèdia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en-gb" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ast" },
+          {
+            "id": "descriptions.value",
+            "value": "artículu de llista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sco" },
+          { "id": "descriptions.value", "value": "Wikimedia leet airticle" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "eu" },
+          {
+            "id": "descriptions.value",
+            "value": "Wikimediako zerrenda artikulua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg" },
+          { "id": "descriptions.value", "value": "саҳифаи феҳристӣ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "mk" },
+          {
+            "id": "descriptions.value",
+            "value": "список на статии на Викимедија"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ro" },
+          {
+            "id": "descriptions.value",
+            "value": "articol-listă în cadrul unui proiect Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tr" },
+          { "id": "descriptions.value", "value": "Vikimedya liste maddesi" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ba" },
+          { "id": "descriptions.value", "value": "Wikimedia-Listn" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ms" },
+          { "id": "descriptions.value", "value": "rencana senarai Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "th" },
+          { "id": "descriptions.value", "value": "บทความรายชื่อวิกิมีเดีย" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nn" },
+          { "id": "descriptions.value", "value": "Wikimedia-listeartikkel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "yo" },
+          { "id": "descriptions.value", "value": "ojúewé àtojọ Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "artikull-listë e Wikimedias" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fy" },
+          { "id": "descriptions.value", "value": "Wikimedia-list" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "an" },
+          {
+            "id": "descriptions.value",
+            "value": "articlo de lista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg-cyrl" },
+          { "id": "descriptions.value", "value": "мақолаи феҳристӣ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "artikel daftar Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg-latn" },
+          { "id": "descriptions.value", "value": "sahifai fehristī" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zea" },
+          { "id": "descriptions.value", "value": "Wikimedia-lieste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "li" },
+          { "id": "descriptions.value", "value": "Wikimedia-lies" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pap" },
+          { "id": "descriptions.value", "value": "lista di Wikimedia" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 67,
+      "rows": [
+        [
+          { "id": "en_label", "value": "reservation policy in Tamil Nadu" },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 68,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Sekolah Berasrama Penuh" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "boarding school" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Internat in Malaysia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ms" },
+          { "id": "descriptions.value", "value": "jenis sekolah di Malaysia" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 69,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Turks in Moena" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "immigrant group in Italy" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 70,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "commandant" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ja" },
+          {
+            "id": "descriptions.value",
+            "value": "戦国時代から安土桃山時代の武将。長宗我部氏の家臣。土佐長岡郡池城主。細川義俊--細川定輔（十市細川氏）-池頼定（次男、池城主）-頼和。"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 71,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 72,
+      "rows": [
+        [
+          { "id": "en_label", "value": "2003 JGTC season" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "sports season" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "sportseizoen van een competitie"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "موسم رياضي في اليابان" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 73,
+      "rows": [
+        [
+          { "id": "en_label", "value": "No Es Lo Mismo Tour" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "concert tour" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "es" },
+          {
+            "id": "descriptions.value",
+            "value": "Gira/Tour musical de Alejandro Sanz"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          {
+            "id": "descriptions.value",
+            "value": "جولة موسيقية من أداء أليخاندرو صانز"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 74,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Pizza California" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "Japanese pizza chain" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "pizzeria restaurantketen in Japan"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 75,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2010 KNSB Dutch Single Distance Championships – Women's 1500 m"
+          },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 76,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Artist subsidy" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "regulation" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 77,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2011 KNSB Dutch Single Distance Championships – Men's 500 m"
+          },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 78,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2010 KNSB Dutch Single Distance Championships – Men's 5000 m"
+          },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 79,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2010 KNSB Dutch Single Distance Championships – Men's 1500 m"
+          },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "Dutch speed skating competition"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 80,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Canon ELPH" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "series of APS film cameras" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 81,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Thoothukudi" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "2006 film by Sanjay Ram" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "film sorti en 2006" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "film uit 2006 van Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "oc" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2006 dirigit per Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ca" },
+          {
+            "id": "descriptions.value",
+            "value": "pel·lícula de 2006 dirigida per Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pt" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2006 dirigido por Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ast" },
+          {
+            "id": "descriptions.value",
+            "value": "película de 2006 dirixida por Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "he" },
+          { "id": "descriptions.value", "value": "סרט משנת 2006" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "film del 2006 diretto da Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2006 dirixido por Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ext" },
+          {
+            "id": "descriptions.value",
+            "value": "pinicla de 2006 dirigía por Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "an" },
+          {
+            "id": "descriptions.value",
+            "value": "cinta de 2006 dirichita por Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Film von Sanjay Ram (2006)" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sv" },
+          {
+            "id": "descriptions.value",
+            "value": "film från 2006 regisserad av Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "es" },
+          {
+            "id": "descriptions.value",
+            "value": "película de 2006 dirigida por Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "film" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "فيلم أنتج عام 2006" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "et" },
+          {
+            "id": "descriptions.value",
+            "value": "2006. aasta film, lavastanud Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ro" },
+          {
+            "id": "descriptions.value",
+            "value": "film din 2006 regizat de Sanjay Ram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fy" },
+          { "id": "descriptions.value", "value": "film út 2006 fan Sanjay Ram" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "film India oleh Sanjay Ram" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 82,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "seven noble families of Tosa Province from the Muromachi period to the Sengoku period"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 83,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "National Register of Historic Places listings in Champaign County"
+          },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bg" },
+          { "id": "descriptions.value", "value": "Уикимедия списък" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "eo" },
+          { "id": "descriptions.value", "value": "Listartikolo en Vikipedio" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pl" },
+          { "id": "descriptions.value", "value": "lista w projekcie Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "قائمة ويكيميديا" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "es" },
+          {
+            "id": "descriptions.value",
+            "value": "artículo de lista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "si" },
+          { "id": "descriptions.value", "value": "විකිමීඩියා ලැයිස්තු ලිපිය" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "liste d'un projet Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "el" },
+          {
+            "id": "descriptions.value",
+            "value": "κατάλογος εγχειρήματος Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "uk" },
+          {
+            "id": "descriptions.value",
+            "value": "стаття-список у проекті Вікімедіа"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hant" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de-at" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sk" },
+          {
+            "id": "descriptions.value",
+            "value": "zoznamový článok projektov Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bs" },
+          { "id": "descriptions.value", "value": "spisak na Wikimediji" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "yi" },
+          { "id": "descriptions.value", "value": "וויקימעדיע ליסטע" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ta" },
+          { "id": "descriptions.value", "value": "விக்கிப்பீடியா:பட்டியலிடல்" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hk" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "Wikimedia-lijst" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "lista di un progetto Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "he" },
+          { "id": "descriptions.value", "value": "רשימת ערכים" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "vi" },
+          {
+            "id": "descriptions.value",
+            "value": "bài viết danh sách Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "artigo de listas da Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-tw" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hans" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "lb" },
+          { "id": "descriptions.value", "value": "Wikimedia-Lëschtenartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "oc" },
+          {
+            "id": "descriptions.value",
+            "value": "lista d'un projècte Wikimèdia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-mo" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ca" },
+          {
+            "id": "descriptions.value",
+            "value": "article de llista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sl" },
+          { "id": "descriptions.value", "value": "seznam Wikimedije" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de-ch" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "cs" },
+          {
+            "id": "descriptions.value",
+            "value": "seznam na projektech Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "as" },
+          {
+            "id": "descriptions.value",
+            "value": "ৱিকিপিডিয়া:ৰচনাশৈলীৰ হাতপুথি"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "be" },
+          {
+            "id": "descriptions.value",
+            "value": "спіс артыкулаў у адным з праектаў Вікімедыя"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "hr" },
+          { "id": "descriptions.value", "value": "popis na Wikimediji" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nb" },
+          { "id": "descriptions.value", "value": "Wikimedia-listeartikkel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ja" },
+          { "id": "descriptions.value", "value": "ウィキメディアの一覧記事" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ko" },
+          { "id": "descriptions.value", "value": "위키미디어 목록 항목" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sr" },
+          { "id": "descriptions.value", "value": "списак на Викимедији" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "статья-список в проекте Викимедиа"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bn" },
+          { "id": "descriptions.value", "value": "উইকিমিডিয়ার তালিকা নিবন্ধ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "hy" },
+          { "id": "descriptions.value", "value": "Վիքիմեդիայի նախագծի ցանկ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "da" },
+          { "id": "descriptions.value", "value": "Wikimedia liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-my" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-sg" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sv" },
+          { "id": "descriptions.value", "value": "Wikimedia-listartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-cn" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fi" },
+          { "id": "descriptions.value", "value": "Wikimedia-luetteloartikkeli" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en-ca" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ia" },
+          {
+            "id": "descriptions.value",
+            "value": "lista de un projecto de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "af" },
+          { "id": "descriptions.value", "value": "Wikimedia lysartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ace" },
+          { "id": "descriptions.value", "value": "teunuléh dapeuta Wikimèdia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en-gb" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ast" },
+          {
+            "id": "descriptions.value",
+            "value": "artículu de llista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sco" },
+          { "id": "descriptions.value", "value": "Wikimedia leet airticle" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "eu" },
+          {
+            "id": "descriptions.value",
+            "value": "Wikimediako zerrenda artikulua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg" },
+          { "id": "descriptions.value", "value": "саҳифаи феҳристӣ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "mk" },
+          {
+            "id": "descriptions.value",
+            "value": "список на статии на Викимедија"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ro" },
+          {
+            "id": "descriptions.value",
+            "value": "articol-listă în cadrul unui proiect Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tr" },
+          { "id": "descriptions.value", "value": "Vikimedya liste maddesi" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ba" },
+          { "id": "descriptions.value", "value": "Wikimedia-Listn" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ms" },
+          { "id": "descriptions.value", "value": "rencana senarai Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "th" },
+          { "id": "descriptions.value", "value": "บทความรายชื่อวิกิมีเดีย" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nn" },
+          { "id": "descriptions.value", "value": "Wikimedia-listeartikkel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "yo" },
+          { "id": "descriptions.value", "value": "ojúewé àtojọ Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "artikull-listë e Wikimedias" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fy" },
+          { "id": "descriptions.value", "value": "Wikimedia-list" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "an" },
+          {
+            "id": "descriptions.value",
+            "value": "articlo de lista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg-cyrl" },
+          { "id": "descriptions.value", "value": "мақолаи феҳристӣ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "artikel daftar Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg-latn" },
+          { "id": "descriptions.value", "value": "sahifai fehristī" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zea" },
+          { "id": "descriptions.value", "value": "Wikimedia-lieste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "li" },
+          { "id": "descriptions.value", "value": "Wikimedia-lies" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pap" },
+          { "id": "descriptions.value", "value": "lista di Wikimedia" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 84,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "potato dish" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "aliment" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 85,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language", "value": "ja" },
+          {
+            "id": "descriptions.value",
+            "value": "戦国時代の武将。土佐七雄 本山氏当主。本山茂宗の嫡男"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 86,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "sportseizoen van een honkbalcompetitie"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          {
+            "id": "descriptions.value",
+            "value": "موسم من بطولة البيسبول في المدرسة الثانوية اليابانية"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 87,
+      "rows": [
+        [
+          { "id": "en_label", "value": "taxation in Puerto Rico" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "tax laws of Puerto Rico" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 88,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Dr. V. M. Government Medical College" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "medical school" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 89,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Konikar Ramdhenu" },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "film del 2003 diretto da Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Film von Jahnu Barua (2003)" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "2003 film by Jahnu Barua" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "film sorti en 2003" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "film uit 2003 van Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ca" },
+          {
+            "id": "descriptions.value",
+            "value": "pel·lícula de 2003 dirigida per Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pt" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2003 dirigido por Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ast" },
+          {
+            "id": "descriptions.value",
+            "value": "película de 2003 dirixida por Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "he" },
+          { "id": "descriptions.value", "value": "סרט משנת 2003" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2003 dirixido por Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ext" },
+          {
+            "id": "descriptions.value",
+            "value": "pinicla de 2003 dirigía por Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "es" },
+          {
+            "id": "descriptions.value",
+            "value": "película de 2003 dirigida por Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "an" },
+          {
+            "id": "descriptions.value",
+            "value": "cinta de 2003 dirichita por Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sv" },
+          {
+            "id": "descriptions.value",
+            "value": "film från 2003 regisserad av Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "oc" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2003 dirigit per Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "film" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "فيلم أنتج عام 2003" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "et" },
+          {
+            "id": "descriptions.value",
+            "value": "2003. aasta film, lavastanud Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ro" },
+          {
+            "id": "descriptions.value",
+            "value": "film din 2003 regizat de Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fy" },
+          {
+            "id": "descriptions.value",
+            "value": "film út 2003 fan Jahnu Barua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "film India oleh Jahnu Barua" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 90,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Mon Jaai" },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "film del 2008 diretto da Moirangthem Maniram"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de" },
+          {
+            "id": "descriptions.value",
+            "value": "Film von Moirangthem Maniram Singha (2008)"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "2008 Assamese language film" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "film sorti en 2008" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "film uit 2008" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ca" },
+          {
+            "id": "descriptions.value",
+            "value": "pel·lícula de 2008 dirigida per Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pt" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2008 dirigido por Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ast" },
+          {
+            "id": "descriptions.value",
+            "value": "película de 2008 dirixida por Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "he" },
+          { "id": "descriptions.value", "value": "סרט משנת 2008" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2008 dirixido por Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ext" },
+          {
+            "id": "descriptions.value",
+            "value": "pinicla de 2008 dirigía por Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "es" },
+          {
+            "id": "descriptions.value",
+            "value": "película de 2008 dirigida por Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "an" },
+          {
+            "id": "descriptions.value",
+            "value": "cinta de 2008 dirichita por Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sv" },
+          {
+            "id": "descriptions.value",
+            "value": "film från 2008 regisserad av Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "oc" },
+          {
+            "id": "descriptions.value",
+            "value": "filme de 2008 dirigit per Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "film" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "فيلم أنتج عام 2008" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "et" },
+          {
+            "id": "descriptions.value",
+            "value": "2008. aasta film, lavastanud Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ro" },
+          {
+            "id": "descriptions.value",
+            "value": "film din 2008 regizat de Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fy" },
+          {
+            "id": "descriptions.value",
+            "value": "film út 2008 fan Moirangthem Maniram Singha"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "as" },
+          { "id": "descriptions.value", "value": "অসমীয়া চলচ্চিত্ৰ (২০০৮)" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          {
+            "id": "descriptions.value",
+            "value": "film India oleh Moirangthem Maniram Singha"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 91,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Jetuka Pator Dore" },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "film del 2011 diretto da Jadumoni Dutta"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "2011 Assamese language film" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "film sorti en 2011" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "film uit 2011" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "film" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "as" },
+          { "id": "descriptions.value", "value": "অসমীয়া চলচ্চিত্ৰ (২০১১)" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "film India" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 92,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Industrial Commission" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "former US federal government agency (1898–1902)"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 93,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "National Register of Historic Places listings in Bureau County"
+          },
+          { "id": "descriptions.language", "value": "de" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bg" },
+          { "id": "descriptions.value", "value": "Уикимедия списък" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "eo" },
+          { "id": "descriptions.value", "value": "Listartikolo en Vikipedio" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pl" },
+          { "id": "descriptions.value", "value": "lista w projekcie Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "قائمة ويكيميديا" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "es" },
+          {
+            "id": "descriptions.value",
+            "value": "artículo de lista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "si" },
+          { "id": "descriptions.value", "value": "විකිමීඩියා ලැයිස්තු ලිපිය" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fr" },
+          { "id": "descriptions.value", "value": "liste d'un projet Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "el" },
+          {
+            "id": "descriptions.value",
+            "value": "κατάλογος εγχειρήματος Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "uk" },
+          {
+            "id": "descriptions.value",
+            "value": "стаття-список у проекті Вікімедіа"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hant" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de-at" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sk" },
+          {
+            "id": "descriptions.value",
+            "value": "zoznamový článok projektov Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bs" },
+          { "id": "descriptions.value", "value": "spisak na Wikimediji" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "yi" },
+          { "id": "descriptions.value", "value": "וויקימעדיע ליסטע" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ta" },
+          { "id": "descriptions.value", "value": "விக்கிப்பீடியா:பட்டியலிடல்" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hk" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nl" },
+          { "id": "descriptions.value", "value": "Wikimedia-lijst" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "it" },
+          {
+            "id": "descriptions.value",
+            "value": "lista di un progetto Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "he" },
+          { "id": "descriptions.value", "value": "רשימת ערכים" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "vi" },
+          {
+            "id": "descriptions.value",
+            "value": "bài viết danh sách Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "gl" },
+          {
+            "id": "descriptions.value",
+            "value": "artigo de listas da Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-tw" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-hans" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "lb" },
+          { "id": "descriptions.value", "value": "Wikimedia-Lëschtenartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "oc" },
+          {
+            "id": "descriptions.value",
+            "value": "lista d'un projècte Wikimèdia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-mo" },
+          { "id": "descriptions.value", "value": "維基媒體列表條目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ca" },
+          {
+            "id": "descriptions.value",
+            "value": "article de llista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sl" },
+          { "id": "descriptions.value", "value": "seznam Wikimedije" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "de-ch" },
+          { "id": "descriptions.value", "value": "Wikimedia-Liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "cs" },
+          {
+            "id": "descriptions.value",
+            "value": "seznam na projektech Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "as" },
+          {
+            "id": "descriptions.value",
+            "value": "ৱিকিপিডিয়া:ৰচনাশৈলীৰ হাতপুথি"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "be" },
+          {
+            "id": "descriptions.value",
+            "value": "спіс артыкулаў у адным з праектаў Вікімедыя"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "hr" },
+          { "id": "descriptions.value", "value": "popis na Wikimediji" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nb" },
+          { "id": "descriptions.value", "value": "Wikimedia-listeartikkel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ja" },
+          { "id": "descriptions.value", "value": "ウィキメディアの一覧記事" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ko" },
+          { "id": "descriptions.value", "value": "위키미디어 목록 항목" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sr" },
+          { "id": "descriptions.value", "value": "списак на Викимедији" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ru" },
+          {
+            "id": "descriptions.value",
+            "value": "статья-список в проекте Викимедиа"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "bn" },
+          { "id": "descriptions.value", "value": "উইকিমিডিয়ার তালিকা নিবন্ধ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "hy" },
+          { "id": "descriptions.value", "value": "Վիքիմեդիայի նախագծի ցանկ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "da" },
+          { "id": "descriptions.value", "value": "Wikimedia liste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-my" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-sg" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sv" },
+          { "id": "descriptions.value", "value": "Wikimedia-listartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zh-cn" },
+          { "id": "descriptions.value", "value": "维基媒体列表条目" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fi" },
+          { "id": "descriptions.value", "value": "Wikimedia-luetteloartikkeli" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en-ca" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ia" },
+          {
+            "id": "descriptions.value",
+            "value": "lista de un projecto de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "af" },
+          { "id": "descriptions.value", "value": "Wikimedia lysartikel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ace" },
+          { "id": "descriptions.value", "value": "teunuléh dapeuta Wikimèdia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en-gb" },
+          { "id": "descriptions.value", "value": "Wikimedia list article" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ast" },
+          {
+            "id": "descriptions.value",
+            "value": "artículu de llista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sco" },
+          { "id": "descriptions.value", "value": "Wikimedia leet airticle" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "eu" },
+          {
+            "id": "descriptions.value",
+            "value": "Wikimediako zerrenda artikulua"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg" },
+          { "id": "descriptions.value", "value": "саҳифаи феҳристӣ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "mk" },
+          {
+            "id": "descriptions.value",
+            "value": "список на статии на Викимедија"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ro" },
+          {
+            "id": "descriptions.value",
+            "value": "articol-listă în cadrul unui proiect Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tr" },
+          { "id": "descriptions.value", "value": "Vikimedya liste maddesi" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ba" },
+          { "id": "descriptions.value", "value": "Wikimedia-Listn" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ms" },
+          { "id": "descriptions.value", "value": "rencana senarai Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "th" },
+          { "id": "descriptions.value", "value": "บทความรายชื่อวิกิมีเดีย" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "nn" },
+          { "id": "descriptions.value", "value": "Wikimedia-listeartikkel" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "yo" },
+          { "id": "descriptions.value", "value": "ojúewé àtojọ Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "sq" },
+          { "id": "descriptions.value", "value": "artikull-listë e Wikimedias" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fy" },
+          { "id": "descriptions.value", "value": "Wikimedia-list" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "an" },
+          {
+            "id": "descriptions.value",
+            "value": "articlo de lista de Wikimedia"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg-cyrl" },
+          { "id": "descriptions.value", "value": "мақолаи феҳристӣ" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "id" },
+          { "id": "descriptions.value", "value": "artikel daftar Wikimedia" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "tg-latn" },
+          { "id": "descriptions.value", "value": "sahifai fehristī" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "zea" },
+          { "id": "descriptions.value", "value": "Wikimedia-lieste" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "li" },
+          { "id": "descriptions.value", "value": "Wikimedia-lies" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pap" },
+          { "id": "descriptions.value", "value": "lista di Wikimedia" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 94,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Purpose of civil procedure" },
+          { "id": "descriptions.language", "value": "ko" },
+          {
+            "id": "descriptions.value",
+            "value": "민사소송의 목적을 설명한 문서이다."
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 95,
+      "rows": [
+        [
+          { "id": "en_label", "value": "Irish potato candy" },
+          { "id": "descriptions.language", "value": "en" },
+          {
+            "id": "descriptions.value",
+            "value": "candy from Philadelphia, USA"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 96,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 97,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language" },
+          { "id": "descriptions.value" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 98,
+      "rows": [
+        [
+          {
+            "id": "en_label",
+            "value": "2012 Stanković Continental Champions' Cup"
+          },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "sportseizoen van een basketbalcompetitie"
+          }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 99,
+      "rows": [
+        [
+          { "id": "en_label", "value": "2010–11 Hessenliga" },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "sportseizoen van een voetbalcompetitie"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "ar" },
+          { "id": "descriptions.value", "value": "موسم رياضي في ألمانيا" }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "en" },
+          { "id": "descriptions.value", "value": "football league season" }
+        ]
+      ]
+    },
+    {
+      "rowNumber": 100,
+      "rows": [
+        [
+          { "id": "en_label", "value": null },
+          { "id": "descriptions.language", "value": "nl" },
+          {
+            "id": "descriptions.value",
+            "value": "eiland in Equatoriaal-Guinea"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "fi" },
+          {
+            "id": "descriptions.value",
+            "value": "saari Päiväntasaajan Guineassa"
+          }
+        ],
+        [
+          { "id": "en_label" },
+          { "id": "descriptions.language", "value": "pap" },
+          { "id": "descriptions.value", "value": "Isla" }
+        ]
+      ]
+    }
+  ],
+  "page": { "maxResults": 100, "current": 0 },
+  "numRows": "500",
+  "destinationTable": "minodisk-api._974002322e1183b3df64c0f31d9b6832d25246ef.anon813b4fb5cf5ec0dff7793dc57f07608737d8eebc",
+  "edge": { "hasPrev": false, "hasNext": true }
+}
