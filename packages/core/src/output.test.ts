@@ -38,6 +38,12 @@ describe("output", () => {
         structs: [],
         numRows: "0",
         flat: createFlat([]),
+        page: {
+          maxResults: 100,
+          current: 0,
+        },
+        destinationTable: "",
+        edge: { hasPrev: false, hasNext: false },
       });
     });
 
@@ -72,6 +78,12 @@ describe("output", () => {
         ],
         numRows: "0",
         flat,
+        page: {
+          maxResults: 100,
+          current: 0,
+        },
+        destinationTable: "foo",
+        edge: { hasPrev: false, hasNext: false },
       });
       expect(messages).toEqual([
         {
@@ -99,8 +111,13 @@ describe("output", () => {
                   ],
                 },
               ],
-              page: undefined,
               numRows: "0",
+              destinationTable: "foo",
+              edge: { hasPrev: false, hasNext: false },
+              page: {
+                maxResults: 100,
+                current: 0,
+              },
             },
           },
         },
@@ -138,6 +155,12 @@ describe("output", () => {
           ],
           numRows: "0",
           flat,
+          page: {
+            maxResults: 100,
+            current: 0,
+          },
+          destinationTable: "",
+          edge: { hasPrev: false, hasNext: false },
         });
         await output.close();
         expect(actual).toEqual(
@@ -196,6 +219,12 @@ describe("output", () => {
         ],
         numRows: "0",
         flat,
+        page: {
+          maxResults: 100,
+          current: 0,
+        },
+        destinationTable: "",
+        edge: { hasPrev: false, hasNext: false },
       });
       await output.close();
       expect(actual).toEqual(
@@ -237,6 +266,12 @@ FOO2  false
         ],
         numRows: "0",
         flat,
+        page: {
+          maxResults: 100,
+          current: 0,
+        },
+        destinationTable: "",
+        edge: { hasPrev: false, hasNext: false },
       });
       await output.close();
       expect(actual).toEqual(
@@ -280,6 +315,12 @@ FOO2  false
         ],
         numRows: "0",
         flat,
+        page: {
+          maxResults: 100,
+          current: 0,
+        },
+        destinationTable: "",
+        edge: { hasPrev: false, hasNext: false },
       });
       await output.close();
       expect(actual).toEqual(
