@@ -2,6 +2,17 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.45
+
+### Added
+
+- Added GUI buttons to the viewer for paging.
+- Added job information pane to the viewer.
+
+### Changed
+
+- Fixed file output directories are automatically created.
+
 ## v0.0.44
 
 ### Added
