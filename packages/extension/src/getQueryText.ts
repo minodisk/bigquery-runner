@@ -1,17 +1,18 @@
-import { Range, TextDocument } from "vscode";
+import { Selection, TextDocument } from "vscode";
 
 export async function getQueryText({
   document,
-  range,
+  selections,
 }: {
   readonly document: TextDocument;
-  readonly range?: Range;
+  readonly selections: readonly Selection[];
 }): Promise<string> {
   const text = (() => {
-    if (range?.isEmpty) {
+    const sels = selections.filter((selection) => !selection.isEmpty);
+    if (sels.length === 0) {
       return document.getText();
     }
-    return document.getText(range);
+    return sels.map((selection) => document.getText(selection)).join("\n");
   })();
 
   if (text.trim() === "") {

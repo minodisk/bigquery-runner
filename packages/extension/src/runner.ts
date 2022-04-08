@@ -34,18 +34,18 @@ export function createRunner({
     async run(): Promise<void> {
       try {
         let fileName: string;
-        let query: string;
-        let selection: Selection | undefined;
+        let selections!: readonly Selection[];
         let viewColumn: ViewColumn | undefined;
+        let query: string;
         if (window.activeTextEditor) {
           const textEditor = window.activeTextEditor;
           fileName = textEditor.document.fileName;
+          selections = textEditor.selections;
+          viewColumn = textEditor.viewColumn;
           query = await getQueryText({
             document: textEditor.document,
-            range: textEditor.selection,
+            selections,
           });
-          selection = textEditor.selection;
-          viewColumn = textEditor.viewColumn;
         } else {
           const panel = panelManager.getActive();
           if (!panel) {
@@ -80,7 +80,7 @@ export function createRunner({
             });
             errorMarker.clear({ fileName });
           } catch (err) {
-            errorMarker.mark({ fileName, err, selection });
+            errorMarker.mark({ fileName, err, selections });
             throw err;
           }
 

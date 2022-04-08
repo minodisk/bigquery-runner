@@ -33,12 +33,12 @@ export function createDryRunner({
           return;
         }
         const textEditor = window.activeTextEditor;
+        const fileName = textEditor.document.fileName;
+        const selections = textEditor.selections;
         const query = await getQueryText({
           document: textEditor.document,
-          range: textEditor.selection,
+          selections,
         });
-        const fileName = textEditor.document.fileName;
-        const selection = textEditor.selection;
 
         try {
           outputChannel.appendLine(`Dry run`);
@@ -57,7 +57,7 @@ export function createDryRunner({
             });
             errorMarker.clear({ fileName });
           } catch (err) {
-            errorMarker.mark({ fileName, err, selection });
+            errorMarker.mark({ fileName, err, selections });
             throw err;
           }
 

@@ -1,4 +1,11 @@
-import { Diagnostic, languages, Position, Range, workspace } from "vscode";
+import {
+  Diagnostic,
+  languages,
+  Position,
+  Range,
+  Selection,
+  workspace,
+} from "vscode";
 
 export type ErrorMarker = ReturnType<typeof createErrorMarker>;
 
@@ -19,11 +26,11 @@ export function createErrorMarker({ section }: { section: string }) {
     mark({
       fileName,
       err,
-      selection,
+      selections,
     }: {
       readonly fileName: string;
       readonly err: unknown;
-      readonly selection?: Range;
+      readonly selections: readonly Selection[];
     }) {
       const document = workspace.textDocuments.find(
         (document) => document.fileName === fileName
@@ -33,14 +40,25 @@ export function createErrorMarker({ section }: { section: string }) {
       }
 
       if (!(err instanceof Error)) {
+        if (selections.length > 0) {
+          diagnosticCollection.set(
+            document.uri,
+            selections.map(
+              (selection) =>
+                new Diagnostic(
+                  new Range(selection.start, selection.end),
+                  `${err}`
+                )
+            )
+          );
+          return;
+        }
         diagnosticCollection.set(document.uri, [
           new Diagnostic(
-            selection && !selection.isEmpty
-              ? new Range(selection.start, selection.end)
-              : new Range(
-                  document.lineAt(0).range.start,
-                  document.lineAt(document.lineCount - 1).range.end
-                ),
+            new Range(
+              document.lineAt(0).range.start,
+              document.lineAt(document.lineCount - 1).range.end
+            ),
             `${err}`
           ),
         ]);
@@ -51,40 +69,59 @@ export function createErrorMarker({ section }: { section: string }) {
       const rMessage = /^(.*?) at \[(\d+):(\d+)\]$/;
       const res = rMessage.exec(message);
       if (!res) {
+        if (selections.length > 0) {
+          diagnosticCollection.set(
+            document.uri,
+            selections.map(
+              (selection) =>
+                new Diagnostic(
+                  new Range(selection.start, selection.end),
+                  `${err}`
+                )
+            )
+          );
+          return;
+        }
         diagnosticCollection.set(document.uri, [
           new Diagnostic(
-            selection && !selection.isEmpty
-              ? new Range(selection.start, selection.end)
-              : new Range(
-                  document.lineAt(0).range.start,
-                  document.lineAt(document.lineCount - 1).range.end
-                ),
+            new Range(
+              document.lineAt(0).range.start,
+              document.lineAt(document.lineCount - 1).range.end
+            ),
             `${err}`
           ),
         ]);
         return;
       }
 
-      const [_, m, l, c] = res;
-      const line =
-        (selection && !selection.isEmpty ? selection.start.line : 0) +
-        Number(l) -
-        1;
-      const character =
-        (selection && !selection.isEmpty ? selection.start.character : 0) +
-        Number(c) -
-        1;
-      const range = document.getWordRangeAtPosition(
+      if (selections.length > 0) {
+        diagnosticCollection.set(
+          document.uri,
+          selections.map(
+            (selection) =>
+              new Diagnostic(
+                new Range(selection.start, selection.end),
+                `${err}`
+              )
+          )
+        );
+        return;
+      }
+
+      const [_, errorMessage, l, c] = res;
+      const line = Number(l) - 1;
+      const character = Number(c) - 1;
+      const wordRange = document.getWordRangeAtPosition(
         new Position(line, character)
       );
       diagnosticCollection.set(document.uri, [
         new Diagnostic(
-          range ??
+          wordRange ??
             new Range(
               new Position(line, character),
               new Position(line, character + 1)
             ),
-          m ?? ""
+          errorMessage ?? ""
         ),
       ]);
     },

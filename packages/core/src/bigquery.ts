@@ -107,6 +107,10 @@ export type RunInfo = {
   readonly numRows: string;
 };
 
+function hasMessage(e: any): e is { message: string } {
+  return typeof e.message === "string";
+}
+
 export async function createClient(options: BigQueryOptions) {
   const bigQuery = new BigQuery({
     scopes: [
@@ -119,8 +123,8 @@ export async function createClient(options: BigQueryOptions) {
     await bigQuery.authClient.getProjectId();
   } catch (err) {
     if (
-      (err as { message: string }).message &&
-      (err as { message: string }).message.startsWith(
+      hasMessage(err) &&
+      err.message.startsWith(
         "Unable to detect a Project Id in the current environment."
       )
     ) {
