@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.46
+
+### Added
+
+- Support multi-select.
+
 ## v0.0.45
 
 ### Added
