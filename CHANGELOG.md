@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.47
+
+### Added
+
+- Added a pane of job information to the viewer.
+- Added a pane of table information to the viewer.
+
 ## v0.0.46
 
 ### Added
