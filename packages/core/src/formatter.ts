@@ -9,7 +9,7 @@ export type Formatter = {
   readonly rows: (props: {
     flat: Flat;
     structs: Array<Struct>;
-    rowNumber: number;
+    rowNumber: bigint;
   }) => Promise<string>;
   readonly footer: () => string;
 };

@@ -115,7 +115,7 @@ const complexStructs = {
       e: false,
     },
   ],
-  rowNumber: 0,
+  rowNumber: 0n,
 };
 
 describe("formatter", () => {
@@ -126,9 +126,9 @@ describe("formatter", () => {
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
       expect(formatter.header({ flat })).toEqual("");
-      expect(await formatter.rows({ structs: [], rowNumber: 0, flat })).toEqual(
-        "\n"
-      );
+      expect(
+        await formatter.rows({ structs: [], rowNumber: 0n, flat })
+      ).toEqual("\n");
       expect(formatter.footer()).toEqual("");
     });
 
@@ -145,7 +145,7 @@ describe("formatter", () => {
               foo: 123,
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
           flat,
         })
       ).toEqual(
@@ -195,7 +195,7 @@ a    b.c    b.d  e
       expect(
         await formatter.rows({
           structs,
-          rowNumber: 0,
+          rowNumber: 0n,
           flat,
         })
       ).toEqual(
@@ -223,9 +223,9 @@ null   null   null     null     null        null    null   null        null     
 |---|
 `.trimStart()
       );
-      expect(await formatter.rows({ structs: [], rowNumber: 0, flat })).toEqual(
-        "\n"
-      );
+      expect(
+        await formatter.rows({ structs: [], rowNumber: 0n, flat })
+      ).toEqual("\n");
       expect(formatter.footer()).toEqual("");
     });
 
@@ -247,7 +247,7 @@ null   null   null     null     null        null    null   null        null     
               foo: 123,
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
           flat,
         })
       ).toEqual(
@@ -301,7 +301,7 @@ null   null   null     null     null        null    null   null        null     
       expect(
         await formatter.rows({
           structs,
-          rowNumber: 0,
+          rowNumber: 0n,
           flat,
         })
       ).toEqual(
@@ -319,9 +319,9 @@ null   null   null     null     null        null    null   null        null     
       const formatter = createJSONLinesFormatter();
       const flat = createFlat([]);
       expect(formatter.header({ flat })).toEqual("");
-      expect(await formatter.rows({ structs: [], rowNumber: 0, flat })).toEqual(
-        "\n"
-      );
+      expect(
+        await formatter.rows({ structs: [], rowNumber: 0n, flat })
+      ).toEqual("\n");
       expect(formatter.footer()).toEqual("");
     });
 
@@ -332,7 +332,7 @@ null   null   null     null     null        null    null   null        null     
       expect(
         await formatter.rows({
           structs,
-          rowNumber: 0,
+          rowNumber: 0n,
           flat,
         })
       ).toEqual(
@@ -350,9 +350,9 @@ null   null   null     null     null        null    null   null        null     
       const formatter = createJSONFormatter();
       const flat = createFlat([]);
       expect(formatter.header({ flat })).toEqual("[");
-      expect(await formatter.rows({ structs: [], rowNumber: 0, flat })).toEqual(
-        ""
-      );
+      expect(
+        await formatter.rows({ structs: [], rowNumber: 0n, flat })
+      ).toEqual("");
       expect(formatter.footer()).toEqual(`]
 `);
     });
@@ -364,7 +364,7 @@ null   null   null     null     null        null    null   null        null     
       expect(
         await formatter.rows({
           structs,
-          rowNumber: 0,
+          rowNumber: 0n,
           flat,
         })
       ).toEqual(
@@ -382,9 +382,9 @@ null   null   null     null     null        null    null   null        null     
       });
       const flat = createFlat([]);
       expect(formatter.header({ flat })).toEqual("");
-      expect(await formatter.rows({ structs: [], rowNumber: 0, flat })).toEqual(
-        ""
-      );
+      expect(
+        await formatter.rows({ structs: [], rowNumber: 0n, flat })
+      ).toEqual("");
       expect(formatter.footer()).toEqual(``);
     });
 
@@ -397,7 +397,7 @@ null   null   null     null     null        null    null   null        null     
       expect(
         await formatter.rows({
           structs,
-          rowNumber: 0,
+          rowNumber: 0n,
           flat,
         })
       )

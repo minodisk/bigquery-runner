@@ -1,10 +1,10 @@
 import { createFlat } from "./flat";
 
-describe("falt", () => {
+describe("flat", () => {
   describe("structToRows", () => {
     it("Empty", () => {
       const flatten = createFlat([]);
-      expect(flatten.toRows({ structs: [], rowNumber: 0 })).toEqual([]);
+      expect(flatten.toRows({ structs: [], rowNumber: 0n })).toEqual([]);
     });
 
     it("Flat", () => {
@@ -28,11 +28,11 @@ describe("falt", () => {
               b: 321,
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [
               { id: "a", value: "foo" },
@@ -79,11 +79,11 @@ describe("falt", () => {
               d: 123,
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [
               { id: "a", value: "foo" },
@@ -143,11 +143,11 @@ describe("falt", () => {
               },
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [
               { id: "a.b", value: true },
@@ -156,7 +156,7 @@ describe("falt", () => {
           ],
         },
         {
-          rowNumber: 1,
+          rowNumber: "1",
           rows: [
             [
               { id: "a.b", value: null },
@@ -165,7 +165,7 @@ describe("falt", () => {
           ],
         },
         {
-          rowNumber: 2,
+          rowNumber: "2",
           rows: [
             [
               { id: "a.b", value: true },
@@ -236,11 +236,11 @@ describe("falt", () => {
               ],
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [
               { id: "a.b", value: true },
@@ -286,11 +286,11 @@ describe("falt", () => {
               c: 0.123,
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [
               { id: "a", value: "foo" },
@@ -335,11 +335,11 @@ describe("falt", () => {
               d: [0.123, 0.456],
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [
               { id: "a", value: "foo" },
@@ -408,11 +408,11 @@ describe("falt", () => {
               f: 0.123,
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [
               { id: "a", value: "foo" },
@@ -472,11 +472,11 @@ describe("falt", () => {
               ],
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [
               { id: "a", value: "foo" },
@@ -558,11 +558,11 @@ describe("falt", () => {
               ],
             },
           ],
-          rowNumber: 0,
+          rowNumber: 0n,
         })
       ).toEqual([
         {
-          rowNumber: 0,
+          rowNumber: "0",
           rows: [
             [{ id: "a.b.c", value: "foo" }],
             [{ id: "a.b.c", value: "bar" }],

@@ -1,0 +1,36 @@
+{
+  "kind": "bigquery#table",
+  "etag": "Ps9LfjYICT3GQ95Gociing==",
+  "id": "minodisk-api:_974002322e1183b3df64c0f31d9b6832d25246ef.anond8e3e2a367e0234e97050be371e91fe8dd62ed85",
+  "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/minodisk-api/datasets/_974002322e1183b3df64c0f31d9b6832d25246ef/tables/anond8e3e2a367e0234e97050be371e91fe8dd62ed85",
+  "tableReference": {
+    "projectId": "minodisk-api",
+    "datasetId": "_974002322e1183b3df64c0f31d9b6832d25246ef",
+    "tableId": "anond8e3e2a367e0234e97050be371e91fe8dd62ed85"
+  },
+  "schema": {
+    "fields": [
+      { "name": "en_label", "type": "STRING", "mode": "NULLABLE" },
+      {
+        "name": "labels",
+        "type": "RECORD",
+        "mode": "REPEATED",
+        "fields": [
+          { "name": "language", "type": "STRING", "mode": "NULLABLE" },
+          { "name": "value", "type": "STRING", "mode": "NULLABLE" }
+        ]
+      }
+    ]
+  },
+  "numBytes": "0",
+  "numLongTermBytes": "0",
+  "numRows": "580",
+  "creationTime": "1649767720933",
+  "expirationTime": "1649856620804",
+  "lastModifiedTime": "1649770220804",
+  "type": "TABLE",
+  "location": "US",
+  "numTotalLogicalBytes": "0",
+  "numActiveLogicalBytes": "0",
+  "numLongTermLogicalBytes": "0"
+}

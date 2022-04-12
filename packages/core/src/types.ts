@@ -6,7 +6,6 @@ import {
   BigQueryTimestamp,
   Geography,
 } from "@google-cloud/bigquery";
-import { Edge } from "extension/src/runJobManager";
 
 export type Field = PrimitiveField | StructField;
 export type PrimitiveField = {
@@ -74,7 +73,7 @@ export type Value =
 export type Primitive = null | number | string | boolean;
 
 export type NumberedRows = {
-  rowNumber: number;
+  rowNumber: string;
   rows: Array<Row>;
 };
 
@@ -130,24 +129,111 @@ export type RowsEvent = {
 export type Rows = {
   header: Array<string>;
   rows: Array<NumberedRows>;
-  page?: Page;
-  numRows: string;
-  destinationTable: string | undefined;
-  edge: Edge;
+  jobInfo: JobInfo;
+  tableInfo: TableInfo;
+  edgeInfo: SerializableEdgeInfo;
 };
 export function isRowsEvent(e: Event): e is RowsEvent {
   return e.event === "rows";
 }
 
-export type Results = {
-  readonly structs: Array<Struct>;
-  readonly page: Page;
+export type RunInfo = {
+  jobInfo: JobInfo;
+  tableInfo: TableInfo;
+  edgeInfo: EdgeInfo;
 };
 
-export type Page = {
-  readonly maxResults?: number;
-  readonly current: number;
+export type JobInfo = Readonly<{
+  kind: string;
+  etag: string;
+  id: string;
+  selfLink: string;
+  configuration: Readonly<{
+    query: Readonly<{
+      query: string;
+      destinationTable: TableReference;
+      writeDisposition: string;
+      priority: string;
+      useLegacySql: boolean;
+    }>;
+    jobType: string;
+  }>;
+  jobReference: Readonly<{
+    projectId: string;
+    jobId: string;
+    location: string;
+  }>;
+  statistics: Readonly<{
+    creationTime: string;
+    startTime: string;
+    endTime: string;
+    totalBytesProcessed: string;
+    query: {
+      totalBytesProcessed: string;
+      totalBytesBilled: string;
+      cacheHit: boolean;
+      statementType: string;
+    };
+  }>;
+  status: Readonly<{
+    state: string;
+  }>;
+  user_email: string;
+}>;
+
+export type TableInfo = Readonly<{
+  creationTime: string;
+  etag: string;
+  expirationTime: string;
+  id: string;
+  kind: string;
+  lastModifiedTime: string;
+  location: string;
+  numActiveLogicalBytes: string;
+  numBytes: string;
+  numLongTermBytes: string;
+  numLongTermLogicalBytes: string;
+  numRows: string;
+  numTotalLogicalBytes: string;
+  schema: Schema;
+  selfLink: string;
+  tableReference: TableReference;
+  type: "TABLE";
+}>;
+
+export type Schema = Readonly<{
+  fields?: Array<Field>;
+}>;
+
+export type TableReference = Readonly<{
+  projectId: string;
+  datasetId: string;
+  tableId: string;
+}>;
+
+export type EdgeInfo = {
+  readonly hasPrev: boolean;
+  readonly hasNext: boolean;
+  readonly rowNumberStart: bigint;
+  readonly rowNumberEnd: bigint;
 };
+
+export type SerializableEdgeInfo = {
+  readonly hasPrev: boolean;
+  readonly hasNext: boolean;
+  readonly rowNumberStart: string;
+  readonly rowNumberEnd: string;
+};
+
+// export type Results = {
+//   readonly structs: Array<Struct>;
+//   readonly page: Page;
+// };
+
+// export type Page = {
+//   readonly maxResults?: number;
+//   readonly current: number;
+// };
 
 export type ViewerEvent = StartEvent | EndEvent | PrevEvent | NextEvent;
 export type StartEvent = {

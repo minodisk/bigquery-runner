@@ -8,6 +8,11 @@ import {
   createTableFormatter,
 } from ".";
 import { createViewerOutput } from "./output";
+import jobInfo from "./jobInfo.json";
+import t from "./tableInfo.json";
+import { TableInfo } from "./types";
+
+const tableInfo = t as TableInfo;
 
 const viewerOptions = {
   async postMessage() {
@@ -36,14 +41,15 @@ describe("output", () => {
       const output = createViewerOutput(viewerOptions);
       await output.writeRows({
         structs: [],
-        numRows: "0",
         flat: createFlat([]),
-        page: {
-          maxResults: 100,
-          current: 0,
+        jobInfo,
+        tableInfo,
+        edgeInfo: {
+          hasPrev: false,
+          hasNext: false,
+          rowNumberStart: BigInt(1),
+          rowNumberEnd: BigInt(1),
         },
-        destinationTable: "",
-        edge: { hasPrev: false, hasNext: false },
       });
     });
 
@@ -76,14 +82,15 @@ describe("output", () => {
             foo: true,
           },
         ],
-        numRows: "0",
         flat,
-        page: {
-          maxResults: 100,
-          current: 0,
+        jobInfo,
+        tableInfo,
+        edgeInfo: {
+          hasPrev: false,
+          hasNext: false,
+          rowNumberStart: BigInt(1),
+          rowNumberEnd: BigInt(1),
         },
-        destinationTable: "foo",
-        edge: { hasPrev: false, hasNext: false },
       });
       expect(messages).toEqual([
         {
@@ -100,7 +107,7 @@ describe("output", () => {
               header: ["foo"],
               rows: [
                 {
-                  rowNumber: 1,
+                  rowNumber: "1",
                   rows: [
                     [
                       {
@@ -111,12 +118,13 @@ describe("output", () => {
                   ],
                 },
               ],
-              numRows: "0",
-              destinationTable: "foo",
-              edge: { hasPrev: false, hasNext: false },
-              page: {
-                maxResults: 100,
-                current: 0,
+              jobInfo,
+              tableInfo,
+              edgeInfo: {
+                hasPrev: false,
+                hasNext: false,
+                rowNumberStart: "1",
+                rowNumberEnd: "1",
               },
             },
           },
@@ -153,14 +161,15 @@ describe("output", () => {
               foo: true,
             },
           ],
-          numRows: "0",
           flat,
-          page: {
-            maxResults: 100,
-            current: 0,
+          jobInfo,
+          tableInfo,
+          edgeInfo: {
+            hasPrev: false,
+            hasNext: false,
+            rowNumberStart: BigInt(1),
+            rowNumberEnd: BigInt(1),
           },
-          destinationTable: "",
-          edge: { hasPrev: false, hasNext: false },
         });
         await output.close();
         expect(actual).toEqual(
@@ -217,14 +226,15 @@ describe("output", () => {
             bar: false,
           },
         ],
-        numRows: "0",
         flat,
-        page: {
-          maxResults: 100,
-          current: 0,
+        jobInfo,
+        tableInfo,
+        edgeInfo: {
+          hasPrev: false,
+          hasNext: false,
+          rowNumberStart: BigInt(1),
+          rowNumberEnd: BigInt(1),
         },
-        destinationTable: "",
-        edge: { hasPrev: false, hasNext: false },
       });
       await output.close();
       expect(actual).toEqual(
@@ -264,14 +274,15 @@ FOO2  false
             bar: false,
           },
         ],
-        numRows: "0",
         flat,
-        page: {
-          maxResults: 100,
-          current: 0,
+        jobInfo,
+        tableInfo,
+        edgeInfo: {
+          hasPrev: false,
+          hasNext: false,
+          rowNumberStart: BigInt(1),
+          rowNumberEnd: BigInt(1),
         },
-        destinationTable: "",
-        edge: { hasPrev: false, hasNext: false },
       });
       await output.close();
       expect(actual).toEqual(
@@ -313,14 +324,15 @@ FOO2  false
             bar: false,
           },
         ],
-        numRows: "0",
         flat,
-        page: {
-          maxResults: 100,
-          current: 0,
+        jobInfo,
+        tableInfo,
+        edgeInfo: {
+          hasPrev: false,
+          hasNext: false,
+          rowNumberStart: BigInt(1),
+          rowNumberEnd: BigInt(1),
         },
-        destinationTable: "",
-        edge: { hasPrev: false, hasNext: false },
       });
       await output.close();
       expect(actual).toEqual(

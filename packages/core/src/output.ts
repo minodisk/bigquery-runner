@@ -1,19 +1,27 @@
 import { Writable } from "stream";
 import { Flat, Formatter } from ".";
-import { CloseEvent, Data, OpenEvent, Results, RowsEvent } from "./types";
-import { Edge } from "extension/src/runJobManager";
+import { toSerializableEdgeInfo } from "./bigquery";
+import {
+  CloseEvent,
+  Data,
+  EdgeInfo,
+  JobInfo,
+  OpenEvent,
+  RowsEvent,
+  Struct,
+  TableInfo,
+} from "./types";
 
 export type Output = {
   readonly open: () => Promise<string | void>;
   readonly writeHeads: (props: { readonly flat: Flat }) => Promise<unknown>;
-  readonly writeRows: (
-    results: Results & {
-      readonly flat: Flat;
-      readonly numRows: string;
-      readonly destinationTable?: string;
-      readonly edge: Edge;
-    }
-  ) => Promise<unknown>;
+  readonly writeRows: (params: {
+    readonly structs: Array<Struct>;
+    readonly flat: Flat;
+    readonly jobInfo: JobInfo;
+    readonly tableInfo: TableInfo;
+    readonly edgeInfo: EdgeInfo;
+  }) => Promise<unknown>;
   readonly close: () => Promise<void>;
   readonly dispose: () => unknown;
 };
@@ -50,7 +58,7 @@ export function createViewerOutput({
       // do nothing
     },
 
-    async writeRows({ structs, page, edge, flat, numRows, destinationTable }) {
+    async writeRows({ structs, flat, jobInfo, tableInfo, edgeInfo }) {
       await postMessage({
         source: "bigquery-runner",
         payload: {
@@ -59,14 +67,11 @@ export function createViewerOutput({
             header: flat.heads.map(({ id }) => id),
             rows: flat.toRows({
               structs,
-              rowNumber: page.maxResults
-                ? page.maxResults * page.current + 1
-                : 1,
+              rowNumber: edgeInfo.rowNumberStart,
             }),
-            page,
-            numRows,
-            destinationTable,
-            edge,
+            jobInfo,
+            tableInfo,
+            edgeInfo: toSerializableEdgeInfo(edgeInfo),
           },
         },
       } as Data<RowsEvent>);
@@ -106,7 +111,7 @@ export function createLogOutput({
     },
     async writeRows({ structs: rows, flat }) {
       outputChannel.append(
-        await formatter.rows({ structs: rows, rowNumber: 0, flat })
+        await formatter.rows({ structs: rows, rowNumber: 0n, flat })
       );
     },
     async close() {
@@ -136,7 +141,9 @@ export function createFileOutput({
       }
     },
     async writeRows({ structs: rows, flat }) {
-      stream.write(await formatter.rows({ structs: rows, rowNumber: 0, flat }));
+      stream.write(
+        await formatter.rows({ structs: rows, rowNumber: 0n, flat })
+      );
     },
     async close() {
       stream.write(formatter.footer());

@@ -1,70 +1,12 @@
-import { BigQuery, BigQueryOptions, Query } from "@google-cloud/bigquery";
-import { Field, Results } from "./types";
-
-export type JobInfo = {
-  kind: string;
-  etag: string;
-  id: string;
-  selfLink: string;
-  // user_email: string;
-  configuration: {
-    query: {
-      query: string;
-      destinationTable: TableReference;
-      writeDisposition: string;
-      priority: string;
-      useLegacySql: boolean;
-    };
-    jobType: string;
-  };
-  jobReference: {
-    projectId: string;
-    jobId: string;
-    location: string;
-  };
-  statistics: {
-    creationTime: string;
-    startTime: string;
-    endTime: string;
-    totalBytesProcessed: string;
-    query: {
-      totalBytesProcessed: string;
-      totalBytesBilled: string;
-      cacheHit: boolean;
-      statementType: string;
-    };
-  };
-  status: {
-    state: string;
-  };
-};
-
-export type Table = {
-  kind: string;
-  etag: string;
-  id: string;
-  selfLink: string;
-  tableReference: TableReference;
-  schema: Schema;
-  numBytes: string;
-  numLongTermBytes: string;
-  numRows: string;
-  creationTime: string;
-  expirationTime: string;
-  lastModifiedTime: string;
-  type: "TABLE";
-  location: string;
-};
-
-export type Schema = {
-  fields?: Array<Field>;
-};
-
-export type TableReference = {
-  projectId: string;
-  datasetId: string;
-  tableId: string;
-};
+import { BigQuery, BigQueryOptions, Job, Query } from "@google-cloud/bigquery";
+import {
+  EdgeInfo,
+  JobInfo,
+  SerializableEdgeInfo,
+  Struct,
+  TableInfo,
+  TableReference,
+} from "./types";
 
 export type Client = ReturnType<typeof createClient> extends Promise<infer T>
   ? T
@@ -94,19 +36,6 @@ export class NoPageTokenError extends Error {
   }
 }
 
-export type RunInfo = {
-  readonly query: {
-    readonly totalBytesProcessed: string;
-    readonly totalBytesBilled: string;
-    readonly cacheHit: boolean;
-    readonly statementType: string;
-  };
-  readonly schema: {
-    readonly fields: Array<Field>;
-  };
-  readonly numRows: string;
-};
-
 function hasMessage(e: any): e is { message: string } {
   return typeof e.message === "string";
 }
@@ -125,7 +54,7 @@ export async function createClient(options: BigQueryOptions) {
     if (
       hasMessage(err) &&
       err.message.startsWith(
-        "Unable to detect a Project Id in the current environment."
+        "Unable to detect a Project ID in the current environment."
       )
     ) {
       throw new AuthenticationError(options.keyFilename);
@@ -135,49 +64,34 @@ export async function createClient(options: BigQueryOptions) {
   return {
     async createRunJob(query: Omit<Query, "dryRun">): Promise<{
       id: string;
-      destinationTable: string | undefined;
-      getRows(): Promise<Results>;
-      getPrevRows(): Promise<Results>;
-      getNextRows(): Promise<Results>;
-      getInfo(): Promise<RunInfo>;
+      getRows(): Promise<Array<Struct>>;
+      getPrevRows(): Promise<Array<Struct>>;
+      getNextRows(): Promise<Array<Struct>>;
+      getJobInfo(): Promise<JobInfo>;
+      getTableInfo(params: { jobInfo: JobInfo }): Promise<TableInfo>;
+      getEdgeInfo(params: { tableInfo: TableInfo }): EdgeInfo;
     }> {
       const [job, info] = await bigQuery.createQueryJob({
         ...query,
         dryRun: false,
       });
+      const tableName = createTableName(
+        info.configuration?.query?.destinationTable
+      );
 
       if (
         ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
           (type) => info.statistics?.query?.statementType === type
         ) &&
-        info.configuration?.query?.destinationTable
+        tableName
       ) {
         // Wait for completion of table creation job
         // to get the records of the table just created.
-        for (let i = 0; i < 10; i++) {
-          const metadata = await job.getMetadata();
-          const info: JobInfo | undefined = metadata.find(
-            ({ kind }) => kind === "bigquery#job"
-          );
-          if (!info) {
-            continue;
-          }
-          if (info.status.state === "DONE") {
-            break;
-          }
-          if (i === 9) {
-            throw new Error(
-              `waiting for completion of table creation job timed out`
-            );
-          }
-          await sleep(1000);
-        }
+        await getJobInfo({ job });
 
         return this.createRunJob({
           ...query,
-          query: `select * from \`${datasourceName(
-            info.configuration.query.destinationTable
-          )}\``,
+          query: `select * from \`${tableName}\``,
         });
       }
 
@@ -191,117 +105,65 @@ export async function createClient(options: BigQueryOptions) {
       return {
         id: job.id,
 
-        destinationTable: datasourceName(
-          info.configuration?.query?.destinationTable
-        ),
-
-        async getRows(): Promise<Results> {
+        async getRows() {
           const [structs, next] = await job.getQueryResults({
             maxResults: query.maxResults,
           });
           if (next?.pageToken) {
             tokens.set(current + 1, next.pageToken);
           }
-          return {
-            structs,
-            page: {
-              maxResults: query.maxResults,
-              current,
-            },
-          };
+          return structs;
         },
 
-        async getPrevRows(): Promise<Results> {
+        async getPrevRows() {
           const pageToken = tokens.get(current - 1);
           if (pageToken === undefined) {
             throw new NoPageTokenError(current - 1);
           }
           current -= 1;
-          const [rows, next] = await job.getQueryResults({
+          const [structs, next] = await job.getQueryResults({
             maxResults: query.maxResults,
             pageToken: pageToken ?? undefined,
           });
           if (next?.pageToken) {
             tokens.set(current + 1, next.pageToken);
           }
-          return {
-            structs: rows,
-            page: {
-              maxResults: query.maxResults,
-              current,
-            },
-          };
+          return structs;
         },
 
-        async getNextRows(): Promise<Results> {
+        async getNextRows() {
           const pageToken = tokens.get(current + 1);
           if (pageToken === undefined) {
             throw new NoPageTokenError(current + 1);
           }
           current += 1;
-          const [rows, next] = await job.getQueryResults({
+          const [structs, next] = await job.getQueryResults({
             maxResults: query.maxResults,
             pageToken: pageToken ?? undefined,
           });
           if (next?.pageToken) {
             tokens.set(current + 1, next.pageToken);
           }
-          return {
-            structs: rows,
-            page: {
-              maxResults: query.maxResults,
-              current,
-            },
-          };
+          return structs;
         },
 
-        async getInfo() {
-          let jobInfo: JobInfo;
-          for (;;) {
-            const metadata = await job.getMetadata();
-            const info: JobInfo | undefined = metadata.find(
-              ({ kind }) => kind === "bigquery#job"
-            );
-            if (!info) {
-              // throw new Error(`no job info: ${job.id}`);
-              continue;
-            }
-            if (info.status.state === "DONE") {
-              jobInfo = info;
-              break;
-            }
-            await sleep(1000);
-          }
-          const {
-            configuration: {
-              query: {
-                destinationTable: { projectId, datasetId, tableId },
-              },
-            },
-            statistics: { query },
-          } = jobInfo;
+        async getJobInfo() {
+          return getJobInfo({ job });
+        },
 
-          const res = await bigQuery.dataset(datasetId).table(tableId).get();
-          const table: Table = res.find(
-            ({ kind }) => kind === "bigquery#table"
-          );
-          if (!table) {
-            throw new Error(
-              `no table info: ${projectId}.${datasetId}.${tableId}`
-            );
-          }
-          const {
-            schema: { fields },
-            numRows,
-          } = table;
-          if (!fields) {
-            throw new Error(`schema has no fields`);
-          }
-          return {
-            query,
-            schema: { fields },
-            numRows,
-          };
+        async getTableInfo({ jobInfo }) {
+          return getTableInfo({
+            bigQuery,
+            table: jobInfo.configuration.query.destinationTable,
+          });
+        },
+
+        getEdgeInfo({ tableInfo }) {
+          return getEdgeInfo({
+            maxResults: query.maxResults,
+            current,
+            numRows: tableInfo.numRows,
+          });
         },
       };
     },
@@ -330,7 +192,7 @@ export async function createClient(options: BigQueryOptions) {
   };
 }
 
-function datasourceName(table?: {
+export function createTableName(table?: {
   projectId?: string;
   datasetId?: string;
   tableId?: string;
@@ -340,6 +202,87 @@ function datasourceName(table?: {
   }
   const { projectId, datasetId, tableId } = table;
   return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
+}
+
+async function getJobInfo({ job }: { job: Job }): Promise<JobInfo> {
+  // Wait for a job to complete and get information abount the job.
+  for (let i = 1; i <= 10; i++) {
+    const metadata = await job.getMetadata();
+    const info: JobInfo | undefined = metadata.find(
+      ({ kind }) => kind === "bigquery#job"
+    );
+    if (!info) {
+      continue;
+    }
+    if (info.status.state === "DONE") {
+      return info;
+    }
+    if (i === 10) {
+      break;
+    }
+    await sleep(1000);
+  }
+  throw new Error(`waiting for completion of table creation job timed out`);
+}
+
+async function getTableInfo({
+  bigQuery,
+  table,
+}: {
+  bigQuery: BigQuery;
+  table: TableReference;
+}): Promise<TableInfo> {
+  const res = await bigQuery
+    .dataset(table.datasetId)
+    .table(table.tableId)
+    .get();
+  const tableInfo: TableInfo = res.find(
+    ({ kind }) => kind === "bigquery#table"
+  );
+  if (!tableInfo) {
+    throw new Error(`no table info: ${createTableName(table)}`);
+  }
+  return tableInfo;
+}
+
+function getEdgeInfo(params: {
+  maxResults?: number;
+  current: number;
+  numRows: string;
+}): EdgeInfo {
+  const numRows = BigInt(params.numRows);
+  if (params.maxResults === undefined) {
+    return {
+      hasPrev: false,
+      hasNext: false,
+      rowNumberStart: BigInt(1),
+      rowNumberEnd: numRows,
+    };
+  }
+
+  const maxResults = BigInt(params.maxResults);
+  const current = BigInt(params.current);
+  const next = current + 1n;
+  const hasPrev = 0n < current;
+  const hasNext = maxResults * next < numRows;
+  const rowNumberStart = maxResults * current + 1n;
+  const rowNumberEnd = hasNext ? maxResults * next : numRows;
+  return {
+    hasPrev,
+    hasNext,
+    rowNumberStart,
+    rowNumberEnd,
+  };
+}
+
+export function toSerializableEdgeInfo(
+  edgeInfo: EdgeInfo
+): SerializableEdgeInfo {
+  return {
+    ...edgeInfo,
+    rowNumberStart: `${edgeInfo.rowNumberStart}`,
+    rowNumberEnd: `${edgeInfo.rowNumberEnd}`,
+  };
 }
 
 async function sleep(ms: number): Promise<void> {

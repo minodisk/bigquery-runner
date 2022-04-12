@@ -1,0 +1,39 @@
+{
+  "kind": "bigquery#job",
+  "etag": "1PYwXDe/uYzFCOCwqlpyWw==",
+  "id": "minodisk-api:US.9552c26b-2151-45b2-9536-ceb50fc7b5a1",
+  "selfLink": "https://bigquery.googleapis.com/bigquery/v2/projects/minodisk-api/jobs/9552c26b-2151-45b2-9536-ceb50fc7b5a1?location=US",
+  "user_email": "bigquery-runner@minodisk-api.iam.gserviceaccount.com",
+  "configuration": {
+    "query": {
+      "query": "select\n    en_label,\n    labels,\nfrom\n    `bigquery-public-data.wikipedia.wikidata`\nwhere\n    array_length(labels) < 4\nlimit\n    580\n",
+      "destinationTable": {
+        "projectId": "minodisk-api",
+        "datasetId": "_974002322e1183b3df64c0f31d9b6832d25246ef",
+        "tableId": "anond8e3e2a367e0234e97050be371e91fe8dd62ed85"
+      },
+      "writeDisposition": "WRITE_TRUNCATE",
+      "priority": "INTERACTIVE",
+      "useLegacySql": false
+    },
+    "jobType": "QUERY"
+  },
+  "jobReference": {
+    "projectId": "minodisk-api",
+    "jobId": "9552c26b-2151-45b2-9536-ceb50fc7b5a1",
+    "location": "US"
+  },
+  "statistics": {
+    "creationTime": "1649770220681",
+    "startTime": "1649770220849",
+    "endTime": "1649770220887",
+    "totalBytesProcessed": "0",
+    "query": {
+      "totalBytesProcessed": "0",
+      "totalBytesBilled": "0",
+      "cacheHit": true,
+      "statementType": "SELECT"
+    }
+  },
+  "status": { "state": "DONE" }
+}

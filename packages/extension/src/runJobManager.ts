@@ -1,16 +1,16 @@
-import { createClient, RunInfo, RunJob } from "core";
-import { Results } from "core/src/types";
+import { createClient, RunJob } from "core";
+import { EdgeInfo, JobInfo, Struct, TableInfo } from "core/src/types";
 import { ConfigManager } from "./configManager";
 
 export type RunJobManager = ReturnType<typeof createRunJobManager>;
 
-export type RunJobResponse = {
+export type RunJobResponse = Readonly<{
   readonly jobId: string;
-  readonly destinationTable?: string;
-  readonly results: Results;
-  readonly info: RunInfo;
-  readonly edge: Edge;
-};
+  readonly results: Array<Struct>;
+  readonly jobInfo: JobInfo;
+  readonly tableInfo: TableInfo;
+  readonly edgeInfo: EdgeInfo;
+}>;
 
 export function createRunJobManager({
   configManager,
@@ -39,15 +39,16 @@ export function createRunJobManager({
       map.set(fileName, job);
 
       const results = await job.getRows();
-      const info = await job.getInfo();
-      const edge = getEdge({ results, info });
+      const jobInfo = await job.getJobInfo();
+      const tableInfo = await job.getTableInfo({ jobInfo });
+      const edgeInfo = job.getEdgeInfo({ tableInfo });
 
       return {
         jobId: job.id,
-        destinationTable: job.destinationTable,
         results,
-        info,
-        edge,
+        jobInfo,
+        tableInfo,
+        edgeInfo,
       };
     },
 
@@ -62,15 +63,16 @@ export function createRunJobManager({
       }
 
       const results = await job.getPrevRows();
-      const info = await job.getInfo();
-      const edge = getEdge({ results, info });
+      const jobInfo = await job.getJobInfo();
+      const tableInfo = await job.getTableInfo({ jobInfo });
+      const edgeInfo = job.getEdgeInfo({ tableInfo });
 
       return {
         jobId: job.id,
-        destinationTable: job.destinationTable,
         results,
-        info,
-        edge,
+        jobInfo,
+        tableInfo,
+        edgeInfo,
       };
     },
 
@@ -80,20 +82,22 @@ export function createRunJobManager({
       readonly fileName: string;
     }): Promise<RunJobResponse> {
       const job = map.get(fileName);
+
       if (!job) {
         throw new Error(`no job`);
       }
 
       const results = await job.getNextRows();
-      const info = await job.getInfo();
-      const edge = getEdge({ results, info });
+      const jobInfo = await job.getJobInfo();
+      const tableInfo = await job.getTableInfo({ jobInfo });
+      const edgeInfo = job.getEdgeInfo({ tableInfo });
 
       return {
         jobId: job.id,
-        destinationTable: job.destinationTable,
         results,
-        info,
-        edge,
+        jobInfo,
+        tableInfo,
+        edgeInfo,
       };
     },
 
@@ -106,24 +110,3 @@ export function createRunJobManager({
     },
   };
 }
-
-export type Edge = {
-  readonly hasPrev: boolean;
-  readonly hasNext: boolean;
-};
-const getEdge = ({
-  results,
-  info,
-}: {
-  results: Results;
-  info: RunInfo;
-}): Edge => {
-  if (results.page.maxResults === undefined) {
-    return { hasPrev: false, hasNext: false };
-  }
-  const hasPrev = 0 < results.page.current;
-  const hasNext =
-    BigInt(results.page.maxResults) * BigInt(results.page.current + 1) <
-    BigInt(info.numRows);
-  return { hasPrev, hasNext };
-};

@@ -27,7 +27,7 @@ export function createFlat(fields: Array<Field>) {
       transform,
     }: {
       readonly structs: Array<Struct>;
-      readonly rowNumber: number;
+      readonly rowNumber: bigint;
       readonly transform?: Transform;
     }) {
       return structsToRows({ heads, columns, structs, rowNumber, transform });
@@ -88,13 +88,13 @@ function structsToRows({
   readonly heads: Array<Accessor>;
   readonly columns: Array<Column>;
   readonly structs: Array<Struct>;
-  readonly rowNumber: number;
+  readonly rowNumber: bigint;
   readonly transform?: Transform;
 }): Array<NumberedRows> {
   return structs.map((struct, i) => {
     const rows = structToRows({ heads, columns, struct, transform });
     return {
-      rowNumber: rowNumber + i,
+      rowNumber: `${rowNumber + BigInt(i)}`,
       rows,
     };
   });

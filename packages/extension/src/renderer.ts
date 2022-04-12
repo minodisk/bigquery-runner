@@ -18,13 +18,7 @@ export function createRenderer({
     async render({
       fileName,
       output,
-      response: {
-        jobId,
-        destinationTable,
-        results,
-        info: { query, schema, numRows },
-        edge,
-      },
+      response: { jobId, results, jobInfo, tableInfo, edgeInfo },
     }: {
       readonly fileName: string;
       readonly output: Output;
@@ -33,20 +27,26 @@ export function createRenderer({
       try {
         statusManager.loadBilled({ fileName });
 
-        outputChannel.appendLine(`Result: ${results.structs.length} rows`);
-        const bytes = formatBytes(parseInt(query.totalBytesBilled, 10));
+        outputChannel.appendLine(`Result: ${results.length} rows`);
+        const bytes = formatBytes(
+          parseInt(jobInfo.statistics.query.totalBytesBilled, 10)
+        );
         outputChannel.appendLine(
-          `Result: ${bytes} to be billed (cache: ${query.cacheHit})`
+          `Result: ${bytes} to be billed (cache: ${jobInfo.statistics.query.cacheHit})`
         );
 
-        const flat = createFlat(schema.fields);
+        if (tableInfo.schema.fields === undefined) {
+          throw new Error("fields is not defined");
+        }
+
+        const flat = createFlat(tableInfo.schema.fields);
         await output.writeHeads({ flat });
         await output.writeRows({
-          ...results,
-          numRows,
+          structs: results,
           flat,
-          destinationTable,
-          edge,
+          jobInfo,
+          tableInfo,
+          edgeInfo,
         });
 
         // const bytesWritten = await output.bytesWritten();
@@ -58,7 +58,7 @@ export function createRenderer({
 
         statusManager.succeedBilled({
           fileName,
-          billed: { bytes, cacheHit: query.cacheHit },
+          billed: { bytes, cacheHit: jobInfo.statistics.query.cacheHit },
         });
       } catch (err) {
         statusManager.errorBilled({ fileName });
