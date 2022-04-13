@@ -62,15 +62,17 @@ export async function createClient(options: BigQueryOptions) {
   }
 
   return {
-    async createRunJob(query: Omit<Query, "dryRun">): Promise<{
-      id: string;
-      getRows(): Promise<Array<Struct>>;
-      getPrevRows(): Promise<Array<Struct>>;
-      getNextRows(): Promise<Array<Struct>>;
-      getMetadata(): Promise<Metadata>;
-      getTable(params: { metadata: Metadata }): Promise<Table>;
-      getPage(params: { table: Table }): Page;
-    }> {
+    async createRunJob(query: Omit<Query, "dryRun">): Promise<
+      Readonly<{
+        id: string;
+        getStructs(): Promise<Array<Struct>>;
+        getPrevStructs(): Promise<Array<Struct>>;
+        getNextStructs(): Promise<Array<Struct>>;
+        getMetadata(): Promise<Metadata>;
+        getTable(params: { metadata: Metadata }): Promise<Table>;
+        getPage(params: { table: Table }): Page;
+      }>
+    > {
       const [job, info] = await bigQuery.createQueryJob({
         ...query,
         dryRun: false,
@@ -105,7 +107,7 @@ export async function createClient(options: BigQueryOptions) {
       return {
         id: job.id,
 
-        async getRows() {
+        async getStructs() {
           const [structs, next] = await job.getQueryResults({
             maxResults: query.maxResults,
           });
@@ -115,7 +117,7 @@ export async function createClient(options: BigQueryOptions) {
           return structs;
         },
 
-        async getPrevRows() {
+        async getPrevStructs() {
           const pageToken = tokens.get(current - 1);
           if (pageToken === undefined) {
             throw new NoPageTokenError(current - 1);
@@ -131,7 +133,7 @@ export async function createClient(options: BigQueryOptions) {
           return structs;
         },
 
-        async getNextRows() {
+        async getNextStructs() {
           const pageToken = tokens.get(current + 1);
           if (pageToken === undefined) {
             throw new NoPageTokenError(current + 1);

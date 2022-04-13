@@ -4,7 +4,7 @@ describe("flat", () => {
   describe("structToRows", () => {
     it("Empty", () => {
       const flatten = createFlat([]);
-      expect(flatten.toRows({ structs: [], rowNumber: 0n })).toEqual([]);
+      expect(flatten.toRows({ structs: [], rowNumberStart: 0n })).toEqual([]);
     });
 
     it("Flat", () => {
@@ -28,7 +28,7 @@ describe("flat", () => {
               b: 321,
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {
@@ -79,7 +79,7 @@ describe("flat", () => {
               d: 123,
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {
@@ -143,7 +143,7 @@ describe("flat", () => {
               },
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {
@@ -236,7 +236,7 @@ describe("flat", () => {
               ],
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {
@@ -286,7 +286,7 @@ describe("flat", () => {
               c: 0.123,
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {
@@ -335,7 +335,7 @@ describe("flat", () => {
               d: [0.123, 0.456],
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {
@@ -408,7 +408,7 @@ describe("flat", () => {
               f: 0.123,
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {
@@ -472,7 +472,7 @@ describe("flat", () => {
               ],
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {
@@ -558,7 +558,7 @@ describe("flat", () => {
               ],
             },
           ],
-          rowNumber: 0n,
+          rowNumberStart: 0n,
         })
       ).toEqual([
         {

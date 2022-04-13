@@ -5,11 +5,11 @@ import { ConfigManager } from "./configManager";
 export type RunJobManager = ReturnType<typeof createRunJobManager>;
 
 export type RunJobResponse = Readonly<{
-  readonly jobId: string;
-  readonly results: Array<Struct>;
-  readonly metadata: Metadata;
-  readonly table: Table;
-  readonly page: Page;
+  jobId: string;
+  structs: Array<Struct>;
+  metadata: Metadata;
+  table: Table;
+  page: Page;
 }>;
 
 export function createRunJobManager({
@@ -38,14 +38,14 @@ export function createRunJobManager({
       }
       map.set(fileName, job);
 
-      const results = await job.getRows();
+      const structs = await job.getStructs();
       const metadata = await job.getMetadata();
       const table = await job.getTable({ metadata });
       const page = job.getPage({ table });
 
       return {
         jobId: job.id,
-        results,
+        structs,
         metadata,
         table,
         page,
@@ -62,14 +62,14 @@ export function createRunJobManager({
         throw new Error(`no job`);
       }
 
-      const results = await job.getPrevRows();
+      const structs = await job.getPrevStructs();
       const metadata = await job.getMetadata();
       const table = await job.getTable({ metadata });
       const page = job.getPage({ table });
 
       return {
         jobId: job.id,
-        results,
+        structs,
         metadata,
         table,
         page,
@@ -87,14 +87,14 @@ export function createRunJobManager({
         throw new Error(`no job`);
       }
 
-      const results = await job.getNextRows();
+      const structs = await job.getNextStructs();
       const metadata = await job.getMetadata();
       const table = await job.getTable({ metadata });
       const page = job.getPage({ table });
 
       return {
         jobId: job.id,
-        results,
+        structs,
         metadata,
         table,
         page,

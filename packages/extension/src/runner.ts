@@ -139,7 +139,7 @@ export function createRunner({
           output.close();
           throw err;
         }
-        if (!response.results) {
+        if (!response.structs) {
           throw new ErrorWithId("no results", response.jobId);
         }
 
@@ -192,7 +192,7 @@ export function createRunner({
           output.close();
           throw err;
         }
-        if (!response.results) {
+        if (!response.structs) {
           throw new ErrorWithId("no results", response.jobId);
         }
 

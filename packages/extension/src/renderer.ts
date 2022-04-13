@@ -18,7 +18,7 @@ export function createRenderer({
     async render({
       fileName,
       output,
-      response: { jobId, results, metadata, table, page },
+      response: { jobId, structs, metadata, table, page },
     }: {
       readonly fileName: string;
       readonly output: Output;
@@ -27,7 +27,7 @@ export function createRenderer({
       try {
         statusManager.loadBilled({ fileName });
 
-        outputChannel.appendLine(`Result: ${results.length} rows`);
+        outputChannel.appendLine(`Result: ${structs.length} rows`);
         const bytes = formatBytes(
           parseInt(metadata.statistics.query.totalBytesBilled, 10)
         );
@@ -42,7 +42,7 @@ export function createRenderer({
         const flat = createFlat(table.schema.fields);
         await output.writeHeads({ flat });
         await output.writeRows({
-          structs: results,
+          structs,
           flat,
           metadata,
           table,

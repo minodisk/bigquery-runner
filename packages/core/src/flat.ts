@@ -23,14 +23,20 @@ export function createFlat(fields: Array<Field>) {
     columns,
     toRows({
       structs,
-      rowNumber,
+      rowNumberStart,
       transform,
     }: {
       readonly structs: Array<Struct>;
-      readonly rowNumber: bigint;
+      readonly rowNumberStart: bigint;
       readonly transform?: Transform;
     }) {
-      return structsToRows({ heads, columns, structs, rowNumber, transform });
+      return structsToRows({
+        heads,
+        columns,
+        structs,
+        rowNumberStart,
+        transform,
+      });
     },
     toHashes({
       structs,
@@ -82,19 +88,19 @@ function structsToRows({
   heads,
   columns,
   structs,
-  rowNumber,
+  rowNumberStart,
   transform,
 }: {
   readonly heads: Array<Accessor>;
   readonly columns: Array<Column>;
   readonly structs: Array<Struct>;
-  readonly rowNumber: bigint;
+  readonly rowNumberStart: bigint;
   readonly transform?: Transform;
 }): Array<NumberedRows> {
   return structs.map((struct, i) => {
     const rows = structToRows({ heads, columns, struct, transform });
     return {
-      rowNumber: `${rowNumber + BigInt(i)}`,
+      rowNumber: `${rowNumberStart + BigInt(i)}`,
       rows,
     };
   });

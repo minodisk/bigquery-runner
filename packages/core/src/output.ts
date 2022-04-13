@@ -12,32 +12,25 @@ import {
   Table,
 } from "./types";
 
-export type Output = {
-  readonly open: () => Promise<string | void>;
-  readonly writeHeads: (props: { readonly flat: Flat }) => Promise<unknown>;
-  readonly writeRows: (params: {
-    readonly structs: Array<Struct>;
-    readonly flat: Flat;
-    readonly metadata: Metadata;
-    readonly table: Table;
-    readonly page: Page;
-  }) => Promise<unknown>;
-  readonly close: () => Promise<void>;
-  readonly dispose: () => unknown;
-};
-
-// export type WebviewPanel = {
-//   readonly webview: {
-//     html: string;
-//     postMessage(message: unknown): Thenable<boolean>;
-//   };
-//   dispose(): unknown;
-//   onDidDispose(
-//     callback: () => void,
-//     hoge: unknown,
-//     subscriptions: Array<{ dispose(): unknown }>
-//   ): void;
-// };
+export type Output = Readonly<{
+  open: () => Promise<string | void>;
+  writeHeads: (
+    params: Readonly<{
+      flat: Flat;
+    }>
+  ) => Promise<unknown>;
+  writeRows: (
+    params: Readonly<{
+      structs: Array<Struct>;
+      flat: Flat;
+      metadata: Metadata;
+      table: Table;
+      page: Page;
+    }>
+  ) => Promise<unknown>;
+  close: () => Promise<void>;
+  dispose: () => unknown;
+}>;
 
 export function createViewerOutput({
   postMessage,
@@ -67,7 +60,7 @@ export function createViewerOutput({
             header: flat.heads.map(({ id }) => id),
             rows: flat.toRows({
               structs,
-              rowNumber: page.rowNumberStart,
+              rowNumberStart: page.rowNumberStart,
             }),
             metadata,
             table,
@@ -109,9 +102,9 @@ export function createLogOutput({
     async writeHeads({ flat }) {
       outputChannel.append(formatter.header({ flat }));
     },
-    async writeRows({ structs: rows, flat }) {
+    async writeRows({ structs, flat }) {
       outputChannel.append(
-        await formatter.rows({ structs: rows, rowNumber: 0n, flat })
+        await formatter.rows({ structs, rowNumberStart: 0n, flat })
       );
     },
     async close() {
@@ -140,10 +133,8 @@ export function createFileOutput({
         stream.write(res);
       }
     },
-    async writeRows({ structs: rows, flat }) {
-      stream.write(
-        await formatter.rows({ structs: rows, rowNumber: 0n, flat })
-      );
+    async writeRows({ structs, flat }) {
+      stream.write(await formatter.rows({ structs, rowNumberStart: 0n, flat }));
     },
     async close() {
       stream.write(formatter.footer());

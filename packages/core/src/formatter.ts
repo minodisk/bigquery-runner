@@ -9,7 +9,7 @@ export type Formatter = {
   readonly rows: (props: {
     flat: Flat;
     structs: Array<Struct>;
-    rowNumber: bigint;
+    rowNumberStart: bigint;
   }) => Promise<string>;
   readonly footer: () => string;
 };
@@ -20,9 +20,9 @@ export function createTableFormatter(): Formatter {
     header() {
       return "";
     },
-    async rows({ flat, structs, rowNumber }) {
+    async rows({ flat, structs, rowNumberStart }) {
       const t = new EasyTable();
-      flat.toRows({ structs, rowNumber }).forEach(({ rows }) => {
+      flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) => {
         rows.forEach((row) => {
           row.forEach((cell) => t.cell(cell.id, cell.value));
           t.newRow();
@@ -47,10 +47,10 @@ export function createMarkdownFormatter(): Formatter {
 |${flat.heads.map(() => "---").join("|")}|
 `;
     },
-    async rows({ flat, structs, rowNumber }) {
+    async rows({ flat, structs, rowNumberStart }) {
       return (
         flat
-          .toRows({ structs, rowNumber })
+          .toRows({ structs, rowNumberStart })
           .flatMap(({ rows }) =>
             rows.map(
               (row) =>
