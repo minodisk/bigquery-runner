@@ -7,8 +7,7 @@ import {
   isRowsEvent,
   Rows,
   ViewerEvent,
-  TableInfo,
-  SerializableEdgeInfo,
+  SerializablePage,
 } from "core/src/types";
 import cx from "classnames";
 import "./App.css";
@@ -148,15 +147,15 @@ const App: FC = () => {
                   })}
                 </tbody>
               </table>
-              <Footer tableInfo={data.tableInfo} edgeInfo={data.edgeInfo} />
+              <Footer page={data.page} />
             </VStack>
           ) : null}
         </TabContent>
         <TabContent name="jobInformation" current={current}>
-          {data ? <JobInformation jobInfo={data.jobInfo} /> : null}
+          {data ? <JobInformation metadata={data.metadata} /> : null}
         </TabContent>
         <TabContent name="tableInformation" current={current}>
-          {data ? <TableInformation tableInfo={data.tableInfo} /> : null}
+          {data ? <TableInformation table={data.table} /> : null}
         </TabContent>
       </div>
     </Box>
@@ -192,30 +191,28 @@ const Header: FC<{
 );
 
 const Footer: FC<{
-  readonly tableInfo: TableInfo;
-  readonly edgeInfo: SerializableEdgeInfo;
-  // readonly rowsInPage: number;
-}> = ({ tableInfo, edgeInfo, ...props }) => (
+  readonly page: SerializablePage;
+}> = ({ page, ...props }) => (
   <Box className="footer">
     <Flex justify="between" className="pagination" px={2}>
       <HStack gap={2} {...props}>
         {/* <StartButton onClick={() => vscode?.postMessage({ event: "start" })} /> */}
         <PrevButton
-          disabled={!edgeInfo.hasPrev}
+          disabled={!page.hasPrev}
           onClick={() => vscode?.postMessage({ event: "prev" })}
         />
         <NextButton
-          disabled={!edgeInfo.hasNext}
+          disabled={!page.hasNext}
           onClick={() => vscode?.postMessage({ event: "next" })}
         />
         {/* <EndButton onClick={() => vscode?.postMessage({ event: "end" })} /> */}
       </HStack>
       <HStack gap={2} {...props}>
-        <UIText color="weak">{`${edgeInfo.rowNumberStart}`}</UIText>
+        <UIText color="weak">{`${page.rowNumberStart}`}</UIText>
         <UIText color="weak">-</UIText>
-        <UIText color="weak">{`${edgeInfo.rowNumberEnd}`}</UIText>
+        <UIText color="weak">{`${page.rowNumberEnd}`}</UIText>
         <UIText color="weak">of</UIText>
-        <UIText color="weak">{tableInfo.numRows}</UIText>
+        <UIText color="weak">{page.numRows}</UIText>
       </HStack>
     </Flex>
   </Box>

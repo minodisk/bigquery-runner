@@ -18,7 +18,7 @@ export function createRenderer({
     async render({
       fileName,
       output,
-      response: { jobId, results, jobInfo, tableInfo, edgeInfo },
+      response: { jobId, results, metadata, table, page },
     }: {
       readonly fileName: string;
       readonly output: Output;
@@ -29,24 +29,24 @@ export function createRenderer({
 
         outputChannel.appendLine(`Result: ${results.length} rows`);
         const bytes = formatBytes(
-          parseInt(jobInfo.statistics.query.totalBytesBilled, 10)
+          parseInt(metadata.statistics.query.totalBytesBilled, 10)
         );
         outputChannel.appendLine(
-          `Result: ${bytes} to be billed (cache: ${jobInfo.statistics.query.cacheHit})`
+          `Result: ${bytes} to be billed (cache: ${metadata.statistics.query.cacheHit})`
         );
 
-        if (tableInfo.schema.fields === undefined) {
+        if (table.schema.fields === undefined) {
           throw new Error("fields is not defined");
         }
 
-        const flat = createFlat(tableInfo.schema.fields);
+        const flat = createFlat(table.schema.fields);
         await output.writeHeads({ flat });
         await output.writeRows({
           structs: results,
           flat,
-          jobInfo,
-          tableInfo,
-          edgeInfo,
+          metadata,
+          table,
+          page,
         });
 
         // const bytesWritten = await output.bytesWritten();
@@ -58,7 +58,7 @@ export function createRenderer({
 
         statusManager.succeedBilled({
           fileName,
-          billed: { bytes, cacheHit: jobInfo.statistics.query.cacheHit },
+          billed: { bytes, cacheHit: metadata.statistics.query.cacheHit },
         });
       } catch (err) {
         statusManager.errorBilled({ fileName });

@@ -8,17 +8,17 @@ import {
 } from "@google-cloud/bigquery";
 
 export type Field = PrimitiveField | StructField;
-export type PrimitiveField = {
+export type PrimitiveField = Readonly<{
   name: string;
   type: PrimitiveFieldType;
   mode: FieldMode;
-};
-export type StructField = {
+}>;
+export type StructField = Readonly<{
   name: string;
   type: StructFieldType;
   mode: FieldMode;
   fields: Array<Field>;
-};
+}>;
 
 export type FieldType = PrimitiveFieldType | StructFieldType;
 const primitiveTableFieldTypes = [
@@ -46,16 +46,16 @@ export type StructFieldType = typeof structTableFieldTypes[number];
 export type FieldMode = "NULLABLE" | "REQUIRED" | "REPEATED";
 
 export type Column = Array<Accessor>;
-export type Accessor = {
+export type Accessor = Readonly<{
   id: string;
   name: string;
   type: FieldType;
   mode: FieldMode;
-};
+}>;
 
-export type Struct = {
+export type Struct = Readonly<{
   [name: string]: Value | Struct | Array<Value | Struct>;
-};
+}>;
 export type Value =
   | null
   | number
@@ -72,23 +72,25 @@ export type Value =
 
 export type Primitive = null | number | string | boolean;
 
-export type NumberedRows = {
+export type NumberedRows = Readonly<{
   rowNumber: string;
   rows: Array<Row>;
-};
+}>;
 
 export type Row = Array<Cell>;
-export type Cell = {
+export type Cell = Readonly<{
   id: string;
   value?: Primitive;
+}>;
+
+export type Hash = {
+  [id: string]: Value;
 };
 
-export type Hash = { [id: string]: Value };
-
-export type Data<E extends Event> = {
+export type Data<E extends Event> = Readonly<{
   source: "bigquery-runner";
   payload: E;
-};
+}>;
 
 export function isData(data: { source?: string }): data is Data<Event> {
   return data.source === "bigquery-runner";
@@ -96,54 +98,54 @@ export function isData(data: { source?: string }): data is Data<Event> {
 
 export type Event = FocusedEvent | OpenEvent | CloseEvent | RowsEvent;
 
-export type FocusedEvent = {
+export type FocusedEvent = Readonly<{
   event: "focused";
   payload: {
     focused: boolean;
   };
-};
+}>;
 export function isFocusedEvent(e: Event): e is FocusedEvent {
   return e.event === "focused";
 }
 
-export type OpenEvent = {
+export type OpenEvent = Readonly<{
   event: "open";
   payload: undefined;
-};
+}>;
 export function isOpenEvent(e: Event): e is OpenEvent {
   return e.event === "open";
 }
 
-export type CloseEvent = {
+export type CloseEvent = Readonly<{
   event: "close";
   payload: undefined;
-};
+}>;
 export function isCloseEvent(e: Event): e is CloseEvent {
   return e.event === "close";
 }
 
-export type RowsEvent = {
+export type RowsEvent = Readonly<{
   event: "rows";
   payload: Rows;
-};
-export type Rows = {
+}>;
+export type Rows = Readonly<{
   header: Array<string>;
   rows: Array<NumberedRows>;
-  jobInfo: JobInfo;
-  tableInfo: TableInfo;
-  edgeInfo: SerializableEdgeInfo;
-};
+  metadata: Metadata;
+  table: Table;
+  page: SerializablePage;
+}>;
 export function isRowsEvent(e: Event): e is RowsEvent {
   return e.event === "rows";
 }
 
-export type RunInfo = {
-  jobInfo: JobInfo;
-  tableInfo: TableInfo;
-  edgeInfo: EdgeInfo;
-};
+export type RunInfo = Readonly<{
+  metadata: Metadata;
+  table: Table;
+  page: Page;
+}>;
 
-export type JobInfo = Readonly<{
+export type Metadata = Readonly<{
   kind: string;
   etag: string;
   id: string;
@@ -181,7 +183,7 @@ export type JobInfo = Readonly<{
   user_email: string;
 }>;
 
-export type TableInfo = Readonly<{
+export type Table = Readonly<{
   creationTime: string;
   etag: string;
   expirationTime: string;
@@ -211,43 +213,35 @@ export type TableReference = Readonly<{
   tableId: string;
 }>;
 
-export type EdgeInfo = {
-  readonly hasPrev: boolean;
-  readonly hasNext: boolean;
-  readonly rowNumberStart: bigint;
-  readonly rowNumberEnd: bigint;
-};
+export type Page = Readonly<{
+  hasPrev: boolean;
+  hasNext: boolean;
+  rowNumberStart: bigint;
+  rowNumberEnd: bigint;
+  numRows: bigint;
+}>;
 
-export type SerializableEdgeInfo = {
-  readonly hasPrev: boolean;
-  readonly hasNext: boolean;
-  readonly rowNumberStart: string;
-  readonly rowNumberEnd: string;
-};
-
-// export type Results = {
-//   readonly structs: Array<Struct>;
-//   readonly page: Page;
-// };
-
-// export type Page = {
-//   readonly maxResults?: number;
-//   readonly current: number;
-// };
+export type SerializablePage = Readonly<{
+  hasPrev: boolean;
+  hasNext: boolean;
+  rowNumberStart: string;
+  rowNumberEnd: string;
+  numRows: string;
+}>;
 
 export type ViewerEvent = StartEvent | EndEvent | PrevEvent | NextEvent;
-export type StartEvent = {
+export type StartEvent = Readonly<{
   event: "start";
-};
-export type EndEvent = {
+}>;
+export type EndEvent = Readonly<{
   event: "end";
-};
-export type PrevEvent = {
+}>;
+export type PrevEvent = Readonly<{
   event: "prev";
-};
-export type NextEvent = {
+}>;
+export type NextEvent = Readonly<{
   event: "next";
-};
+}>;
 
 export function isStartEvent(e: ViewerEvent): e is StartEvent {
   return e.event === "start";

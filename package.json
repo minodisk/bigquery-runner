@@ -4,6 +4,7 @@
   "displayName": "BigQuery Runner",
   "description": "An extension for querying Google Cloud Platform's BigQuery analytics datasets directly from VS Code.",
   "version": "0.0.47",
+  "license": "Apach-2",
   "publisher": "minodisk",
   "repository": {
     "type": "git",

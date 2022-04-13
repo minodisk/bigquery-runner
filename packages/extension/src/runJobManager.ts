@@ -1,5 +1,5 @@
 import { createClient, RunJob } from "core";
-import { EdgeInfo, JobInfo, Struct, TableInfo } from "core/src/types";
+import { Metadata, Page, Struct, Table } from "core/src/types";
 import { ConfigManager } from "./configManager";
 
 export type RunJobManager = ReturnType<typeof createRunJobManager>;
@@ -7,9 +7,9 @@ export type RunJobManager = ReturnType<typeof createRunJobManager>;
 export type RunJobResponse = Readonly<{
   readonly jobId: string;
   readonly results: Array<Struct>;
-  readonly jobInfo: JobInfo;
-  readonly tableInfo: TableInfo;
-  readonly edgeInfo: EdgeInfo;
+  readonly metadata: Metadata;
+  readonly table: Table;
+  readonly page: Page;
 }>;
 
 export function createRunJobManager({
@@ -39,16 +39,16 @@ export function createRunJobManager({
       map.set(fileName, job);
 
       const results = await job.getRows();
-      const jobInfo = await job.getJobInfo();
-      const tableInfo = await job.getTableInfo({ jobInfo });
-      const edgeInfo = job.getEdgeInfo({ tableInfo });
+      const metadata = await job.getMetadata();
+      const table = await job.getTable({ metadata });
+      const page = job.getPage({ table });
 
       return {
         jobId: job.id,
         results,
-        jobInfo,
-        tableInfo,
-        edgeInfo,
+        metadata,
+        table,
+        page,
       };
     },
 
@@ -63,16 +63,16 @@ export function createRunJobManager({
       }
 
       const results = await job.getPrevRows();
-      const jobInfo = await job.getJobInfo();
-      const tableInfo = await job.getTableInfo({ jobInfo });
-      const edgeInfo = job.getEdgeInfo({ tableInfo });
+      const metadata = await job.getMetadata();
+      const table = await job.getTable({ metadata });
+      const page = job.getPage({ table });
 
       return {
         jobId: job.id,
         results,
-        jobInfo,
-        tableInfo,
-        edgeInfo,
+        metadata,
+        table,
+        page,
       };
     },
 
@@ -88,16 +88,16 @@ export function createRunJobManager({
       }
 
       const results = await job.getNextRows();
-      const jobInfo = await job.getJobInfo();
-      const tableInfo = await job.getTableInfo({ jobInfo });
-      const edgeInfo = job.getEdgeInfo({ tableInfo });
+      const metadata = await job.getMetadata();
+      const table = await job.getTable({ metadata });
+      const page = job.getPage({ table });
 
       return {
         jobId: job.id,
         results,
-        jobInfo,
-        tableInfo,
-        edgeInfo,
+        metadata,
+        table,
+        page,
       };
     },
 

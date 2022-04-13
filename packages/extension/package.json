@@ -1,12 +1,10 @@
 {
   "private": true,
   "name": "extension",
-  "version": "0.0.0",
-  "description": "",
   "main": "src/extension.ts",
   "scripts": {
     "dev": "run-p build:watch",
-    "build": "esbuild ./src/index.ts --bundle --outfile=../../out/extension/index.js --external:vscode --format=cjs --platform=node",
+    "build": "tsc && esbuild ./src/index.ts --bundle --outfile=../../out/extension/index.js --external:vscode --format=cjs --platform=node",
     "build:test": "tsc -p ./",
     "build:watch": "npm run build -- --sourcemap --watch",
     "build:debug": "npm run build -- --sourcemap",

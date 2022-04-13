@@ -1,10 +1,10 @@
 import { BigQuery, BigQueryOptions, Job, Query } from "@google-cloud/bigquery";
 import {
-  EdgeInfo,
-  JobInfo,
-  SerializableEdgeInfo,
+  Page,
+  Metadata,
+  SerializablePage,
   Struct,
-  TableInfo,
+  Table,
   TableReference,
 } from "./types";
 
@@ -67,9 +67,9 @@ export async function createClient(options: BigQueryOptions) {
       getRows(): Promise<Array<Struct>>;
       getPrevRows(): Promise<Array<Struct>>;
       getNextRows(): Promise<Array<Struct>>;
-      getJobInfo(): Promise<JobInfo>;
-      getTableInfo(params: { jobInfo: JobInfo }): Promise<TableInfo>;
-      getEdgeInfo(params: { tableInfo: TableInfo }): EdgeInfo;
+      getMetadata(): Promise<Metadata>;
+      getTable(params: { metadata: Metadata }): Promise<Table>;
+      getPage(params: { table: Table }): Page;
     }> {
       const [job, info] = await bigQuery.createQueryJob({
         ...query,
@@ -87,7 +87,7 @@ export async function createClient(options: BigQueryOptions) {
       ) {
         // Wait for completion of table creation job
         // to get the records of the table just created.
-        await getJobInfo({ job });
+        await getMetadata({ job });
 
         return this.createRunJob({
           ...query,
@@ -147,22 +147,22 @@ export async function createClient(options: BigQueryOptions) {
           return structs;
         },
 
-        async getJobInfo() {
-          return getJobInfo({ job });
+        async getMetadata() {
+          return getMetadata({ job });
         },
 
-        async getTableInfo({ jobInfo }) {
-          return getTableInfo({
+        async getTable({ metadata }) {
+          return getTable({
             bigQuery,
-            table: jobInfo.configuration.query.destinationTable,
+            table: metadata.configuration.query.destinationTable,
           });
         },
 
-        getEdgeInfo({ tableInfo }) {
-          return getEdgeInfo({
+        getPage({ table }) {
+          return getPage({
             maxResults: query.maxResults,
             current,
-            numRows: tableInfo.numRows,
+            numRows: table.numRows,
           });
         },
       };
@@ -176,6 +176,7 @@ export async function createClient(options: BigQueryOptions) {
       }
       return {
         id: job.id,
+
         getInfo(): { totalBytesProcessed: number } {
           const { totalBytesProcessed } = job.metadata.statistics;
           return {
@@ -204,11 +205,11 @@ export function createTableName(table?: {
   return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
 }
 
-async function getJobInfo({ job }: { job: Job }): Promise<JobInfo> {
+async function getMetadata({ job }: { job: Job }): Promise<Metadata> {
   // Wait for a job to complete and get information abount the job.
   for (let i = 1; i <= 10; i++) {
     const metadata = await job.getMetadata();
-    const info: JobInfo | undefined = metadata.find(
+    const info: Metadata | undefined = metadata.find(
       ({ kind }) => kind === "bigquery#job"
     );
     if (!info) {
@@ -225,31 +226,29 @@ async function getJobInfo({ job }: { job: Job }): Promise<JobInfo> {
   throw new Error(`waiting for completion of table creation job timed out`);
 }
 
-async function getTableInfo({
+async function getTable({
   bigQuery,
   table,
 }: {
   bigQuery: BigQuery;
   table: TableReference;
-}): Promise<TableInfo> {
+}): Promise<Table> {
   const res = await bigQuery
     .dataset(table.datasetId)
     .table(table.tableId)
     .get();
-  const tableInfo: TableInfo = res.find(
-    ({ kind }) => kind === "bigquery#table"
-  );
-  if (!tableInfo) {
+  const t: Table = res.find(({ kind }) => kind === "bigquery#table");
+  if (!t) {
     throw new Error(`no table info: ${createTableName(table)}`);
   }
-  return tableInfo;
+  return t;
 }
 
-function getEdgeInfo(params: {
+function getPage(params: {
   maxResults?: number;
   current: number;
   numRows: string;
-}): EdgeInfo {
+}): Page {
   const numRows = BigInt(params.numRows);
   if (params.maxResults === undefined) {
     return {
@@ -257,6 +256,7 @@ function getEdgeInfo(params: {
       hasNext: false,
       rowNumberStart: BigInt(1),
       rowNumberEnd: numRows,
+      numRows,
     };
   }
 
@@ -272,16 +272,16 @@ function getEdgeInfo(params: {
     hasNext,
     rowNumberStart,
     rowNumberEnd,
+    numRows,
   };
 }
 
-export function toSerializableEdgeInfo(
-  edgeInfo: EdgeInfo
-): SerializableEdgeInfo {
+export function toSerializablePage(page: Page): SerializablePage {
   return {
-    ...edgeInfo,
-    rowNumberStart: `${edgeInfo.rowNumberStart}`,
-    rowNumberEnd: `${edgeInfo.rowNumberEnd}`,
+    ...page,
+    rowNumberStart: `${page.rowNumberStart}`,
+    rowNumberEnd: `${page.rowNumberEnd}`,
+    numRows: `${page.numRows}`,
   };
 }
 

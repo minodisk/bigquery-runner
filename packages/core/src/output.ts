@@ -1,15 +1,15 @@
 import { Writable } from "stream";
 import { Flat, Formatter } from ".";
-import { toSerializableEdgeInfo } from "./bigquery";
+import { toSerializablePage } from "./bigquery";
 import {
   CloseEvent,
   Data,
-  EdgeInfo,
-  JobInfo,
+  Page,
+  Metadata,
   OpenEvent,
   RowsEvent,
   Struct,
-  TableInfo,
+  Table,
 } from "./types";
 
 export type Output = {
@@ -18,9 +18,9 @@ export type Output = {
   readonly writeRows: (params: {
     readonly structs: Array<Struct>;
     readonly flat: Flat;
-    readonly jobInfo: JobInfo;
-    readonly tableInfo: TableInfo;
-    readonly edgeInfo: EdgeInfo;
+    readonly metadata: Metadata;
+    readonly table: Table;
+    readonly page: Page;
   }) => Promise<unknown>;
   readonly close: () => Promise<void>;
   readonly dispose: () => unknown;
@@ -58,7 +58,7 @@ export function createViewerOutput({
       // do nothing
     },
 
-    async writeRows({ structs, flat, jobInfo, tableInfo, edgeInfo }) {
+    async writeRows({ structs, flat, metadata, table, page }) {
       await postMessage({
         source: "bigquery-runner",
         payload: {
@@ -67,11 +67,11 @@ export function createViewerOutput({
             header: flat.heads.map(({ id }) => id),
             rows: flat.toRows({
               structs,
-              rowNumber: edgeInfo.rowNumberStart,
+              rowNumber: page.rowNumberStart,
             }),
-            jobInfo,
-            tableInfo,
-            edgeInfo: toSerializableEdgeInfo(edgeInfo),
+            metadata,
+            table,
+            page: toSerializablePage(page),
           },
         },
       } as Data<RowsEvent>);

@@ -1,8 +1,6 @@
 {
+  "private": true,
   "name": "core",
-  "version": "1.0.0",
-  "description": "",
-  "license": "Apach-2",
   "main": "src/index.ts",
   "scripts": {
     "lint": "eslint './src/**/*.ts'",

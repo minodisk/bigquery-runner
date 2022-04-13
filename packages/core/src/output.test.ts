@@ -8,11 +8,11 @@ import {
   createTableFormatter,
 } from ".";
 import { createViewerOutput } from "./output";
-import jobInfo from "./jobInfo.json";
-import t from "./tableInfo.json";
-import { TableInfo } from "./types";
+import metadata from "./metadata.json";
+import t from "./table.json";
+import { Table } from "./types";
 
-const tableInfo = t as TableInfo;
+const table = t as Table;
 
 const viewerOptions = {
   async postMessage() {
@@ -42,13 +42,14 @@ describe("output", () => {
       await output.writeRows({
         structs: [],
         flat: createFlat([]),
-        jobInfo,
-        tableInfo,
-        edgeInfo: {
+        metadata,
+        table,
+        page: {
           hasPrev: false,
           hasNext: false,
           rowNumberStart: BigInt(1),
           rowNumberEnd: BigInt(1),
+          numRows: BigInt(1),
         },
       });
     });
@@ -83,13 +84,14 @@ describe("output", () => {
           },
         ],
         flat,
-        jobInfo,
-        tableInfo,
-        edgeInfo: {
+        metadata,
+        table,
+        page: {
           hasPrev: false,
           hasNext: false,
           rowNumberStart: BigInt(1),
           rowNumberEnd: BigInt(1),
+          numRows: BigInt(1),
         },
       });
       expect(messages).toEqual([
@@ -118,13 +120,14 @@ describe("output", () => {
                   ],
                 },
               ],
-              jobInfo,
-              tableInfo,
-              edgeInfo: {
+              metadata,
+              table,
+              page: {
                 hasPrev: false,
                 hasNext: false,
                 rowNumberStart: "1",
                 rowNumberEnd: "1",
+                numRows: "1",
               },
             },
           },
@@ -162,13 +165,14 @@ describe("output", () => {
             },
           ],
           flat,
-          jobInfo,
-          tableInfo,
-          edgeInfo: {
+          metadata,
+          table,
+          page: {
             hasPrev: false,
             hasNext: false,
             rowNumberStart: BigInt(1),
             rowNumberEnd: BigInt(1),
+            numRows: BigInt(1),
           },
         });
         await output.close();
@@ -227,13 +231,14 @@ describe("output", () => {
           },
         ],
         flat,
-        jobInfo,
-        tableInfo,
-        edgeInfo: {
+        metadata,
+        table,
+        page: {
           hasPrev: false,
           hasNext: false,
           rowNumberStart: BigInt(1),
           rowNumberEnd: BigInt(1),
+          numRows: BigInt(1),
         },
       });
       await output.close();
@@ -275,13 +280,14 @@ FOO2  false
           },
         ],
         flat,
-        jobInfo,
-        tableInfo,
-        edgeInfo: {
+        metadata,
+        table,
+        page: {
           hasPrev: false,
           hasNext: false,
           rowNumberStart: BigInt(1),
           rowNumberEnd: BigInt(1),
+          numRows: BigInt(1),
         },
       });
       await output.close();
@@ -325,13 +331,14 @@ FOO2  false
           },
         ],
         flat,
-        jobInfo,
-        tableInfo,
-        edgeInfo: {
+        metadata,
+        table,
+        page: {
           hasPrev: false,
           hasNext: false,
           rowNumberStart: BigInt(1),
           rowNumberEnd: BigInt(1),
+          numRows: BigInt(1),
         },
       });
       await output.close();

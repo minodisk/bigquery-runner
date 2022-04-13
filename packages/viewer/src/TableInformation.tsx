@@ -1,11 +1,11 @@
 import bytes from "bytes";
-import { TableInfo } from "core/src/types";
+import { Table } from "core/src/types";
 import formatISO from "date-fns/formatISO";
 import React from "react";
 import { CopyButton, Flex, HStack, RowNumberTd, Td, Text, Tr } from "./ui";
 
-export const TableInformation = ({ tableInfo }: { tableInfo: TableInfo }) => {
-  const tableId = `${tableInfo.tableReference.projectId}.${tableInfo.tableReference.datasetId}.${tableInfo.tableReference.tableId}`;
+export const TableInformation = ({ table }: { table: Table }) => {
+  const tableId = `${table.tableReference.projectId}.${table.tableReference.datasetId}.${table.tableReference.tableId}`;
   return (
     <table>
       <tbody>
@@ -29,31 +29,31 @@ export const TableInformation = ({ tableInfo }: { tableInfo: TableInfo }) => {
         </Tr>
         <Tr>
           <RowNumberTd>Table size</RowNumberTd>
-          <Td>{bytes(Number(tableInfo.numBytes))}</Td>
+          <Td>{bytes(Number(table.numBytes))}</Td>
         </Tr>
         <Tr>
           <RowNumberTd>Long-term storage size</RowNumberTd>
-          <Td>{bytes(Number(tableInfo.numLongTermBytes))}</Td>
+          <Td>{bytes(Number(table.numLongTermBytes))}</Td>
         </Tr>
         <Tr>
           <RowNumberTd>Number of rows</RowNumberTd>
-          <Td>{tableInfo.numRows}</Td>
+          <Td>{table.numRows}</Td>
         </Tr>
         <Tr>
           <RowNumberTd>Created</RowNumberTd>
-          <Td>{formatISO(Number(tableInfo.creationTime))}</Td>
+          <Td>{formatISO(Number(table.creationTime))}</Td>
         </Tr>
         <Tr>
           <RowNumberTd>Last modified</RowNumberTd>
-          <Td>{formatISO(Number(tableInfo.lastModifiedTime))}</Td>
+          <Td>{formatISO(Number(table.lastModifiedTime))}</Td>
         </Tr>
         <Tr>
           <RowNumberTd>Table expiration</RowNumberTd>
-          <Td>{formatISO(Number(tableInfo.expirationTime))}</Td>
+          <Td>{formatISO(Number(table.expirationTime))}</Td>
         </Tr>
         <Tr>
           <RowNumberTd>Data location</RowNumberTd>
-          <Td>{tableInfo.location}</Td>
+          <Td>{table.location}</Td>
         </Tr>
       </tbody>
     </table>
