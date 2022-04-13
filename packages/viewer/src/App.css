@@ -282,6 +282,22 @@ tbody tr.lastOfRowNumber td.rowNumber {
   stroke: unset;
 }
 
+.labelWrapper {
+  position: relative;
+}
+.labelContainer {
+  position: absolute;
+  top: 2px;
+}
+.label {
+  position: relative;
+  left: -50%;
+  background: var(--vscode-tab-activeBackground);
+  color: var(--vscode-tab-activeForeground);
+  padding: 2px;
+  border-radius: 2px;
+}
+
 .spinner {
   fill: var(--vscode-tab-inactiveForeground);
   stroke: unset;

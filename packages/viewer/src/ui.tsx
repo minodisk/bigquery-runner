@@ -3,6 +3,7 @@ import React, {
   ButtonHTMLAttributes,
   HTMLProps,
   PropsWithChildren,
+  useEffect,
   useState,
 } from "react";
 
@@ -223,27 +224,65 @@ export const NextButton: VFC<IconButtonProps> = (props) => (
   </IconButton>
 );
 
-export const CopyButton: VFC<IconButtonProps> = (props) => (
-  <IconButton title="Copy" {...props}>
-    <svg
-      width="16"
-      height="16"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="currentColor"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="m4 4 1-1h5.414L14 6.586V14l-1 1H5l-1-1V4zm9 3-3-3H5v10h8V7z"
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M3 1 2 2v10l1 1V2h6.414l-1-1H3z"
-      />
-    </svg>
-  </IconButton>
-);
+export const CopyButton: VFC<IconButtonProps & { text?: string }> = ({
+  text,
+  onClick,
+  ...props
+}) => {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied) {
+      setTimeout(() => {
+        setCopied(false);
+      }, 1000);
+    }
+  }, [copied]);
+
+  return (
+    <VStack align="center">
+      <IconButton
+        title="Copy"
+        disabled={!text}
+        onClick={(e) => {
+          if (text) {
+            navigator.clipboard.writeText(text);
+            setCopied(true);
+          }
+          if (onClick) {
+            onClick(e);
+          }
+        }}
+        {...props}
+      >
+        <svg
+          width="16"
+          height="16"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="m4 4 1-1h5.414L14 6.586V14l-1 1H5l-1-1V4zm9 3-3-3H5v10h8V7z"
+          />
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M3 1 2 2v10l1 1V2h6.414l-1-1H3z"
+          />
+        </svg>
+      </IconButton>
+      {copied ? (
+        <Box className="labelWrapper">
+          <Box className="labelContainer">
+            <UIText className="label">Copied</UIText>
+          </Box>
+        </Box>
+      ) : null}
+    </VStack>
+  );
+};
 
 export const Spinner: FC = () => (
   <svg

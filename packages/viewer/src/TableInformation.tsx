@@ -15,14 +15,7 @@ export const TableInformation = ({ table }: { table: Table }) => {
             <HStack gap={2}>
               <Text className="breakable">{tableId}</Text>
               <Flex align="center">
-                <CopyButton
-                  disabled={!tableId}
-                  onClick={() => {
-                    if (tableId) {
-                      navigator.clipboard.writeText(tableId);
-                    }
-                  }}
-                />
+                <CopyButton text={tableId} />
               </Flex>
             </HStack>
           </Td>

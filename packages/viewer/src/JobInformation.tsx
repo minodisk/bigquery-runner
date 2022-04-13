@@ -17,14 +17,7 @@ export const JobInformation = ({ metadata }: { metadata: Metadata }) => {
             <HStack gap={2}>
               <Text className="breakable">{jobId}</Text>
               <Flex align="center">
-                <CopyButton
-                  disabled={!jobId}
-                  onClick={() => {
-                    if (jobId) {
-                      navigator.clipboard.writeText(jobId);
-                    }
-                  }}
-                />
+                <CopyButton text={jobId} />
               </Flex>
             </HStack>
           </Td>

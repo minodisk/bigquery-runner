@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.48
+
+### Added
+
+- Notify when text has been copied to the clipboard.
+
 ## v0.0.47
 
 ### Added
