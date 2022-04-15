@@ -24,8 +24,7 @@ This extension requires authentication to the Google Cloud API. You can start us
 2. Open the command palette
 3. Run `BigQuery Runner: Run`
 
-![bigquery-runner-12 1](https://user-images.githubusercontent.com/514164/150627625-2cca91ec-c0fc-47f2-a157-4704b44b8e04.gif)
-
+![bigquery-runner](https://user-images.githubusercontent.com/514164/163587955-9175c1d2-b467-4c1c-a22c-fd10fff19c57.gif)
 
 ## Commands
 
