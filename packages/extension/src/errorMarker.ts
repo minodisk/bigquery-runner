@@ -40,7 +40,7 @@ export function createErrorMarker({ section }: { section: string }) {
       }
 
       if (!(err instanceof Error)) {
-        if (selections.length > 0) {
+        if (selections.some((s) => !s.isEmpty)) {
           diagnosticCollection.set(
             document.uri,
             selections.map(
@@ -69,7 +69,7 @@ export function createErrorMarker({ section }: { section: string }) {
       const rMessage = /^(.*?) at \[(\d+):(\d+)\]$/;
       const res = rMessage.exec(message);
       if (!res) {
-        if (selections.length > 0) {
+        if (selections.some((s) => !s.isEmpty)) {
           diagnosticCollection.set(
             document.uri,
             selections.map(
@@ -94,7 +94,7 @@ export function createErrorMarker({ section }: { section: string }) {
         return;
       }
 
-      if (selections.length > 0) {
+      if (selections.some((s) => !s.isEmpty)) {
         diagnosticCollection.set(
           document.uri,
           selections.map(

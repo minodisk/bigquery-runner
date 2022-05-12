@@ -2,7 +2,15 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.50
+
+### Changed
+
+- Fixed a problem with incorrect error mark positions.
+
 ## v0.0.49
+
+### Changed
 
 - Fixed the problem of the header and footer showing through when scrolling a horizontal table.
 
