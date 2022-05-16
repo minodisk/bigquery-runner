@@ -5,7 +5,7 @@ import {
   DryRunJob,
   NoPageTokenError,
 } from "core";
-import { window } from "vscode";
+import { TextDocument, window } from "vscode";
 import { OutputChannel } from ".";
 import { ConfigManager } from "./configManager";
 import { ErrorMarker } from "./errorMarker";
@@ -27,16 +27,15 @@ export function createDryRunner({
   readonly errorMarker: ErrorMarker;
 }) {
   return {
-    async run(): Promise<void> {
+    async run({ document }: { document: TextDocument }): Promise<void> {
       try {
-        if (!window.activeTextEditor) {
-          return;
-        }
-        const textEditor = window.activeTextEditor;
-        const fileName = textEditor.document.fileName;
-        const selections = textEditor.selections;
+        const fileName = document.fileName;
+        const textEditor = window.visibleTextEditors.find(
+          (e) => e.document.fileName === fileName
+        );
+        const selections = textEditor?.selections ?? [];
         const query = await getQueryText({
-          document: textEditor.document,
+          document,
           selections,
         });
 

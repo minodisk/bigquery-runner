@@ -133,7 +133,15 @@ export async function activate(
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
     new Map<string, () => void>([
-      [`${section}.dryRun`, dryRunner.run],
+      [
+        `${section}.dryRun`,
+        () => {
+          if (!window.activeTextEditor) {
+            return;
+          }
+          dryRunner.run({ document: window.activeTextEditor.document });
+        },
+      ],
       [`${section}.run`, runner.run],
       [`${section}.prevPage`, runner.gotoPrevPage],
       [`${section}.nextPage`, runner.gotoNextPage],
