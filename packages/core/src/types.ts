@@ -229,7 +229,15 @@ export type SerializablePage = Readonly<{
   numRows: string;
 }>;
 
-export type ViewerEvent = StartEvent | EndEvent | PrevEvent | NextEvent;
+export type ViewerEvent =
+  | LoadedEvent
+  | StartEvent
+  | EndEvent
+  | PrevEvent
+  | NextEvent;
+export type LoadedEvent = Readonly<{
+  event: "loaded";
+}>;
 export type StartEvent = Readonly<{
   event: "start";
 }>;
@@ -243,6 +251,9 @@ export type NextEvent = Readonly<{
   event: "next";
 }>;
 
+export function isLoadedEvent(e: ViewerEvent): e is StartEvent {
+  return e.event === "loaded";
+}
 export function isStartEvent(e: ViewerEvent): e is StartEvent {
   return e.event === "start";
 }

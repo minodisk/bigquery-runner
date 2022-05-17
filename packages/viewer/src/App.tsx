@@ -62,6 +62,10 @@ const App: FC = () => {
   const [current, setCurrent] = useState("results");
 
   useEffect(() => {
+    vscode?.postMessage({ event: "loaded" });
+  }, []);
+
+  useEffect(() => {
     window.addEventListener("message", (e: MessageEvent) => {
       // When postMessage from a test, this value becomes a JSON string, so parse it.
       const data =

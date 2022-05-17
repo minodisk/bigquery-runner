@@ -2,13 +2,17 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v0.0.53
+
+### Changed
+
+- Wait for the HTML to finish loading in the Webview and for the JavaScript to complete initialization.
+
 ## v0.0.52
 
 ### Changed
 
 - Fixed a problem where results are not displayed in the viewer after a query is executed.
-  - Maybe since VS Code v1.67.1 or so, there is a problem that the `Promise` returned by `postMessage()` does not resolve if `postMessage()` is called immediately after creating a webview panel.
-  - After creating a new webview panel, I made sure that the `Promise` returned by `postMessage()` resolves before returning an instance.
 
 ## v0.0.51
 

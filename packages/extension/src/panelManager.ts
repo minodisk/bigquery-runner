@@ -1,4 +1,4 @@
-import { Data, FocusedEvent, ViewerEvent } from "core/src/types";
+import { Data, FocusedEvent, isLoadedEvent, ViewerEvent } from "core/src/types";
 import { readFile } from "fs/promises";
 import { basename, join } from "path";
 import {
@@ -60,64 +60,52 @@ export function createPanelManager({
         "<head>",
         `<head><base href="${base}/" />`
       );
-      const panel = window.createWebviewPanel(
-        `bigqueryRunner:${fileName}`,
-        basename(fileName),
-        {
-          viewColumn: panelViewColumn,
-          preserveFocus: true,
-        },
-        {
-          enableScripts: true,
-          localResourceRoots: [Uri.file(root)],
-        }
-      );
-      map.set(fileName, panel);
-      panel.iconPath = Uri.file(
-        join(ctx.extensionPath, "out/assets/icon-small.png")
-      );
-      panel.webview.html = html;
-      panel.webview.onDidReceiveMessage((e: ViewerEvent) => {
-        onDidReceiveMessage(e);
-      });
-      panel.onDidChangeViewState((e) =>
-        panel.webview.postMessage({
-          source: "bigquery-runner",
-          payload: {
-            event: "focused",
-            payload: {
-              focused: e.webviewPanel.active,
-            },
+
+      return new Promise((resolve) => {
+        let resolved = false;
+
+        const panel = window.createWebviewPanel(
+          `bigqueryRunner:${fileName}`,
+          basename(fileName),
+          {
+            viewColumn: panelViewColumn,
+            preserveFocus: true,
           },
-        } as Data<FocusedEvent>)
-      );
-      panel.onDidDispose(() => {
-        onDidDisposePanel({ fileName });
+          {
+            enableScripts: true,
+            localResourceRoots: [Uri.file(root)],
+          }
+        );
+        ctx.subscriptions.push(panel);
+        map.set(fileName, panel);
+
+        panel.onDidChangeViewState((e) =>
+          panel.webview.postMessage({
+            source: "bigquery-runner",
+            payload: {
+              event: "focused",
+              payload: {
+                focused: e.webviewPanel.active,
+              },
+            },
+          } as Data<FocusedEvent>)
+        );
+        panel.onDidDispose(() => {
+          onDidDisposePanel({ fileName });
+        });
+        panel.iconPath = Uri.file(
+          join(ctx.extensionPath, "out/assets/icon-small.png")
+        );
+
+        panel.webview.onDidReceiveMessage((e: ViewerEvent) => {
+          if (isLoadedEvent(e) && !resolved) {
+            resolved = true;
+            resolve(panel);
+          }
+          onDidReceiveMessage(e);
+        });
+        panel.webview.html = html;
       });
-      ctx.subscriptions.push(panel);
-
-      // Maybe since VS Code v1.67.1 or so, there is a problem
-      // that the Promise returned by postMessage() does not resolve
-      // if postMessage() is called immediately after creating a webview panel.
-      // After creating a new webview panel, I made sure that the Promise
-      // returned by postMessage() resolves before returning an instance.
-      for (;;) {
-        let connected = false;
-        await Promise.race([
-          new Promise((resolve) => {
-            panel.webview.postMessage(null).then(() => {
-              connected = true;
-              resolve(null);
-            });
-          }),
-          sleep(100),
-        ]);
-        if (connected) {
-          break;
-        }
-      }
-
-      return panel;
     },
 
     exists({ fileName }: { readonly fileName: string }) {
