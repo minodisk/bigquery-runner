@@ -80,22 +80,43 @@ export function createPanelManager({
       panel.webview.onDidReceiveMessage((e: ViewerEvent) => {
         onDidReceiveMessage(e);
       });
-      panel.onDidChangeViewState(
-        async (e) =>
-          await panel.webview.postMessage({
-            source: "bigquery-runner",
+      panel.onDidChangeViewState((e) =>
+        panel.webview.postMessage({
+          source: "bigquery-runner",
+          payload: {
+            event: "focused",
             payload: {
-              event: "focused",
-              payload: {
-                focused: e.webviewPanel.active,
-              },
+              focused: e.webviewPanel.active,
             },
-          } as Data<FocusedEvent>)
+          },
+        } as Data<FocusedEvent>)
       );
       panel.onDidDispose(() => {
         onDidDisposePanel({ fileName });
       });
       ctx.subscriptions.push(panel);
+
+      // Maybe since VS Code v1.67.1 or so, there is a problem
+      // that the Promise returned by postMessage() does not resolve
+      // if postMessage() is called immediately after creating a webview panel.
+      // After creating a new webview panel, I made sure that the Promise
+      // returned by postMessage() resolves before returning an instance.
+      for (;;) {
+        let connected = false;
+        await Promise.race([
+          new Promise((resolve) => {
+            panel.webview.postMessage(null).then(() => {
+              connected = true;
+              resolve(null);
+            });
+          }),
+          sleep(100),
+        ]);
+        if (connected) {
+          break;
+        }
+      }
+
       return panel;
     },
 
@@ -123,4 +144,8 @@ export function createPanelManager({
       map.clear();
     },
   };
+}
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
