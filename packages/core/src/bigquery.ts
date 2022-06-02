@@ -1,11 +1,11 @@
-import { BigQuery, BigQueryOptions, Job, Query } from "@google-cloud/bigquery";
+import { BigQuery, BigQueryOptions, Query } from "@google-cloud/bigquery";
 import {
   Page,
   Metadata,
   SerializablePage,
   Struct,
   Table,
-  TableReference,
+  Routine,
 } from "./types";
 
 export type Client = ReturnType<typeof createClient> extends Promise<infer T>
@@ -19,6 +19,12 @@ export type DryRunJob = ReturnType<Client["createDryRunJob"]> extends Promise<
 >
   ? T
   : never;
+
+export type StatementType =
+  | "SELECT"
+  | "CREATE_TABLE_AS_SELECT"
+  | "MERGE"
+  | "SCRIPT";
 
 export class AuthenticationError extends Error {
   constructor(keyFilename?: string) {
@@ -65,11 +71,14 @@ export async function createClient(options: BigQueryOptions) {
     async createRunJob(query: Omit<Query, "dryRun">): Promise<
       Readonly<{
         id: string;
+        statementType?: StatementType;
+        tableName?: string;
         getStructs(): Promise<Array<Struct>>;
         getPrevStructs(): Promise<Array<Struct>>;
         getNextStructs(): Promise<Array<Struct>>;
         getMetadata(): Promise<Metadata>;
         getTable(params: { metadata: Metadata }): Promise<Table>;
+        getRoutine(): Promise<Routine>;
         getPage(params: { table: Table }): Page;
       }>
     > {
@@ -77,25 +86,12 @@ export async function createClient(options: BigQueryOptions) {
         ...query,
         dryRun: false,
       });
+      const statementType = info.statistics?.query?.statementType as
+        | StatementType
+        | undefined;
       const tableName = createTableName(
         info.configuration?.query?.destinationTable
       );
-
-      if (
-        ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
-          (type) => info.statistics?.query?.statementType === type
-        ) &&
-        tableName
-      ) {
-        // Wait for completion of table creation job
-        // to get the records of the table just created.
-        await getMetadata({ job });
-
-        return this.createRunJob({
-          ...query,
-          query: `select * from \`${tableName}\``,
-        });
-      }
 
       if (!job.id) {
         throw new Error(`no job ID`);
@@ -106,6 +102,8 @@ export async function createClient(options: BigQueryOptions) {
 
       return {
         id: job.id,
+        statementType,
+        tableName,
 
         async getStructs() {
           const [structs, next] = await job.getQueryResults({
@@ -150,14 +148,45 @@ export async function createClient(options: BigQueryOptions) {
         },
 
         async getMetadata() {
-          return getMetadata({ job });
+          // Wait for a job to complete and get information abount the job.
+          for (let i = 1; i <= 10; i++) {
+            const metadata = await job.getMetadata();
+            const info: Metadata | undefined = metadata.find(
+              ({ kind }) => kind === "bigquery#job"
+            );
+            if (!info) {
+              continue;
+            }
+            if (info.status.state === "DONE") {
+              return info;
+            }
+            if (i === 10) {
+              break;
+            }
+            await sleep(1000);
+          }
+          throw new Error(
+            `waiting for completion of table creation job timed out`
+          );
         },
 
         async getTable({ metadata }) {
-          return getTable({
-            bigQuery,
-            table: metadata.configuration.query.destinationTable,
-          });
+          const table = metadata.configuration.query.destinationTable;
+          const res = await bigQuery
+            .dataset(table.datasetId)
+            .table(table.tableId)
+            .get();
+          const t: Table = res.find(({ kind }) => kind === "bigquery#table");
+          if (!t) {
+            throw new Error(`no table info: ${createTableName(table)}`);
+          }
+          return t;
+        },
+
+        async getRoutine() {
+          return (
+            await bigQuery.dataset("testing").routine("QueryTable").get()
+          )[0] as Routine;
         },
 
         getPage({ table }) {
@@ -205,45 +234,6 @@ export function createTableName(table?: {
   }
   const { projectId, datasetId, tableId } = table;
   return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
-}
-
-async function getMetadata({ job }: { job: Job }): Promise<Metadata> {
-  // Wait for a job to complete and get information abount the job.
-  for (let i = 1; i <= 10; i++) {
-    const metadata = await job.getMetadata();
-    const info: Metadata | undefined = metadata.find(
-      ({ kind }) => kind === "bigquery#job"
-    );
-    if (!info) {
-      continue;
-    }
-    if (info.status.state === "DONE") {
-      return info;
-    }
-    if (i === 10) {
-      break;
-    }
-    await sleep(1000);
-  }
-  throw new Error(`waiting for completion of table creation job timed out`);
-}
-
-async function getTable({
-  bigQuery,
-  table,
-}: {
-  bigQuery: BigQuery;
-  table: TableReference;
-}): Promise<Table> {
-  const res = await bigQuery
-    .dataset(table.datasetId)
-    .table(table.tableId)
-    .get();
-  const t: Table = res.find(({ kind }) => kind === "bigquery#table");
-  if (!t) {
-    throw new Error(`no table info: ${createTableName(table)}`);
-  }
-  return t;
 }
 
 function getPage(params: {

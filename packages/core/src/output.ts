@@ -10,10 +10,17 @@ import {
   RowsEvent,
   Struct,
   Table,
+  Routine,
 } from "./types";
 
 export type Output = Readonly<{
   open: () => Promise<string | void>;
+  writeRoutine: (
+    params: Readonly<{
+      routine: Routine;
+      metadata: Metadata;
+    }>
+  ) => Promise<unknown>;
   writeHeads: (
     params: Readonly<{
       flat: Flat;
@@ -45,6 +52,16 @@ export function createViewerOutput({
           event: "open",
         },
       } as Data<OpenEvent>);
+    },
+
+    async writeRoutine(payload) {
+      await postMessage({
+        source: "bigquery-runner",
+        payload: {
+          event: "routine",
+          payload,
+        },
+      });
     },
 
     async writeHeads() {
@@ -99,6 +116,9 @@ export function createLogOutput({
     async open() {
       outputChannel.show(true);
     },
+    async writeRoutine() {
+      // do nothing
+    },
     async writeHeads({ flat }) {
       outputChannel.append(formatter.header({ flat }));
     },
@@ -125,6 +145,9 @@ export function createFileOutput({
 }): Output {
   return {
     async open() {
+      // do nothing
+    },
+    async writeRoutine() {
       // do nothing
     },
     async writeHeads({ flat }) {

@@ -1,15 +1,25 @@
 import { createClient, RunJob } from "core";
-import { Metadata, Page, Struct, Table } from "core/src/types";
+import { Metadata, Page, Routine, Struct, Table } from "core/src/types";
 import { ConfigManager } from "./configManager";
 
 export type RunJobManager = ReturnType<typeof createRunJobManager>;
 
-export type RunJobResponse = Readonly<{
+export type RunJobResponse = SelectResponse | RoutineResponse;
+
+export type SelectResponse = Readonly<{
+  type: "select";
   jobId: string;
-  structs: Array<Struct>;
   metadata: Metadata;
+  structs: Array<Struct>;
   table: Table;
   page: Page;
+}>;
+
+export type RoutineResponse = Readonly<{
+  type: "routine";
+  jobId: string;
+  metadata: Metadata;
+  routine: Routine;
 }>;
 
 export function createRunJobManager({
@@ -17,10 +27,10 @@ export function createRunJobManager({
 }: {
   readonly configManager: ConfigManager;
 }) {
-  const map: Map<string, RunJob> = new Map();
+  const selectJobs: Map<string, RunJob> = new Map();
 
   return {
-    async rows({
+    async query({
       fileName,
       query,
     }: {
@@ -29,14 +39,46 @@ export function createRunJobManager({
     }): Promise<RunJobResponse> {
       const config = configManager.get();
       const client = await createClient(config);
-      const job = await client.createRunJob({
+      let job = await client.createRunJob({
         query,
         maxResults: config.pagination.results,
       });
-      if (!job) {
-        throw new Error(`no job`);
+      // if (!job) {
+      //   throw new Error(`no job`);
+      // }
+
+      if (["SCRIPT"].some((type) => job.statementType === type)) {
+        // Wait for completion of table creation job
+        // to get the records of the table just created.
+        const metadata = await job.getMetadata();
+
+        const routine = await job.getRoutine();
+
+        return {
+          type: "routine",
+          jobId: job.id,
+          metadata,
+          routine,
+        };
       }
-      map.set(fileName, job);
+
+      if (
+        ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
+          (type) => job.statementType === type
+        ) &&
+        job.tableName
+      ) {
+        // Wait for completion of table creation job
+        // to get the records of the table just created.
+        await job.getMetadata();
+
+        job = await client.createRunJob({
+          query: `SELECT * FROM \`${job.tableName}\``,
+          maxResults: config.pagination.results,
+        });
+      }
+
+      selectJobs.set(fileName, job);
 
       const structs = await job.getStructs();
       const metadata = await job.getMetadata();
@@ -44,6 +86,7 @@ export function createRunJobManager({
       const page = job.getPage({ table });
 
       return {
+        type: "select",
         jobId: job.id,
         structs,
         metadata,
@@ -56,8 +99,8 @@ export function createRunJobManager({
       fileName,
     }: {
       readonly fileName: string;
-    }): Promise<RunJobResponse> {
-      const job = map.get(fileName);
+    }): Promise<SelectResponse> {
+      const job = selectJobs.get(fileName);
       if (!job) {
         throw new Error(`no job`);
       }
@@ -68,6 +111,7 @@ export function createRunJobManager({
       const page = job.getPage({ table });
 
       return {
+        type: "select",
         jobId: job.id,
         structs,
         metadata,
@@ -80,8 +124,8 @@ export function createRunJobManager({
       fileName,
     }: {
       readonly fileName: string;
-    }): Promise<RunJobResponse> {
-      const job = map.get(fileName);
+    }): Promise<SelectResponse> {
+      const job = selectJobs.get(fileName);
 
       if (!job) {
         throw new Error(`no job`);
@@ -93,6 +137,7 @@ export function createRunJobManager({
       const page = job.getPage({ table });
 
       return {
+        type: "select",
         jobId: job.id,
         structs,
         metadata,
@@ -102,11 +147,11 @@ export function createRunJobManager({
     },
 
     delete({ fileName }: { readonly fileName: string }) {
-      return map.delete(fileName);
+      return selectJobs.delete(fileName);
     },
 
     dispose() {
-      map.clear();
+      selectJobs.clear();
     },
   };
 }

@@ -96,7 +96,12 @@ export function isData(data: { source?: string }): data is Data<Event> {
   return data.source === "bigquery-runner";
 }
 
-export type Event = FocusedEvent | OpenEvent | CloseEvent | RowsEvent;
+export type Event =
+  | FocusedEvent
+  | OpenEvent
+  | CloseEvent
+  | RoutineEvent
+  | RowsEvent;
 
 export type FocusedEvent = Readonly<{
   event: "focused";
@@ -122,6 +127,17 @@ export type CloseEvent = Readonly<{
 }>;
 export function isCloseEvent(e: Event): e is CloseEvent {
   return e.event === "close";
+}
+
+export type RoutineEvent = Readonly<{
+  event: "routine";
+  payload: {
+    routine: Routine;
+    metadata: Metadata;
+  };
+}>;
+export function isRoutineEvent(e: Event): e is RoutineEvent {
+  return e.event === "routine";
 }
 
 export type RowsEvent = Readonly<{
@@ -201,6 +217,24 @@ export type Table = Readonly<{
   selfLink: string;
   tableReference: TableReference;
   type: "TABLE";
+}>;
+
+export type Routine = Readonly<{
+  baseUrl: string;
+  id: string;
+  metadata: {
+    creationTime: string;
+    definitionBody: string;
+    etag: string;
+    language: "SQL";
+    lastModifiedTime: string;
+    routineReference: {
+      datasetId: string;
+      projectId: string;
+      routineId: string;
+    };
+    routineType: "PROCEDURE";
+  };
 }>;
 
 export type Schema = Readonly<{

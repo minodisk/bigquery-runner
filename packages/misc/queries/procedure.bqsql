@@ -1,0 +1,4 @@
+CREATE OR REPLACE PROCEDURE testing.QueryTable()
+BEGIN
+  SELECT * FROM testing.create;
+END;

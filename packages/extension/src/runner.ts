@@ -74,7 +74,7 @@ export function createRunner({
           let response: RunJobResponse;
           try {
             errorMarker.clear({ fileName });
-            response = await runJobManager.rows({
+            response = await runJobManager.query({
               fileName,
               query,
             });

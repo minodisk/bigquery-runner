@@ -8,6 +8,7 @@ import {
   Rows,
   ViewerEvent,
   SerializablePage,
+  isRoutineEvent,
 } from "core/src/types";
 import cx from "classnames";
 import "./App.css";
@@ -80,6 +81,14 @@ const App: FC = () => {
       }
       if (isOpenEvent(payload)) {
         setLoading("Fetching");
+        return;
+      }
+      if (isRoutineEvent(payload)) {
+        setLoading(undefined);
+        startTransition(() => {
+          setData(payload.payload);
+          vscode?.setState(payload.payload);
+        });
         return;
       }
       if (isRowsEvent(payload)) {

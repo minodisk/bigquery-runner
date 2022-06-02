@@ -18,13 +18,25 @@ export function createRenderer({
     async render({
       fileName,
       output,
-      response: { jobId, structs, metadata, table, page },
+      response,
     }: {
       readonly fileName: string;
       readonly output: Output;
       readonly response: RunJobResponse;
     }) {
+      if (response.type === "routine") {
+        const { metadata, routine } = response;
+        console.log("----------------------");
+        console.log(metadata, routine);
+        output.writeRoutine({
+          routine,
+          metadata,
+        });
+        return;
+      }
       try {
+        const { metadata, structs, table, page } = response;
+
         statusManager.loadBilled({ fileName });
 
         outputChannel.appendLine(`Result: ${structs.length} rows`);
@@ -63,8 +75,8 @@ export function createRenderer({
       } catch (err) {
         statusManager.errorBilled({ fileName });
         // statusManager.hide();
-        if (jobId) {
-          throw new ErrorWithId(err, jobId);
+        if (response.jobId) {
+          throw new ErrorWithId(err, response.jobId);
         } else {
           throw err;
         }
