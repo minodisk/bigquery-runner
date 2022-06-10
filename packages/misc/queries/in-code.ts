@@ -10,7 +10,7 @@ export function main() {
       )
   `;
   const query2 = `select 
-      ip
+      id
     from 
       (
         select 1 as id

@@ -71,13 +71,13 @@ export async function createClient(options: BigQueryOptions) {
     async createRunJob(query: Omit<Query, "dryRun">): Promise<
       Readonly<{
         id: string;
+        metadata: Metadata;
         statementType?: StatementType;
         tableName?: string;
         getStructs(): Promise<Array<Struct>>;
         getPrevStructs(): Promise<Array<Struct>>;
         getNextStructs(): Promise<Array<Struct>>;
-        getMetadata(): Promise<Metadata>;
-        getTable(params: { metadata: Metadata }): Promise<Table>;
+        getTable(): Promise<Table>;
         getRoutine(): Promise<Routine>;
         getPage(params: { table: Table }): Page;
       }>
@@ -86,6 +86,17 @@ export async function createClient(options: BigQueryOptions) {
         ...query,
         dryRun: false,
       });
+      const metadata = await new Promise<Metadata>((resolve, reject) => {
+        job.on("complete", (metadata) => {
+          resolve(metadata);
+          job.removeAllListeners();
+        });
+        job.on("error", () => {
+          reject();
+          job.removeAllListeners();
+        });
+      });
+
       const statementType = info.statistics?.query?.statementType as
         | StatementType
         | undefined;
@@ -102,6 +113,7 @@ export async function createClient(options: BigQueryOptions) {
 
       return {
         id: job.id,
+        metadata,
         statementType,
         tableName,
 
@@ -147,30 +159,7 @@ export async function createClient(options: BigQueryOptions) {
           return structs;
         },
 
-        async getMetadata() {
-          // Wait for a job to complete and get information abount the job.
-          for (let i = 1; i <= 10; i++) {
-            const metadata = await job.getMetadata();
-            const info: Metadata | undefined = metadata.find(
-              ({ kind }) => kind === "bigquery#job"
-            );
-            if (!info) {
-              continue;
-            }
-            if (info.status.state === "DONE") {
-              return info;
-            }
-            if (i === 10) {
-              break;
-            }
-            await sleep(1000);
-          }
-          throw new Error(
-            `waiting for completion of table creation job timed out`
-          );
-        },
-
-        async getTable({ metadata }) {
+        async getTable() {
           const table = metadata.configuration.query.destinationTable;
           const res = await bigQuery
             .dataset(table.datasetId)
@@ -184,8 +173,19 @@ export async function createClient(options: BigQueryOptions) {
         },
 
         async getRoutine() {
+          const [[j]] = await bigQuery.getJobs({ parentJobId: job.id });
+          if (!j) {
+            throw new Error(`no routine`);
+          }
+          const routine = j?.metadata.statistics.query.ddlTargetRoutine;
+          if (!routine) {
+            throw new Error(`no routine`);
+          }
           return (
-            await bigQuery.dataset("testing").routine("QueryTable").get()
+            await bigQuery
+              .dataset(routine.datasetId)
+              .routine(routine.routineId)
+              .get()
           )[0] as Routine;
         },
 
@@ -275,8 +275,4 @@ export function toSerializablePage(page: Page): SerializablePage {
     rowNumberEnd: `${page.rowNumberEnd}`,
     numRows: `${page.numRows}`,
   };
-}
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

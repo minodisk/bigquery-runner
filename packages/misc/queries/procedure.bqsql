@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE testing.QueryTable()
-BEGIN
-  SELECT * FROM testing.create;
-END;
+create or replace procedure testing.hoge()
+begin
+  select * from testing.create;
+end;

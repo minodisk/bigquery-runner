@@ -337,4 +337,8 @@ export const TabContent: XFC<{
   );
 };
 
+export const Pre: XFC = ({ className, ...props }) => {
+  return <pre className={cx("pre", className)} {...props} />;
+};
+
 // export const Skeleton: FC = () => <div className="skeleton" />;

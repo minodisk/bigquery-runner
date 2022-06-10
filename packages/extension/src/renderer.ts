@@ -26,8 +26,6 @@ export function createRenderer({
     }) {
       if (response.type === "routine") {
         const { metadata, routine } = response;
-        console.log("----------------------");
-        console.log(metadata, routine);
         output.writeRoutine({
           routine,
           metadata,

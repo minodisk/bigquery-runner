@@ -46,18 +46,19 @@ export function createRunJobManager({
       // if (!job) {
       //   throw new Error(`no job`);
       // }
+      // const metadata = await job.getMetadata();
 
-      if (["SCRIPT"].some((type) => job.statementType === type)) {
+      if (
+        job.metadata.statistics.numChildJobs &&
+        ["SCRIPT"].some((type) => job.statementType === type)
+      ) {
         // Wait for completion of table creation job
         // to get the records of the table just created.
-        const metadata = await job.getMetadata();
-
         const routine = await job.getRoutine();
-
         return {
           type: "routine",
           jobId: job.id,
-          metadata,
+          metadata: job.metadata,
           routine,
         };
       }
@@ -70,8 +71,6 @@ export function createRunJobManager({
       ) {
         // Wait for completion of table creation job
         // to get the records of the table just created.
-        await job.getMetadata();
-
         job = await client.createRunJob({
           query: `SELECT * FROM \`${job.tableName}\``,
           maxResults: config.pagination.results,
@@ -81,15 +80,14 @@ export function createRunJobManager({
       selectJobs.set(fileName, job);
 
       const structs = await job.getStructs();
-      const metadata = await job.getMetadata();
-      const table = await job.getTable({ metadata });
+      const table = await job.getTable();
       const page = job.getPage({ table });
 
       return {
         type: "select",
         jobId: job.id,
         structs,
-        metadata,
+        metadata: job.metadata,
         table,
         page,
       };
@@ -106,15 +104,14 @@ export function createRunJobManager({
       }
 
       const structs = await job.getPrevStructs();
-      const metadata = await job.getMetadata();
-      const table = await job.getTable({ metadata });
+      const table = await job.getTable();
       const page = job.getPage({ table });
 
       return {
         type: "select",
         jobId: job.id,
         structs,
-        metadata,
+        metadata: job.metadata,
         table,
         page,
       };
@@ -132,15 +129,14 @@ export function createRunJobManager({
       }
 
       const structs = await job.getNextStructs();
-      const metadata = await job.getMetadata();
-      const table = await job.getTable({ metadata });
+      const table = await job.getTable();
       const page = job.getPage({ table });
 
       return {
         type: "select",
         jobId: job.id,
         structs,
-        metadata,
+        metadata: job.metadata,
         table,
         page,
       };

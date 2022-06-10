@@ -61,7 +61,7 @@ export type Value =
   | number
   | string
   | boolean
-  | BigInt
+  | bigint
   | Buffer
   | Geography
   | BigQueryDate
@@ -131,11 +131,12 @@ export function isCloseEvent(e: Event): e is CloseEvent {
 
 export type RoutineEvent = Readonly<{
   event: "routine";
-  payload: {
-    routine: Routine;
-    metadata: Metadata;
-  };
+  payload: RoutinePayload;
 }>;
+export type RoutinePayload = {
+  routine: Routine;
+  metadata: Metadata;
+};
 export function isRoutineEvent(e: Event): e is RoutineEvent {
   return e.event === "routine";
 }
@@ -185,6 +186,7 @@ export type Metadata = Readonly<{
     creationTime: string;
     startTime: string;
     endTime: string;
+    numChildJobs?: string;
     totalBytesProcessed: string;
     query: {
       totalBytesProcessed: string;
