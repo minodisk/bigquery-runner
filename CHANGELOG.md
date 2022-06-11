@@ -4,6 +4,10 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ## v0.0.53
 
+### Added
+
+- Support routine.
+
 ### Changed
 
 - Wait for the HTML to finish loading in the Webview and for the JavaScript to complete initialization.
