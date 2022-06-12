@@ -1,26 +1,28 @@
-import React, { FC, useState } from "react";
-import { Rows, SerializablePage } from "core/src/types";
+import React, { FC } from "react";
+import { Rows } from "core/src/types";
 import cx from "classnames";
 import { JobInformation } from "./JobInformation";
+import { Footer, Header } from "./ui";
+import { TableInformation } from "./TableInformation";
 import {
   Box,
-  Flex,
   HStack,
-  NextButton,
-  PrevButton,
-  RowNumberTd,
-  RowNumberTh,
+  IconButton,
   Spinner,
   Tab,
-  TabContent,
+  Table,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  Tbody,
   Td,
+  Text,
   Th,
+  Thead,
   Tr,
-  UIText,
-  VStack,
-} from "./ui";
-import { TableInformation } from "./TableInformation";
-// import * as payload from "../../misc/mock/payload.json";
+} from "@chakra-ui/react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
 const Select: FC<
   Readonly<{
@@ -37,120 +39,105 @@ const Select: FC<
   onPrevRequest,
   onNextRequest,
 }) => {
-  const [current, setCurrent] = useState("results");
-
   return (
     <Box className={cx({ focused })}>
-      <Header current={current} onChange={setCurrent} loading={loading} />
-      <div>
-        <TabContent name="results" current={current}>
-          <VStack>
-            <table>
-              <thead>
-                <Tr>
-                  <RowNumberTh>Row</RowNumberTh>
-                  {header.map((head) => (
-                    <Th key={head}>{head}</Th>
-                  ))}
-                </Tr>
-              </thead>
-              <tbody>
-                {rows.map(({ rowNumber, rows }, i) => {
-                  const lastRow = i === rows.length - 1;
-                  return rows.map((row, j) => (
-                    <Tr
-                      key={j}
-                      className={cx({
-                        lastOfRowNumber: lastRow && j === 0,
-                      })}
-                    >
-                      {j === 0 ? (
-                        <RowNumberTd rowSpan={rows.length}>
-                          {`${rowNumber}`}
-                        </RowNumberTd>
-                      ) : null}
-                      {row.map((cell) => {
-                        return (
-                          <Td key={cell.id}>
-                            {cell.value === undefined ? null : `${cell.value}`}
-                          </Td>
-                        );
-                      })}
-                    </Tr>
-                  ));
-                })}
-              </tbody>
-            </table>
-            <Footer
-              page={page}
-              onPrevRequest={onPrevRequest}
-              onNextRequest={onNextRequest}
-            />
-          </VStack>
-        </TabContent>
-        <TabContent name="jobInformation" current={current}>
-          <JobInformation metadata={metadata} />
-        </TabContent>
-        <TabContent name="tableInformation" current={current}>
-          <TableInformation table={table} />
-        </TabContent>
-      </div>
+      <Tabs>
+        <Header>
+          <TabList>
+            <Tab>Results</Tab>
+            <Tab>Job</Tab>
+            <Tab>Table</Tab>
+          </TabList>
+          {loading ? (
+            <HStack gap={1} px={2}>
+              <Text>{loading}</Text>
+              <Spinner size="sm" />
+            </HStack>
+          ) : null}
+        </Header>
+        <TabPanels>
+          <TabPanel>
+            <Box>
+              <Table>
+                <Thead position="sticky" top={38.5}>
+                  <Tr>
+                    <Th isNumeric />
+                    {header.map((head) => (
+                      <Th key={head}>{head}</Th>
+                    ))}
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {rows.map(({ rowNumber, rows }, i) => {
+                    const lastRow = i === rows.length - 1;
+                    return rows.map((row, j) => (
+                      <Tr
+                        key={j}
+                        className={cx({
+                          lastOfRowNumber: lastRow && j === 0,
+                        })}
+                      >
+                        {j === 0 ? (
+                          <Th
+                            rowSpan={rows.length}
+                            isNumeric
+                          >{`${rowNumber}`}</Th>
+                        ) : null}
+                        {row.map((cell) => {
+                          return (
+                            <Td key={cell.id}>
+                              {cell.value === undefined
+                                ? null
+                                : `${cell.value}`}
+                            </Td>
+                          );
+                        })}
+                      </Tr>
+                    ));
+                  })}
+                </Tbody>
+              </Table>
+              <Footer>
+                <HStack gap={1}>
+                  {/* <StartButton onClick={() => vscode?.postMessage({ event: "start" })} /> */}
+                  <IconButton
+                    aria-label="prev page"
+                    icon={<ChevronLeftIcon />}
+                    size="xs"
+                    variant="ghost"
+                    disabled={!page.hasPrev}
+                    onClick={onPrevRequest}
+                  />
+                  <IconButton
+                    aria-label="next page"
+                    icon={<ChevronRightIcon />}
+                    size="xs"
+                    variant="ghost"
+                    disabled={!page.hasNext}
+                    onClick={onNextRequest}
+                  />
+                  {/* <EndButton onClick={() => vscode?.postMessage({ event: "end" })} /> */}
+                </HStack>
+                <HStack gap={1} px={1}>
+                  <Text>{`${page.rowNumberStart}`}</Text>
+                  <Text>-</Text>
+                  <Text>{`${page.rowNumberEnd}`}</Text>
+                  <Text>of</Text>
+                  <Text>{page.numRows}</Text>
+                </HStack>
+              </Footer>
+            </Box>
+          </TabPanel>
+          <TabPanel>
+            <JobInformation metadata={metadata} />
+          </TabPanel>
+          <TabPanel>
+            <TableInformation table={table} />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </Box>
   );
 };
-
-const Header: FC<{
-  readonly current: string;
-  readonly loading?: string;
-  readonly onChange: (current: string) => void;
-}> = ({ current, loading, onChange }) => (
-  <Box className="header">
-    <Flex justify="between" className="nav">
-      <HStack>
-        <Tab name="results" current={current} onChange={onChange}>
-          <UIText>Results</UIText>
-        </Tab>
-        <Tab name="jobInformation" current={current} onChange={onChange}>
-          <UIText>Job</UIText>
-        </Tab>
-        <Tab name="tableInformation" current={current} onChange={onChange}>
-          Table
-        </Tab>
-      </HStack>
-      {loading ? (
-        <HStack reverse align="center" gap={1} px={2}>
-          <Spinner />
-          <UIText color="weak">{loading}</UIText>
-        </HStack>
-      ) : null}
-    </Flex>
-  </Box>
-);
-
-const Footer: FC<
-  Readonly<{
-    page: SerializablePage;
-    onPrevRequest: () => unknown;
-    onNextRequest: () => unknown;
-  }>
-> = ({ page, onPrevRequest, onNextRequest, ...props }) => (
-  <Box className="footer">
-    <Flex justify="between" className="pagination" px={2}>
-      <HStack gap={2} {...props}>
-        {/* <StartButton onClick={() => vscode?.postMessage({ event: "start" })} /> */}
-        <PrevButton disabled={!page.hasPrev} onClick={onPrevRequest} />
-        <NextButton disabled={!page.hasNext} onClick={onNextRequest} />
-        {/* <EndButton onClick={() => vscode?.postMessage({ event: "end" })} /> */}
-      </HStack>
-      <HStack gap={2} {...props}>
-        <UIText color="weak">{`${page.rowNumberStart}`}</UIText>
-        <UIText color="weak">-</UIText>
-        <UIText color="weak">{`${page.rowNumberEnd}`}</UIText>
-        <UIText color="weak">of</UIText>
-        <UIText color="weak">{page.numRows}</UIText>
-      </HStack>
-    </Flex>
-  </Box>
-);
 
 export default Select;

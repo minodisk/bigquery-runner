@@ -1,8 +1,8 @@
-:root {
+/* :root {
   --header-height: 28px;
-}
+} */
 
-.header {
+/* .header {
   position: sticky;
   top: 0;
   width: 100%;
@@ -15,17 +15,17 @@
   position: absolute;
   left: 0;
   bottom: 0;
-}
-.nav {
+} */
+/* .nav {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   background-color: var(--vscode-editorGroupHeader-tabsBackground);
   border-bottom: 1px solid var(--vscode-editorGroupHeader-tabsBorder);
-}
+} */
 
-.footer {
+/* .footer {
   position: sticky;
   bottom: 0;
   width: 100%;
@@ -38,9 +38,9 @@
   height: 22px;
   background-color: var(--vscode-statusBar-background);
   border-top: 1px solid var(--vscode-statusBar-border);
-}
+} */
 
-.button.tab {
+/* .button.tab {
   position: relative;
   white-space: nowrap;
   box-sizing: border-box;
@@ -90,20 +90,20 @@
 }
 .focused .button.tab.current .tabBorder {
   background-color: var(--vscode-tab-activeBorder);
-}
+} */
 
-.tabContent {
+/* .tabContent {
   display: none;
 }
 .tabContent.show {
   display: block;
-}
+} */
 
-table {
+/* table {
   border-collapse: separate;
   border-spacing: 0;
-}
-thead {
+} */
+/* thead {
   position: sticky;
   top: var(--header-height);
   background-color: var(--vscode-editor-background);
@@ -118,9 +118,9 @@ tbody tr td {
   border-width: 0 0 1px 0;
   border-style: solid;
   border-color: var(--vscode-terminal-border);
-}
+} */
 
-th {
+/* th {
   padding: 4px 16px;
   text-align: left;
   vertical-align: top;
@@ -138,13 +138,13 @@ tbody tr:last-of-type td {
 }
 tbody tr.lastOfRowNumber td.rowNumber {
   border-width: 0;
-}
+} */
 
-.rowNumber {
+/* .rowNumber {
   color: var(--vscode-descriptionForeground);
-}
+} */
 
-.box {
+/* .box {
   box-sizing: border-box;
 }
 
@@ -226,9 +226,9 @@ tbody tr.lastOfRowNumber td.rowNumber {
 }
 .gap-3 {
   gap: 16px;
-}
+} */
 
-.text.alignCenter {
+/* .text.alignCenter {
   text-align: center;
 }
 .text.weakColor {
@@ -241,9 +241,9 @@ tbody tr.lastOfRowNumber td.rowNumber {
 .text.ui {
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
-}
+} */
 
-.button {
+/* .button {
   padding: unset;
   border: unset;
   cursor: pointer;
@@ -275,7 +275,6 @@ tbody tr.lastOfRowNumber td.rowNumber {
 }
 .iconButton svg {
   fill: var(--vscode-tab-activeForeground);
-  /* stroke: var(--vscode-tab-activeForeground); */
 }
 .iconButton:disabled svg {
   fill: var(--vscode-tab-inactiveForeground);
@@ -301,20 +300,20 @@ tbody tr.lastOfRowNumber td.rowNumber {
 .pre {
   margin: 0;
   padding: 0;
-}
+} */
 
-.spinner {
+/* .spinner {
   fill: var(--vscode-tab-inactiveForeground);
   stroke: unset;
   will-change: transform;
   animation: codicon-spin 1s cubic-bezier(0.53, 0.21, 0.29, 0.67) infinite;
-}
+} */
 
-@keyframes codicon-spin {
+/* @keyframes codicon-spin {
   to {
     transform: rotate(1turn);
   }
-}
+} */
 
 /* .skeleton {
   opacity: 0.7;

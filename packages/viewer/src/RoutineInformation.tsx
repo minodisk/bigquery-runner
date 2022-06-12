@@ -1,44 +1,43 @@
+import { HStack, Table, Tbody, Td, Text, Th, Tr } from "@chakra-ui/react";
 import { Routine } from "core/src/types";
 import formatISO from "date-fns/formatISO";
 import React from "react";
-import { CopyButton, Flex, HStack, Pre, RowNumberTd, Td, Text, Tr } from "./ui";
+import { Breakable, CopyButton } from "./ui";
 
 export const RoutineInformation = ({ routine }: { routine: Routine }) => {
   const { projectId, datasetId, routineId } = routine.metadata.routineReference;
   const id = [projectId, datasetId, routineId].join(".");
   return (
-    <table>
-      <tbody>
+    <Table>
+      <Tbody>
         <Tr>
-          <RowNumberTd>Routine ID</RowNumberTd>
+          <Th>Routine ID</Th>
           <Td>
             <HStack gap={2}>
-              <Text className="breakable">{id}</Text>
-              <Flex align="center">
-                <CopyButton text={id} />
-              </Flex>
+              <Breakable>{id}</Breakable>
+              <CopyButton text={id} />
             </HStack>
           </Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Created</RowNumberTd>
+          <Th>Created</Th>
           <Td>{formatISO(Number(routine.metadata.creationTime))}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Last modified</RowNumberTd>
+          <Th>Last modified</Th>
           <Td>{formatISO(Number(routine.metadata.lastModifiedTime))}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Language</RowNumberTd>
+          <Th>Language</Th>
           <Td>{routine.metadata.language}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Definition</RowNumberTd>
+          <Th>Definition</Th>
           <Td>
-            <Pre>{routine.metadata.definitionBody}</Pre>
+            <Text whiteSpace="pre">{routine.metadata.definitionBody}</Text>
           </Td>
         </Tr>
-      </tbody>
-    </table>
+      </Tbody>
+    </Table>
   );
 };

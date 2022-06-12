@@ -1,51 +1,50 @@
+import { HStack, Table, Tbody, Td, Text, Th, Tr } from "@chakra-ui/react";
 import bytes from "bytes";
 import { Metadata } from "core/src/types";
 import formatDuration from "date-fns/formatDuration";
 import formatISO from "date-fns/formatISO";
 import React from "react";
-import { CopyButton, Flex, HStack, RowNumberTd, Td, Text, Tr } from "./ui";
+import { Breakable, CopyButton } from "./ui";
 
 export const JobInformation = ({ metadata }: { metadata: Metadata }) => {
   const jobId = `${metadata.jobReference.projectId}:${metadata.jobReference.location}.${metadata.jobReference.jobId}`;
 
   return (
-    <table>
-      <tbody>
+    <Table>
+      <Tbody>
         <Tr>
-          <RowNumberTd>Job ID</RowNumberTd>
+          <Th>Job ID</Th>
           <Td>
             <HStack gap={2}>
-              <Text className="breakable">{jobId}</Text>
-              <Flex align="center">
-                <CopyButton text={jobId} />
-              </Flex>
+              <Breakable>{jobId}</Breakable>
+              <CopyButton text={jobId} />
             </HStack>
           </Td>
         </Tr>
         <Tr>
-          <RowNumberTd>User</RowNumberTd>
+          <Th>User</Th>
           <Td>{metadata.user_email}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Location</RowNumberTd>
+          <Th>Location</Th>
           <Td>{metadata.jobReference.location}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Creation time</RowNumberTd>
+          <Th>Creation time</Th>
           <Td>
             {formatISO(Number(metadata.statistics.creationTime)).toString()}
           </Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Start time</RowNumberTd>
+          <Th>Start time</Th>
           <Td>{formatISO(Number(metadata.statistics.startTime)).toString()}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>End time</RowNumberTd>
+          <Th>End time</Th>
           <Td>{formatISO(Number(metadata.statistics.endTime)).toString()}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Duration</RowNumberTd>
+          <Th>Duration</Th>
           <Td>
             {formatDuration({
               seconds:
@@ -56,7 +55,7 @@ export const JobInformation = ({ metadata }: { metadata: Metadata }) => {
           </Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Bytes processed</RowNumberTd>
+          <Th>Bytes processed</Th>
           <Td>
             <HStack gap={1}>
               <Text>
@@ -69,14 +68,14 @@ export const JobInformation = ({ metadata }: { metadata: Metadata }) => {
           </Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Bytes billed</RowNumberTd>
+          <Th>Bytes billed</Th>
           <Td>{bytes(Number(metadata.statistics.query.totalBytesBilled))}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Use legacy SQL</RowNumberTd>
+          <Th>Use legacy SQL</Th>
           <Td>{`${metadata.configuration.query.useLegacySql}`}</Td>
         </Tr>
-      </tbody>
-    </table>
+      </Tbody>
+    </Table>
   );
 };

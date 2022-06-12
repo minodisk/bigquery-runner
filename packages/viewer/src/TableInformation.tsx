@@ -1,54 +1,53 @@
+import { HStack, Table, Tbody, Td, Th, Tr } from "@chakra-ui/react";
 import bytes from "bytes";
-import { Table } from "core/src/types";
+import { Table as TableInfo } from "core/src/types";
 import formatISO from "date-fns/formatISO";
 import React from "react";
-import { CopyButton, Flex, HStack, RowNumberTd, Td, Text, Tr } from "./ui";
+import { Breakable, CopyButton } from "./ui";
 
-export const TableInformation = ({ table }: { table: Table }) => {
+export const TableInformation = ({ table }: { table: TableInfo }) => {
   const tableId = `${table.tableReference.projectId}.${table.tableReference.datasetId}.${table.tableReference.tableId}`;
   return (
-    <table>
-      <tbody>
+    <Table>
+      <Tbody>
         <Tr>
-          <RowNumberTd>Table ID</RowNumberTd>
+          <Th>Table ID</Th>
           <Td>
             <HStack gap={2}>
-              <Text className="breakable">{tableId}</Text>
-              <Flex align="center">
-                <CopyButton text={tableId} />
-              </Flex>
+              <Breakable>{tableId}</Breakable>
+              <CopyButton text={tableId} />
             </HStack>
           </Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Table size</RowNumberTd>
+          <Th>Table size</Th>
           <Td>{bytes(Number(table.numBytes))}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Long-term storage size</RowNumberTd>
+          <Th>Long-term storage size</Th>
           <Td>{bytes(Number(table.numLongTermBytes))}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Number of rows</RowNumberTd>
+          <Th>Number of rows</Th>
           <Td>{table.numRows}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Created</RowNumberTd>
+          <Th>Created</Th>
           <Td>{formatISO(Number(table.creationTime))}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Last modified</RowNumberTd>
+          <Th>Last modified</Th>
           <Td>{formatISO(Number(table.lastModifiedTime))}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Table expiration</RowNumberTd>
+          <Th>Table expiration</Th>
           <Td>{formatISO(Number(table.expirationTime))}</Td>
         </Tr>
         <Tr>
-          <RowNumberTd>Data location</RowNumberTd>
+          <Th>Data location</Th>
           <Td>{table.location}</Td>
         </Tr>
-      </tbody>
-    </table>
+      </Tbody>
+    </Table>
   );
 };

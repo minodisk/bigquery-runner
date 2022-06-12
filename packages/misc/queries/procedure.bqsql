@@ -1,4 +1,4 @@
-create or replace procedure testing.hoge()
+create or replace procedure testing.procedure()
 begin
   select * from testing.create;
 end;

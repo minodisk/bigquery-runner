@@ -10,10 +10,9 @@ import {
   isRoutineEvent,
   RoutinePayload,
 } from "core/src/types";
-import "./App.css";
+// import "./App.css";
 import Select from "./Select";
 import Routine from "./Routine";
-// import * as payload from "../../misc/mock/payload.json";
 
 const w = window as unknown as {
   acquireVsCodeApi?: () => {
@@ -22,7 +21,22 @@ const w = window as unknown as {
     postMessage(e: ViewerEvent): void;
   };
 };
-const vscode = w.acquireVsCodeApi ? w.acquireVsCodeApi() : undefined;
+const vscode = w.acquireVsCodeApi
+  ? w.acquireVsCodeApi()
+  : {
+      getState() {
+        // eslint-disable-next-line
+        const payload = require("../../misc/mock/payload.json");
+        require("./vscode.css");
+        return payload;
+      },
+      setState() {
+        // do nothing
+      },
+      postMessage() {
+        // do nothing
+      },
+    };
 
 const App: FC = () => {
   const [focused, setFocused] = useState(false);
