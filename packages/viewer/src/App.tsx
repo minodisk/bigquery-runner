@@ -10,9 +10,8 @@ import {
   isRoutineEvent,
   RoutinePayload,
 } from "core/src/types";
-// import "./App.css";
-import Select from "./Select";
 import Routine from "./Routine";
+import Select from "./Select";
 
 const w = window as unknown as {
   acquireVsCodeApi?: () => {
