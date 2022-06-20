@@ -1,8 +1,8 @@
 import { HStack, Table, Tbody, Td, Th, Tr } from "@chakra-ui/react";
 import bytes from "bytes";
-import { Table as TableInfo } from "core/src/types";
 import formatISO from "date-fns/formatISO";
 import React from "react";
+import { Table as TableInfo } from "types";
 import { Breakable, CopyButton } from "./ui";
 
 export const TableInformation = ({ table }: { table: TableInfo }) => {

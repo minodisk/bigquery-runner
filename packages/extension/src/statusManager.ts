@@ -16,6 +16,8 @@ type BilledUsage = {
   cacheHit: boolean;
 };
 
+export type StatusManager = ReturnType<typeof createStatusManager>;
+
 export function createStatusManager({
   options,
   createStatusBarItem,
@@ -128,7 +130,6 @@ export function createStatusManager({
     },
   };
 }
-export type StatusManager = ReturnType<typeof createStatusManager>;
 
 export function createStatusBarItemCreator(w: typeof window) {
   return (options: Config["statusBarItem"]) => {

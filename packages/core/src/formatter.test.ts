@@ -1,3 +1,4 @@
+import { Field, Struct } from "types";
 import {
   createCSVFormatter,
   createFlat,
@@ -6,7 +7,6 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
 } from ".";
-import { Field, Struct } from "./types";
 
 const fields: Array<Field> = [
   { name: "bool", type: "BOOL", mode: "NULLABLE" },

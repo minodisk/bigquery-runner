@@ -1,5 +1,4 @@
-import { TextDocument } from "vscode";
-import { OutputChannel } from ".";
+import { OutputChannel, TextDocument } from "vscode";
 import { ConfigManager } from "./configManager";
 import { DryRunner } from "./dryRunner";
 import { isBigQuery } from "./isBigQuery";
@@ -23,10 +22,7 @@ export function createValidator({
       readonly document: TextDocument;
     }): Promise<void> {
       const config = configManager.get();
-      if (
-        !isBigQuery({ config, document }) ||
-        !config.queryValidation.enabled
-      ) {
+      if (!isBigQuery({ config, document }) || !config.validation.enabled) {
         return;
       }
 
@@ -48,7 +44,7 @@ export function createValidator({
               outputChannel.appendLine(`${err}`);
             }
           }
-        }, config.queryValidation.debounceInterval)
+        }, config.validation.debounceInterval)
       );
     },
 

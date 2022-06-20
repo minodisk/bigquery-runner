@@ -5,17 +5,18 @@
     "ecmaVersion": 12,
     "sourceType": "module"
   },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:react/recommended"
+  ],
   "plugins": [
     "@typescript-eslint",
     "import",
     "unused-imports",
     "react",
     "react-hooks"
-  ],
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:react/recommended"
   ],
   "rules": {
     // Do with TypeScript
@@ -53,7 +54,17 @@
     "no-useless-rename": "error",
     "object-shorthand": "error",
 
-    // "import/order": "off",
+    "import/order": [
+      "error",
+      {
+        "groups": ["builtin", "external", "parent", "sibling", "index"],
+        "newlines-between": "never",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": false
+        }
+      }
+    ],
     "import/no-unresolved": "off",
     "unused-imports/no-unused-imports": "error",
     "unused-imports/no-unused-vars": [
@@ -65,8 +76,8 @@
         "argsIgnorePattern": "^_"
       }
     ],
-    "curly": "warn",
-    "eqeqeq": "warn",
+    "curly": "error",
+    "eqeqeq": "error",
     "no-throw-literal": "warn",
     "semi": "off",
     "react-hooks/rules-of-hooks": "error",

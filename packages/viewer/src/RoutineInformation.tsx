@@ -1,7 +1,7 @@
 import { HStack, Table, Tbody, Td, Text, Th, Tr } from "@chakra-ui/react";
-import { Routine } from "core/src/types";
 import formatISO from "date-fns/formatISO";
 import React from "react";
+import { Routine } from "types";
 import { Breakable, CopyButton } from "./ui";
 
 export const RoutineInformation = ({ routine }: { routine: Routine }) => {

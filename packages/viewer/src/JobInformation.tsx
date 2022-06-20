@@ -1,9 +1,9 @@
 import { HStack, Table, Tbody, Td, Text, Th, Tr } from "@chakra-ui/react";
 import bytes from "bytes";
-import { Metadata } from "core/src/types";
 import formatDuration from "date-fns/formatDuration";
 import formatISO from "date-fns/formatISO";
 import React from "react";
+import { Metadata } from "types";
 import { Breakable, CopyButton } from "./ui";
 
 export const JobInformation = ({ metadata }: { metadata: Metadata }) => {

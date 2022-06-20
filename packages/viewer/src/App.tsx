@@ -9,7 +9,7 @@ import {
   ViewerEvent,
   isRoutineEvent,
   RoutinePayload,
-} from "core/src/types";
+} from "types";
 import Routine from "./Routine";
 import Select from "./Select";
 

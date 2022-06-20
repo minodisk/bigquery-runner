@@ -1,8 +1,8 @@
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 import React, { FC } from "react";
-import { RoutinePayload } from "core/src/types";
+import { RoutinePayload } from "types";
 import { JobInformation } from "./JobInformation";
 import { RoutineInformation } from "./RoutineInformation";
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 import { Header } from "./ui";
 
 const Routine: FC<

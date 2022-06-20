@@ -1,35 +1,65 @@
-import { AuthenticationError, NoPageTokenError, Output } from "core";
-import { isNextEvent, isPrevEvent, ViewerEvent } from "core/src/types";
 import { readFile } from "fs/promises";
-import { Selection, ViewColumn, window } from "vscode";
-import { OutputChannel } from ".";
+import {
+  AuthenticationError,
+  createClient,
+  NoPageTokenError,
+  RunJob,
+} from "core";
+import {
+  isNextEvent,
+  isPrevEvent,
+  Metadata,
+  Page,
+  Routine,
+  Struct,
+  Table,
+  ViewerEvent,
+} from "types";
+import { OutputChannel, Selection, ViewColumn, window } from "vscode";
+import { ConfigManager } from "./configManager";
 import { ErrorMarker } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
-import { OutputManager } from "./outputManager";
 import { PanelManager } from "./panelManager";
-import { Renderer } from "./renderer";
-import { RunJobManager, RunJobResponse } from "./runJobManager";
+import { Renderer, RendererManager } from "./rendererManager";
 import { StatusManager } from "./statusManager";
 
 export type Runner = ReturnType<typeof createRunner>;
 
+export type RunJobResponse = SelectResponse | RoutineResponse;
+
+export type SelectResponse = Readonly<{
+  type: "select";
+  jobId: string;
+  metadata: Metadata;
+  structs: Array<Struct>;
+  table: Table;
+  page: Page;
+}>;
+
+export type RoutineResponse = Readonly<{
+  type: "routine";
+  jobId: string;
+  metadata: Metadata;
+  routine: Routine;
+}>;
+
 export function createRunner({
+  configManager,
   outputChannel,
-  outputManager,
+  rendererManager,
   panelManager,
   statusManager,
-  runJobManager,
-  renderer,
   errorMarker,
-}: {
-  readonly outputChannel: OutputChannel;
-  readonly outputManager: OutputManager;
-  readonly panelManager: PanelManager;
-  readonly statusManager: StatusManager;
-  readonly runJobManager: RunJobManager;
-  readonly renderer: Renderer;
-  readonly errorMarker: ErrorMarker;
-}) {
+}: Readonly<{
+  configManager: ConfigManager;
+  outputChannel: OutputChannel;
+  rendererManager: RendererManager;
+  panelManager: PanelManager;
+  statusManager: StatusManager;
+  errorMarker: ErrorMarker;
+}>) {
+  const selectJobs: Map<string, RunJob> = new Map();
+
   return {
     async run(): Promise<void> {
       try {
@@ -60,24 +90,70 @@ export function createRunner({
           fileName,
         });
 
-        let output!: Output;
+        let renderer!: Renderer;
         try {
-          output = await outputManager.create({
+          renderer = await rendererManager.create({
             fileName,
             viewColumn,
           });
-          const path = await output.open();
-          if (path !== undefined) {
-            outputChannel.appendLine(`Output to: ${path}`);
-          }
+
+          await renderer.open();
 
           let response: RunJobResponse;
           try {
             errorMarker.clear({ fileName });
-            response = await runJobManager.query({
-              fileName,
+
+            const config = configManager.get();
+            const client = await createClient(config);
+            let job = await client.createRunJob({
               query,
+              maxResults: config.pagination.results,
             });
+
+            if (
+              job.metadata.statistics.numChildJobs &&
+              ["SCRIPT"].some((type) => job.statementType === type)
+            ) {
+              // Wait for completion of table creation job
+              // to get the records of the table just created.
+              const routine = await job.getRoutine();
+              response = {
+                type: "routine",
+                jobId: job.id,
+                metadata: job.metadata,
+                routine,
+              };
+            } else {
+              if (
+                ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
+                  (type) => job.statementType === type
+                ) &&
+                job.tableName
+              ) {
+                // Wait for completion of table creation job
+                // to get the records of the table just created.
+                job = await client.createRunJob({
+                  query: `SELECT * FROM \`${job.tableName}\``,
+                  maxResults: config.pagination.results,
+                });
+              }
+
+              selectJobs.set(fileName, job);
+
+              const structs = await job.getStructs();
+              const table = await job.getTable();
+              const page = job.getPage({ table });
+
+              response = {
+                type: "select",
+                jobId: job.id,
+                structs,
+                metadata: job.metadata,
+                table,
+                page,
+              };
+            }
+
             errorMarker.clear({ fileName });
           } catch (err) {
             errorMarker.mark({ fileName, err, selections });
@@ -87,11 +163,10 @@ export function createRunner({
           outputChannel.appendLine(`Job ID: ${response.jobId}`);
           await renderer.render({
             fileName,
-            output,
             response,
           });
         } catch (err) {
-          output.close();
+          renderer.close();
           statusManager.errorBilled({ fileName });
           throw err;
         }
@@ -124,19 +199,36 @@ export function createRunner({
           fileName = panel.fileName;
         }
 
-        const output = await outputManager.create({
+        const renderer = await rendererManager.create({
           fileName,
         });
-        const path = await output.open();
+        const path = await renderer.open();
         if (path !== undefined) {
           outputChannel.appendLine(`Output to: ${path}`);
         }
 
         let response: RunJobResponse;
         try {
-          response = await runJobManager.prevRows({ fileName });
+          // response = await runJobManager.prevRows({ fileName });
+          const job = selectJobs.get(fileName);
+          if (!job) {
+            throw new Error(`no job`);
+          }
+
+          const structs = await job.getPrevStructs();
+          const table = await job.getTable();
+          const page = job.getPage({ table });
+
+          response = {
+            type: "select",
+            jobId: job.id,
+            structs,
+            metadata: job.metadata,
+            table,
+            page,
+          };
         } catch (err) {
-          output.close();
+          renderer.close();
           throw err;
         }
         if (!response.structs) {
@@ -145,7 +237,6 @@ export function createRunner({
 
         await renderer.render({
           fileName,
-          output,
           response,
         });
       } catch (err) {
@@ -177,19 +268,36 @@ export function createRunner({
           fileName = panel.fileName;
         }
 
-        const output = await outputManager.create({
+        const renderer = await rendererManager.create({
           fileName,
         });
-        const path = await output.open();
+        const path = await renderer.open();
         if (path !== undefined) {
           outputChannel.appendLine(`Output to: ${path}`);
         }
 
         let response: RunJobResponse;
         try {
-          response = await runJobManager.nextRows({ fileName });
+          // response = await runJobManager.nextRows({ fileName });
+          const job = selectJobs.get(fileName);
+          if (!job) {
+            throw new Error(`no job`);
+          }
+
+          const structs = await job.getNextStructs();
+          const table = await job.getTable();
+          const page = job.getPage({ table });
+
+          response = {
+            type: "select",
+            jobId: job.id,
+            structs,
+            metadata: job.metadata,
+            table,
+            page,
+          };
         } catch (err) {
-          output.close();
+          renderer.close();
           throw err;
         }
         if (!response.structs) {
@@ -198,7 +306,6 @@ export function createRunner({
 
         await renderer.render({
           fileName,
-          output,
           response,
         });
       } catch (err) {
@@ -220,7 +327,7 @@ export function createRunner({
       if (panelManager.exists({ fileName })) {
         return;
       }
-      runJobManager.delete({ fileName });
+      selectJobs.delete(fileName);
       panelManager.delete({ fileName });
     },
 
@@ -236,12 +343,12 @@ export function createRunner({
     },
 
     onDidDisposePanel({ fileName }: { readonly fileName: string }) {
-      runJobManager.delete({ fileName });
+      selectJobs.delete(fileName);
       panelManager.delete({ fileName });
     },
 
     dispose() {
-      // do nothing
+      selectJobs.clear();
     },
   };
 }

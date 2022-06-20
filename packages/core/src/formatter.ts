@@ -1,7 +1,7 @@
 import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
-import { Flat } from ".";
-import { Struct } from "./types";
+import { Struct } from "types";
+import { Flat } from "./flat";
 
 export type Formatter = {
   readonly type: "table" | "markdown" | "json-lines" | "json" | "csv";

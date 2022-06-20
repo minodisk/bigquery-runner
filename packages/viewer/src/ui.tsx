@@ -6,7 +6,7 @@ import {
   IconButton,
   Spinner,
   Text,
-  TextProps,
+  type TextProps,
   useToast,
   VStack,
 } from "@chakra-ui/react";

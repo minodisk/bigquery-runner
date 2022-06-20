@@ -1,8 +1,4 @@
-import React, { FC } from "react";
-import { Rows } from "core/src/types";
-import { JobInformation } from "./JobInformation";
-import { Footer, Header } from "./ui";
-import { TableInformation } from "./TableInformation";
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import {
   Box,
   HStack,
@@ -20,7 +16,11 @@ import {
   Thead,
   Tr,
 } from "@chakra-ui/react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import React, { FC } from "react";
+import { Rows } from "types";
+import { JobInformation } from "./JobInformation";
+import { TableInformation } from "./TableInformation";
+import { Footer, Header } from "./ui";
 
 const Select: FC<
   Readonly<{

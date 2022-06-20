@@ -10,7 +10,7 @@ export function isBigQuery({
   readonly document: TextDocument;
 }): boolean {
   return (
-    config.queryValidation.languageIds.includes(document.languageId) ||
-    config.queryValidation.extensions.includes(extname(document.fileName))
+    config.languageIds.includes(document.languageId) ||
+    config.extensions.includes(extname(document.fileName))
   );
 }

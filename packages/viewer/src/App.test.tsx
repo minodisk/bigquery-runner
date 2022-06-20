@@ -1,9 +1,9 @@
-import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import App from "./App";
-import { CloseEvent, Data, OpenEvent, RowsEvent, Table } from "core/src/types";
+import React from "react";
+import { CloseEvent, Data, OpenEvent, RowsEvent, Table } from "types";
 import metadata from "../../core/src/metadata.json";
 import t from "../../core/src/table.json";
+import App from "./App";
 
 const table = t as Table;
 

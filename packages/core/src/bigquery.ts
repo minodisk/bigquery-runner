@@ -6,7 +6,7 @@ import {
   Struct,
   Table,
   Routine,
-} from "./types";
+} from "types";
 
 export type Client = ReturnType<typeof createClient> extends Promise<infer T>
   ? T

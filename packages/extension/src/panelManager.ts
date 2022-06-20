@@ -1,6 +1,6 @@
-import { Data, FocusedEvent, isLoadedEvent, ViewerEvent } from "core/src/types";
 import { readFile } from "fs/promises";
 import { basename, join } from "path";
+import { Data, FocusedEvent, isLoadedEvent, ViewerEvent } from "types";
 import {
   ExtensionContext,
   Uri,
@@ -40,7 +40,7 @@ export function createPanelManager({
       }
 
       const config = configManager.get();
-      const column = config.output.viewer.column;
+      const column = config.viewer.column;
       let panelViewColumn: ViewColumn;
       if (typeof column === "number") {
         panelViewColumn = column;
@@ -134,6 +134,6 @@ export function createPanelManager({
   };
 }
 
-async function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+// async function sleep(ms: number) {
+//   return new Promise((resolve) => setTimeout(resolve, ms));
+// }

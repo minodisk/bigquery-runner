@@ -7,30 +7,21 @@ export type Config = {
   readonly location: string | undefined;
   readonly useLegacySql: boolean;
   readonly maximumBytesBilled: string | undefined;
-  readonly queryValidation: {
+  readonly validation: {
     readonly enabled: boolean;
     readonly debounceInterval: number;
-    readonly languageIds: Array<string>;
-    readonly extensions: Array<string>;
   };
+  readonly languageIds: Array<string>;
+  readonly extensions: Array<string>;
   readonly pagination: {
     readonly results: number | undefined;
   };
-  readonly format: {
-    readonly type: "table" | "markdown" | "json" | "json-lines" | "csv";
-    readonly csv: {
-      readonly header: boolean;
-      readonly delimiter: string;
-    };
+  readonly csv: {
+    readonly header: boolean;
+    readonly delimiter: string;
   };
-  readonly output: {
-    readonly type: "viewer" | "log" | "file";
-    readonly file: {
-      readonly path: string;
-    };
-    readonly viewer: {
-      readonly column: string | number;
-    };
+  readonly viewer: {
+    readonly column: string | number;
   };
   readonly icon: boolean;
   readonly statusBarItem: {

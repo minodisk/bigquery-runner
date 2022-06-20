@@ -12,54 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  commands,
-  DiagnosticCollection,
-  ExtensionContext,
-  OutputChannel as OrigOutputChannel,
-  window,
-  workspace,
-} from "vscode";
+import { ViewerEvent } from "types";
+import { commands, ExtensionContext, window, workspace } from "vscode";
+import { createConfigManager } from "./configManager";
+import { createDryRunner } from "./dryRunner";
+import { createErrorMarker } from "./errorMarker";
+import { isBigQuery } from "./isBigQuery";
+import { createPanelManager } from "./panelManager";
+import { createRendererManager } from "./rendererManager";
+import { createRunner } from "./runner";
 import {
   createStatusBarItemCreator,
   createStatusManager,
 } from "./statusManager";
-import { createConfigManager } from "./configManager";
-import { createRunner } from "./runner";
-import { createErrorMarker } from "./errorMarker";
-import { isBigQuery } from "./isBigQuery";
 import { createValidator } from "./validator";
-import { createDryRunner } from "./dryRunner";
-import { createPanelManager } from "./panelManager";
-import { createRunJobManager } from "./runJobManager";
-import { createRenderer } from "./renderer";
-import { createOutputManager } from "./outputManager";
-import { ViewerEvent } from "core/src/types";
-
-export type OutputChannel = Pick<
-  OrigOutputChannel,
-  "append" | "appendLine" | "show" | "dispose"
->;
 
 export type Result = {
   readonly jobId?: string;
 };
 
-export type Dependencies = {
-  readonly outputChannel: OutputChannel;
-  readonly diagnosticCollection: DiagnosticCollection;
-};
-
-export async function activate(
-  ctx: ExtensionContext,
-  dependencies?: Dependencies
-) {
+export async function activate(ctx: ExtensionContext) {
   try {
     const title = "BigQuery Runner";
     const section = "bigqueryRunner";
 
-    const outputChannel =
-      dependencies?.outputChannel ?? window.createOutputChannel(title);
+    const outputChannel = window.createOutputChannel(title);
     ctx.subscriptions.push(outputChannel);
 
     const onDidReceiveMessage = (e: ViewerEvent) => {
@@ -71,38 +48,30 @@ export async function activate(
     };
 
     const configManager = createConfigManager(section);
+    const statusManager = createStatusManager({
+      options: configManager.get().statusBarItem,
+      createStatusBarItem: createStatusBarItemCreator(window),
+    });
     const panelManager = createPanelManager({
       ctx,
       configManager,
       onDidReceiveMessage,
       onDidDisposePanel,
     });
-    const outputManager = createOutputManager({
+    const rendererManager = createRendererManager({
       outputChannel,
-      configManager,
+      statusManager,
       panelManager,
-    });
-    const statusManager = createStatusManager({
-      options: configManager.get().statusBarItem,
-      createStatusBarItem: createStatusBarItemCreator(window),
     });
     const errorMarker = createErrorMarker({
       section,
     });
-    const runJobManager = createRunJobManager({
-      configManager,
-    });
-    const renderer = createRenderer({
-      outputChannel,
-      statusManager,
-    });
     const runner = createRunner({
+      configManager,
       outputChannel,
-      outputManager,
+      rendererManager,
       panelManager,
       statusManager,
-      runJobManager,
-      renderer,
       errorMarker,
     });
     const dryRunner = createDryRunner({
@@ -119,11 +88,9 @@ export async function activate(
     ctx.subscriptions.push(
       configManager,
       panelManager,
-      outputManager,
+      rendererManager,
       statusManager,
       errorMarker,
-      runJobManager,
-      renderer,
       runner,
       dryRunner,
       validator

@@ -5,8 +5,7 @@ import {
   DryRunJob,
   NoPageTokenError,
 } from "core";
-import { TextDocument, window } from "vscode";
-import { OutputChannel } from ".";
+import { OutputChannel, TextDocument, window } from "vscode";
 import { ConfigManager } from "./configManager";
 import { ErrorMarker } from "./errorMarker";
 import { getQueryText } from "./getQueryText";

@@ -104,31 +104,31 @@ Flag whether to use legacy SQL. If `false`, use standard SQL.
 
 Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used.
 
-### `bigqueryRunner.queryValidation.enabled`
+### `bigqueryRunner.validation.enabled`
 
 |Type|Default|
 |---|---|
 |boolean|true|
 
-Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified.
+Validate the query whenever the file set in `languageIds` or `extensions` is modified.
 
-### `bigqueryRunner.queryValidation.debounceInterval`
+### `bigqueryRunner.validation.debounceInterval`
 
 |Type|Default|
 |---|---|
 |number|600|
 
-[WILL BE RENAMED] Debounce interval in milliseconds to validate the query when the file is modified.
+Debounce interval in milliseconds to validate the query when the file is modified.
 
-### `bigqueryRunner.queryValidation.languageIds`
+### `bigqueryRunner.languageIds`
 
 |Type|Default|
 |---|---|
 |array|["bigquery","sql-bigquery"]|
 
-[WILL BE RENAMED] List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified.
+List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified.
 
-### `bigqueryRunner.queryValidation.extensions`
+### `bigqueryRunner.extensions`
 
 |Type|Default|
 |---|---|
@@ -144,15 +144,7 @@ List of file extensions for which the query is to be validated when the file is 
 
 The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`.
 
-### `bigqueryRunner.format.type`
-
-|Type|Default|Enum|
-|---|---|---|
-|string|"table"|"table" &#x7C; "markdown" &#x7C; "json" &#x7C; "json-lines" &#x7C; "csv"|
-
-Formatting method.
-
-### `bigqueryRunner.format.csv.header`
+### `bigqueryRunner.csv.header`
 
 |Type|Default|
 |---|---|
@@ -160,7 +152,7 @@ Formatting method.
 
 The flag whether to add column names to CSV.
 
-### `bigqueryRunner.format.csv.delimiter`
+### `bigqueryRunner.csv.delimiter`
 
 |Type|Default|
 |---|---|
@@ -168,23 +160,7 @@ The flag whether to add column names to CSV.
 
 The delimiter for CSV. For example, if set to 	, the output will be formatted as TSV.
 
-### `bigqueryRunner.output.type`
-
-|Type|Default|Enum|
-|---|---|---|
-|string|"viewer"|"viewer" &#x7C; "log" &#x7C; "file"|
-
-The output destination for the query results.  When set to `viewer`, this extension opens the webview pane and renders the results with <table> tags. When set to `log`, this extension opens the output panel and outputs the results in the format set in `bigqueryRunner.format.type`. When set to `file`, this extension outputs the results as a file in the directory set in `bigqueryRunner.output.file.path`, in the format set in  `bigqueryRunner.format.type`.
-
-### `bigqueryRunner.output.file.path`
-
-|Type|Default|
-|---|---|
-|string|"."|
-
-The output directory of the file when `bigqueryRunner.output.type` is specified as `file`.
-
-### `bigqueryRunner.output.viewer.column`
+### `bigqueryRunner.viewer.column`
 
 |Type|Default|
 |---|---|

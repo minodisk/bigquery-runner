@@ -19,7 +19,8 @@
     "packages/core",
     "packages/extension",
     "packages/misc",
-    "packages/viewer"
+    "packages/viewer",
+    "packages/types"
   ],
   "categories": [
     "Other"
@@ -69,7 +70,7 @@
     "menus": {
       "editor/title": [
         {
-          "when": "resourceLangId in bigqueryRunner.queryValidation.languageIds || resourceExtname in bigqueryRunner.queryValidation.extensions && bigqueryRunner.icon",
+          "when": "resourceLangId in bigqueryRunner.languageIds || resourceExtname in bigqueryRunner.extensions && bigqueryRunner.icon",
           "command": "bigqueryRunner.run",
           "group": "navigation"
         }
@@ -116,25 +117,25 @@
           "default": null,
           "description": "Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used."
         },
-        "bigqueryRunner.queryValidation.enabled": {
+        "bigqueryRunner.validation.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Validate the query whenever the file set in `queryValidation.languageIds` or `queryValidation.extensions` is modified."
+          "description": "Validate the query whenever the file set in `languageIds` or `extensions` is modified."
         },
-        "bigqueryRunner.queryValidation.debounceInterval": {
+        "bigqueryRunner.validation.debounceInterval": {
           "type": "number",
           "default": 600,
-          "description": "[WILL BE RENAMED] Debounce interval in milliseconds to validate the query when the file is modified."
+          "description": "Debounce interval in milliseconds to validate the query when the file is modified."
         },
-        "bigqueryRunner.queryValidation.languageIds": {
+        "bigqueryRunner.languageIds": {
           "type": "array",
           "default": [
             "bigquery",
             "sql-bigquery"
           ],
-          "description": "[WILL BE RENAMED] List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
+          "description": "List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
         },
-        "bigqueryRunner.queryValidation.extensions": {
+        "bigqueryRunner.extensions": {
           "type": "array",
           "default": [
             ".bqsql",
@@ -151,44 +152,17 @@
           "default": 100,
           "description": "The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`."
         },
-        "bigqueryRunner.format.type": {
-          "type": "string",
-          "default": "table",
-          "enum": [
-            "table",
-            "markdown",
-            "json",
-            "json-lines",
-            "csv"
-          ],
-          "description": "Formatting method."
-        },
-        "bigqueryRunner.format.csv.header": {
+        "bigqueryRunner.csv.header": {
           "type": "boolean",
           "default": false,
           "description": "The flag whether to add column names to CSV."
         },
-        "bigqueryRunner.format.csv.delimiter": {
+        "bigqueryRunner.csv.delimiter": {
           "type": "string",
           "default": ",",
           "description": "The delimiter for CSV. For example, if set to \t, the output will be formatted as TSV."
         },
-        "bigqueryRunner.output.type": {
-          "type": "string",
-          "default": "viewer",
-          "enum": [
-            "viewer",
-            "log",
-            "file"
-          ],
-          "description": "The output destination for the query results.  When set to `viewer`, this extension opens the webview pane and renders the results with <table> tags. When set to `log`, this extension opens the output panel and outputs the results in the format set in `bigqueryRunner.format.type`. When set to `file`, this extension outputs the results as a file in the directory set in `bigqueryRunner.output.file.path`, in the format set in  `bigqueryRunner.format.type`."
-        },
-        "bigqueryRunner.output.file.path": {
-          "type": "string",
-          "default": ".",
-          "description": "The output directory of the file when `bigqueryRunner.output.type` is specified as `file`."
-        },
-        "bigqueryRunner.output.viewer.column": {
+        "bigqueryRunner.viewer.column": {
           "type": [
             "string",
             "number"

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { valueToPrimitive } from "./transform";
 import {
   Accessor,
   Column,
@@ -11,7 +10,8 @@ import {
   Row,
   Struct,
   Primitive,
-} from "./types";
+} from "types";
+import { valueToPrimitive } from "./transform";
 
 type Transform = (primitive: Primitive) => Primitive;
 
