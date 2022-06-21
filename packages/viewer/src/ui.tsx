@@ -18,15 +18,11 @@ export type VFC<P = {}> = (
 export type FC<P = {}> = (props: PropsWithChildren<P>) => JSX.Element | null;
 export type XFC<P = {}> = FC<P & { className?: string }>;
 
-export const Header: FC<{ loading?: string }> = ({
-  loading,
-  children,
-  ...props
-}) => (
+export const Header: FC = ({ children, ...props }) => (
   <Box
     position="sticky"
-    top={0}
     height="36px"
+    top={0}
     bgColor="var(--vscode-editorGroupHeader-tabsBackground);"
     css={{
       "::before": {
@@ -43,6 +39,7 @@ export const Header: FC<{ loading?: string }> = ({
   >
     <Flex
       position="fixed"
+      height="36px"
       top={0}
       left={0}
       right={0}
@@ -50,20 +47,19 @@ export const Header: FC<{ loading?: string }> = ({
       {...props}
     >
       {children}
-      {loading ? (
-        <HStack px={2}>
-          <Text>{loading}</Text>
-          <Spinner size="sm" />
-        </HStack>
-      ) : null}
     </Flex>
   </Box>
 );
 
-export const Footer: FC = ({ ...props }) => (
-  <Box position="sticky" bottom={0} height={25}>
+export const Footer: FC<{ loading?: string }> = ({
+  loading,
+  children,
+  ...props
+}) => (
+  <Box position="sticky" height="25px" bottom={0}>
     <Flex
       position="fixed"
+      height="25px"
       bottom={0}
       left={0}
       right={0}
@@ -72,7 +68,15 @@ export const Footer: FC = ({ ...props }) => (
       borderTopColor="var(--vscode-editorGroupHeader-tabsBorder)"
       justifyContent="space-between"
       {...props}
-    />
+    >
+      <Box>{children}</Box>
+      {loading ? (
+        <HStack px={2}>
+          <Text>{loading}</Text>
+          <Spinner size="sm" />
+        </HStack>
+      ) : null}
+    </Flex>
   </Box>
 );
 

@@ -32,6 +32,7 @@ export const theme = extendTheme({
   components: {
     Button: {
       defaultProps: {
+        variant: "ghost",
         colorScheme: "foreground",
       },
       variants: {

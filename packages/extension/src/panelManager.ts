@@ -1,6 +1,14 @@
 import { readFile } from "fs/promises";
 import { basename, join } from "path";
-import { Data, FocusedEvent, isLoadedEvent, ViewerEvent } from "types";
+import {
+  Data,
+  FocusedEvent,
+  isDownloadEvent,
+  isLoadedEvent,
+  isNextEvent,
+  isPrevEvent,
+  ViewerEvent,
+} from "types";
 import {
   ExtensionContext,
   Uri,
@@ -15,12 +23,25 @@ export type PanelManager = ReturnType<typeof createPanelManager>;
 export function createPanelManager({
   ctx,
   configManager,
-  onDidReceiveMessage,
+  onDownloadRequested,
+  onPrevPageRequested,
+  onNextPageRequested,
   onDidDisposePanel,
 }: {
   readonly ctx: ExtensionContext;
   readonly configManager: ConfigManager;
-  readonly onDidReceiveMessage: (e: ViewerEvent) => unknown;
+  readonly onDownloadRequested: (e: {
+    fileName: string;
+    panel: WebviewPanel;
+  }) => unknown;
+  readonly onPrevPageRequested: (e: {
+    fileName: string;
+    panel: WebviewPanel;
+  }) => unknown;
+  readonly onNextPageRequested: (e: {
+    fileName: string;
+    panel: WebviewPanel;
+  }) => unknown;
   readonly onDidDisposePanel: (e: { readonly fileName: string }) => unknown;
 }) {
   const map: Map<string, WebviewPanel> = new Map();
@@ -97,12 +118,17 @@ export function createPanelManager({
           join(ctx.extensionPath, "out/assets/icon-small.png")
         );
 
-        panel.webview.onDidReceiveMessage((e: ViewerEvent) => {
-          if (isLoadedEvent(e) && !resolved) {
+        panel.webview.onDidReceiveMessage(async (event: ViewerEvent) => {
+          if (isLoadedEvent(event) && !resolved) {
             resolved = true;
             resolve(panel);
+          } else if (isDownloadEvent(event)) {
+            onDownloadRequested({ fileName, panel });
+          } else if (isPrevEvent(event)) {
+            onPrevPageRequested({ fileName, panel });
+          } else if (isNextEvent(event)) {
+            onNextPageRequested({ fileName, panel });
           }
-          onDidReceiveMessage(e);
         });
         panel.webview.html = html;
       });

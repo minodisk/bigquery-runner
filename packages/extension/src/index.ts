@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ViewerEvent } from "types";
 import { commands, ExtensionContext, window, workspace } from "vscode";
 import { createConfigManager } from "./configManager";
+import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
 import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
@@ -37,17 +37,15 @@ export async function activate(ctx: ExtensionContext) {
     const section = "bigqueryRunner";
 
     const outputChannel = window.createOutputChannel(title);
-    ctx.subscriptions.push(outputChannel);
-
-    const onDidReceiveMessage = (e: ViewerEvent) => {
-      runner.onDidReceiveMessage(e);
-    };
 
     const onDidDisposePanel = (e: { readonly fileName: string }) => {
       runner.onDidDisposePanel(e);
     };
 
     const configManager = createConfigManager(section);
+    const downloader = createDownloader({
+      configManager,
+    });
     const statusManager = createStatusManager({
       options: configManager.get().statusBarItem,
       createStatusBarItem: createStatusBarItemCreator(window),
@@ -55,7 +53,15 @@ export async function activate(ctx: ExtensionContext) {
     const panelManager = createPanelManager({
       ctx,
       configManager,
-      onDidReceiveMessage,
+      onPrevPageRequested() {
+        runner.gotoNextPage();
+      },
+      onNextPageRequested() {
+        runner.gotoNextPage();
+      },
+      onDownloadRequested({ fileName }) {
+        runner.download({ fileName });
+      },
       onDidDisposePanel,
     });
     const rendererManager = createRendererManager({
@@ -71,6 +77,7 @@ export async function activate(ctx: ExtensionContext) {
       outputChannel,
       rendererManager,
       panelManager,
+      downloader,
       statusManager,
       errorMarker,
     });
@@ -86,7 +93,9 @@ export async function activate(ctx: ExtensionContext) {
       dryRunner,
     });
     ctx.subscriptions.push(
+      outputChannel,
       configManager,
+      downloader,
       panelManager,
       rendererManager,
       statusManager,

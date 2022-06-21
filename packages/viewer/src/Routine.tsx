@@ -3,7 +3,7 @@ import React, { FC } from "react";
 import { RoutinePayload } from "types";
 import { JobInformation } from "./JobInformation";
 import { RoutineInformation } from "./RoutineInformation";
-import { Header } from "./ui";
+import { Footer, Header } from "./ui";
 
 const Routine: FC<
   Readonly<{
@@ -14,7 +14,7 @@ const Routine: FC<
 > = ({ focused, loading, routinePayload: { metadata, routine } }) => {
   return (
     <Tabs>
-      <Header loading={loading}>
+      <Header>
         <TabList>
           <Tab>Routine</Tab>
           <Tab>Job</Tab>
@@ -23,9 +23,11 @@ const Routine: FC<
       <TabPanels>
         <TabPanel>
           <RoutineInformation routine={routine} />
+          <Footer loading={loading} />
         </TabPanel>
         <TabPanel>
           <JobInformation metadata={metadata} />
+          <Footer loading={loading} />
         </TabPanel>
       </TabPanels>
     </Tabs>

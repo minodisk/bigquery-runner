@@ -5,18 +5,10 @@ import {
   NoPageTokenError,
   RunJob,
 } from "core";
-import {
-  isNextEvent,
-  isPrevEvent,
-  Metadata,
-  Page,
-  Routine,
-  Struct,
-  Table,
-  ViewerEvent,
-} from "types";
+import { Metadata, Page, Routine, Struct, Table } from "types";
 import { OutputChannel, Selection, ViewColumn, window } from "vscode";
 import { ConfigManager } from "./configManager";
+import { Downloader } from "./downloader";
 import { ErrorMarker } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import { PanelManager } from "./panelManager";
@@ -48,6 +40,7 @@ export function createRunner({
   outputChannel,
   rendererManager,
   panelManager,
+  downloader,
   statusManager,
   errorMarker,
 }: Readonly<{
@@ -55,6 +48,7 @@ export function createRunner({
   outputChannel: OutputChannel;
   rendererManager: RendererManager;
   panelManager: PanelManager;
+  downloader: Downloader;
   statusManager: StatusManager;
   errorMarker: ErrorMarker;
 }>) {
@@ -323,23 +317,23 @@ export function createRunner({
       }
     },
 
+    async download({ fileName }: { fileName: string }) {
+      const uri = await window.showSaveDialog();
+      if (!uri) {
+        return;
+      }
+
+      const query = await readFile(fileName, "utf-8");
+      console.log(fileName, uri.path, query);
+      await downloader.jsonl({ uri, query });
+    },
+
     onDidCloseTextDocument({ fileName }: { readonly fileName: string }) {
       if (panelManager.exists({ fileName })) {
         return;
       }
       selectJobs.delete(fileName);
       panelManager.delete({ fileName });
-    },
-
-    async onDidReceiveMessage(e: ViewerEvent) {
-      if (isPrevEvent(e)) {
-        await this.gotoPrevPage();
-        return;
-      }
-      if (isNextEvent(e)) {
-        await this.gotoNextPage();
-        return;
-      }
     },
 
     onDidDisposePanel({ fileName }: { readonly fileName: string }) {

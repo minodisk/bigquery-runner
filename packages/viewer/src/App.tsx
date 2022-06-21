@@ -6,27 +6,27 @@ import {
   isOpenEvent,
   isRowsEvent,
   Rows,
-  ViewerEvent,
   isRoutineEvent,
   RoutinePayload,
 } from "types";
 import Routine from "./Routine";
 import Select from "./Select";
 
-const w = window as unknown as {
-  acquireVsCodeApi?: () => {
-    getState(): Rows;
-    setState(rows: Rows): void;
-    postMessage(e: ViewerEvent): void;
-  };
-};
-const vscode = w.acquireVsCodeApi
-  ? w.acquireVsCodeApi()
-  : {
+// const w = window as unknown as {
+//   acquireVsCodeApi?: () => {
+//     getState(): Rows;
+//     setState(rows: Rows): void;
+//     postMessage(e: ViewerEvent): void;
+//   };
+// };
+const vscode = acquireVsCodeApi
+  ? acquireVsCodeApi<Rows>()
+  : // mock
+    {
       getState() {
         // eslint-disable-next-line
-        const payload = require("../../misc/mock/payload.json");
-        require("./vscode.css");
+        const payload = require("../../misc/mock/rows.json");
+        require("../../misc/mock/vscode.css");
         return payload;
       },
       setState() {
@@ -40,7 +40,7 @@ const vscode = w.acquireVsCodeApi
 const App: FC = () => {
   const [focused, setFocused] = useState(false);
   const [selectPayload, setSelectPayload] = useState<Rows | undefined>(
-    /*payload ?? */ vscode?.getState()
+    vscode.getState()
   );
   const [routinePayload, setRoutinePayload] = useState<
     RoutinePayload | undefined
@@ -59,15 +59,18 @@ const App: FC = () => {
     timeoutMs: 5000,
   });
 
+  const onDownloadRequest = useCallback(() => {
+    vscode.postMessage({ event: "download" });
+  }, []);
   const onPrevRequest = useCallback(() => {
-    vscode?.postMessage({ event: "prev" });
+    vscode.postMessage({ event: "prev" });
   }, []);
   const onNextRequest = useCallback(() => {
-    vscode?.postMessage({ event: "next" });
+    vscode.postMessage({ event: "next" });
   }, []);
 
   useEffect(() => {
-    vscode?.postMessage({ event: "loaded" });
+    vscode.postMessage({ event: "loaded" });
   }, []);
 
   useEffect(() => {
@@ -91,7 +94,7 @@ const App: FC = () => {
         setLoading(undefined);
         startTransition(() => {
           setSelectPayload(payload.payload);
-          vscode?.setState(payload.payload);
+          vscode.setState(payload.payload);
         });
         return;
       }
@@ -99,7 +102,7 @@ const App: FC = () => {
         setLoading(undefined);
         startTransition(() => {
           setRoutinePayload(payload.payload);
-          // vscode?.setState(payload.payload);
+          // vscode.setState(payload.payload);
         });
         return;
       }
@@ -125,6 +128,7 @@ const App: FC = () => {
         focused={focused}
         loading={loading}
         selectPayload={selectPayload}
+        onDownloadRequest={onDownloadRequest}
         onPrevRequest={onPrevRequest}
         onNextRequest={onNextRequest}
       />

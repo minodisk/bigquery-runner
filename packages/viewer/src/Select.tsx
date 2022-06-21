@@ -1,4 +1,8 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DownloadIcon,
+} from "@chakra-ui/icons";
 import {
   Box,
   HStack,
@@ -27,6 +31,7 @@ const Select: FC<
     focused: boolean;
     loading?: string;
     selectPayload: Rows;
+    onDownloadRequest: () => unknown;
     onPrevRequest: () => unknown;
     onNextRequest: () => unknown;
   }>
@@ -34,17 +39,25 @@ const Select: FC<
   focused,
   loading,
   selectPayload: { header, rows, page, metadata, table },
+  onDownloadRequest,
   onPrevRequest,
   onNextRequest,
 }) => {
   return (
     <Tabs>
-      <Header loading={loading}>
+      <Header>
         <TabList>
           <Tab>Results</Tab>
           <Tab>Job</Tab>
           <Tab>Table</Tab>
         </TabList>
+        <HStack>
+          <IconButton
+            aria-label="download"
+            icon={<DownloadIcon />}
+            onClick={onDownloadRequest}
+          />
+        </HStack>
       </Header>
       <TabPanels>
         <TabPanel>
@@ -81,13 +94,12 @@ const Select: FC<
                 })}
               </Tbody>
             </Table>
-            <Footer>
+            <Footer loading={loading}>
               <HStack px={2} gap={1}>
                 <IconButton
                   aria-label="prev page"
                   icon={<ChevronLeftIcon />}
                   size="xs"
-                  variant="ghost"
                   disabled={!page.hasPrev}
                   onClick={onPrevRequest}
                 />
@@ -95,12 +107,9 @@ const Select: FC<
                   aria-label="next page"
                   icon={<ChevronRightIcon />}
                   size="xs"
-                  variant="ghost"
                   disabled={!page.hasNext}
                   onClick={onNextRequest}
                 />
-              </HStack>
-              <HStack px={2}>
                 <Text>{`${page.rowNumberStart}`}</Text>
                 <Text>-</Text>
                 <Text>{`${page.rowNumberEnd}`}</Text>
@@ -112,9 +121,11 @@ const Select: FC<
         </TabPanel>
         <TabPanel>
           <JobInformation metadata={metadata} />
+          <Footer loading={loading} />
         </TabPanel>
         <TabPanel>
           <TableInformation table={table} />
+          <Footer loading={loading} />
         </TabPanel>
       </TabPanels>
     </Tabs>

@@ -74,6 +74,7 @@ export async function createClient(options: BigQueryOptions) {
         metadata: Metadata;
         statementType?: StatementType;
         tableName?: string;
+        hasNext(): boolean;
         getStructs(): Promise<Array<Struct>>;
         getPrevStructs(): Promise<Array<Struct>>;
         getNextStructs(): Promise<Array<Struct>>;
@@ -116,6 +117,10 @@ export async function createClient(options: BigQueryOptions) {
         metadata,
         statementType,
         tableName,
+
+        hasNext() {
+          return !!tokens.get(current + 1);
+        },
 
         async getStructs() {
           const [structs, next] = await job.getQueryResults({
