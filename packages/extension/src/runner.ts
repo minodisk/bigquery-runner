@@ -6,13 +6,12 @@ import {
   RunJob,
 } from "core";
 import { Metadata, Page, Routine, Struct, Table } from "types";
-import { OutputChannel, Selection, ViewColumn, window } from "vscode";
+import { OutputChannel, window, workspace } from "vscode";
 import { ConfigManager } from "./configManager";
 import { Downloader } from "./downloader";
 import { ErrorMarker } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import { Renderer, RendererManager } from "./renderer";
-import { StatusManager } from "./statusManager";
 
 export type Runner = ReturnType<typeof createRunner>;
 
@@ -39,14 +38,12 @@ export function createRunner({
   outputChannel,
   rendererManager,
   downloader,
-  statusManager,
   errorMarker,
 }: Readonly<{
   configManager: ConfigManager;
   outputChannel: OutputChannel;
   rendererManager: RendererManager;
   downloader: Downloader;
-  statusManager: StatusManager;
   errorMarker: ErrorMarker;
 }>) {
   const selectJobs: Map<string, RunJob> = new Map();
@@ -54,33 +51,18 @@ export function createRunner({
   return {
     async run(): Promise<void> {
       try {
-        let fileName: string;
-        let selections!: readonly Selection[];
-        let viewColumn: ViewColumn | undefined;
-        let query: string;
-        if (window.activeTextEditor) {
-          const textEditor = window.activeTextEditor;
-          fileName = textEditor.document.fileName;
-          selections = textEditor.selections;
-          viewColumn = textEditor.viewColumn;
-          query = await getQueryText({
-            document: textEditor.document,
-            selections,
-          });
-        } else {
-          const renderer = rendererManager.getActive();
-          if (!renderer) {
-            throw new Error("no active text editor");
-          }
-          fileName = renderer.fileName;
-          query = await readFile(renderer.fileName, "utf-8");
+        if (!window.activeTextEditor) {
+          throw new Error(`no editor`);
         }
-
-        outputChannel.appendLine(`Run`);
-        statusManager.loadBilled({
-          fileName,
+        const { document, selections, viewColumn } = window.activeTextEditor;
+        const query = await getQueryText({
+          document,
+          selections,
         });
 
+        outputChannel.appendLine(`Run`);
+
+        const { fileName } = document;
         let renderer!: Renderer;
         try {
           renderer = await rendererManager.create({
@@ -157,8 +139,8 @@ export function createRunner({
             response,
           });
         } catch (err) {
+          renderer.error();
           renderer.close();
-          statusManager.errorBilled({ fileName });
           throw err;
         }
       } catch (err) {
@@ -178,17 +160,10 @@ export function createRunner({
 
     async gotoPrevPage(): Promise<void> {
       try {
-        let fileName: string;
-        if (window.activeTextEditor) {
-          const textEditor = window.activeTextEditor;
-          fileName = textEditor.document.fileName;
-        } else {
-          const renderer = rendererManager.getActive();
-          if (!renderer) {
-            throw new Error("no active text editor");
-          }
-          fileName = renderer.fileName;
+        if (!window.activeTextEditor) {
+          throw new Error(`no editor`);
         }
+        const fileName = window.activeTextEditor.document.fileName;
 
         const renderer = await rendererManager.create({
           fileName,
@@ -247,17 +222,10 @@ export function createRunner({
 
     async gotoNextPage(): Promise<void> {
       try {
-        let fileName: string;
-        if (window.activeTextEditor) {
-          const textEditor = window.activeTextEditor;
-          fileName = textEditor.document.fileName;
-        } else {
-          const renderer = rendererManager.getActive();
-          if (!renderer) {
-            throw new Error("no active text editor");
-          }
-          fileName = renderer.fileName;
+        if (!window.activeTextEditor) {
+          throw new Error(`no editor`);
         }
+        const fileName = window.activeTextEditor.document.fileName;
 
         const renderer = await rendererManager.create({
           fileName,
@@ -315,13 +283,20 @@ export function createRunner({
     },
 
     async download({ fileName }: Readonly<{ fileName: string }>) {
-      const uri = await window.showSaveDialog();
+      const uri = await window.showSaveDialog({
+        defaultUri:
+          workspace.workspaceFolders &&
+          workspace.workspaceFolders[0] &&
+          workspace.workspaceFolders[0].uri,
+        filters: {
+          "JSON Lines": ["jsonl"],
+        },
+      });
       if (!uri) {
         return;
       }
 
       const query = await readFile(fileName, "utf-8");
-      console.log(fileName, uri.path, query);
       await downloader.jsonl({ uri, query });
     },
 

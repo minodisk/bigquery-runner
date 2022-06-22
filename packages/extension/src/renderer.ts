@@ -30,7 +30,6 @@ import { StatusManager } from "./statusManager";
 export type RendererManager = ReturnType<typeof createRendererManager>;
 
 export type Renderer = {
-  panel: WebviewPanel;
   reveal: () => void;
   open: () => Promise<void>;
   render: (
@@ -39,6 +38,7 @@ export type Renderer = {
       response: RunJobResponse;
     }>
   ) => Promise<void>;
+  error: () => void;
   close: () => Promise<void>;
 };
 
@@ -82,10 +82,12 @@ export function createRendererManager({
       readonly fileName: string;
       readonly viewColumn?: ViewColumn;
     }): Promise<Renderer> {
-      const p = map.get(fileName);
-      if (p) {
-        p.reveal();
-        return p;
+      {
+        const renderer = map.get(fileName);
+        if (renderer) {
+          renderer.reveal();
+          return renderer;
+        }
       }
 
       const config = configManager.get();
@@ -163,13 +165,12 @@ export function createRendererManager({
       });
 
       const renderer = {
-        panel,
-
         reveal() {
-          panel.reveal(viewColumn, true);
+          panel.reveal(undefined, true);
         },
 
         async open() {
+          statusManager.loadBilled({ fileName });
           await panel.webview.postMessage({
             source: "bigquery-runner",
             payload: {
@@ -201,8 +202,6 @@ export function createRendererManager({
           }
           try {
             const { metadata, structs, table, page } = response;
-
-            statusManager.loadBilled({ fileName });
 
             outputChannel.appendLine(`Result: ${structs.length} rows`);
             const bytes = format(
@@ -248,6 +247,10 @@ export function createRendererManager({
           }
         },
 
+        error() {
+          statusManager.errorBilled({ fileName });
+        },
+
         async close() {
           await panel.webview.postMessage({
             source: "bigquery-runner",
@@ -264,20 +267,6 @@ export function createRendererManager({
 
     exists({ fileName }: Readonly<{ fileName: string }>) {
       return map.has(fileName);
-    },
-
-    getActive() {
-      const e = Array.from(map.entries()).find(
-        ([, renderer]) => renderer.panel.active
-      );
-      if (!e) {
-        return;
-      }
-      const [fileName, panel] = e;
-      return {
-        fileName,
-        panel,
-      };
     },
 
     delete({ fileName }: Readonly<{ readonly fileName: string }>) {

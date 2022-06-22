@@ -55,7 +55,7 @@ export async function activate(ctx: ExtensionContext) {
       outputChannel,
       statusManager,
       onPrevPageRequested() {
-        runner.gotoNextPage();
+        runner.gotoPrevPage();
       },
       onNextPageRequested() {
         runner.gotoNextPage();
@@ -76,7 +76,6 @@ export async function activate(ctx: ExtensionContext) {
       outputChannel,
       rendererManager,
       downloader,
-      statusManager,
       errorMarker,
     });
     const dryRunner = createDryRunner({
@@ -95,7 +94,6 @@ export async function activate(ctx: ExtensionContext) {
       configManager,
       downloader,
       rendererManager,
-      // rendererManager,
       statusManager,
       errorMarker,
       runner,
