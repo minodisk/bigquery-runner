@@ -9,33 +9,26 @@ import {
   isRoutineEvent,
   RoutinePayload,
 } from "types";
-import Routine from "./Routine";
-import Select from "./Select";
+import { Routine } from "./pages/Routine";
+import { Select } from "./pages/Select";
 
-// const w = window as unknown as {
-//   acquireVsCodeApi?: () => {
-//     getState(): Rows;
-//     setState(rows: Rows): void;
-//     postMessage(e: ViewerEvent): void;
+const vscode = acquireVsCodeApi<Rows>();
+// : // mock
+//   {
+//     getState() {
+//       // eslint-disable-next-line
+//       // const payload = require("../../misc/mock/rows.json");
+//       // require("../../misc/mock/vscode.css");
+//       // return payload;
+//       return {};
+//     },
+//     setState() {
+//       // do nothing
+//     },
+//     postMessage() {
+//       // do nothing
+//     },
 //   };
-// };
-const vscode = acquireVsCodeApi
-  ? acquireVsCodeApi<Rows>()
-  : // mock
-    {
-      getState() {
-        // eslint-disable-next-line
-        const payload = require("../../misc/mock/rows.json");
-        require("../../misc/mock/vscode.css");
-        return payload;
-      },
-      setState() {
-        // do nothing
-      },
-      postMessage() {
-        // do nothing
-      },
-    };
 
 const App: FC = () => {
   const [focused, setFocused] = useState(false);

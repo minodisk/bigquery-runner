@@ -4,9 +4,10 @@ import formatDuration from "date-fns/formatDuration";
 import formatISO from "date-fns/formatISO";
 import React from "react";
 import { Metadata } from "types";
-import { Breakable, CopyButton } from "./ui";
+import { Breakable } from "../ui/Breakable";
+import { CopyButton } from "../ui/CopyButton";
 
-export const JobInformation = ({ metadata }: { metadata: Metadata }) => {
+export const Job = ({ metadata }: { metadata: Metadata }) => {
   const jobId = `${metadata.jobReference.projectId}:${metadata.jobReference.location}.${metadata.jobReference.jobId}`;
 
   return (

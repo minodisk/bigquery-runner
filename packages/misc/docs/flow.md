@@ -1,3 +1,40 @@
+## Resource Lifecycle
+
+```mermaid
+flowchart LR
+  subgraph usage
+    query[/Query/]
+    resource[Resource]
+    ui(UI)
+  end
+```
+
+```mermaid
+flowchart LR
+  procedure[/PROCEDURE/]
+  routine[Routine]
+  run(Run)
+  preview(Preview)
+  select[/SELECT/]
+  merge[/MERGE/]
+  table[Table]
+  results[Results]
+  download(Download)
+  format(Select\nformat)
+  path(Select\nfile path)
+  file[File]
+
+  procedure --> routine --> run
+  run --> select
+  run --> merge
+
+  merge --> table --> preview --> select
+  select --> results
+  results --> download --> format --> path --> file
+```
+
+## Processing
+
 ```mermaid
 flowchart LR
 

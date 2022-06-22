@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
-import { JobInformation } from "./JobInformation";
+import { Job } from "./Job";
 
 describe("JobInformation", () => {
   describe("metadata", () => {
     it("should be rendered with cache", async () => {
       render(
-        <JobInformation
+        <Job
           metadata={{
             kind: "bigquery#job",
             etag: "XXXXXXXXXXXXXXXXXXXXXX==",
@@ -67,7 +67,7 @@ describe("JobInformation", () => {
 
     it("should be rendered without cache", async () => {
       render(
-        <JobInformation
+        <Job
           metadata={{
             kind: "bigquery#job",
             etag: "XXXXXXXXXXXXXXXXXXXXXX==",

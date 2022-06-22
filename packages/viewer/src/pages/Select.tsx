@@ -22,11 +22,12 @@ import {
 } from "@chakra-ui/react";
 import React, { FC } from "react";
 import { Rows } from "types";
-import { JobInformation } from "./JobInformation";
-import { TableInformation } from "./TableInformation";
-import { Footer, Header } from "./ui";
+import { Footer } from "../domain/Footer";
+import { Header } from "../domain/Header";
+import { Job } from "../domain/Job";
+import { Table as TableTabContent } from "../domain/Table";
 
-const Select: FC<
+export const Select: FC<
   Readonly<{
     focused: boolean;
     loading?: string;
@@ -45,19 +46,12 @@ const Select: FC<
 }) => {
   return (
     <Tabs>
-      <Header>
+      <Header loading={loading}>
         <TabList>
           <Tab>Results</Tab>
-          <Tab>Job</Tab>
           <Tab>Table</Tab>
+          <Tab>Job</Tab>
         </TabList>
-        <HStack>
-          <IconButton
-            aria-label="download"
-            icon={<DownloadIcon />}
-            onClick={onDownloadRequest}
-          />
-        </HStack>
       </Header>
       <TabPanels>
         <TabPanel>
@@ -94,7 +88,7 @@ const Select: FC<
                 })}
               </Tbody>
             </Table>
-            <Footer loading={loading}>
+            <Footer>
               <HStack px={2} gap={1}>
                 <IconButton
                   aria-label="prev page"
@@ -116,20 +110,23 @@ const Select: FC<
                 <Text>of</Text>
                 <Text>{page.numRows}</Text>
               </HStack>
+              <HStack>
+                <IconButton
+                  aria-label="download"
+                  icon={<DownloadIcon />}
+                  onClick={onDownloadRequest}
+                />
+              </HStack>
             </Footer>
           </Box>
         </TabPanel>
         <TabPanel>
-          <JobInformation metadata={metadata} />
-          <Footer loading={loading} />
+          <Job metadata={metadata} />
         </TabPanel>
         <TabPanel>
-          <TableInformation table={table} />
-          <Footer loading={loading} />
+          <TableTabContent table={table} />
         </TabPanel>
       </TabPanels>
     </Tabs>
   );
 };
-
-export default Select;

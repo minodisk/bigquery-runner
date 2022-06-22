@@ -1,10 +1,11 @@
 import { HStack, Table, Tbody, Td, Text, Th, Tr } from "@chakra-ui/react";
 import formatISO from "date-fns/formatISO";
 import React from "react";
-import { Routine } from "types";
-import { Breakable, CopyButton } from "./ui";
+import { Routine as RoutineData } from "types";
+import { Breakable } from "../ui/Breakable";
+import { CopyButton } from "../ui/CopyButton";
 
-export const RoutineInformation = ({ routine }: { routine: Routine }) => {
+export const Routine = ({ routine }: { routine: RoutineData }) => {
   const { projectId, datasetId, routineId } = routine.metadata.routineReference;
   const id = [projectId, datasetId, routineId].join(".");
   return (

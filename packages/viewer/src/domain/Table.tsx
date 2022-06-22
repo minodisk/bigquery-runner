@@ -1,14 +1,22 @@
-import { HStack, Table, Tbody, Td, Th, Tr } from "@chakra-ui/react";
+import {
+  HStack,
+  Table as TableComponent,
+  Tbody,
+  Td,
+  Th,
+  Tr,
+} from "@chakra-ui/react";
 import bytes from "bytes";
 import formatISO from "date-fns/formatISO";
 import React from "react";
-import { Table as TableInfo } from "types";
-import { Breakable, CopyButton } from "./ui";
+import { Table as TableData } from "types";
+import { Breakable } from "../ui/Breakable";
+import { CopyButton } from "../ui/CopyButton";
 
-export const TableInformation = ({ table }: { table: TableInfo }) => {
+export const Table = ({ table }: { table: TableData }) => {
   const tableId = `${table.tableReference.projectId}.${table.tableReference.datasetId}.${table.tableReference.tableId}`;
   return (
-    <Table>
+    <TableComponent>
       <Tbody>
         <Tr>
           <Th>Table ID</Th>
@@ -48,6 +56,6 @@ export const TableInformation = ({ table }: { table: TableInfo }) => {
           <Td>{table.location}</Td>
         </Tr>
       </Tbody>
-    </Table>
+    </TableComponent>
   );
 };
