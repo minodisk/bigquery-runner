@@ -1,4 +1,3 @@
-import { readFile } from "fs/promises";
 import {
   AuthenticationError,
   createClient,
@@ -46,7 +45,7 @@ export function createRunner({
   downloader: Downloader;
   errorMarker: ErrorMarker;
 }>) {
-  const selectJobs: Map<string, RunJob> = new Map();
+  const jobs = new Map<Renderer, RunJob>();
 
   return {
     async run(): Promise<void> {
@@ -111,7 +110,7 @@ export function createRunner({
                 });
               }
 
-              selectJobs.set(fileName, job);
+              jobs.set(renderer, job);
 
               const structs = await job.getStructs();
               const table = await job.getTable();
@@ -135,7 +134,6 @@ export function createRunner({
 
           outputChannel.appendLine(`Job ID: ${response.jobId}`);
           await renderer.render({
-            fileName,
             response,
           });
         } catch (err) {
@@ -176,7 +174,7 @@ export function createRunner({
         let response: RunJobResponse;
         try {
           // response = await runJobManager.prevRows({ fileName });
-          const job = selectJobs.get(fileName);
+          const job = jobs.get(renderer);
           if (!job) {
             throw new Error(`no job`);
           }
@@ -202,7 +200,6 @@ export function createRunner({
         }
 
         await renderer.render({
-          fileName,
           response,
         });
       } catch (err) {
@@ -238,7 +235,7 @@ export function createRunner({
         let response: RunJobResponse;
         try {
           // response = await runJobManager.nextRows({ fileName });
-          const job = selectJobs.get(fileName);
+          const job = jobs.get(renderer);
           if (!job) {
             throw new Error(`no job`);
           }
@@ -264,7 +261,6 @@ export function createRunner({
         }
 
         await renderer.render({
-          fileName,
           response,
         });
       } catch (err) {
@@ -282,7 +278,12 @@ export function createRunner({
       }
     },
 
-    async download({ fileName }: Readonly<{ fileName: string }>) {
+    async download(renderer: Renderer) {
+      const job = jobs.get(renderer);
+      if (!job) {
+        throw new Error(`no job for the renderer`);
+      }
+
       const uri = await window.showSaveDialog({
         defaultUri:
           workspace.workspaceFolders &&
@@ -296,33 +297,33 @@ export function createRunner({
         return;
       }
 
-      const query = await readFile(fileName, "utf-8");
-      await downloader.jsonl({ uri, query });
+      await downloader.jsonl({ uri, query: job.query });
     },
 
-    async preview({ fileName }: Readonly<{ fileName: string }>) {
-      const job = selectJobs.get(fileName);
-      if (!job) {
-        throw new Error(`job for ${fileName} not found`);
-      }
-      console.log("preview:", job);
+    async preview(renderer: Renderer) {
+      console.log(renderer);
+      // const job = jobs.get(fileName);
+      // if (!job) {
+      //   throw new Error(`job for ${fileName} not found`);
+      // }
+      // console.log("preview:", job);
     },
 
     onDidCloseTextDocument({ fileName }: Readonly<{ fileName: string }>) {
-      if (rendererManager.exists({ fileName })) {
+      const renderer = rendererManager.get(fileName);
+      rendererManager.delete(fileName);
+      if (!renderer) {
         return;
       }
-      selectJobs.delete(fileName);
-      rendererManager.delete({ fileName });
+      jobs.delete(renderer);
     },
 
-    onDidDisposePanel({ fileName }: Readonly<{ fileName: string }>) {
-      selectJobs.delete(fileName);
-      rendererManager.delete({ fileName });
+    onDidDisposePanel(renderer: Renderer) {
+      jobs.delete(renderer);
     },
 
     dispose() {
-      selectJobs.clear();
+      jobs.clear();
     },
   };
 }

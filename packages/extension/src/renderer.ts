@@ -27,20 +27,21 @@ import { ConfigManager } from "./configManager";
 import { ErrorWithId, RunJobResponse } from "./runner";
 import { StatusManager } from "./statusManager";
 
-export type RendererManager = ReturnType<typeof createRendererManager>;
+export type RendererManager = Readonly<
+  ReturnType<typeof createRendererManager>
+>;
 
-export type Renderer = {
+export type Renderer = Readonly<{
   reveal: () => void;
   open: () => Promise<void>;
   render: (
     props: Readonly<{
-      fileName: string;
       response: RunJobResponse;
     }>
   ) => Promise<void>;
   error: () => void;
   close: () => Promise<void>;
-};
+}>;
 
 export function createRendererManager({
   ctx,
@@ -57,20 +58,11 @@ export function createRendererManager({
   configManager: ConfigManager;
   outputChannel: OutputChannel;
   statusManager: StatusManager;
-  onPrevPageRequested: (e: {
-    fileName: string;
-    panel: WebviewPanel;
-  }) => unknown;
-  onNextPageRequested: (e: {
-    fileName: string;
-    panel: WebviewPanel;
-  }) => unknown;
-  onDownloadRequested: (e: {
-    fileName: string;
-    panel: WebviewPanel;
-  }) => unknown;
-  onPreviewRequested: (e: { fileName: string; panel: WebviewPanel }) => unknown;
-  onDidDisposePanel: (e: { readonly fileName: string }) => unknown;
+  onPrevPageRequested: (renderer: Renderer) => unknown;
+  onNextPageRequested: (renderer: Renderer) => unknown;
+  onDownloadRequested: (renderer: Renderer) => unknown;
+  onPreviewRequested: (renderer: Renderer) => unknown;
+  onDidDisposePanel: (renderer: Renderer) => unknown;
 }>) {
   const map: Map<string, Renderer> = new Map();
 
@@ -141,7 +133,8 @@ export function createRendererManager({
           } as Data<FocusedEvent>)
         );
         panel.onDidDispose(() => {
-          onDidDisposePanel({ fileName });
+          onDidDisposePanel(renderer);
+          map.delete(fileName);
         });
         panel.iconPath = Uri.file(
           join(ctx.extensionPath, "out/assets/icon-small.png")
@@ -152,13 +145,13 @@ export function createRendererManager({
             resolved = true;
             resolve(panel);
           } else if (isPrevEvent(event)) {
-            onPrevPageRequested({ fileName, panel });
+            onPrevPageRequested(renderer);
           } else if (isNextEvent(event)) {
-            onNextPageRequested({ fileName, panel });
+            onNextPageRequested(renderer);
           } else if (isDownloadEvent(event)) {
-            onDownloadRequested({ fileName, panel });
+            onDownloadRequested(renderer);
           } else if (isPreviewEvent(event)) {
-            onPreviewRequested({ fileName, panel });
+            onPreviewRequested(renderer);
           }
         });
         panel.webview.html = html;
@@ -180,10 +173,8 @@ export function createRendererManager({
         },
 
         async render({
-          fileName,
           response,
         }: Readonly<{
-          fileName: string;
           response: RunJobResponse;
         }>) {
           if (response.type === "routine") {
@@ -265,11 +256,11 @@ export function createRendererManager({
       return renderer;
     },
 
-    exists({ fileName }: Readonly<{ fileName: string }>) {
-      return map.has(fileName);
+    get(fileName: string) {
+      return map.get(fileName);
     },
 
-    delete({ fileName }: Readonly<{ readonly fileName: string }>) {
+    delete(fileName: string) {
       return map.delete(fileName);
     },
 

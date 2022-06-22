@@ -18,7 +18,7 @@ import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
 import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
-import { createRendererManager } from "./renderer";
+import { createRendererManager, Renderer } from "./renderer";
 import { createRunner } from "./runner";
 import {
   createStatusBarItemCreator,
@@ -37,8 +37,8 @@ export async function activate(ctx: ExtensionContext) {
 
     const outputChannel = window.createOutputChannel(title);
 
-    const onDidDisposePanel = (e: { readonly fileName: string }) => {
-      runner.onDidDisposePanel(e);
+    const onDidDisposePanel = (renderer: Renderer) => {
+      runner.onDidDisposePanel(renderer);
     };
 
     const configManager = createConfigManager(section);
@@ -60,11 +60,11 @@ export async function activate(ctx: ExtensionContext) {
       onNextPageRequested() {
         runner.gotoNextPage();
       },
-      onDownloadRequested({ fileName }) {
-        runner.download({ fileName });
+      onDownloadRequested(renderer) {
+        runner.download(renderer);
       },
-      onPreviewRequested({ fileName }) {
-        runner.preview({ fileName });
+      onPreviewRequested(renderer) {
+        runner.preview(renderer);
       },
       onDidDisposePanel,
     });

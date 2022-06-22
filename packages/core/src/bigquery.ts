@@ -68,9 +68,12 @@ export async function createClient(options: BigQueryOptions) {
   }
 
   return {
-    async createRunJob(query: Omit<Query, "dryRun">): Promise<
+    async createRunJob(
+      query: Omit<Query, "dryRun" | "query"> & { query: string }
+    ): Promise<
       Readonly<{
         id: string;
+        query: string;
         metadata: Metadata;
         statementType?: StatementType;
         tableName?: string;
@@ -114,6 +117,7 @@ export async function createClient(options: BigQueryOptions) {
 
       return {
         id: job.id,
+        query: query.query,
         metadata,
         statementType,
         tableName,
