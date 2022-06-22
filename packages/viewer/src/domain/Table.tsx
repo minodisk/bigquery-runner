@@ -1,5 +1,7 @@
+import { ViewIcon } from "@chakra-ui/icons";
 import {
   HStack,
+  IconButton,
   Table as TableComponent,
   Tbody,
   Td,
@@ -8,12 +10,15 @@ import {
 } from "@chakra-ui/react";
 import bytes from "bytes";
 import formatISO from "date-fns/formatISO";
-import React from "react";
+import React, { FC } from "react";
 import { Table as TableData } from "types";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 
-export const Table = ({ table }: { table: TableData }) => {
+export const Table: FC<{
+  table: TableData;
+  onPreviewRequest: () => unknown;
+}> = ({ table, onPreviewRequest }) => {
   const tableId = `${table.tableReference.projectId}.${table.tableReference.datasetId}.${table.tableReference.tableId}`;
   return (
     <TableComponent>
@@ -24,6 +29,11 @@ export const Table = ({ table }: { table: TableData }) => {
             <HStack gap={2}>
               <Breakable>{tableId}</Breakable>
               <CopyButton text={tableId} />
+              <IconButton
+                aria-label="preview"
+                icon={<ViewIcon />}
+                onClick={onPreviewRequest}
+              />
             </HStack>
           </Td>
         </Tr>

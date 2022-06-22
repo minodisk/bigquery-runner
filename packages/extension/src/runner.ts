@@ -11,8 +11,7 @@ import { ConfigManager } from "./configManager";
 import { Downloader } from "./downloader";
 import { ErrorMarker } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
-import { PanelManager } from "./panelManager";
-import { Renderer, RendererManager } from "./rendererManager";
+import { Renderer, RendererManager } from "./renderer";
 import { StatusManager } from "./statusManager";
 
 export type Runner = ReturnType<typeof createRunner>;
@@ -39,7 +38,6 @@ export function createRunner({
   configManager,
   outputChannel,
   rendererManager,
-  panelManager,
   downloader,
   statusManager,
   errorMarker,
@@ -47,7 +45,6 @@ export function createRunner({
   configManager: ConfigManager;
   outputChannel: OutputChannel;
   rendererManager: RendererManager;
-  panelManager: PanelManager;
   downloader: Downloader;
   statusManager: StatusManager;
   errorMarker: ErrorMarker;
@@ -71,12 +68,12 @@ export function createRunner({
             selections,
           });
         } else {
-          const panel = panelManager.getActive();
-          if (!panel) {
+          const renderer = rendererManager.getActive();
+          if (!renderer) {
             throw new Error("no active text editor");
           }
-          fileName = panel.fileName;
-          query = await readFile(panel.fileName, "utf-8");
+          fileName = renderer.fileName;
+          query = await readFile(renderer.fileName, "utf-8");
         }
 
         outputChannel.appendLine(`Run`);
@@ -186,11 +183,11 @@ export function createRunner({
           const textEditor = window.activeTextEditor;
           fileName = textEditor.document.fileName;
         } else {
-          const panel = panelManager.getActive();
-          if (!panel) {
+          const renderer = rendererManager.getActive();
+          if (!renderer) {
             throw new Error("no active text editor");
           }
-          fileName = panel.fileName;
+          fileName = renderer.fileName;
         }
 
         const renderer = await rendererManager.create({
@@ -255,11 +252,11 @@ export function createRunner({
           const textEditor = window.activeTextEditor;
           fileName = textEditor.document.fileName;
         } else {
-          const panel = panelManager.getActive();
-          if (!panel) {
+          const renderer = rendererManager.getActive();
+          if (!renderer) {
             throw new Error("no active text editor");
           }
-          fileName = panel.fileName;
+          fileName = renderer.fileName;
         }
 
         const renderer = await rendererManager.create({
@@ -317,7 +314,7 @@ export function createRunner({
       }
     },
 
-    async download({ fileName }: { fileName: string }) {
+    async download({ fileName }: Readonly<{ fileName: string }>) {
       const uri = await window.showSaveDialog();
       if (!uri) {
         return;
@@ -328,17 +325,25 @@ export function createRunner({
       await downloader.jsonl({ uri, query });
     },
 
-    onDidCloseTextDocument({ fileName }: { readonly fileName: string }) {
-      if (panelManager.exists({ fileName })) {
+    async preview({ fileName }: Readonly<{ fileName: string }>) {
+      const job = selectJobs.get(fileName);
+      if (!job) {
+        throw new Error(`job for ${fileName} not found`);
+      }
+      console.log("preview:", job);
+    },
+
+    onDidCloseTextDocument({ fileName }: Readonly<{ fileName: string }>) {
+      if (rendererManager.exists({ fileName })) {
         return;
       }
       selectJobs.delete(fileName);
-      panelManager.delete({ fileName });
+      rendererManager.delete({ fileName });
     },
 
-    onDidDisposePanel({ fileName }: { readonly fileName: string }) {
+    onDidDisposePanel({ fileName }: Readonly<{ fileName: string }>) {
       selectJobs.delete(fileName);
-      panelManager.delete({ fileName });
+      rendererManager.delete({ fileName });
     },
 
     dispose() {

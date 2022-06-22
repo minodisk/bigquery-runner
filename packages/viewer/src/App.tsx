@@ -52,14 +52,17 @@ const App: FC = () => {
     timeoutMs: 5000,
   });
 
-  const onDownloadRequest = useCallback(() => {
-    vscode.postMessage({ event: "download" });
-  }, []);
   const onPrevRequest = useCallback(() => {
     vscode.postMessage({ event: "prev" });
   }, []);
   const onNextRequest = useCallback(() => {
     vscode.postMessage({ event: "next" });
+  }, []);
+  const onDownloadRequest = useCallback(() => {
+    vscode.postMessage({ event: "download" });
+  }, []);
+  const onPreviewRequest = useCallback(() => {
+    vscode.postMessage({ event: "preview" });
   }, []);
 
   useEffect(() => {
@@ -121,9 +124,10 @@ const App: FC = () => {
         focused={focused}
         loading={loading}
         selectPayload={selectPayload}
-        onDownloadRequest={onDownloadRequest}
         onPrevRequest={onPrevRequest}
         onNextRequest={onNextRequest}
+        onDownloadRequest={onDownloadRequest}
+        onPreviewRequest={onPreviewRequest}
       />
     );
   }

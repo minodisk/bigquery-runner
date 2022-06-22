@@ -229,11 +229,13 @@ export async function createClient(options: BigQueryOptions) {
   };
 }
 
-export function createTableName(table?: {
-  projectId?: string;
-  datasetId?: string;
-  tableId?: string;
-}): string | undefined {
+export function createTableName(
+  table?: Readonly<{
+    projectId?: string;
+    datasetId?: string;
+    tableId?: string;
+  }>
+): string | undefined {
   if (!table) {
     return;
   }
@@ -241,11 +243,13 @@ export function createTableName(table?: {
   return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
 }
 
-function getPage(params: {
-  maxResults?: number;
-  current: number;
-  numRows: string;
-}): Page {
+function getPage(
+  params: Readonly<{
+    maxResults?: number;
+    current: number;
+    numRows: string;
+  }>
+): Page {
   const numRows = BigInt(params.numRows);
   if (params.maxResults === undefined) {
     return {

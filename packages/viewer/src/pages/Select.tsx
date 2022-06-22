@@ -32,17 +32,19 @@ export const Select: FC<
     focused: boolean;
     loading?: string;
     selectPayload: Rows;
-    onDownloadRequest: () => unknown;
     onPrevRequest: () => unknown;
     onNextRequest: () => unknown;
+    onDownloadRequest: () => unknown;
+    onPreviewRequest: () => unknown;
   }>
 > = ({
   focused,
   loading,
   selectPayload: { header, rows, page, metadata, table },
-  onDownloadRequest,
   onPrevRequest,
   onNextRequest,
+  onDownloadRequest,
+  onPreviewRequest,
 }) => {
   return (
     <Tabs>
@@ -124,7 +126,7 @@ export const Select: FC<
           <Job metadata={metadata} />
         </TabPanel>
         <TabPanel>
-          <TableTabContent table={table} />
+          <TableTabContent table={table} onPreviewRequest={onPreviewRequest} />
         </TabPanel>
       </TabPanels>
     </Tabs>

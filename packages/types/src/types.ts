@@ -271,7 +271,8 @@ export type ViewerEvent =
   | EndEvent
   | PrevEvent
   | NextEvent
-  | DownloadEvent;
+  | DownloadEvent
+  | PreviewEvent;
 export type LoadedEvent = Readonly<{
   event: "loaded";
 }>;
@@ -281,14 +282,17 @@ export type StartEvent = Readonly<{
 export type EndEvent = Readonly<{
   event: "end";
 }>;
-export type DownloadEvent = Readonly<{
-  event: "download";
-}>;
 export type PrevEvent = Readonly<{
   event: "prev";
 }>;
 export type NextEvent = Readonly<{
   event: "next";
+}>;
+export type DownloadEvent = Readonly<{
+  event: "download";
+}>;
+export type PreviewEvent = Readonly<{
+  event: "preview";
 }>;
 
 export function isLoadedEvent(e: ViewerEvent): e is StartEvent {
@@ -300,12 +304,15 @@ export function isStartEvent(e: ViewerEvent): e is StartEvent {
 export function isEndEvent(e: ViewerEvent): e is EndEvent {
   return e.event === "end";
 }
-export function isDownloadEvent(e: ViewerEvent): e is DownloadEvent {
-  return e.event === "download";
-}
 export function isPrevEvent(e: ViewerEvent): e is PrevEvent {
   return e.event === "prev";
 }
 export function isNextEvent(e: ViewerEvent): e is NextEvent {
   return e.event === "next";
+}
+export function isDownloadEvent(e: ViewerEvent): e is DownloadEvent {
+  return e.event === "download";
+}
+export function isPreviewEvent(e: ViewerEvent): e is PreviewEvent {
+  return e.event === "preview";
 }

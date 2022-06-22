@@ -18,8 +18,7 @@ import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
 import { createErrorMarker } from "./errorMarker";
 import { isBigQuery } from "./isBigQuery";
-import { createPanelManager } from "./panelManager";
-import { createRendererManager } from "./rendererManager";
+import { createRendererManager } from "./renderer";
 import { createRunner } from "./runner";
 import {
   createStatusBarItemCreator,
@@ -50,9 +49,11 @@ export async function activate(ctx: ExtensionContext) {
       options: configManager.get().statusBarItem,
       createStatusBarItem: createStatusBarItemCreator(window),
     });
-    const panelManager = createPanelManager({
+    const rendererManager = createRendererManager({
       ctx,
       configManager,
+      outputChannel,
+      statusManager,
       onPrevPageRequested() {
         runner.gotoNextPage();
       },
@@ -62,12 +63,10 @@ export async function activate(ctx: ExtensionContext) {
       onDownloadRequested({ fileName }) {
         runner.download({ fileName });
       },
+      onPreviewRequested({ fileName }) {
+        runner.preview({ fileName });
+      },
       onDidDisposePanel,
-    });
-    const rendererManager = createRendererManager({
-      outputChannel,
-      statusManager,
-      panelManager,
     });
     const errorMarker = createErrorMarker({
       section,
@@ -76,7 +75,6 @@ export async function activate(ctx: ExtensionContext) {
       configManager,
       outputChannel,
       rendererManager,
-      panelManager,
       downloader,
       statusManager,
       errorMarker,
@@ -96,8 +94,8 @@ export async function activate(ctx: ExtensionContext) {
       outputChannel,
       configManager,
       downloader,
-      panelManager,
       rendererManager,
+      // rendererManager,
       statusManager,
       errorMarker,
       runner,
