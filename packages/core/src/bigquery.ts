@@ -8,17 +8,9 @@ import {
   Routine,
 } from "types";
 
-export type Client = ReturnType<typeof createClient> extends Promise<infer T>
-  ? T
-  : never;
-export type RunJob = ReturnType<Client["createRunJob"]> extends Promise<infer T>
-  ? T
-  : never;
-export type DryRunJob = ReturnType<Client["createDryRunJob"]> extends Promise<
-  infer T
->
-  ? T
-  : never;
+export type Client = Awaited<ReturnType<typeof createClient>>;
+export type RunJob = Awaited<ReturnType<Client["createRunJob"]>>;
+export type DryRunJob = Awaited<ReturnType<Client["createDryRunJob"]>>;
 
 export type StatementType =
   | "SELECT"

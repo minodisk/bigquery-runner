@@ -1,20 +1,34 @@
+import { randomUUID } from "crypto";
 import {
   AuthenticationError,
   createClient,
   NoPageTokenError,
   RunJob,
 } from "core";
-import { Metadata, Page, Routine, Struct, Table } from "types";
-import { OutputChannel, window, workspace } from "vscode";
+import { Metadata, Page, Routine, RunnerID, Struct, Table } from "types";
+import {
+  OutputChannel,
+  Selection,
+  ViewColumn,
+  window,
+  workspace,
+} from "vscode";
 import { ConfigManager } from "./configManager";
 import { Downloader } from "./downloader";
 import { ErrorMarker } from "./errorMarker";
-import { getQueryText } from "./getQueryText";
 import { Renderer, RendererManager } from "./renderer";
 
-export type Runner = ReturnType<typeof createRunner>;
-
+export type RunnerManager = ReturnType<typeof createRunnerManager>;
 export type RunJobResponse = SelectResponse | RoutineResponse;
+export type Runner = {
+  disposed: boolean;
+  isSaveFileName: (fileName: string) => boolean;
+  prev: () => Promise<void>;
+  next: () => Promise<void>;
+  download: () => Promise<void>;
+  preview: () => Promise<Runner>;
+  dispose: () => void;
+};
 
 export type SelectResponse = Readonly<{
   type: "select";
@@ -32,7 +46,7 @@ export type RoutineResponse = Readonly<{
   routine: Routine;
 }>;
 
-export function createRunner({
+export function createRunnerManager({
   configManager,
   outputChannel,
   rendererManager,
@@ -45,39 +59,43 @@ export function createRunner({
   downloader: Downloader;
   errorMarker: ErrorMarker;
 }>) {
-  const jobs = new Map<Renderer, RunJob>();
+  const runners = new Map<RunnerID, Runner>();
 
-  return {
-    async run(): Promise<void> {
+  const runnerManager = {
+    async create({
+      query,
+      fileName,
+      selections,
+      viewColumn,
+    }: Readonly<{
+      query: string;
+      fileName?: string;
+      selections?: readonly Selection[];
+      viewColumn?: ViewColumn;
+    }>) {
+      const runnerId = randomUUID() as RunnerID;
+      let renderer!: Renderer;
+      let job!: RunJob;
+      let response!: RunJobResponse;
+
       try {
-        if (!window.activeTextEditor) {
-          throw new Error(`no editor`);
-        }
-        const { document, selections, viewColumn } = window.activeTextEditor;
-        const query = await getQueryText({
-          document,
-          selections,
-        });
-
         outputChannel.appendLine(`Run`);
 
-        const { fileName } = document;
-        let renderer!: Renderer;
         try {
-          renderer = await rendererManager.create({
-            fileName,
-            viewColumn,
-          });
+          renderer = await rendererManager.create({ runnerId, viewColumn });
 
           await renderer.open();
 
-          let response: RunJobResponse;
           try {
-            errorMarker.clear({ fileName });
+            if (fileName) {
+              errorMarker.clear({
+                fileName,
+              });
+            }
 
             const config = configManager.get();
             const client = await createClient(config);
-            let job = await client.createRunJob({
+            job = await client.createRunJob({
               query,
               maxResults: config.pagination.results,
             });
@@ -110,8 +128,6 @@ export function createRunner({
                 });
               }
 
-              jobs.set(renderer, job);
-
               const structs = await job.getStructs();
               const table = await job.getTable();
               const page = job.getPage({ table });
@@ -126,9 +142,19 @@ export function createRunner({
               };
             }
 
-            errorMarker.clear({ fileName });
+            if (fileName) {
+              errorMarker.clear({
+                fileName,
+              });
+            }
           } catch (err) {
-            errorMarker.mark({ fileName, err, selections });
+            if (fileName) {
+              errorMarker.mark({
+                fileName,
+                err,
+                selections: selections ?? [],
+              });
+            }
             throw err;
           }
 
@@ -154,178 +180,176 @@ export function createRunner({
           window.showErrorMessage(`${err.message}`);
         }
       }
-    },
 
-    async gotoPrevPage(): Promise<void> {
-      try {
-        if (!window.activeTextEditor) {
-          throw new Error(`no editor`);
-        }
-        const fileName = window.activeTextEditor.document.fileName;
+      const runner: Runner = {
+        disposed: false,
 
-        const renderer = await rendererManager.create({
-          fileName,
-        });
-        const path = await renderer.open();
-        if (path !== undefined) {
-          outputChannel.appendLine(`Output to: ${path}`);
-        }
-
-        let response: RunJobResponse;
-        try {
-          // response = await runJobManager.prevRows({ fileName });
-          const job = jobs.get(renderer);
-          if (!job) {
-            throw new Error(`no job`);
-          }
-
-          const structs = await job.getPrevStructs();
-          const table = await job.getTable();
-          const page = job.getPage({ table });
-
-          response = {
-            type: "select",
-            jobId: job.id,
-            structs,
-            metadata: job.metadata,
-            table,
-            page,
-          };
-        } catch (err) {
-          renderer.close();
-          throw err;
-        }
-        if (!response.structs) {
-          throw new ErrorWithId("no results", response.jobId);
-        }
-
-        await renderer.render({
-          response,
-        });
-      } catch (err) {
-        if (err instanceof ErrorWithId) {
-          outputChannel.appendLine(`${err.error} (${err.id})`);
-        } else {
-          outputChannel.appendLine(`${err}`);
-        }
-        if (
-          err instanceof AuthenticationError ||
-          err instanceof NoPageTokenError
-        ) {
-          window.showErrorMessage(`${err.message}`);
-        }
-      }
-    },
-
-    async gotoNextPage(): Promise<void> {
-      try {
-        if (!window.activeTextEditor) {
-          throw new Error(`no editor`);
-        }
-        const fileName = window.activeTextEditor.document.fileName;
-
-        const renderer = await rendererManager.create({
-          fileName,
-        });
-        const path = await renderer.open();
-        if (path !== undefined) {
-          outputChannel.appendLine(`Output to: ${path}`);
-        }
-
-        let response: RunJobResponse;
-        try {
-          // response = await runJobManager.nextRows({ fileName });
-          const job = jobs.get(renderer);
-          if (!job) {
-            throw new Error(`no job`);
-          }
-
-          const structs = await job.getNextStructs();
-          const table = await job.getTable();
-          const page = job.getPage({ table });
-
-          response = {
-            type: "select",
-            jobId: job.id,
-            structs,
-            metadata: job.metadata,
-            table,
-            page,
-          };
-        } catch (err) {
-          renderer.close();
-          throw err;
-        }
-        if (!response.structs) {
-          throw new ErrorWithId("no results", response.jobId);
-        }
-
-        await renderer.render({
-          response,
-        });
-      } catch (err) {
-        if (err instanceof ErrorWithId) {
-          outputChannel.appendLine(`${err.error} (${err.id})`);
-        } else {
-          outputChannel.appendLine(`${err}`);
-        }
-        if (
-          err instanceof AuthenticationError ||
-          err instanceof NoPageTokenError
-        ) {
-          window.showErrorMessage(`${err.message}`);
-        }
-      }
-    },
-
-    async download(renderer: Renderer) {
-      const job = jobs.get(renderer);
-      if (!job) {
-        throw new Error(`no job for the renderer`);
-      }
-
-      const uri = await window.showSaveDialog({
-        defaultUri:
-          workspace.workspaceFolders &&
-          workspace.workspaceFolders[0] &&
-          workspace.workspaceFolders[0].uri,
-        filters: {
-          "JSON Lines": ["jsonl"],
+        isSaveFileName(f) {
+          return f === fileName;
         },
-      });
-      if (!uri) {
-        return;
+
+        async prev() {
+          try {
+            if (renderer.disposed) {
+              renderer = await rendererManager.create({ runnerId, viewColumn });
+            }
+            renderer.reveal();
+
+            const path = await renderer.open();
+            if (path !== undefined) {
+              outputChannel.appendLine(`Output to: ${path}`);
+            }
+
+            let response: RunJobResponse;
+            try {
+              const structs = await job.getPrevStructs();
+              const table = await job.getTable();
+              const page = job.getPage({ table });
+
+              response = {
+                type: "select",
+                jobId: job.id,
+                structs,
+                metadata: job.metadata,
+                table,
+                page,
+              };
+            } catch (err) {
+              renderer.close();
+              throw err;
+            }
+            if (!response.structs) {
+              throw new ErrorWithId("no results", response.jobId);
+            }
+
+            await renderer.render({
+              response,
+            });
+          } catch (err) {
+            if (err instanceof ErrorWithId) {
+              outputChannel.appendLine(`${err.error} (${err.id})`);
+            } else {
+              outputChannel.appendLine(`${err}`);
+            }
+            if (
+              err instanceof AuthenticationError ||
+              err instanceof NoPageTokenError
+            ) {
+              window.showErrorMessage(`${err.message}`);
+            }
+          }
+        },
+
+        async next() {
+          try {
+            if (renderer.disposed) {
+              renderer = await rendererManager.create({ runnerId, viewColumn });
+            }
+            renderer.reveal();
+
+            const path = await renderer.open();
+            if (path !== undefined) {
+              outputChannel.appendLine(`Output to: ${path}`);
+            }
+
+            let response: RunJobResponse;
+            try {
+              const structs = await job.getNextStructs();
+              const table = await job.getTable();
+              const page = job.getPage({ table });
+
+              response = {
+                type: "select",
+                jobId: job.id,
+                structs,
+                metadata: job.metadata,
+                table,
+                page,
+              };
+            } catch (err) {
+              renderer.close();
+              throw err;
+            }
+            if (!response.structs) {
+              throw new ErrorWithId("no results", response.jobId);
+            }
+
+            await renderer.render({
+              response,
+            });
+          } catch (err) {
+            if (err instanceof ErrorWithId) {
+              outputChannel.appendLine(`${err.error} (${err.id})`);
+            } else {
+              outputChannel.appendLine(`${err}`);
+            }
+            if (
+              err instanceof AuthenticationError ||
+              err instanceof NoPageTokenError
+            ) {
+              window.showErrorMessage(`${err.message}`);
+            }
+          }
+        },
+
+        async download() {
+          const uri = await window.showSaveDialog({
+            defaultUri:
+              workspace.workspaceFolders &&
+              workspace.workspaceFolders[0] &&
+              workspace.workspaceFolders[0].uri,
+            filters: {
+              "JSON Lines": ["jsonl"],
+            },
+          });
+          if (!uri) {
+            return;
+          }
+
+          await downloader.jsonl({ uri, query: job.query });
+        },
+
+        async preview() {
+          const query = `SELECT * FROM ${job.tableName}`;
+          return runnerManager.create({
+            query,
+            viewColumn: renderer.viewColumn,
+          });
+        },
+
+        dispose() {
+          if (!renderer.disposed) {
+            return;
+          }
+          this.disposed = true;
+          runners.delete(runnerId);
+        },
+      };
+
+      runners.set(runnerId, runner);
+
+      return runner;
+    },
+
+    get({ runnerId }: Readonly<{ runnerId: RunnerID }>) {
+      return runners.get(runnerId);
+    },
+
+    findWithFileName({ fileName }: Readonly<{ fileName: string }>) {
+      for (const runner of runners.values()) {
+        if (runner.isSaveFileName(fileName)) {
+          return runner;
+        }
       }
-
-      await downloader.jsonl({ uri, query: job.query });
-    },
-
-    async preview(renderer: Renderer) {
-      console.log(renderer);
-      // const job = jobs.get(fileName);
-      // if (!job) {
-      //   throw new Error(`job for ${fileName} not found`);
-      // }
-      // console.log("preview:", job);
-    },
-
-    onDidCloseTextDocument({ fileName }: Readonly<{ fileName: string }>) {
-      const renderer = rendererManager.get(fileName);
-      rendererManager.delete(fileName);
-      if (!renderer) {
-        return;
-      }
-      jobs.delete(renderer);
-    },
-
-    onDidDisposePanel(renderer: Renderer) {
-      jobs.delete(renderer);
+      return;
     },
 
     dispose() {
-      jobs.clear();
+      runners.clear();
     },
   };
+
+  return runnerManager;
 }
 
 export class ErrorWithId {

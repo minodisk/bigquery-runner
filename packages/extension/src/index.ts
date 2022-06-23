@@ -17,9 +17,10 @@ import { createConfigManager } from "./configManager";
 import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
 import { createErrorMarker } from "./errorMarker";
+import { getQueryText } from "./getQueryText";
 import { isBigQuery } from "./isBigQuery";
-import { createRendererManager, Renderer } from "./renderer";
-import { createRunner } from "./runner";
+import { createRendererManager } from "./renderer";
+import { createRunnerManager } from "./runner";
 import {
   createStatusBarItemCreator,
   createStatusManager,
@@ -36,11 +37,6 @@ export async function activate(ctx: ExtensionContext) {
     const section = "bigqueryRunner";
 
     const outputChannel = window.createOutputChannel(title);
-
-    const onDidDisposePanel = (renderer: Renderer) => {
-      runner.onDidDisposePanel(renderer);
-    };
-
     const configManager = createConfigManager(section);
     const downloader = createDownloader({
       configManager,
@@ -54,24 +50,26 @@ export async function activate(ctx: ExtensionContext) {
       configManager,
       outputChannel,
       statusManager,
-      onPrevPageRequested() {
-        runner.gotoPrevPage();
+      onPrevPageRequested({ runnerId }) {
+        runnerManager.get({ runnerId })?.prev();
       },
-      onNextPageRequested() {
-        runner.gotoNextPage();
+      onNextPageRequested({ runnerId }) {
+        runnerManager.get({ runnerId })?.next();
       },
-      onDownloadRequested(renderer) {
-        runner.download(renderer);
+      onDownloadRequested({ runnerId }) {
+        runnerManager.get({ runnerId })?.download();
       },
-      onPreviewRequested(renderer) {
-        runner.preview(renderer);
+      onPreviewRequested({ runnerId }) {
+        runnerManager.get({ runnerId })?.preview();
       },
-      onDidDisposePanel,
+      onDidDisposePanel({ runnerId }) {
+        runnerManager.get({ runnerId })?.dispose();
+      },
     });
     const errorMarker = createErrorMarker({
       section,
     });
-    const runner = createRunner({
+    const runnerManager = createRunnerManager({
       configManager,
       outputChannel,
       rendererManager,
@@ -96,7 +94,7 @@ export async function activate(ctx: ExtensionContext) {
       rendererManager,
       statusManager,
       errorMarker,
-      runner,
+      runnerManager,
       dryRunner,
       validator
     );
@@ -114,9 +112,55 @@ export async function activate(ctx: ExtensionContext) {
           dryRunner.run({ document: window.activeTextEditor.document });
         },
       ],
-      [`${section}.run`, runner.run],
-      [`${section}.prevPage`, runner.gotoPrevPage],
-      [`${section}.nextPage`, runner.gotoNextPage],
+      [
+        `${section}.run`,
+        async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          const { document, selections, viewColumn } = window.activeTextEditor;
+          const query = await getQueryText({
+            document,
+            selections,
+          });
+          await runnerManager.create({
+            query,
+            fileName: document.fileName,
+            selections,
+            viewColumn,
+          });
+        },
+      ],
+      [
+        `${section}.prevPage`,
+        async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          const runner = runnerManager.findWithFileName({
+            fileName: window.activeTextEditor.document.fileName,
+          });
+          if (!runner) {
+            return;
+          }
+          await runner.prev();
+        },
+      ],
+      [
+        `${section}.nextPage`,
+        async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          const runner = runnerManager.findWithFileName({
+            fileName: window.activeTextEditor.document.fileName,
+          });
+          if (!runner) {
+            return;
+          }
+          await runner.next();
+        },
+      ],
     ]).forEach((action, name) => {
       ctx.subscriptions.push(commands.registerCommand(name, action));
     });
@@ -160,7 +204,13 @@ export async function activate(ctx: ExtensionContext) {
         })
       ),
       workspace.onDidCloseTextDocument((document) => {
-        runner.onDidCloseTextDocument({ fileName: document.fileName });
+        const runner = runnerManager.findWithFileName({
+          fileName: document.fileName,
+        });
+        if (!runner) {
+          return;
+        }
+        runner.dispose();
       }),
       // Listen for configuration changes and trigger an update, so that users don't
       // have to reload the VS Code environment after a config update.

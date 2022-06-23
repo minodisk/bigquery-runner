@@ -7,6 +7,8 @@ import type {
   Geography,
 } from "@google-cloud/bigquery";
 
+export type RunnerID = `${string}-${string}-${string}`;
+
 export type Field = PrimitiveField | StructField;
 export type PrimitiveField = Readonly<{
   name: string;

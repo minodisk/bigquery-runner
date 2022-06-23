@@ -13,6 +13,7 @@ import {
   isPreviewEvent,
   OpenEvent,
   RowsEvent,
+  RunnerID,
   ViewerEvent,
 } from "types";
 import {
@@ -31,17 +32,21 @@ export type RendererManager = Readonly<
   ReturnType<typeof createRendererManager>
 >;
 
-export type Renderer = Readonly<{
-  reveal: () => void;
-  open: () => Promise<void>;
-  render: (
+export type Renderer = {
+  readonly runnerId: RunnerID;
+  disposed: boolean;
+  readonly viewColumn: ViewColumn;
+  readonly reveal: () => void;
+  readonly open: () => Promise<void>;
+  readonly render: (
     props: Readonly<{
       response: RunJobResponse;
     }>
   ) => Promise<void>;
-  error: () => void;
-  close: () => Promise<void>;
-}>;
+  readonly error: () => void;
+  readonly close: () => Promise<void>;
+  readonly dispose: () => void;
+};
 
 export function createRendererManager({
   ctx,
@@ -64,33 +69,25 @@ export function createRendererManager({
   onPreviewRequested: (renderer: Renderer) => unknown;
   onDidDisposePanel: (renderer: Renderer) => unknown;
 }>) {
-  const map: Map<string, Renderer> = new Map();
+  const renderers = new Map<RunnerID, Renderer>();
 
   return {
     async create({
-      fileName,
-      viewColumn,
-    }: {
-      readonly fileName: string;
-      readonly viewColumn?: ViewColumn;
-    }): Promise<Renderer> {
-      {
-        const renderer = map.get(fileName);
-        if (renderer) {
-          renderer.reveal();
-          return renderer;
-        }
-      }
-
+      runnerId,
+      viewColumn: baseViewColumn,
+    }: Readonly<{
+      runnerId: RunnerID;
+      viewColumn?: ViewColumn;
+    }>) {
       const config = configManager.get();
       const column = config.viewer.column;
-      let panelViewColumn: ViewColumn;
+      let viewColumn: ViewColumn;
       if (typeof column === "number") {
-        panelViewColumn = column;
-      } else if (viewColumn !== undefined) {
-        panelViewColumn = viewColumn + parseInt(column, 10);
+        viewColumn = column;
+      } else if (baseViewColumn !== undefined) {
+        viewColumn = baseViewColumn + parseInt(column, 10);
       } else {
-        panelViewColumn = ViewColumn.Active;
+        viewColumn = ViewColumn.Active;
       }
 
       const root = join(ctx.extensionPath, "out/viewer");
@@ -108,10 +105,10 @@ export function createRendererManager({
         let resolved = false;
 
         const panel = window.createWebviewPanel(
-          `bigqueryRunner:${fileName}`,
-          basename(fileName),
+          `bigqueryRunner:${runnerId}`,
+          basename(runnerId),
           {
-            viewColumn: panelViewColumn,
+            viewColumn,
             preserveFocus: true,
           },
           {
@@ -133,8 +130,7 @@ export function createRendererManager({
           } as Data<FocusedEvent>)
         );
         panel.onDidDispose(() => {
-          onDidDisposePanel(renderer);
-          map.delete(fileName);
+          renderer.dispose();
         });
         panel.iconPath = Uri.file(
           join(ctx.extensionPath, "out/assets/icon-small.png")
@@ -157,13 +153,19 @@ export function createRendererManager({
         panel.webview.html = html;
       });
 
-      const renderer = {
+      const renderer: Renderer = {
+        runnerId,
+
+        disposed: false,
+
+        viewColumn,
+
         reveal() {
           panel.reveal(undefined, true);
         },
 
         async open() {
-          statusManager.loadBilled({ fileName });
+          statusManager.loadBilled({ fileName: runnerId });
           await panel.webview.postMessage({
             source: "bigquery-runner",
             payload: {
@@ -225,11 +227,11 @@ export function createRendererManager({
             } as Data<RowsEvent>);
 
             statusManager.succeedBilled({
-              fileName,
+              fileName: runnerId,
               billed: { bytes, cacheHit: metadata.statistics.query.cacheHit },
             });
           } catch (err) {
-            statusManager.errorBilled({ fileName });
+            statusManager.errorBilled({ fileName: runnerId });
             if (response.jobId) {
               throw new ErrorWithId(err, response.jobId);
             } else {
@@ -239,7 +241,7 @@ export function createRendererManager({
         },
 
         error() {
-          statusManager.errorBilled({ fileName });
+          statusManager.errorBilled({ fileName: runnerId });
         },
 
         async close() {
@@ -250,22 +252,28 @@ export function createRendererManager({
             },
           } as Data<CloseEvent>);
         },
+
+        dispose() {
+          this.disposed = true;
+          renderers.delete(runnerId);
+          onDidDisposePanel(this);
+        },
       };
 
-      map.set(fileName, renderer);
+      renderers.set(runnerId, renderer);
       return renderer;
     },
 
-    get(fileName: string) {
-      return map.get(fileName);
+    get(runnerId: RunnerID) {
+      return renderers.get(runnerId);
     },
 
-    delete(fileName: string) {
-      return map.delete(fileName);
+    delete(runnerId: RunnerID) {
+      return renderers.delete(runnerId);
     },
 
     dispose() {
-      map.clear();
+      renderers.clear();
     },
   };
 }

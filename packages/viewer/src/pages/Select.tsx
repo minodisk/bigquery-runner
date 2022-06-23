@@ -123,10 +123,10 @@ export const Select: FC<
           </Box>
         </TabPanel>
         <TabPanel>
-          <Job metadata={metadata} />
+          <TableTabContent table={table} onPreviewRequest={onPreviewRequest} />
         </TabPanel>
         <TabPanel>
-          <TableTabContent table={table} onPreviewRequest={onPreviewRequest} />
+          <Job metadata={metadata} />
         </TabPanel>
       </TabPanels>
     </Tabs>

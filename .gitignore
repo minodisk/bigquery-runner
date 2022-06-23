@@ -6,3 +6,4 @@ out
 output
 node_modules
 service-account.json
+*.jsonl
