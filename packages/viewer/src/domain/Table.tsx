@@ -20,6 +20,7 @@ export const Table: FC<{
   onPreviewRequest: () => unknown;
 }> = ({ table, onPreviewRequest }) => {
   const tableId = `${table.tableReference.projectId}.${table.tableReference.datasetId}.${table.tableReference.tableId}`;
+
   return (
     <TableComponent>
       <Tbody>
@@ -57,10 +58,12 @@ export const Table: FC<{
           <Th>Last modified</Th>
           <Td>{formatISO(Number(table.lastModifiedTime))}</Td>
         </Tr>
-        <Tr>
-          <Th>Table expiration</Th>
-          <Td>{formatISO(Number(table.expirationTime))}</Td>
-        </Tr>
+        {table.expirationTime ? (
+          <Tr>
+            <Th>Table expiration</Th>
+            <Td>{formatISO(Number(table.expirationTime))}</Td>
+          </Tr>
+        ) : null}
         <Tr>
           <Th>Data location</Th>
           <Td>{table.location}</Td>

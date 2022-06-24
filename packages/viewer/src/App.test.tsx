@@ -95,8 +95,8 @@ describe("App", () => {
                 ],
               },
             ],
-            metadata,
-            table,
+            // metadata,
+            // table,
             page: {
               hasPrev: false,
               hasNext: false,
@@ -327,8 +327,8 @@ describe("App", () => {
               ],
             },
           ],
-          metadata,
-          table,
+          // metadata,
+          // table,
           page: {
             hasPrev: false,
             hasNext: false,

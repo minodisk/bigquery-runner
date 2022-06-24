@@ -89,19 +89,21 @@ export type Hash = {
   [id: string]: Value;
 };
 
-export type Data<E extends Event> = Readonly<{
+export type Data<E extends RendererEvent> = Readonly<{
   source: "bigquery-runner";
   payload: E;
 }>;
 
-export function isData(data: { source?: string }): data is Data<Event> {
+export function isData(data: { source?: string }): data is Data<RendererEvent> {
   return data.source === "bigquery-runner";
 }
 
-export type Event =
+export type RendererEvent =
   | FocusedEvent
   | OpenEvent
   | CloseEvent
+  | MetadataEvent
+  | TableEvent
   | RoutineEvent
   | RowsEvent;
 
@@ -111,24 +113,44 @@ export type FocusedEvent = Readonly<{
     focused: boolean;
   };
 }>;
-export function isFocusedEvent(e: Event): e is FocusedEvent {
+export function isFocusedEvent(e: RendererEvent): e is FocusedEvent {
   return e.event === "focused";
 }
 
 export type OpenEvent = Readonly<{
   event: "open";
-  payload: undefined;
 }>;
-export function isOpenEvent(e: Event): e is OpenEvent {
+export function isOpenEvent(e: RendererEvent): e is OpenEvent {
   return e.event === "open";
 }
 
 export type CloseEvent = Readonly<{
   event: "close";
-  payload: undefined;
 }>;
-export function isCloseEvent(e: Event): e is CloseEvent {
+export function isCloseEvent(e: RendererEvent): e is CloseEvent {
   return e.event === "close";
+}
+
+export type MetadataEvent = Readonly<{
+  event: "metadata";
+  payload: MetadataPayload;
+}>;
+export type MetadataPayload = {
+  metadata: Metadata;
+};
+export function isMetadataEvent(e: RendererEvent): e is MetadataEvent {
+  return e.event === "metadata";
+}
+
+export type TableEvent = Readonly<{
+  event: "table";
+  payload: TablePayload;
+}>;
+export type TablePayload = {
+  table: Table;
+};
+export function isTableEvent(e: RendererEvent): e is TableEvent {
+  return e.event === "table";
 }
 
 export type RoutineEvent = Readonly<{
@@ -137,24 +159,21 @@ export type RoutineEvent = Readonly<{
 }>;
 export type RoutinePayload = {
   routine: Routine;
-  metadata: Metadata;
 };
-export function isRoutineEvent(e: Event): e is RoutineEvent {
+export function isRoutineEvent(e: RendererEvent): e is RoutineEvent {
   return e.event === "routine";
 }
 
 export type RowsEvent = Readonly<{
   event: "rows";
-  payload: Rows;
+  payload: RowsPayload;
 }>;
-export type Rows = Readonly<{
+export type RowsPayload = Readonly<{
   header: Array<string>;
   rows: Array<NumberedRows>;
-  metadata: Metadata;
-  table: Table;
   page: SerializablePage;
 }>;
-export function isRowsEvent(e: Event): e is RowsEvent {
+export function isRowsEvent(e: RendererEvent): e is RowsEvent {
   return e.event === "rows";
 }
 
@@ -206,7 +225,7 @@ export type Metadata = Readonly<{
 export type Table = Readonly<{
   creationTime: string;
   etag: string;
-  expirationTime: string;
+  expirationTime?: string;
   id: string;
   kind: string;
   lastModifiedTime: string;

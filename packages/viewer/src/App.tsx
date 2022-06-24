@@ -1,3 +1,4 @@
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 import React, { FC, useCallback, useEffect, useState } from "react";
 import {
   isFocusedEvent,
@@ -5,14 +6,21 @@ import {
   isData,
   isOpenEvent,
   isRowsEvent,
-  Rows,
+  RowsPayload,
   isRoutineEvent,
   RoutinePayload,
+  isMetadataEvent,
+  MetadataPayload,
+  TablePayload,
+  isTableEvent,
 } from "types";
-import { Routine } from "./pages/Routine";
-import { Select } from "./pages/Select";
+import { Header } from "./domain/Header";
+import { Job } from "./domain/Job";
+import { Routine } from "./domain/Routine";
+import { Rows } from "./domain/Rows";
+import { Table } from "./domain/Table";
 
-const vscode = acquireVsCodeApi<Rows>();
+const vscode = acquireVsCodeApi<RowsPayload>();
 // : // mock
 //   {
 //     getState() {
@@ -32,12 +40,16 @@ const vscode = acquireVsCodeApi<Rows>();
 
 const App: FC = () => {
   const [focused, setFocused] = useState(false);
-  const [selectPayload, setSelectPayload] = useState<Rows | undefined>(
-    vscode.getState()
-  );
+  const [metadataPayload, setMetadataPayload] = useState<
+    MetadataPayload | undefined
+  >();
+  const [tablePayload, setTablePayload] = useState<TablePayload | undefined>();
   const [routinePayload, setRoutinePayload] = useState<
     RoutinePayload | undefined
   >();
+  const [rowsPayload, setRowsPayload] = useState<RowsPayload | undefined>(
+    vscode.getState()
+  );
   const [loading, setLoading] = useState<string | undefined>("Initializing");
   const [isPending, startTransition] = (
     React as unknown as {
@@ -86,10 +98,20 @@ const App: FC = () => {
         setLoading("Fetching");
         return;
       }
+      if (isMetadataEvent(payload)) {
+        setLoading(undefined);
+        setMetadataPayload(payload.payload);
+        return;
+      }
+      if (isTableEvent(payload)) {
+        setLoading(undefined);
+        setTablePayload(payload.payload);
+        return;
+      }
       if (isRowsEvent(payload)) {
         setLoading(undefined);
         startTransition(() => {
-          setSelectPayload(payload.payload);
+          setRowsPayload(payload.payload);
           vscode.setState(payload.payload);
         });
         return;
@@ -106,7 +128,7 @@ const App: FC = () => {
         setLoading(undefined);
         return;
       }
-      throw new Error(`undefined data payload '${payload}'`);
+      throw new Error(`undefined data payload:\n'${JSON.stringify(payload)}'`);
     });
   }, [startTransition]);
 
@@ -118,29 +140,48 @@ const App: FC = () => {
     }
   }, [isPending]);
 
-  if (selectPayload) {
-    return (
-      <Select
-        focused={focused}
-        loading={loading}
-        selectPayload={selectPayload}
-        onPrevRequest={onPrevRequest}
-        onNextRequest={onNextRequest}
-        onDownloadRequest={onDownloadRequest}
-        onPreviewRequest={onPreviewRequest}
-      />
-    );
-  }
-  if (routinePayload) {
-    return (
-      <Routine
-        focused={focused}
-        loading={loading}
-        routinePayload={routinePayload}
-      />
-    );
-  }
-  return null;
+  return (
+    <Tabs>
+      <Header loading={loading}>
+        <TabList>
+          {rowsPayload ? <Tab>Results</Tab> : null}
+          {tablePayload ? <Tab>Table</Tab> : null}
+          {routinePayload ? <Tab>Routine</Tab> : null}
+          {metadataPayload ? <Tab>Job</Tab> : null}
+        </TabList>
+      </Header>
+      <TabPanels>
+        {rowsPayload ? (
+          <TabPanel>
+            <Rows
+              rowsPayload={rowsPayload}
+              onPrevRequest={onPrevRequest}
+              onNextRequest={onNextRequest}
+              onDownloadRequest={onDownloadRequest}
+            />
+          </TabPanel>
+        ) : null}
+        {tablePayload ? (
+          <TabPanel>
+            <Table
+              table={tablePayload.table}
+              onPreviewRequest={onPreviewRequest}
+            />
+          </TabPanel>
+        ) : null}
+        {routinePayload ? (
+          <TabPanel>
+            <Routine routine={routinePayload.routine} />
+          </TabPanel>
+        ) : null}
+        {metadataPayload ? (
+          <TabPanel>
+            <Job metadata={metadataPayload.metadata} />
+          </TabPanel>
+        ) : null}
+      </TabPanels>
+    </Tabs>
+  );
 };
 
 export default App;

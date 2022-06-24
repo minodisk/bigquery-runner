@@ -3,17 +3,16 @@ import { basename, join } from "path";
 import { format } from "bytes";
 import { createFlat, toSerializablePage } from "core";
 import {
-  CloseEvent,
-  Data,
-  FocusedEvent,
   isDownloadEvent,
   isLoadedEvent,
   isNextEvent,
   isPrevEvent,
   isPreviewEvent,
-  OpenEvent,
-  RowsEvent,
+  Metadata,
+  RendererEvent,
+  Routine,
   RunnerID,
+  Table,
   ViewerEvent,
 } from "types";
 import {
@@ -25,7 +24,7 @@ import {
   window,
 } from "vscode";
 import { ConfigManager } from "./configManager";
-import { ErrorWithId, RunJobResponse } from "./runner";
+import { SelectResponse } from "./runner";
 import { StatusManager } from "./statusManager";
 
 export type RendererManager = Readonly<
@@ -38,11 +37,12 @@ export type Renderer = {
   readonly viewColumn: ViewColumn;
   readonly reveal: () => void;
   readonly open: () => Promise<void>;
-  readonly render: (
-    props: Readonly<{
-      response: RunJobResponse;
-    }>
-  ) => Promise<void>;
+
+  readonly renderMetadata: (data: { metadata: Metadata }) => Promise<void>;
+  readonly renderRoutine: (data: { routine: Routine }) => Promise<void>;
+  readonly renderTable: (data: { table: Table }) => Promise<void>;
+  readonly renderRows: (data: SelectResponse) => Promise<void>;
+
   readonly error: () => void;
   readonly close: () => Promise<void>;
   readonly dispose: () => void;
@@ -119,15 +119,12 @@ export function createRendererManager({
         ctx.subscriptions.push(panel);
 
         panel.onDidChangeViewState((e) =>
-          panel.webview.postMessage({
-            source: "bigquery-runner",
+          postMessage({
+            event: "focused",
             payload: {
-              event: "focused",
-              payload: {
-                focused: e.webviewPanel.active,
-              },
+              focused: e.webviewPanel.active,
             },
-          } as Data<FocusedEvent>)
+          })
         );
         panel.onDidDispose(() => {
           renderer.dispose();
@@ -153,6 +150,13 @@ export function createRendererManager({
         panel.webview.html = html;
       });
 
+      async function postMessage(event: RendererEvent) {
+        await panel.webview.postMessage({
+          source: "bigquery-runner",
+          payload: event,
+        });
+      }
+
       const renderer: Renderer = {
         runnerId,
 
@@ -166,36 +170,40 @@ export function createRendererManager({
 
         async open() {
           statusManager.loadBilled({ fileName: runnerId });
-          await panel.webview.postMessage({
-            source: "bigquery-runner",
-            payload: {
-              event: "open",
-            },
-          } as Data<OpenEvent>);
+          await postMessage({
+            event: "open",
+          });
         },
 
-        async render({
-          response,
-        }: Readonly<{
-          response: RunJobResponse;
-        }>) {
-          if (response.type === "routine") {
-            const { metadata, routine } = response;
-            await panel.webview.postMessage({
-              source: "bigquery-runner",
-              payload: {
-                event: "routine",
-                payload: {
-                  routine,
-                  metadata,
-                },
-              },
-            });
-            return;
-          }
-          try {
-            const { metadata, structs, table, page } = response;
+        async renderMetadata({ metadata }) {
+          await postMessage({
+            event: "metadata",
+            payload: {
+              metadata,
+            },
+          });
+        },
 
+        async renderRoutine({ routine }) {
+          await postMessage({
+            event: "routine",
+            payload: {
+              routine,
+            },
+          });
+        },
+
+        async renderTable({ table }) {
+          await postMessage({
+            event: "table",
+            payload: {
+              table,
+            },
+          });
+        },
+
+        async renderRows({ metadata, structs, table, page }) {
+          try {
             outputChannel.appendLine(`Result: ${structs.length} rows`);
             const bytes = format(
               parseInt(metadata.statistics.query.totalBytesBilled, 10)
@@ -209,22 +217,17 @@ export function createRendererManager({
             }
 
             const flat = createFlat(table.schema.fields);
-            await panel.webview.postMessage({
-              source: "bigquery-runner",
+            await postMessage({
+              event: "rows",
               payload: {
-                event: "rows",
-                payload: {
-                  header: flat.heads.map(({ id }) => id),
-                  rows: flat.toRows({
-                    structs,
-                    rowNumberStart: page.rowNumberStart,
-                  }),
-                  metadata,
-                  table,
-                  page: toSerializablePage(page),
-                },
+                header: flat.heads.map(({ id }) => id),
+                rows: flat.toRows({
+                  structs,
+                  rowNumberStart: page.rowNumberStart,
+                }),
+                page: toSerializablePage(page),
               },
-            } as Data<RowsEvent>);
+            });
 
             statusManager.succeedBilled({
               fileName: runnerId,
@@ -232,11 +235,7 @@ export function createRendererManager({
             });
           } catch (err) {
             statusManager.errorBilled({ fileName: runnerId });
-            if (response.jobId) {
-              throw new ErrorWithId(err, response.jobId);
-            } else {
-              throw err;
-            }
+            throw err;
           }
         },
 
@@ -245,12 +244,9 @@ export function createRendererManager({
         },
 
         async close() {
-          await panel.webview.postMessage({
-            source: "bigquery-runner",
-            payload: {
-              event: "close",
-            },
-          } as Data<CloseEvent>);
+          await postMessage({
+            event: "close",
+          });
         },
 
         dispose() {

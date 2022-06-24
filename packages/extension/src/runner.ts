@@ -26,13 +26,11 @@ export type Runner = {
   prev: () => Promise<void>;
   next: () => Promise<void>;
   download: () => Promise<void>;
-  preview: () => Promise<Runner>;
+  preview: () => Promise<void>;
   dispose: () => void;
 };
 
 export type SelectResponse = Readonly<{
-  type: "select";
-  jobId: string;
   metadata: Metadata;
   structs: Array<Struct>;
   table: Table;
@@ -76,110 +74,6 @@ export function createRunnerManager({
       const runnerId = randomUUID() as RunnerID;
       let renderer!: Renderer;
       let job!: RunJob;
-      let response!: RunJobResponse;
-
-      try {
-        outputChannel.appendLine(`Run`);
-
-        try {
-          renderer = await rendererManager.create({ runnerId, viewColumn });
-
-          await renderer.open();
-
-          try {
-            if (fileName) {
-              errorMarker.clear({
-                fileName,
-              });
-            }
-
-            const config = configManager.get();
-            const client = await createClient(config);
-            job = await client.createRunJob({
-              query,
-              maxResults: config.pagination.results,
-            });
-
-            if (
-              job.metadata.statistics.numChildJobs &&
-              ["SCRIPT"].some((type) => job.statementType === type)
-            ) {
-              // Wait for completion of table creation job
-              // to get the records of the table just created.
-              const routine = await job.getRoutine();
-              response = {
-                type: "routine",
-                jobId: job.id,
-                metadata: job.metadata,
-                routine,
-              };
-            } else {
-              if (
-                ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
-                  (type) => job.statementType === type
-                ) &&
-                job.tableName
-              ) {
-                // Wait for completion of table creation job
-                // to get the records of the table just created.
-                job = await client.createRunJob({
-                  query: `SELECT * FROM \`${job.tableName}\``,
-                  maxResults: config.pagination.results,
-                });
-              }
-
-              const structs = await job.getStructs();
-              const table = await job.getTable();
-              const page = job.getPage({ table });
-
-              response = {
-                type: "select",
-                jobId: job.id,
-                structs,
-                metadata: job.metadata,
-                table,
-                page,
-              };
-            }
-
-            if (fileName) {
-              errorMarker.clear({
-                fileName,
-              });
-            }
-          } catch (err) {
-            if (fileName) {
-              errorMarker.mark({
-                fileName,
-                err,
-                selections: selections ?? [],
-              });
-            }
-            throw err;
-          }
-
-          outputChannel.appendLine(`Job ID: ${response.jobId}`);
-          await renderer.render({
-            response,
-          });
-        } catch (err) {
-          renderer.error();
-          renderer.close();
-          throw err;
-        }
-      } catch (err) {
-        if (err instanceof ErrorWithId) {
-          outputChannel.appendLine(`${err.error} (${err.id})`);
-        } else {
-          outputChannel.appendLine(`${err}`);
-        }
-        if (
-          err instanceof AuthenticationError ||
-          err instanceof NoPageTokenError
-        ) {
-          window.showErrorMessage(`${err.message}`);
-        }
-      }
 
       const runner: Runner = {
         disposed: false,
@@ -200,31 +94,22 @@ export function createRunnerManager({
               outputChannel.appendLine(`Output to: ${path}`);
             }
 
-            let response: RunJobResponse;
             try {
-              const structs = await job.getPrevStructs();
               const table = await job.getTable();
-              const page = job.getPage({ table });
+              renderer.renderTable({ table });
 
-              response = {
-                type: "select",
-                jobId: job.id,
-                structs,
+              const structs = await job.getPrevStructs();
+              const page = job.getPage({ table });
+              renderer.renderRows({
                 metadata: job.metadata,
+                structs,
                 table,
                 page,
-              };
+              });
             } catch (err) {
               renderer.close();
               throw err;
             }
-            if (!response.structs) {
-              throw new ErrorWithId("no results", response.jobId);
-            }
-
-            await renderer.render({
-              response,
-            });
           } catch (err) {
             if (err instanceof ErrorWithId) {
               outputChannel.appendLine(`${err.error} (${err.id})`);
@@ -252,31 +137,22 @@ export function createRunnerManager({
               outputChannel.appendLine(`Output to: ${path}`);
             }
 
-            let response: RunJobResponse;
             try {
-              const structs = await job.getNextStructs();
               const table = await job.getTable();
-              const page = job.getPage({ table });
+              renderer.renderTable({ table });
 
-              response = {
-                type: "select",
-                jobId: job.id,
-                structs,
+              const structs = await job.getNextStructs();
+              const page = job.getPage({ table });
+              renderer.renderRows({
                 metadata: job.metadata,
+                structs,
                 table,
                 page,
-              };
+              });
             } catch (err) {
               renderer.close();
               throw err;
             }
-            if (!response.structs) {
-              throw new ErrorWithId("no results", response.jobId);
-            }
-
-            await renderer.render({
-              response,
-            });
           } catch (err) {
             if (err instanceof ErrorWithId) {
               outputChannel.appendLine(`${err.error} (${err.id})`);
@@ -311,7 +187,7 @@ export function createRunnerManager({
 
         async preview() {
           const query = `SELECT * FROM ${job.tableName}`;
-          return runnerManager.create({
+          await runnerManager.create({
             query,
             viewColumn: renderer.viewColumn,
           });
@@ -325,10 +201,99 @@ export function createRunnerManager({
           runners.delete(runnerId);
         },
       };
-
       runners.set(runnerId, runner);
 
-      return runner;
+      try {
+        outputChannel.appendLine(`Run`);
+
+        try {
+          renderer = await rendererManager.create({ runnerId, viewColumn });
+
+          await renderer.open();
+
+          try {
+            if (fileName) {
+              errorMarker.clear({
+                fileName,
+              });
+            }
+
+            const config = configManager.get();
+            const client = await createClient(config);
+            job = await client.createRunJob({
+              query,
+              maxResults: config.pagination.results,
+            });
+            outputChannel.appendLine(`Job ID: ${job.id}`);
+
+            renderer.renderMetadata({ metadata: job.metadata });
+
+            if (
+              job.metadata.statistics.numChildJobs &&
+              ["SCRIPT"].some((type) => job.statementType === type)
+            ) {
+              // Wait for completion of table creation job
+              // to get the records of the table just created.
+              const routine = await job.getRoutine();
+              renderer.renderRoutine({
+                routine,
+              });
+              return;
+            }
+
+            const table = await job.getTable();
+            renderer.renderTable({ table });
+
+            if (
+              ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
+                (type) => job.statementType === type
+              )
+            ) {
+              return;
+            }
+
+            const structs = await job.getStructs();
+            const page = job.getPage({ table });
+            renderer.renderRows({
+              metadata: job.metadata,
+              structs,
+              table,
+              page,
+            });
+
+            if (fileName) {
+              errorMarker.clear({
+                fileName,
+              });
+            }
+          } catch (err) {
+            if (fileName) {
+              errorMarker.mark({
+                fileName,
+                err,
+                selections: selections ?? [],
+              });
+            }
+            throw err;
+          }
+        } catch (err) {
+          renderer.error();
+          renderer.close();
+          throw err;
+        }
+      } catch (err) {
+        if (err instanceof ErrorWithId) {
+          outputChannel.appendLine(`${err.error} (${err.id})`);
+        } else {
+          outputChannel.appendLine(`${err}`);
+        }
+        if (
+          err instanceof AuthenticationError ||
+          err instanceof NoPageTokenError
+        ) {
+          window.showErrorMessage(`${err.message}`);
+        }
+      }
     },
 
     get({ runnerId }: Readonly<{ runnerId: RunnerID }>) {
