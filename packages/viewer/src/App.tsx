@@ -1,4 +1,5 @@
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
+import deepmerge from "deepmerge";
 import React, { FC, useCallback, useEffect, useState } from "react";
 import {
   isFocusedEvent,
@@ -20,7 +21,16 @@ import { Routine } from "./domain/Routine";
 import { Rows } from "./domain/Rows";
 import { Table } from "./domain/Table";
 
-const vscode = acquireVsCodeApi<RowsPayload>();
+type State = Partial<
+  Readonly<{
+    tabIndex: number;
+    metadataPayload: MetadataPayload;
+    tablePayload: TablePayload;
+    rowsPayload: RowsPayload;
+    routinePayload: RoutinePayload;
+  }>
+>;
+const vscode = acquireVsCodeApi<State>();
 // : // mock
 //   {
 //     getState() {
@@ -42,13 +52,15 @@ const App: FC = () => {
   const [focused, setFocused] = useState(false);
   const [metadataPayload, setMetadataPayload] = useState<
     MetadataPayload | undefined
-  >();
-  const [tablePayload, setTablePayload] = useState<TablePayload | undefined>();
+  >(vscode.getState()?.metadataPayload);
+  const [tablePayload, setTablePayload] = useState<TablePayload | undefined>(
+    vscode.getState()?.tablePayload
+  );
   const [routinePayload, setRoutinePayload] = useState<
     RoutinePayload | undefined
-  >();
+  >(vscode.getState()?.routinePayload);
   const [rowsPayload, setRowsPayload] = useState<RowsPayload | undefined>(
-    vscode.getState()
+    vscode.getState()?.rowsPayload
   );
   const [loading, setLoading] = useState<string | undefined>("Initializing");
   const [isPending, startTransition] = (
@@ -63,6 +75,11 @@ const App: FC = () => {
   ).useTransition({
     timeoutMs: 5000,
   });
+  const [tabIndex, setTabIndex] = useState(vscode.getState()?.tabIndex ?? 0);
+
+  const setState = useCallback((state: State) => {
+    vscode.setState(deepmerge(vscode.getState() ?? {}, state));
+  }, []);
 
   const onPrevRequest = useCallback(() => {
     vscode.postMessage({ event: "prev" });
@@ -76,6 +93,14 @@ const App: FC = () => {
   const onPreviewRequest = useCallback(() => {
     vscode.postMessage({ event: "preview" });
   }, []);
+
+  const onTabChange = useCallback(
+    (tabIndex: number) => {
+      setTabIndex(tabIndex);
+      setState({ tabIndex });
+    },
+    [setState]
+  );
 
   useEffect(() => {
     vscode.postMessage({ event: "loaded" });
@@ -100,19 +125,25 @@ const App: FC = () => {
       }
       if (isMetadataEvent(payload)) {
         setLoading(undefined);
-        setMetadataPayload(payload.payload);
+        startTransition(() => {
+          setMetadataPayload(payload.payload);
+          setState({ metadataPayload: payload.payload });
+        });
         return;
       }
       if (isTableEvent(payload)) {
         setLoading(undefined);
-        setTablePayload(payload.payload);
+        startTransition(() => {
+          setTablePayload(payload.payload);
+          setState({ tablePayload: payload.payload });
+        });
         return;
       }
       if (isRowsEvent(payload)) {
         setLoading(undefined);
         startTransition(() => {
           setRowsPayload(payload.payload);
-          vscode.setState(payload.payload);
+          setState({ rowsPayload: payload.payload });
         });
         return;
       }
@@ -120,7 +151,7 @@ const App: FC = () => {
         setLoading(undefined);
         startTransition(() => {
           setRoutinePayload(payload.payload);
-          // vscode.setState(payload.payload);
+          setState({ routinePayload: payload.payload });
         });
         return;
       }
@@ -130,7 +161,7 @@ const App: FC = () => {
       }
       throw new Error(`undefined data payload:\n'${JSON.stringify(payload)}'`);
     });
-  }, [startTransition]);
+  }, [setState, startTransition]);
 
   useEffect(() => {
     if (isPending) {
@@ -141,7 +172,7 @@ const App: FC = () => {
   }, [isPending]);
 
   return (
-    <Tabs>
+    <Tabs index={tabIndex} onChange={onTabChange}>
       <Header loading={loading}>
         <TabList>
           {rowsPayload ? <Tab>Results</Tab> : null}
