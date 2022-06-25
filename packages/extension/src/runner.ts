@@ -62,11 +62,13 @@ export function createRunnerManager({
   const runnerManager = {
     async create({
       query,
+      title,
       fileName,
       selections,
       viewColumn,
     }: Readonly<{
       query: string;
+      title: string;
       fileName?: string;
       selections?: readonly Selection[];
       viewColumn?: ViewColumn;
@@ -85,7 +87,11 @@ export function createRunnerManager({
         async prev() {
           try {
             if (renderer.disposed) {
-              renderer = await rendererManager.create({ runnerId, viewColumn });
+              renderer = await rendererManager.create({
+                runnerId,
+                title,
+                viewColumn,
+              });
             }
             renderer.reveal();
 
@@ -128,7 +134,11 @@ export function createRunnerManager({
         async next() {
           try {
             if (renderer.disposed) {
-              renderer = await rendererManager.create({ runnerId, viewColumn });
+              renderer = await rendererManager.create({
+                runnerId,
+                title,
+                viewColumn,
+              });
             }
             renderer.reveal();
 
@@ -186,8 +196,12 @@ export function createRunnerManager({
         },
 
         async preview() {
+          if (!job.tableName) {
+            throw new Error(`preview is failed: table name is not defined`);
+          }
           const query = `SELECT * FROM ${job.tableName}`;
           await runnerManager.create({
+            title: job.tableName,
             query,
             viewColumn: renderer.viewColumn,
           });
@@ -207,7 +221,11 @@ export function createRunnerManager({
         outputChannel.appendLine(`Run`);
 
         try {
-          renderer = await rendererManager.create({ runnerId, viewColumn });
+          renderer = await rendererManager.create({
+            runnerId,
+            title,
+            viewColumn,
+          });
 
           await renderer.open();
 

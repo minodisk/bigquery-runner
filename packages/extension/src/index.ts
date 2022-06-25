@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { basename } from "path";
 import { commands, ExtensionContext, window, workspace } from "vscode";
 import { createConfigManager } from "./configManager";
 import { createDownloader } from "./downloader";
@@ -125,6 +126,7 @@ export async function activate(ctx: ExtensionContext) {
           });
           await runnerManager.create({
             query,
+            title: basename(document.fileName),
             fileName: document.fileName,
             selections,
             viewColumn,

@@ -1,5 +1,5 @@
 import { readFile } from "fs/promises";
-import { basename, join } from "path";
+import { join } from "path";
 import { format } from "bytes";
 import { createFlat, toSerializablePage } from "core";
 import {
@@ -74,13 +74,16 @@ export function createRendererManager({
   return {
     async create({
       runnerId,
+      title,
       viewColumn: baseViewColumn,
     }: Readonly<{
       runnerId: RunnerID;
+      title: string;
       viewColumn?: ViewColumn;
     }>) {
-      const config = configManager.get();
-      const column = config.viewer.column;
+      const {
+        viewer: { column },
+      } = configManager.get();
       let viewColumn: ViewColumn;
       if (typeof column === "number") {
         viewColumn = column;
@@ -101,12 +104,19 @@ export function createRendererManager({
         `<head><base href="${base}/" />`
       );
 
+      async function postMessage(event: RendererEvent) {
+        await panel.webview.postMessage({
+          source: "bigquery-runner",
+          payload: event,
+        });
+      }
+
       const panel = await new Promise<WebviewPanel>((resolve) => {
         let resolved = false;
 
         const panel = window.createWebviewPanel(
           `bigqueryRunner:${runnerId}`,
-          basename(runnerId),
+          title,
           {
             viewColumn,
             preserveFocus: true,
@@ -118,14 +128,14 @@ export function createRendererManager({
         );
         ctx.subscriptions.push(panel);
 
-        panel.onDidChangeViewState((e) =>
-          postMessage({
-            event: "focused",
-            payload: {
-              focused: e.webviewPanel.active,
-            },
-          })
-        );
+        // panel.onDidChangeViewState((e) =>
+        //   postMessage({
+        //     event: "focused",
+        //     payload: {
+        //       focused: e.webviewPanel.active,
+        //     },
+        //   })
+        // );
         panel.onDidDispose(() => {
           renderer.dispose();
         });
@@ -149,13 +159,6 @@ export function createRendererManager({
         });
         panel.webview.html = html;
       });
-
-      async function postMessage(event: RendererEvent) {
-        await panel.webview.postMessage({
-          source: "bigquery-runner",
-          payload: event,
-        });
-      }
 
       const renderer: Renderer = {
         runnerId,
