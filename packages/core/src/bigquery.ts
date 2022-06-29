@@ -3,14 +3,44 @@ import {
   Page,
   Metadata,
   SerializablePage,
-  Struct,
   Table,
   Routine,
+  tryCatch,
+  type Error,
+  Result,
+  Struct,
+  succeed,
+  unwrap,
 } from "types";
 
-export type Client = Awaited<ReturnType<typeof createClient>>;
-export type RunJob = Awaited<ReturnType<Client["createRunJob"]>>;
-export type DryRunJob = Awaited<ReturnType<Client["createDryRunJob"]>>;
+export type Client = Readonly<{
+  createRunJob(
+    query: Omit<Query, "dryRun" | "query"> & { query: string }
+  ): Promise<Result<Error<"NoJob">, RunJob>>;
+  createDryRunJob(query: Omit<Query, "dryRun">): Promise<DryRunJob>;
+}>;
+export type RunJob = Readonly<{
+  id?: string;
+  query: string;
+  metadata: Metadata;
+  statementType?: StatementType;
+  tableName?: string;
+  hasNext(): boolean;
+  getPage(table: Table): Page;
+  getStructs(): Promise<Result<Error<"Unknown">, Array<Struct>>>;
+  getPrevStructs(): Promise<
+    Result<Error<"Unknown"> | Error<"NoPageToken">, Array<Struct>>
+  >;
+  getNextStructs(): Promise<
+    Result<Error<"Unknown"> | Error<"NoPageToken">, Array<Struct>>
+  >;
+  getTable(): Promise<Result<Error<"TableError">, Table>>;
+  getRoutine(): Promise<Result<Error<"Unknown">, Routine>>;
+}>;
+export type DryRunJob = Readonly<{
+  id: string;
+  getInfo(): { totalBytesProcessed: number };
+}>;
 
 export type StatementType =
   | "SELECT"
@@ -18,27 +48,9 @@ export type StatementType =
   | "MERGE"
   | "SCRIPT";
 
-export class AuthenticationError extends Error {
-  constructor(keyFilename?: string) {
-    super(
-      keyFilename
-        ? `Bad authentication: Make sure that "${keyFilename}", which is set in bigqueryRunner.keyFilename of setting.json, is the valid path to service account key file`
-        : `Bad authentication: Set bigqueryRunner.keyFilename of your setting.json to the valid path to service account key file`
-    );
-  }
-}
-
-export class NoPageTokenError extends Error {
-  constructor(page: number) {
-    super(`no page token for page at ${page}`);
-  }
-}
-
-function hasMessage(e: any): e is { message: string } {
-  return typeof e.message === "string";
-}
-
-export async function createClient(options: BigQueryOptions) {
+export async function createClient(
+  options: BigQueryOptions
+): Promise<Result<Error<"Authentication">, Client>> {
   const bigQuery = new BigQuery({
     scopes: [
       // Query Drive data: https://cloud.google.com/bigquery/external-data-drive
@@ -46,52 +58,59 @@ export async function createClient(options: BigQueryOptions) {
     ],
     ...options,
   });
+
+  // Check authentication
   try {
     await bigQuery.authClient.getProjectId();
   } catch (err) {
     if (
-      hasMessage(err) &&
-      err.message.startsWith(
+      String(err).startsWith(
         "Unable to detect a Project ID in the current environment."
       )
     ) {
-      throw new AuthenticationError(options.keyFilename);
+      if (options.keyFilename) {
+        return fail({
+          type: "Authentication",
+          reason: `Bad authentication: Make sure that "${options.keyFilename}", which is set in bigqueryRunner.keyFilename of setting.json, is the valid path to service account key file`,
+        });
+      }
+      return fail({
+        type: "Authentication",
+        reason: `Bad authentication: Set bigqueryRunner.keyFilename of your setting.json to the valid path to service account key file`,
+      });
     }
+    return fail({
+      type: "Unknown",
+      reason: String(err),
+    });
   }
 
-  return {
-    async createRunJob(
-      query: Omit<Query, "dryRun" | "query"> & { query: string }
-    ): Promise<
-      Readonly<{
-        id: string;
-        query: string;
-        metadata: Metadata;
-        statementType?: StatementType;
-        tableName?: string;
-        hasNext(): boolean;
-        getStructs(): Promise<Array<Struct>>;
-        getPrevStructs(): Promise<Array<Struct>>;
-        getNextStructs(): Promise<Array<Struct>>;
-        getTable(): Promise<Table>;
-        getRoutine(): Promise<Routine>;
-        getPage(params: { table: Table }): Page;
-      }>
-    > {
+  return succeed({
+    async createRunJob(query) {
       const [job, info] = await bigQuery.createQueryJob({
         ...query,
         dryRun: false,
       });
-      const metadata = await new Promise<Metadata>((resolve, reject) => {
-        job.on("complete", (metadata) => {
-          resolve(metadata);
-          job.removeAllListeners();
-        });
-        job.on("error", () => {
-          reject();
-          job.removeAllListeners();
-        });
-      });
+
+      const metadataResult = await tryCatch(
+        async () => {
+          return await new Promise<Metadata>((resolve, reject) => {
+            job.on("complete", (metadata) => {
+              resolve(metadata);
+              job.removeAllListeners();
+            });
+            job.on("error", (err) => {
+              reject(err);
+              job.removeAllListeners();
+            });
+          });
+        },
+        (err) => ({ type: "NoJob", reason: String(err) } as Error<"NoJob">)
+      );
+      if (!metadataResult.success) {
+        return metadataResult;
+      }
+      const metadata = unwrap(metadataResult);
 
       const statementType = info.statistics?.query?.statementType as
         | StatementType
@@ -100,14 +119,10 @@ export async function createClient(options: BigQueryOptions) {
         info.configuration?.query?.destinationTable
       );
 
-      if (!job.id) {
-        throw new Error(`no job ID`);
-      }
-
       const tokens: Map<number, string | null> = new Map([[0, null]]);
       let current = 0;
 
-      return {
+      return succeed({
         id: job.id,
         query: query.query,
         metadata,
@@ -118,86 +133,138 @@ export async function createClient(options: BigQueryOptions) {
           return !!tokens.get(current + 1);
         },
 
-        async getStructs() {
-          const [structs, next] = await job.getQueryResults({
-            maxResults: query.maxResults,
-          });
-          if (next?.pageToken) {
-            tokens.set(current + 1, next.pageToken);
-          }
-          return structs;
-        },
-
-        async getPrevStructs() {
-          const pageToken = tokens.get(current - 1);
-          if (pageToken === undefined) {
-            throw new NoPageTokenError(current - 1);
-          }
-          current -= 1;
-          const [structs, next] = await job.getQueryResults({
-            maxResults: query.maxResults,
-            pageToken: pageToken ?? undefined,
-          });
-          if (next?.pageToken) {
-            tokens.set(current + 1, next.pageToken);
-          }
-          return structs;
-        },
-
-        async getNextStructs() {
-          const pageToken = tokens.get(current + 1);
-          if (pageToken === undefined) {
-            throw new NoPageTokenError(current + 1);
-          }
-          current += 1;
-          const [structs, next] = await job.getQueryResults({
-            maxResults: query.maxResults,
-            pageToken: pageToken ?? undefined,
-          });
-          if (next?.pageToken) {
-            tokens.set(current + 1, next.pageToken);
-          }
-          return structs;
-        },
-
-        async getTable() {
-          const table = metadata.configuration.query.destinationTable;
-          const res = await bigQuery
-            .dataset(table.datasetId)
-            .table(table.tableId)
-            .get();
-          const t: Table = res.find(({ kind }) => kind === "bigquery#table");
-          if (!t) {
-            throw new Error(`no table info: ${createTableName(table)}`);
-          }
-          return t;
-        },
-
-        async getRoutine() {
-          const [[j]] = await bigQuery.getJobs({ parentJobId: job.id });
-          if (!j) {
-            throw new Error(`no routine`);
-          }
-          const routine = j?.metadata.statistics.query.ddlTargetRoutine;
-          if (!routine) {
-            throw new Error(`no routine`);
-          }
-          return (
-            await bigQuery
-              .dataset(routine.datasetId)
-              .routine(routine.routineId)
-              .get()
-          )[0] as Routine;
-        },
-
-        getPage({ table }) {
+        getPage(table) {
           return getPage({
             maxResults: query.maxResults,
             current,
             numRows: table.numRows,
           });
         },
-      };
+
+        getStructs() {
+          return tryCatch(
+            async () => {
+              const [structs, next] = await job.getQueryResults({
+                maxResults: query.maxResults,
+              });
+              if (next?.pageToken) {
+                tokens.set(current + 1, next.pageToken);
+              }
+              return structs;
+            },
+            (reason) => ({
+              type: "Unknown",
+              reason: String(reason),
+            })
+          );
+        },
+
+        async getPrevStructs() {
+          const pageToken = tokens.get(current - 1);
+          if (pageToken === undefined) {
+            return fail({
+              type: "NoPageToken",
+              reason: `no page token for page at ${current - 1}`,
+            });
+          }
+          current -= 1;
+
+          return tryCatch(
+            async () => {
+              const [structs, next] = await job.getQueryResults({
+                maxResults: query.maxResults,
+                pageToken: pageToken ?? undefined,
+              });
+              if (next?.pageToken) {
+                tokens.set(current + 1, next.pageToken);
+              }
+              return structs;
+            },
+            (reason) => ({
+              type: "Unknown",
+              reason: String(reason),
+            })
+          );
+        },
+
+        async getNextStructs() {
+          const pageToken = tokens.get(current + 1);
+          if (pageToken === undefined) {
+            return fail({
+              type: "NoPageToken",
+              reason: `no page token for page at ${current + 1}`,
+            });
+          }
+          current += 1;
+
+          return tryCatch(
+            async () => {
+              const [structs, next] = await job.getQueryResults({
+                maxResults: query.maxResults,
+                pageToken: pageToken ?? undefined,
+              });
+              if (next?.pageToken) {
+                tokens.set(current + 1, next.pageToken);
+              }
+              return structs;
+            },
+            (reason) => ({
+              type: "Unknown",
+              reason: String(reason),
+            })
+          );
+        },
+
+        getTable() {
+          return tryCatch(
+            async () => {
+              const { destinationTable } = metadata.configuration.query;
+              const ref = bigQuery
+                .dataset(destinationTable.datasetId)
+                .table(destinationTable.tableId);
+              const res = await ref.get();
+              const table: Table = res.find(
+                ({ kind }) => kind === "bigquery#table"
+              );
+              if (!table) {
+                throw new Error(
+                  `table not found: ${createTableName(destinationTable)}`
+                );
+              }
+              return table;
+            },
+            (reason) => ({
+              type: "TableError",
+              reason: String(reason),
+            })
+          );
+        },
+
+        getRoutine() {
+          return tryCatch(
+            async () => {
+              const [[j]] = await bigQuery.getJobs({ parentJobId: job.id });
+              if (!j) {
+                throw new Error(`no routine`);
+              }
+              const routine = j?.metadata.statistics.query.ddlTargetRoutine;
+              if (!routine) {
+                throw new Error(`no routine`);
+              }
+              return (
+                await bigQuery
+                  .dataset(routine.datasetId)
+                  .routine(routine.routineId)
+                  .get()
+              )[0] as Routine;
+            },
+            (reason) => ({
+              type: "Unknown",
+              reason: String(reason),
+            })
+          );
+        },
+      });
     },
 
     async createDryRunJob(query: Omit<Query, "dryRun">) {
@@ -222,7 +289,7 @@ export async function createClient(options: BigQueryOptions) {
         },
       };
     },
-  };
+  });
 }
 
 export function createTableName(

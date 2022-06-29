@@ -1,10 +1,6 @@
 import { format as formatBytes } from "bytes";
-import {
-  AuthenticationError,
-  createClient,
-  DryRunJob,
-  NoPageTokenError,
-} from "core";
+import { createClient, DryRunJob } from "core";
+import { unwrap } from "types";
 import { OutputChannel, TextDocument, window } from "vscode";
 import { ConfigManager } from "./configManager";
 import { ErrorMarker } from "./errorMarker";
@@ -45,7 +41,15 @@ export function createDryRunner({
           });
 
           const config = configManager.get();
-          const client = await createClient(config);
+
+          const clientResult = await createClient(config);
+          if (!clientResult.success) {
+            const { reason } = unwrap(clientResult);
+            outputChannel.appendLine(reason);
+            await window.showErrorMessage(reason);
+            return;
+          }
+          const client = unwrap(clientResult);
 
           let job!: DryRunJob;
           try {
@@ -79,12 +83,6 @@ export function createDryRunner({
           outputChannel.appendLine(`${err.error} (${err.id})`);
         } else {
           outputChannel.appendLine(`${err}`);
-        }
-        if (
-          err instanceof AuthenticationError ||
-          err instanceof NoPageTokenError
-        ) {
-          window.showErrorMessage(`${err.message}`);
         }
       }
     },

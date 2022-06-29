@@ -129,7 +129,7 @@ export async function activate(ctx: ExtensionContext) {
             title: basename(document.fileName),
             fileName: document.fileName,
             selections,
-            viewColumn,
+            baseViewColumn: viewColumn,
           });
         },
       ],

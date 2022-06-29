@@ -1,5 +1,6 @@
 import { createWriteStream } from "fs";
 import { createClient } from "core";
+import { Struct, unwrap } from "types";
 import { Uri } from "vscode";
 import { ConfigManager } from "./configManager";
 
@@ -13,20 +14,47 @@ export function createDownloader({
   return {
     async jsonl({ uri, query }: { uri: Uri; query: string }) {
       const config = configManager.get();
-      const client = await createClient(config);
-      const job = await client.createRunJob({
+
+      const createClientResult = await createClient(config);
+      if (!createClientResult.success) {
+        const { reason } = unwrap(createClientResult);
+        console.log(reason);
+        return;
+      }
+      const client = unwrap(createClientResult);
+
+      const createRunJobResult = await client.createRunJob({
         query,
       });
+      if (!createRunJobResult.success) {
+        const { reason } = unwrap(createRunJobResult);
+        console.log(reason);
+        return;
+      }
+      const job = unwrap(createRunJobResult);
 
       const stream = createWriteStream(uri.path);
-
-      function writeLine(line: any) {
+      const writeLine = (line: Struct) =>
         stream.write(JSON.stringify(line) + "\n");
-      }
 
-      (await job.getStructs()).map(writeLine);
+      const getStructsResult = await job.getStructs();
+      if (!getStructsResult.success) {
+        const { reason } = unwrap(getStructsResult);
+        console.log(reason);
+        return;
+      }
+      const structs = unwrap(getStructsResult);
+      structs.forEach(writeLine);
+
       while (job.hasNext()) {
-        (await job.getNextStructs()).map(writeLine);
+        const getStructsResult = await job.getStructs();
+        if (!getStructsResult.success) {
+          const { reason } = unwrap(getStructsResult);
+          console.log(reason);
+          return;
+        }
+        const structs = unwrap(getStructsResult);
+        structs.forEach(writeLine);
       }
     },
 

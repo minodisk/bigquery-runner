@@ -1,11 +1,14 @@
 import { randomUUID } from "crypto";
+import { createClient } from "core";
 import {
-  AuthenticationError,
-  createClient,
-  NoPageTokenError,
-  RunJob,
-} from "core";
-import { Metadata, Page, Routine, RunnerID, Struct, Table } from "types";
+  Metadata,
+  Page,
+  Routine,
+  RunnerID,
+  Struct,
+  Table,
+  unwrap,
+} from "types";
 import {
   OutputChannel,
   Selection,
@@ -16,12 +19,11 @@ import {
 import { ConfigManager } from "./configManager";
 import { Downloader } from "./downloader";
 import { ErrorMarker } from "./errorMarker";
-import { Renderer, RendererManager } from "./renderer";
+import { RendererManager } from "./renderer";
 
 export type RunnerManager = ReturnType<typeof createRunnerManager>;
 export type RunJobResponse = SelectResponse | RoutineResponse;
 export type Runner = {
-  disposed: boolean;
   isSaveFileName: (fileName: string) => boolean;
   prev: () => Promise<void>;
   next: () => Promise<void>;
@@ -65,116 +67,364 @@ export function createRunnerManager({
       title,
       fileName,
       selections,
-      viewColumn,
+      baseViewColumn,
     }: Readonly<{
       query: string;
       title: string;
       fileName?: string;
       selections?: readonly Selection[];
-      viewColumn?: ViewColumn;
+      baseViewColumn?: ViewColumn;
     }>) {
       const runnerId = randomUUID() as RunnerID;
-      let renderer!: Renderer;
-      let job!: RunJob;
+
+      outputChannel.appendLine(`Run`);
+
+      const rendererCreateResult = await rendererManager.create({
+        runnerId,
+        title,
+        baseViewColumn,
+      });
+      if (!rendererCreateResult.success) {
+        const { reason } = unwrap(rendererCreateResult);
+        outputChannel.appendLine(reason);
+        return;
+      }
+      const renderer = unwrap(rendererCreateResult);
+
+      const rendererOpenResult = await renderer.open();
+      if (!rendererOpenResult.success) {
+        const { reason } = unwrap(rendererOpenResult);
+        outputChannel.appendLine(reason);
+        return;
+      }
+
+      if (fileName) {
+        errorMarker.clear({
+          fileName,
+        });
+      }
+
+      const config = configManager.get();
+
+      const clientResult = await createClient(config);
+      if (!clientResult.success) {
+        const { reason } = unwrap(clientResult);
+        outputChannel.appendLine(reason);
+        await window.showErrorMessage(reason);
+        renderer.error();
+        await renderer.close();
+        if (fileName) {
+          errorMarker.mark({
+            fileName,
+            err: reason,
+            selections: selections ?? [],
+          });
+        }
+        return;
+      }
+      const client = unwrap(clientResult);
+
+      const jobResult = await client.createRunJob({
+        query,
+        maxResults: config.pagination.results,
+      });
+      if (!jobResult.success) {
+        const { reason } = unwrap(jobResult);
+        outputChannel.appendLine(reason);
+        renderer.error();
+        await renderer.close();
+        if (fileName) {
+          errorMarker.mark({
+            fileName,
+            err: reason,
+            selections: selections ?? [],
+          });
+        }
+        return;
+      }
+      const job = unwrap(jobResult);
+
+      outputChannel.appendLine(`Job ID: ${job.id}`);
+
+      const renderMedatadaResult = await renderer.renderMetadata(job.metadata);
+      if (!renderMedatadaResult.success) {
+        const { reason } = unwrap(renderMedatadaResult);
+        outputChannel.appendLine(reason);
+        renderer.error();
+        await renderer.close();
+        if (fileName) {
+          errorMarker.mark({
+            fileName,
+            err: reason,
+            selections: selections ?? [],
+          });
+        }
+        return;
+      }
+
+      if (
+        job.metadata.statistics.numChildJobs &&
+        ["SCRIPT"].some((type) => job.statementType === type)
+      ) {
+        // Wait for completion of table creation job
+        // to get the records of the table just created.
+        const routineResult = await job.getRoutine();
+        if (!routineResult.success) {
+          const { reason } = unwrap(routineResult);
+          outputChannel.appendLine(reason);
+          renderer.error();
+          await renderer.close();
+          if (fileName) {
+            errorMarker.mark({
+              fileName,
+              err: reason,
+              selections: selections ?? [],
+            });
+          }
+          return;
+        }
+        const routine = unwrap(routineResult);
+
+        const renderRoutineResult = await renderer.renderRoutine(routine);
+        if (!renderRoutineResult.success) {
+          const { reason } = unwrap(renderRoutineResult);
+          outputChannel.appendLine(reason);
+          renderer.error();
+          await renderer.close();
+          if (fileName) {
+            errorMarker.mark({
+              fileName,
+              err: reason,
+              selections: selections ?? [],
+            });
+          }
+          return;
+        }
+        return;
+      }
+
+      const tableResult = await job.getTable();
+      if (!tableResult.success) {
+        const { reason } = unwrap(tableResult);
+        outputChannel.appendLine(reason);
+        renderer.error();
+        await renderer.close();
+        if (fileName) {
+          errorMarker.mark({
+            fileName,
+            err: reason,
+            selections: selections ?? [],
+          });
+        }
+        return;
+      }
+      const table = unwrap(tableResult);
+
+      const renderTableResult = await renderer.renderTable(table);
+      if (!renderTableResult.success) {
+        const { reason } = unwrap(renderTableResult);
+        outputChannel.appendLine(reason);
+        renderer.error();
+        await renderer.close();
+        if (fileName) {
+          errorMarker.mark({
+            fileName,
+            err: reason,
+            selections: selections ?? [],
+          });
+        }
+        return;
+      }
+
+      if (
+        ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
+          (type) => job.statementType === type
+        )
+      ) {
+        // doesn't have any rows
+        return;
+      }
+
+      const getStructsResult = await job.getStructs();
+      if (!getStructsResult.success) {
+        const { reason } = unwrap(getStructsResult);
+        outputChannel.appendLine(reason);
+        renderer.error();
+        await renderer.close();
+        if (fileName) {
+          errorMarker.mark({
+            fileName,
+            err: reason,
+            selections: selections ?? [],
+          });
+        }
+        return;
+      }
+      const structs = unwrap(getStructsResult);
+
+      const page = job.getPage(table);
+
+      const renderRowsResult = await renderer.renderRows({
+        metadata: job.metadata,
+        structs,
+        table,
+        page,
+      });
+      if (!renderRowsResult.success) {
+        const { reason } = unwrap(renderRowsResult);
+        outputChannel.appendLine(reason);
+        renderer.error();
+        await renderer.close();
+        if (fileName) {
+          errorMarker.mark({
+            fileName,
+            err: reason,
+            selections: selections ?? [],
+          });
+        }
+        return;
+      }
+
+      if (fileName) {
+        errorMarker.clear({
+          fileName,
+        });
+      }
 
       const runner: Runner = {
-        disposed: false,
-
         isSaveFileName(f) {
           return f === fileName;
         },
 
         async prev() {
-          try {
-            if (renderer.disposed) {
-              renderer = await rendererManager.create({
-                runnerId,
-                title,
-                viewColumn,
-              });
-            }
-            renderer.reveal();
+          const rendererCreateResult = await rendererManager.create({
+            runnerId,
+            title,
+            baseViewColumn,
+          });
+          if (!rendererCreateResult.success) {
+            const { reason } = unwrap(rendererCreateResult);
+            outputChannel.appendLine(reason);
+            return;
+          }
+          const renderer = unwrap(rendererCreateResult);
 
-            const path = await renderer.open();
-            if (path !== undefined) {
-              outputChannel.appendLine(`Output to: ${path}`);
-            }
+          renderer.reveal();
 
-            try {
-              const table = await job.getTable();
-              renderer.renderTable({ table });
+          const rendererOpenResult = await renderer.open();
+          if (!rendererOpenResult.success) {
+            const { reason } = unwrap(rendererOpenResult);
+            outputChannel.appendLine(reason);
+            return;
+          }
 
-              const structs = await job.getPrevStructs();
-              const page = job.getPage({ table });
-              renderer.renderRows({
-                metadata: job.metadata,
-                structs,
-                table,
-                page,
-              });
-            } catch (err) {
-              renderer.close();
-              throw err;
+          const tableResult = await job.getTable();
+          if (!tableResult.success) {
+            const { reason } = unwrap(tableResult);
+            outputChannel.appendLine(reason);
+            await renderer.close();
+            return;
+          }
+          const { value: table } = tableResult;
+
+          const renderTableResult = await renderer.renderTable(table);
+          if (!renderTableResult.success) {
+            const { reason } = unwrap(renderTableResult);
+            outputChannel.appendLine(reason);
+            await renderer.close();
+            return;
+          }
+
+          const structsResult = await job.getPrevStructs();
+          if (!structsResult.success) {
+            const { type, reason } = unwrap(structsResult);
+            outputChannel.appendLine(reason);
+            if (type === "NoPageToken") {
+              await window.showErrorMessage(reason);
             }
-          } catch (err) {
-            if (err instanceof ErrorWithId) {
-              outputChannel.appendLine(`${err.error} (${err.id})`);
-            } else {
-              outputChannel.appendLine(`${err}`);
-            }
-            if (
-              err instanceof AuthenticationError ||
-              err instanceof NoPageTokenError
-            ) {
-              window.showErrorMessage(`${err.message}`);
-            }
+            await renderer.close();
+            return;
+          }
+          const { value: structs } = structsResult;
+
+          const page = job.getPage(table);
+          const renderRowsResult = await renderer.renderRows({
+            metadata: job.metadata,
+            structs,
+            table,
+            page,
+          });
+          if (!renderRowsResult.success) {
+            const { reason } = unwrap(renderRowsResult);
+            outputChannel.appendLine(reason);
+            await renderer.close();
+            return;
           }
         },
 
         async next() {
-          try {
-            if (renderer.disposed) {
-              renderer = await rendererManager.create({
-                runnerId,
-                title,
-                viewColumn,
-              });
-            }
-            renderer.reveal();
+          const rendererCreateResult = await rendererManager.create({
+            runnerId,
+            title,
+            baseViewColumn,
+          });
+          if (!rendererCreateResult.success) {
+            const { reason } = unwrap(rendererCreateResult);
+            outputChannel.appendLine(reason);
+            return;
+          }
+          const renderer = unwrap(rendererCreateResult);
 
-            const path = await renderer.open();
-            if (path !== undefined) {
-              outputChannel.appendLine(`Output to: ${path}`);
-            }
+          renderer.reveal();
 
-            try {
-              const table = await job.getTable();
-              renderer.renderTable({ table });
+          const rendererOpenResult = await renderer.open();
+          if (!rendererOpenResult.success) {
+            const { reason } = unwrap(rendererOpenResult);
+            outputChannel.appendLine(reason);
+            return;
+          }
 
-              const structs = await job.getNextStructs();
-              const page = job.getPage({ table });
-              renderer.renderRows({
-                metadata: job.metadata,
-                structs,
-                table,
-                page,
-              });
-            } catch (err) {
-              renderer.close();
-              throw err;
+          const getTableResult = await job.getTable();
+          if (!getTableResult.success) {
+            const { reason } = unwrap(getTableResult);
+            outputChannel.appendLine(reason);
+            await renderer.close();
+            return;
+          }
+          const { value: table } = getTableResult;
+
+          const renderTableResult = await renderer.renderTable(table);
+          if (!renderTableResult.success) {
+            const { reason } = unwrap(renderTableResult);
+            outputChannel.appendLine(reason);
+            await renderer.close();
+            return;
+          }
+
+          const getStructsResult = await job.getNextStructs();
+          if (!getStructsResult.success) {
+            const { type, reason } = unwrap(getStructsResult);
+            outputChannel.appendLine(reason);
+            if (type === "NoPageToken") {
+              await window.showErrorMessage(reason);
             }
-          } catch (err) {
-            if (err instanceof ErrorWithId) {
-              outputChannel.appendLine(`${err.error} (${err.id})`);
-            } else {
-              outputChannel.appendLine(`${err}`);
-            }
-            if (
-              err instanceof AuthenticationError ||
-              err instanceof NoPageTokenError
-            ) {
-              window.showErrorMessage(`${err.message}`);
-            }
+            await renderer.close();
+            return;
+          }
+          const { value: structs } = getStructsResult;
+
+          const page = job.getPage(table);
+          const renderRowsResult = await renderer.renderRows({
+            metadata: job.metadata,
+            structs,
+            table,
+            page,
+          });
+          if (!renderRowsResult.success) {
+            const { reason } = unwrap(renderRowsResult);
+            outputChannel.appendLine(reason);
+            await renderer.close();
+            return;
           }
         },
 
@@ -203,115 +453,18 @@ export function createRunnerManager({
           await runnerManager.create({
             title: job.tableName,
             query,
-            viewColumn: renderer.viewColumn,
+            baseViewColumn: renderer.viewColumn,
           });
         },
 
         dispose() {
-          if (!renderer.disposed) {
+          if (rendererManager.exists(runnerId)) {
             return;
           }
-          this.disposed = true;
           runners.delete(runnerId);
         },
       };
       runners.set(runnerId, runner);
-
-      try {
-        outputChannel.appendLine(`Run`);
-
-        try {
-          renderer = await rendererManager.create({
-            runnerId,
-            title,
-            viewColumn,
-          });
-
-          await renderer.open();
-
-          try {
-            if (fileName) {
-              errorMarker.clear({
-                fileName,
-              });
-            }
-
-            const config = configManager.get();
-            const client = await createClient(config);
-            job = await client.createRunJob({
-              query,
-              maxResults: config.pagination.results,
-            });
-            outputChannel.appendLine(`Job ID: ${job.id}`);
-
-            renderer.renderMetadata({ metadata: job.metadata });
-
-            if (
-              job.metadata.statistics.numChildJobs &&
-              ["SCRIPT"].some((type) => job.statementType === type)
-            ) {
-              // Wait for completion of table creation job
-              // to get the records of the table just created.
-              const routine = await job.getRoutine();
-              renderer.renderRoutine({
-                routine,
-              });
-              return;
-            }
-
-            const table = await job.getTable();
-            renderer.renderTable({ table });
-
-            if (
-              ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
-                (type) => job.statementType === type
-              )
-            ) {
-              return;
-            }
-
-            const structs = await job.getStructs();
-            const page = job.getPage({ table });
-            renderer.renderRows({
-              metadata: job.metadata,
-              structs,
-              table,
-              page,
-            });
-
-            if (fileName) {
-              errorMarker.clear({
-                fileName,
-              });
-            }
-          } catch (err) {
-            if (fileName) {
-              errorMarker.mark({
-                fileName,
-                err,
-                selections: selections ?? [],
-              });
-            }
-            throw err;
-          }
-        } catch (err) {
-          renderer.error();
-          renderer.close();
-          throw err;
-        }
-      } catch (err) {
-        if (err instanceof ErrorWithId) {
-          outputChannel.appendLine(`${err.error} (${err.id})`);
-        } else {
-          outputChannel.appendLine(`${err}`);
-        }
-        if (
-          err instanceof AuthenticationError ||
-          err instanceof NoPageTokenError
-        ) {
-          window.showErrorMessage(`${err.message}`);
-        }
-      }
     },
 
     get({ runnerId }: Readonly<{ runnerId: RunnerID }>) {

@@ -3,6 +3,7 @@ import { join } from "path";
 import { format } from "bytes";
 import { createFlat, toSerializablePage } from "core";
 import {
+  type Error,
   isDownloadEvent,
   isLoadedEvent,
   isNextEvent,
@@ -10,9 +11,12 @@ import {
   isPreviewEvent,
   Metadata,
   RendererEvent,
+  Result,
   Routine,
   RunnerID,
   Table,
+  tryCatch,
+  unknownError,
   ViewerEvent,
 } from "types";
 import {
@@ -27,24 +31,39 @@ import { ConfigManager } from "./configManager";
 import { SelectResponse } from "./runner";
 import { StatusManager } from "./statusManager";
 
-export type RendererManager = Readonly<
-  ReturnType<typeof createRendererManager>
->;
+export type RendererManager = Readonly<{
+  create(
+    props: Readonly<{
+      runnerId: RunnerID;
+      title: string;
+      baseViewColumn?: ViewColumn;
+    }>
+  ): Promise<Result<Error<"Unknown">, Renderer>>;
+  exists(runnerId: RunnerID): boolean;
+  dispose(): void;
+}>;
 
 export type Renderer = {
   readonly runnerId: RunnerID;
-  disposed: boolean;
   readonly viewColumn: ViewColumn;
   readonly reveal: () => void;
-  readonly open: () => Promise<void>;
+  readonly open: () => Promise<Result<Error<"Unknown">, void>>;
 
-  readonly renderMetadata: (data: { metadata: Metadata }) => Promise<void>;
-  readonly renderRoutine: (data: { routine: Routine }) => Promise<void>;
-  readonly renderTable: (data: { table: Table }) => Promise<void>;
-  readonly renderRows: (data: SelectResponse) => Promise<void>;
+  readonly renderMetadata: (
+    metadata: Metadata
+  ) => Promise<Result<Error<"Unknown">, void>>;
+  readonly renderRoutine: (
+    routine: Routine
+  ) => Promise<Result<Error<"Unknown">, void>>;
+  readonly renderTable: (
+    table: Table
+  ) => Promise<Result<Error<"Unknown">, void>>;
+  readonly renderRows: (
+    data: SelectResponse
+  ) => Promise<Result<Error<"Unknown">, void>>;
 
   readonly error: () => void;
-  readonly close: () => Promise<void>;
+  readonly close: () => Promise<Result<Error<"Unknown">, void>>;
   readonly dispose: () => void;
 };
 
@@ -68,207 +87,215 @@ export function createRendererManager({
   onDownloadRequested: (renderer: Renderer) => unknown;
   onPreviewRequested: (renderer: Renderer) => unknown;
   onDidDisposePanel: (renderer: Renderer) => unknown;
-}>) {
+}>): RendererManager {
   const renderers = new Map<RunnerID, Renderer>();
 
   return {
-    async create({
-      runnerId,
-      title,
-      viewColumn: baseViewColumn,
-    }: Readonly<{
-      runnerId: RunnerID;
-      title: string;
-      viewColumn?: ViewColumn;
-    }>) {
-      const {
-        viewer: { column },
-      } = configManager.get();
-      let viewColumn: ViewColumn;
-      if (typeof column === "number") {
-        viewColumn = column;
-      } else if (baseViewColumn !== undefined) {
-        viewColumn = baseViewColumn + parseInt(column, 10);
-      } else {
-        viewColumn = ViewColumn.Active;
-      }
-
-      const root = join(ctx.extensionPath, "out/viewer");
-      const base = Uri.file(root)
-        .with({
-          scheme: "vscode-resource",
-        })
-        .toString();
-      const html = (await readFile(join(root, "index.html"), "utf-8")).replace(
-        "<head>",
-        `<head><base href="${base}/" />`
-      );
-
-      async function postMessage(event: RendererEvent) {
-        await panel.webview.postMessage({
-          source: "bigquery-runner",
-          payload: event,
-        });
-      }
-
-      const panel = await new Promise<WebviewPanel>((resolve) => {
-        let resolved = false;
-
-        const panel = window.createWebviewPanel(
-          `bigqueryRunner:${runnerId}`,
-          title,
-          {
-            viewColumn,
-            preserveFocus: true,
-          },
-          {
-            enableScripts: true,
-            localResourceRoots: [Uri.file(root)],
+    create({ runnerId, title, baseViewColumn }) {
+      return tryCatch(
+        async () => {
+          const r = renderers.get(runnerId);
+          if (r) {
+            return r;
           }
-        );
-        ctx.subscriptions.push(panel);
 
-        // panel.onDidChangeViewState((e) =>
-        //   postMessage({
-        //     event: "focused",
-        //     payload: {
-        //       focused: e.webviewPanel.active,
-        //     },
-        //   })
-        // );
-        panel.onDidDispose(() => {
-          renderer.dispose();
-        });
-        panel.iconPath = Uri.file(
-          join(ctx.extensionPath, "out/assets/icon-small.png")
-        );
-
-        panel.webview.onDidReceiveMessage(async (event: ViewerEvent) => {
-          if (isLoadedEvent(event) && !resolved) {
-            resolved = true;
-            resolve(panel);
-          } else if (isPrevEvent(event)) {
-            onPrevPageRequested(renderer);
-          } else if (isNextEvent(event)) {
-            onNextPageRequested(renderer);
-          } else if (isDownloadEvent(event)) {
-            onDownloadRequested(renderer);
-          } else if (isPreviewEvent(event)) {
-            onPreviewRequested(renderer);
+          const {
+            viewer: { column },
+          } = configManager.get();
+          let viewColumn: ViewColumn;
+          if (typeof column === "number") {
+            viewColumn = column;
+          } else if (baseViewColumn !== undefined) {
+            viewColumn = baseViewColumn + parseInt(column, 10);
+          } else {
+            viewColumn = ViewColumn.Active;
           }
-        });
-        panel.webview.html = html;
-      });
 
-      const renderer: Renderer = {
-        runnerId,
+          const root = join(ctx.extensionPath, "out/viewer");
+          const base = Uri.file(root)
+            .with({
+              scheme: "vscode-resource",
+            })
+            .toString();
+          const html = (
+            await readFile(join(root, "index.html"), "utf-8")
+          ).replace("<head>", `<head><base href="${base}/" />`);
 
-        disposed: false,
+          function postMessage(event: RendererEvent) {
+            return tryCatch(async () => {
+              await panel.webview.postMessage({
+                source: "bigquery-runner",
+                payload: event,
+              });
+            }, unknownError);
+          }
 
-        viewColumn,
+          const panel = await new Promise<WebviewPanel>((resolve) => {
+            let resolved = false;
 
-        reveal() {
-          panel.reveal(undefined, true);
-        },
-
-        async open() {
-          statusManager.loadBilled({ fileName: runnerId });
-          await postMessage({
-            event: "open",
-          });
-        },
-
-        async renderMetadata({ metadata }) {
-          await postMessage({
-            event: "metadata",
-            payload: {
-              metadata,
-            },
-          });
-        },
-
-        async renderRoutine({ routine }) {
-          await postMessage({
-            event: "routine",
-            payload: {
-              routine,
-            },
-          });
-        },
-
-        async renderTable({ table }) {
-          await postMessage({
-            event: "table",
-            payload: {
-              table,
-            },
-          });
-        },
-
-        async renderRows({ metadata, structs, table, page }) {
-          try {
-            outputChannel.appendLine(`Result: ${structs.length} rows`);
-            const bytes = format(
-              parseInt(metadata.statistics.query.totalBytesBilled, 10)
-            );
-            outputChannel.appendLine(
-              `Result: ${bytes} to be billed (cache: ${metadata.statistics.query.cacheHit})`
-            );
-
-            if (table.schema.fields === undefined) {
-              throw new Error("fields is not defined");
-            }
-
-            const flat = createFlat(table.schema.fields);
-            await postMessage({
-              event: "rows",
-              payload: {
-                header: flat.heads.map(({ id }) => id),
-                rows: flat.toRows({
-                  structs,
-                  rowNumberStart: page.rowNumberStart,
-                }),
-                page: toSerializablePage(page),
+            const panel = window.createWebviewPanel(
+              `bigqueryRunner:${runnerId}`,
+              title,
+              {
+                viewColumn,
+                preserveFocus: true,
               },
+              {
+                enableScripts: true,
+                localResourceRoots: [Uri.file(root)],
+              }
+            );
+            ctx.subscriptions.push(panel);
+
+            // panel.onDidChangeViewState((e) =>
+            //   postMessage({
+            //     event: "focused",
+            //     payload: {
+            //       focused: e.webviewPanel.active,
+            //     },
+            //   })
+            // );
+            panel.onDidDispose(() => {
+              renderer.dispose();
             });
+            panel.iconPath = Uri.file(
+              join(ctx.extensionPath, "out/assets/icon-small.png")
+            );
 
-            statusManager.succeedBilled({
-              fileName: runnerId,
-              billed: { bytes, cacheHit: metadata.statistics.query.cacheHit },
+            panel.webview.onDidReceiveMessage(async (event: ViewerEvent) => {
+              if (isLoadedEvent(event) && !resolved) {
+                resolved = true;
+                resolve(panel);
+              } else if (isPrevEvent(event)) {
+                onPrevPageRequested(renderer);
+              } else if (isNextEvent(event)) {
+                onNextPageRequested(renderer);
+              } else if (isDownloadEvent(event)) {
+                onDownloadRequested(renderer);
+              } else if (isPreviewEvent(event)) {
+                onPreviewRequested(renderer);
+              }
             });
-          } catch (err) {
-            statusManager.errorBilled({ fileName: runnerId });
-            throw err;
-          }
-        },
-
-        error() {
-          statusManager.errorBilled({ fileName: runnerId });
-        },
-
-        async close() {
-          await postMessage({
-            event: "close",
+            panel.webview.html = html;
           });
-        },
 
-        dispose() {
-          this.disposed = true;
-          renderers.delete(runnerId);
-          onDidDisposePanel(this);
-        },
-      };
+          const renderer: Renderer = {
+            runnerId,
 
-      renderers.set(runnerId, renderer);
-      return renderer;
+            viewColumn,
+
+            reveal() {
+              panel.reveal(undefined, true);
+            },
+
+            open() {
+              statusManager.loadBilled({ fileName: runnerId });
+              return postMessage({
+                event: "open",
+              });
+            },
+
+            renderMetadata(metadata) {
+              return postMessage({
+                event: "metadata",
+                payload: {
+                  metadata,
+                },
+              });
+            },
+
+            renderRoutine(routine) {
+              return postMessage({
+                event: "routine",
+                payload: {
+                  routine,
+                },
+              });
+            },
+
+            renderTable(table) {
+              return postMessage({
+                event: "table",
+                payload: {
+                  table,
+                },
+              });
+            },
+
+            renderRows({ metadata, structs, table, page }) {
+              return tryCatch(
+                async () => {
+                  outputChannel.appendLine(`Result: ${structs.length} rows`);
+                  const bytes = format(
+                    parseInt(metadata.statistics.query.totalBytesBilled, 10)
+                  );
+                  outputChannel.appendLine(
+                    `Result: ${bytes} to be billed (cache: ${metadata.statistics.query.cacheHit})`
+                  );
+
+                  if (table.schema.fields === undefined) {
+                    throw new Error("fields is not defined");
+                  }
+
+                  const flat = createFlat(table.schema.fields);
+                  await postMessage({
+                    event: "rows",
+                    payload: {
+                      header: flat.heads.map(({ id }) => id),
+                      rows: flat.toRows({
+                        structs,
+                        rowNumberStart: page.rowNumberStart,
+                      }),
+                      page: toSerializablePage(page),
+                    },
+                  });
+
+                  statusManager.succeedBilled({
+                    fileName: runnerId,
+                    billed: {
+                      bytes,
+                      cacheHit: metadata.statistics.query.cacheHit,
+                    },
+                  });
+                },
+                (reason) => {
+                  statusManager.errorBilled({ fileName: runnerId });
+                  return {
+                    type: "Unknown",
+                    reason: String(reason),
+                  };
+                }
+              );
+            },
+
+            error() {
+              statusManager.errorBilled({ fileName: runnerId });
+            },
+
+            close() {
+              return postMessage({
+                event: "close",
+              });
+            },
+
+            dispose() {
+              renderers.delete(runnerId);
+              onDidDisposePanel(this);
+            },
+          };
+
+          renderers.set(runnerId, renderer);
+          return renderer;
+        },
+        (err) => ({
+          type: "Unknown",
+          reason: String(err),
+        })
+      );
     },
 
-    get(runnerId: RunnerID) {
-      return renderers.get(runnerId);
-    },
-
-    delete(runnerId: RunnerID) {
-      return renderers.delete(runnerId);
+    exists(runnerId) {
+      return renderers.has(runnerId);
     },
 
     dispose() {
