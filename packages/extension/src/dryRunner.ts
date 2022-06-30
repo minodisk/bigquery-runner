@@ -51,10 +51,10 @@ export function createDryRunner({
           }
           const client = unwrap(clientResult);
 
-          errorMarker.clear({ fileName });
           const dryRunJobResult = await client.createDryRunJob({
             query,
           });
+          errorMarker.clear({ fileName });
           if (!dryRunJobResult.success) {
             const err = unwrap(dryRunJobResult);
             if (err.type === "QueryWithPosition") {
@@ -73,12 +73,11 @@ export function createDryRunner({
             await window.showErrorMessage(err.reason);
             return;
           }
-          const job = unwrap(dryRunJobResult);
           errorMarker.clear({ fileName });
+          const job = unwrap(dryRunJobResult);
 
           outputChannel.appendLine(`Job ID: ${job.id}`);
-          const { totalBytesProcessed } = job.getInfo();
-          const bytes = formatBytes(totalBytesProcessed);
+          const bytes = formatBytes(job.totalBytesProcessed);
           outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
 
           statusManager.succeedProcessed({

@@ -50,21 +50,20 @@ export async function activate(ctx: ExtensionContext) {
       ctx,
       configManager,
       outputChannel,
-      statusManager,
-      onPrevPageRequested({ runnerId }) {
-        runnerManager.get({ runnerId })?.prev();
+      async onPrevPageRequested({ runnerId }) {
+        await runnerManager.get({ runnerId })?.prev();
       },
-      onNextPageRequested({ runnerId }) {
-        runnerManager.get({ runnerId })?.next();
+      async onNextPageRequested({ runnerId }) {
+        await runnerManager.get({ runnerId })?.next();
       },
-      onDownloadRequested({ runnerId }) {
-        runnerManager.get({ runnerId })?.download();
+      async onDownloadRequested({ runnerId }) {
+        await runnerManager.get({ runnerId })?.download();
       },
-      onPreviewRequested({ runnerId }) {
-        runnerManager.get({ runnerId })?.preview();
+      async onPreviewRequested({ runnerId }) {
+        await runnerManager.get({ runnerId })?.preview();
       },
-      onDidDisposePanel({ runnerId }) {
-        runnerManager.get({ runnerId })?.dispose();
+      async onDidDisposePanel({ runnerId }) {
+        await runnerManager.get({ runnerId })?.dispose();
       },
     });
     const errorMarker = createErrorMarker({
@@ -73,6 +72,7 @@ export async function activate(ctx: ExtensionContext) {
     const runnerManager = createRunnerManager({
       configManager,
       outputChannel,
+      statusManager,
       rendererManager,
       downloader,
       errorMarker,

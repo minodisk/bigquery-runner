@@ -1,4 +1,4 @@
-import { BigQuery, BigQueryOptions, Query } from "@google-cloud/bigquery";
+import { BigQuery, BigQueryOptions, Job, Query } from "@google-cloud/bigquery";
 import {
   Page,
   Metadata,
@@ -54,7 +54,7 @@ export type RunJob = Readonly<{
 }>;
 export type DryRunJob = Readonly<{
   id?: string;
-  getInfo(): { totalBytesProcessed: number };
+  totalBytesProcessed: number;
 }>;
 
 export async function createClient(
@@ -151,11 +151,7 @@ export async function createClient(
       const metadata = unwrap(metadataResult);
 
       const statementType = metadata.statistics.query.statementType;
-      // const statementType = info.statistics?.query?.statementType as
-      //   | StatementType
-      //   | undefined;
       const tableName = createTableName(
-        // info.configuration?.query?.destinationTable
         metadata.configuration.query.destinationTable
       );
 
@@ -308,7 +304,10 @@ export async function createClient(
     },
 
     async createDryRunJob(query) {
-      const createQueryJobResult = await tryCatch(
+      const createQueryJobResult = await tryCatch<
+        QueryError | QueryWithPositionError,
+        Job
+      >(
         async () => {
           const [job] = await bigQuery.createQueryJob({
             ...query,
@@ -341,37 +340,12 @@ export async function createClient(
         return createQueryJobResult;
       }
       const job = unwrap(createQueryJobResult);
+      const { totalBytesProcessed } = job.metadata.statistics;
 
-      const metadataResult = await tryCatch(
-        async () => {
-          return await new Promise<Metadata>((resolve, reject) => {
-            job.on("complete", (metadata) => {
-              resolve(metadata);
-              job.removeAllListeners();
-            });
-            job.on("error", (err) => {
-              reject(err);
-              job.removeAllListeners();
-            });
-          });
-        },
-        (err) => ({ type: "NoJob", reason: String(err) } as NoJobError)
-      );
-      if (!metadataResult.success) {
-        return metadataResult;
-      }
-      const metadata = unwrap(metadataResult);
-      const { totalBytesProcessed } = metadata.statistics;
-
-      const j: DryRunJob = {
+      return succeed({
         id: job.id,
-        getInfo() {
-          return {
-            totalBytesProcessed: parseInt(totalBytesProcessed, 10),
-          };
-        },
-      };
-      return succeed(j);
+        totalBytesProcessed: parseInt(totalBytesProcessed, 10),
+      });
     },
   });
 }

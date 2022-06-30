@@ -1,6 +1,5 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { format } from "bytes";
 import { createFlat, toSerializablePage } from "core";
 import {
   type Error,
@@ -29,7 +28,6 @@ import {
 } from "vscode";
 import { ConfigManager } from "./configManager";
 import { SelectResponse } from "./runner";
-import { StatusManager } from "./statusManager";
 
 export type RendererManager = Readonly<{
   create(
@@ -47,7 +45,8 @@ export type Renderer = {
   readonly runnerId: RunnerID;
   readonly viewColumn: ViewColumn;
   readonly reveal: () => void;
-  readonly open: () => Promise<Result<UnknownError, void>>;
+  readonly startLoading: () => Promise<Result<UnknownError, void>>;
+  readonly cancelLoading: () => Promise<Result<UnknownError, void>>;
 
   readonly renderMetadata: (
     metadata: Metadata
@@ -60,8 +59,6 @@ export type Renderer = {
     data: SelectResponse
   ) => Promise<Result<UnknownError, void>>;
 
-  readonly error: () => void;
-  readonly close: () => Promise<Result<UnknownError, void>>;
   readonly dispose: () => void;
 };
 
@@ -69,7 +66,7 @@ export function createRendererManager({
   ctx,
   configManager,
   outputChannel,
-  statusManager,
+  // statusManager,
   onPrevPageRequested,
   onNextPageRequested,
   onDownloadRequested,
@@ -79,7 +76,7 @@ export function createRendererManager({
   ctx: ExtensionContext;
   configManager: ConfigManager;
   outputChannel: OutputChannel;
-  statusManager: StatusManager;
+  // statusManager: StatusManager;
   onPrevPageRequested: (renderer: Renderer) => unknown;
   onNextPageRequested: (renderer: Renderer) => unknown;
   onDownloadRequested: (renderer: Renderer) => unknown;
@@ -194,10 +191,15 @@ export function createRendererManager({
               panel.reveal(undefined, true);
             },
 
-            open() {
-              statusManager.loadBilled({ fileName: runnerId });
+            startLoading() {
               return postMessage({
                 event: "open",
+              });
+            },
+
+            cancelLoading() {
+              return postMessage({
+                event: "close",
               });
             },
 
@@ -228,16 +230,10 @@ export function createRendererManager({
               });
             },
 
-            renderRows({ metadata, structs, table, page }) {
+            renderRows({ structs, table, page }) {
               return tryCatch(
                 async () => {
                   outputChannel.appendLine(`Result: ${structs.length} rows`);
-                  const bytes = format(
-                    parseInt(metadata.statistics.query.totalBytesBilled, 10)
-                  );
-                  outputChannel.appendLine(
-                    `Result: ${bytes} to be billed (cache: ${metadata.statistics.query.cacheHit})`
-                  );
 
                   if (table.schema.fields === undefined) {
                     throw new Error("fields is not defined");
@@ -255,33 +251,14 @@ export function createRendererManager({
                       page: toSerializablePage(page),
                     },
                   });
-
-                  statusManager.succeedBilled({
-                    fileName: runnerId,
-                    billed: {
-                      bytes,
-                      cacheHit: metadata.statistics.query.cacheHit,
-                    },
-                  });
                 },
                 (reason) => {
-                  statusManager.errorBilled({ fileName: runnerId });
                   return {
                     type: "Unknown",
                     reason: String(reason),
                   };
                 }
               );
-            },
-
-            error() {
-              statusManager.errorBilled({ fileName: runnerId });
-            },
-
-            close() {
-              return postMessage({
-                event: "close",
-              });
             },
 
             dispose() {

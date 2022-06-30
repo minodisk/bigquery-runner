@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { format } from "bytes";
 import { createClient } from "core";
 import {
   Metadata,
@@ -20,6 +21,7 @@ import { ConfigManager } from "./configManager";
 import { Downloader } from "./downloader";
 import { ErrorMarker } from "./errorMarker";
 import { RendererManager } from "./renderer";
+import { StatusManager } from "./statusManager";
 
 export type RunnerManager = ReturnType<typeof createRunnerManager>;
 export type RunJobResponse = SelectResponse | RoutineResponse;
@@ -33,7 +35,6 @@ export type Runner = {
 };
 
 export type SelectResponse = Readonly<{
-  metadata: Metadata;
   structs: Array<Struct>;
   table: Table;
   page: Page;
@@ -49,12 +50,14 @@ export type RoutineResponse = Readonly<{
 export function createRunnerManager({
   configManager,
   outputChannel,
+  statusManager,
   rendererManager,
   downloader,
   errorMarker,
 }: Readonly<{
   configManager: ConfigManager;
   outputChannel: OutputChannel;
+  statusManager: StatusManager;
   rendererManager: RendererManager;
   downloader: Downloader;
   errorMarker: ErrorMarker;
@@ -79,6 +82,8 @@ export function createRunnerManager({
 
       outputChannel.appendLine(`Run`);
 
+      statusManager.loadBilled({ fileName: runnerId });
+
       const rendererCreateResult = await rendererManager.create({
         runnerId,
         title,
@@ -91,17 +96,11 @@ export function createRunnerManager({
       }
       const renderer = unwrap(rendererCreateResult);
 
-      const rendererOpenResult = await renderer.open();
+      const rendererOpenResult = await renderer.startLoading();
       if (!rendererOpenResult.success) {
         const { reason } = unwrap(rendererOpenResult);
         outputChannel.appendLine(reason);
         return;
-      }
-
-      if (fileName) {
-        errorMarker.clear({
-          fileName,
-        });
       }
 
       const config = configManager.get();
@@ -111,8 +110,8 @@ export function createRunnerManager({
         const { reason } = unwrap(clientResult);
         outputChannel.appendLine(reason);
         await window.showErrorMessage(reason);
-        renderer.error();
-        await renderer.close();
+        await renderer.cancelLoading();
+        statusManager.errorBilled({ fileName: runnerId });
         return;
       }
       const client = unwrap(clientResult);
@@ -121,11 +120,16 @@ export function createRunnerManager({
         query,
         maxResults: config.pagination.results,
       });
+      if (fileName) {
+        errorMarker.clear({
+          fileName,
+        });
+      }
       if (!runJobResult.success) {
         const err = unwrap(runJobResult);
         outputChannel.appendLine(err.reason);
-        renderer.error();
-        await renderer.close();
+        await renderer.cancelLoading();
+        statusManager.errorBilled({ fileName: runnerId });
         if (fileName) {
           if (err.type === "QueryWithPosition") {
             errorMarker.markAt({
@@ -148,21 +152,45 @@ export function createRunnerManager({
         await window.showErrorMessage(err.reason);
         return;
       }
+      if (fileName) {
+        errorMarker.clear({
+          fileName,
+        });
+      }
       const job = unwrap(runJobResult);
+      const { metadata } = job;
+      const {
+        statistics: {
+          numChildJobs,
+          query: { totalBytesBilled, cacheHit },
+        },
+      } = metadata;
 
       outputChannel.appendLine(`Job ID: ${job.id}`);
 
-      const renderMedatadaResult = await renderer.renderMetadata(job.metadata);
+      const bytes = format(parseInt(totalBytesBilled, 10));
+      outputChannel.appendLine(
+        `Result: ${bytes} to be billed (cache: ${cacheHit})`
+      );
+      statusManager.succeedBilled({
+        fileName: runnerId,
+        billed: {
+          bytes,
+          cacheHit: metadata.statistics.query.cacheHit,
+        },
+      });
+
+      const renderMedatadaResult = await renderer.renderMetadata(metadata);
       if (!renderMedatadaResult.success) {
         const { reason } = unwrap(renderMedatadaResult);
         outputChannel.appendLine(reason);
-        renderer.error();
-        await renderer.close();
+        await renderer.cancelLoading();
+        statusManager.errorBilled({ fileName: runnerId });
         return;
       }
 
       if (
-        job.metadata.statistics.numChildJobs &&
+        numChildJobs &&
         ["SCRIPT"].some((type) => job.statementType === type)
       ) {
         // Wait for completion of table creation job
@@ -171,8 +199,8 @@ export function createRunnerManager({
         if (!routineResult.success) {
           const { reason } = unwrap(routineResult);
           outputChannel.appendLine(reason);
-          renderer.error();
-          await renderer.close();
+          await renderer.cancelLoading();
+          statusManager.errorBilled({ fileName: runnerId });
           return;
         }
         const routine = unwrap(routineResult);
@@ -181,8 +209,8 @@ export function createRunnerManager({
         if (!renderRoutineResult.success) {
           const { reason } = unwrap(renderRoutineResult);
           outputChannel.appendLine(reason);
-          renderer.error();
-          await renderer.close();
+          await renderer.cancelLoading();
+          statusManager.errorBilled({ fileName: runnerId });
           return;
         }
         return;
@@ -192,8 +220,8 @@ export function createRunnerManager({
       if (!tableResult.success) {
         const { reason } = unwrap(tableResult);
         outputChannel.appendLine(reason);
-        renderer.error();
-        await renderer.close();
+        await renderer.cancelLoading();
+        statusManager.errorBilled({ fileName: runnerId });
         return;
       }
       const table = unwrap(tableResult);
@@ -202,8 +230,8 @@ export function createRunnerManager({
       if (!renderTableResult.success) {
         const { reason } = unwrap(renderTableResult);
         outputChannel.appendLine(reason);
-        renderer.error();
-        await renderer.close();
+        await renderer.cancelLoading();
+        statusManager.errorBilled({ fileName: runnerId });
         return;
       }
 
@@ -220,8 +248,8 @@ export function createRunnerManager({
       if (!getStructsResult.success) {
         const { reason } = unwrap(getStructsResult);
         outputChannel.appendLine(reason);
-        renderer.error();
-        await renderer.close();
+        await renderer.cancelLoading();
+        statusManager.errorBilled({ fileName: runnerId });
         return;
       }
       const structs = unwrap(getStructsResult);
@@ -229,7 +257,6 @@ export function createRunnerManager({
       const page = job.getPage(table);
 
       const renderRowsResult = await renderer.renderRows({
-        metadata: job.metadata,
         structs,
         table,
         page,
@@ -237,15 +264,9 @@ export function createRunnerManager({
       if (!renderRowsResult.success) {
         const { reason } = unwrap(renderRowsResult);
         outputChannel.appendLine(reason);
-        renderer.error();
-        await renderer.close();
+        await renderer.cancelLoading();
+        statusManager.errorBilled({ fileName: runnerId });
         return;
-      }
-
-      if (fileName) {
-        errorMarker.clear({
-          fileName,
-        });
       }
 
       const runner: Runner = {
@@ -268,7 +289,7 @@ export function createRunnerManager({
 
           renderer.reveal();
 
-          const rendererOpenResult = await renderer.open();
+          const rendererOpenResult = await renderer.startLoading();
           if (!rendererOpenResult.success) {
             const { reason } = unwrap(rendererOpenResult);
             outputChannel.appendLine(reason);
@@ -279,7 +300,7 @@ export function createRunnerManager({
           if (!tableResult.success) {
             const { reason } = unwrap(tableResult);
             outputChannel.appendLine(reason);
-            await renderer.close();
+            await renderer.cancelLoading();
             return;
           }
           const { value: table } = tableResult;
@@ -288,7 +309,7 @@ export function createRunnerManager({
           if (!renderTableResult.success) {
             const { reason } = unwrap(renderTableResult);
             outputChannel.appendLine(reason);
-            await renderer.close();
+            await renderer.cancelLoading();
             return;
           }
 
@@ -299,14 +320,14 @@ export function createRunnerManager({
             if (type === "NoPageToken") {
               await window.showErrorMessage(reason);
             }
-            await renderer.close();
+            await renderer.cancelLoading();
             return;
           }
-          const { value: structs } = structsResult;
+          const structs = unwrap(getStructsResult);
 
           const page = job.getPage(table);
+
           const renderRowsResult = await renderer.renderRows({
-            metadata: job.metadata,
             structs,
             table,
             page,
@@ -314,7 +335,7 @@ export function createRunnerManager({
           if (!renderRowsResult.success) {
             const { reason } = unwrap(renderRowsResult);
             outputChannel.appendLine(reason);
-            await renderer.close();
+            await renderer.cancelLoading();
             return;
           }
         },
@@ -334,7 +355,7 @@ export function createRunnerManager({
 
           renderer.reveal();
 
-          const rendererOpenResult = await renderer.open();
+          const rendererOpenResult = await renderer.startLoading();
           if (!rendererOpenResult.success) {
             const { reason } = unwrap(rendererOpenResult);
             outputChannel.appendLine(reason);
@@ -345,7 +366,7 @@ export function createRunnerManager({
           if (!getTableResult.success) {
             const { reason } = unwrap(getTableResult);
             outputChannel.appendLine(reason);
-            await renderer.close();
+            await renderer.cancelLoading();
             return;
           }
           const { value: table } = getTableResult;
@@ -354,7 +375,7 @@ export function createRunnerManager({
           if (!renderTableResult.success) {
             const { reason } = unwrap(renderTableResult);
             outputChannel.appendLine(reason);
-            await renderer.close();
+            await renderer.cancelLoading();
             return;
           }
 
@@ -365,14 +386,14 @@ export function createRunnerManager({
             if (type === "NoPageToken") {
               await window.showErrorMessage(reason);
             }
-            await renderer.close();
+            await renderer.cancelLoading();
             return;
           }
-          const { value: structs } = getStructsResult;
+          const structs = unwrap(getStructsResult);
 
           const page = job.getPage(table);
+
           const renderRowsResult = await renderer.renderRows({
-            metadata: job.metadata,
             structs,
             table,
             page,
@@ -380,7 +401,7 @@ export function createRunnerManager({
           if (!renderRowsResult.success) {
             const { reason } = unwrap(renderRowsResult);
             outputChannel.appendLine(reason);
-            await renderer.close();
+            await renderer.cancelLoading();
             return;
           }
         },
