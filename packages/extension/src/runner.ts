@@ -113,36 +113,42 @@ export function createRunnerManager({
         await window.showErrorMessage(reason);
         renderer.error();
         await renderer.close();
-        if (fileName) {
-          errorMarker.mark({
-            fileName,
-            err: reason,
-            selections: selections ?? [],
-          });
-        }
         return;
       }
       const client = unwrap(clientResult);
 
-      const jobResult = await client.createRunJob({
+      const runJobResult = await client.createRunJob({
         query,
         maxResults: config.pagination.results,
       });
-      if (!jobResult.success) {
-        const { reason } = unwrap(jobResult);
-        outputChannel.appendLine(reason);
+      if (!runJobResult.success) {
+        const err = unwrap(runJobResult);
+        outputChannel.appendLine(err.reason);
         renderer.error();
         await renderer.close();
         if (fileName) {
-          errorMarker.mark({
-            fileName,
-            err: reason,
-            selections: selections ?? [],
-          });
+          if (err.type === "QueryWithPosition") {
+            errorMarker.markAt({
+              fileName,
+              reason: err.reason,
+              position: err.position,
+              selections: selections ?? [],
+            });
+            return;
+          }
+          if (err.type === "Query") {
+            errorMarker.markAll({
+              fileName,
+              reason: err.reason,
+              selections: selections ?? [],
+            });
+            return;
+          }
         }
+        await window.showErrorMessage(err.reason);
         return;
       }
-      const job = unwrap(jobResult);
+      const job = unwrap(runJobResult);
 
       outputChannel.appendLine(`Job ID: ${job.id}`);
 
@@ -152,13 +158,6 @@ export function createRunnerManager({
         outputChannel.appendLine(reason);
         renderer.error();
         await renderer.close();
-        if (fileName) {
-          errorMarker.mark({
-            fileName,
-            err: reason,
-            selections: selections ?? [],
-          });
-        }
         return;
       }
 
@@ -174,13 +173,6 @@ export function createRunnerManager({
           outputChannel.appendLine(reason);
           renderer.error();
           await renderer.close();
-          if (fileName) {
-            errorMarker.mark({
-              fileName,
-              err: reason,
-              selections: selections ?? [],
-            });
-          }
           return;
         }
         const routine = unwrap(routineResult);
@@ -191,13 +183,6 @@ export function createRunnerManager({
           outputChannel.appendLine(reason);
           renderer.error();
           await renderer.close();
-          if (fileName) {
-            errorMarker.mark({
-              fileName,
-              err: reason,
-              selections: selections ?? [],
-            });
-          }
           return;
         }
         return;
@@ -209,13 +194,6 @@ export function createRunnerManager({
         outputChannel.appendLine(reason);
         renderer.error();
         await renderer.close();
-        if (fileName) {
-          errorMarker.mark({
-            fileName,
-            err: reason,
-            selections: selections ?? [],
-          });
-        }
         return;
       }
       const table = unwrap(tableResult);
@@ -226,13 +204,6 @@ export function createRunnerManager({
         outputChannel.appendLine(reason);
         renderer.error();
         await renderer.close();
-        if (fileName) {
-          errorMarker.mark({
-            fileName,
-            err: reason,
-            selections: selections ?? [],
-          });
-        }
         return;
       }
 
@@ -251,13 +222,6 @@ export function createRunnerManager({
         outputChannel.appendLine(reason);
         renderer.error();
         await renderer.close();
-        if (fileName) {
-          errorMarker.mark({
-            fileName,
-            err: reason,
-            selections: selections ?? [],
-          });
-        }
         return;
       }
       const structs = unwrap(getStructsResult);
@@ -275,13 +239,6 @@ export function createRunnerManager({
         outputChannel.appendLine(reason);
         renderer.error();
         await renderer.close();
-        if (fileName) {
-          errorMarker.mark({
-            fileName,
-            err: reason,
-            selections: selections ?? [],
-          });
-        }
         return;
       }
 

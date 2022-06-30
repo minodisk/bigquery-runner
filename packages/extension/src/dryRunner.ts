@@ -1,5 +1,5 @@
 import { format as formatBytes } from "bytes";
-import { createClient, DryRunJob } from "core";
+import { createClient } from "core";
 import { unwrap } from "types";
 import { OutputChannel, TextDocument, window } from "vscode";
 import { ConfigManager } from "./configManager";
@@ -51,17 +51,30 @@ export function createDryRunner({
           }
           const client = unwrap(clientResult);
 
-          let job!: DryRunJob;
-          try {
-            errorMarker.clear({ fileName });
-            job = await client.createDryRunJob({
-              query,
-            });
-            errorMarker.clear({ fileName });
-          } catch (err) {
-            errorMarker.mark({ fileName, err, selections });
-            throw err;
+          errorMarker.clear({ fileName });
+          const dryRunJobResult = await client.createDryRunJob({
+            query,
+          });
+          if (!dryRunJobResult.success) {
+            const err = unwrap(dryRunJobResult);
+            if (err.type === "QueryWithPosition") {
+              errorMarker.markAt({
+                fileName,
+                reason: err.reason,
+                position: err.position,
+                selections,
+              });
+              return;
+            }
+            if (err.type === "Query") {
+              errorMarker.markAll({ fileName, reason: err.reason, selections });
+              return;
+            }
+            await window.showErrorMessage(err.reason);
+            return;
           }
+          const job = unwrap(dryRunJobResult);
+          errorMarker.clear({ fileName });
 
           outputChannel.appendLine(`Job ID: ${job.id}`);
           const { totalBytesProcessed } = job.getInfo();

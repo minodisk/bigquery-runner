@@ -11,13 +11,28 @@ import {
   Struct,
   succeed,
   unwrap,
+  UnknownError,
+  StatementType,
 } from "types";
+
+export type NoJobError = Error<"NoJob">;
+export type NoPageTokenError = Error<"NoPageToken">;
+export type QueryError = Error<"Query">;
+export type QueryWithPositionError = {
+  type: "QueryWithPosition";
+  reason: string;
+  position: { line: number; character: number };
+};
 
 export type Client = Readonly<{
   createRunJob(
     query: Omit<Query, "dryRun" | "query"> & { query: string }
-  ): Promise<Result<Error<"NoJob">, RunJob>>;
-  createDryRunJob(query: Omit<Query, "dryRun">): Promise<DryRunJob>;
+  ): Promise<Result<NoJobError | QueryError | QueryWithPositionError, RunJob>>;
+  createDryRunJob(
+    query: Omit<Query, "dryRun">
+  ): Promise<
+    Result<NoJobError | QueryError | QueryWithPositionError, DryRunJob>
+  >;
 }>;
 export type RunJob = Readonly<{
   id?: string;
@@ -27,26 +42,20 @@ export type RunJob = Readonly<{
   tableName?: string;
   hasNext(): boolean;
   getPage(table: Table): Page;
-  getStructs(): Promise<Result<Error<"Unknown">, Array<Struct>>>;
+  getStructs(): Promise<Result<UnknownError, Array<Struct>>>;
   getPrevStructs(): Promise<
-    Result<Error<"Unknown"> | Error<"NoPageToken">, Array<Struct>>
+    Result<UnknownError | NoPageTokenError, Array<Struct>>
   >;
   getNextStructs(): Promise<
-    Result<Error<"Unknown"> | Error<"NoPageToken">, Array<Struct>>
+    Result<UnknownError | NoPageTokenError, Array<Struct>>
   >;
-  getTable(): Promise<Result<Error<"TableError">, Table>>;
-  getRoutine(): Promise<Result<Error<"Unknown">, Routine>>;
+  getTable(): Promise<Result<UnknownError, Table>>;
+  getRoutine(): Promise<Result<UnknownError, Routine>>;
 }>;
 export type DryRunJob = Readonly<{
-  id: string;
+  id?: string;
   getInfo(): { totalBytesProcessed: number };
 }>;
-
-export type StatementType =
-  | "SELECT"
-  | "CREATE_TABLE_AS_SELECT"
-  | "MERGE"
-  | "SCRIPT";
 
 export async function createClient(
   options: BigQueryOptions
@@ -87,10 +96,39 @@ export async function createClient(
 
   return succeed({
     async createRunJob(query) {
-      const [job, info] = await bigQuery.createQueryJob({
-        ...query,
-        dryRun: false,
-      });
+      const createQueryJobResult = await tryCatch(
+        async () => {
+          const [job] = await bigQuery.createQueryJob({
+            ...query,
+            dryRun: false,
+          });
+          return job;
+        },
+        (err) => {
+          const reason = String(err);
+          const rPosition = /^(.*?) at \[(\d+):(\d+)\]$/;
+          const res = rPosition.exec(reason);
+          if (!res) {
+            return {
+              type: "Query" as const,
+              reason,
+            };
+          }
+
+          const [_, r, l, c] = res;
+          const line = Number(l) - 1;
+          const character = Number(c) - 1;
+          return {
+            type: "QueryWithPosition" as const,
+            reason: r ?? reason,
+            position: { line, character },
+          };
+        }
+      );
+      if (!createQueryJobResult.success) {
+        return createQueryJobResult;
+      }
+      const job = unwrap(createQueryJobResult);
 
       const metadataResult = await tryCatch(
         async () => {
@@ -105,18 +143,20 @@ export async function createClient(
             });
           });
         },
-        (err) => ({ type: "NoJob", reason: String(err) } as Error<"NoJob">)
+        (err) => ({ type: "NoJob", reason: String(err) } as NoJobError)
       );
       if (!metadataResult.success) {
         return metadataResult;
       }
       const metadata = unwrap(metadataResult);
 
-      const statementType = info.statistics?.query?.statementType as
-        | StatementType
-        | undefined;
+      const statementType = metadata.statistics.query.statementType;
+      // const statementType = info.statistics?.query?.statementType as
+      //   | StatementType
+      //   | undefined;
       const tableName = createTableName(
-        info.configuration?.query?.destinationTable
+        // info.configuration?.query?.destinationTable
+        metadata.configuration.query.destinationTable
       );
 
       const tokens: Map<number, string | null> = new Map([[0, null]]);
@@ -234,7 +274,7 @@ export async function createClient(
               return table;
             },
             (reason) => ({
-              type: "TableError",
+              type: "Unknown",
               reason: String(reason),
             })
           );
@@ -267,27 +307,71 @@ export async function createClient(
       });
     },
 
-    async createDryRunJob(query: Omit<Query, "dryRun">) {
-      const data = await bigQuery.createQueryJob({ ...query, dryRun: true });
-      const job = data[0];
-      if (!job.id) {
-        throw new Error(`no job ID`);
-      }
-      return {
-        id: job.id,
+    async createDryRunJob(query) {
+      const createQueryJobResult = await tryCatch(
+        async () => {
+          const [job] = await bigQuery.createQueryJob({
+            ...query,
+            dryRun: true,
+          });
+          return job;
+        },
+        (err) => {
+          const reason = String(err);
+          const rPosition = /^(.*?) at \[(\d+):(\d+)\]$/;
+          const res = rPosition.exec(reason);
+          if (!res) {
+            return {
+              type: "Query" as const,
+              reason,
+            };
+          }
 
-        getInfo(): { totalBytesProcessed: number } {
-          const { totalBytesProcessed } = job.metadata.statistics;
+          const [_, r, l, c] = res;
+          const line = Number(l) - 1;
+          const character = Number(c) - 1;
           return {
-            totalBytesProcessed:
-              typeof totalBytesProcessed === "number"
-                ? totalBytesProcessed
-                : typeof totalBytesProcessed === "string"
-                ? parseInt(totalBytesProcessed, 10)
-                : 0,
+            type: "QueryWithPosition" as const,
+            reason: r ?? reason,
+            position: { line, character },
+          };
+        }
+      );
+      if (!createQueryJobResult.success) {
+        return createQueryJobResult;
+      }
+      const job = unwrap(createQueryJobResult);
+
+      const metadataResult = await tryCatch(
+        async () => {
+          return await new Promise<Metadata>((resolve, reject) => {
+            job.on("complete", (metadata) => {
+              resolve(metadata);
+              job.removeAllListeners();
+            });
+            job.on("error", (err) => {
+              reject(err);
+              job.removeAllListeners();
+            });
+          });
+        },
+        (err) => ({ type: "NoJob", reason: String(err) } as NoJobError)
+      );
+      if (!metadataResult.success) {
+        return metadataResult;
+      }
+      const metadata = unwrap(metadataResult);
+      const { totalBytesProcessed } = metadata.statistics;
+
+      const j: DryRunJob = {
+        id: job.id,
+        getInfo() {
+          return {
+            totalBytesProcessed: parseInt(totalBytesProcessed, 10),
           };
         },
       };
+      return succeed(j);
     },
   });
 }

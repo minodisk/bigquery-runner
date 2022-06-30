@@ -213,7 +213,7 @@ export type Metadata = Readonly<{
       totalBytesProcessed: string;
       totalBytesBilled: string;
       cacheHit: boolean;
-      statementType: string;
+      statementType: StatementType;
     };
   }>;
   status: Readonly<{
@@ -221,6 +221,12 @@ export type Metadata = Readonly<{
   }>;
   user_email: string;
 }>;
+
+export type StatementType =
+  | "SELECT"
+  | "CREATE_TABLE_AS_SELECT"
+  | "MERGE"
+  | "SCRIPT";
 
 export type Table = Readonly<{
   creationTime: string;

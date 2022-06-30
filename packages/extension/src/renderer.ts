@@ -16,8 +16,8 @@ import {
   RunnerID,
   Table,
   tryCatch,
-  unknownError,
   ViewerEvent,
+  UnknownError,
 } from "types";
 import {
   ExtensionContext,
@@ -38,7 +38,7 @@ export type RendererManager = Readonly<{
       title: string;
       baseViewColumn?: ViewColumn;
     }>
-  ): Promise<Result<Error<"Unknown">, Renderer>>;
+  ): Promise<Result<UnknownError, Renderer>>;
   exists(runnerId: RunnerID): boolean;
   dispose(): void;
 }>;
@@ -47,23 +47,21 @@ export type Renderer = {
   readonly runnerId: RunnerID;
   readonly viewColumn: ViewColumn;
   readonly reveal: () => void;
-  readonly open: () => Promise<Result<Error<"Unknown">, void>>;
+  readonly open: () => Promise<Result<UnknownError, void>>;
 
   readonly renderMetadata: (
     metadata: Metadata
-  ) => Promise<Result<Error<"Unknown">, void>>;
+  ) => Promise<Result<UnknownError, void>>;
   readonly renderRoutine: (
     routine: Routine
-  ) => Promise<Result<Error<"Unknown">, void>>;
-  readonly renderTable: (
-    table: Table
-  ) => Promise<Result<Error<"Unknown">, void>>;
+  ) => Promise<Result<UnknownError, void>>;
+  readonly renderTable: (table: Table) => Promise<Result<UnknownError, void>>;
   readonly renderRows: (
     data: SelectResponse
-  ) => Promise<Result<Error<"Unknown">, void>>;
+  ) => Promise<Result<UnknownError, void>>;
 
   readonly error: () => void;
-  readonly close: () => Promise<Result<Error<"Unknown">, void>>;
+  readonly close: () => Promise<Result<UnknownError, void>>;
   readonly dispose: () => void;
 };
 
@@ -121,14 +119,22 @@ export function createRendererManager({
             await readFile(join(root, "index.html"), "utf-8")
           ).replace("<head>", `<head><base href="${base}/" />`);
 
-          function postMessage(event: RendererEvent) {
-            return tryCatch(async () => {
-              await panel.webview.postMessage({
-                source: "bigquery-runner",
-                payload: event,
-              });
-            }, unknownError);
-          }
+          const postMessage = (
+            event: RendererEvent
+          ): Promise<Result<UnknownError, void>> => {
+            return tryCatch(
+              async () => {
+                await panel.webview.postMessage({
+                  source: "bigquery-runner",
+                  payload: event,
+                });
+              },
+              (err) => ({
+                type: "Unknown",
+                reason: String(err),
+              })
+            );
+          };
 
           const panel = await new Promise<WebviewPanel>((resolve) => {
             let resolved = false;

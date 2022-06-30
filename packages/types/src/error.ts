@@ -3,7 +3,4 @@ export type Error<T extends string> = {
   reason: string;
 };
 
-export const unknownError = (reason: unknown): Error<"Unknown"> => ({
-  type: "Unknown",
-  reason: String(reason),
-});
+export type UnknownError = Error<"Unknown">;
