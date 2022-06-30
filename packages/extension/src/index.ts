@@ -106,11 +106,11 @@ export async function activate(ctx: ExtensionContext) {
     new Map<string, () => void>([
       [
         `${section}.dryRun`,
-        () => {
+        async () => {
           if (!window.activeTextEditor) {
             return;
           }
-          dryRunner.run({ document: window.activeTextEditor.document });
+          await dryRunner.run({ document: window.activeTextEditor.document });
         },
       ],
       [
@@ -173,7 +173,7 @@ export async function activate(ctx: ExtensionContext) {
       })
     );
     ctx.subscriptions.push(
-      window.onDidChangeActiveTextEditor((editor) => {
+      window.onDidChangeActiveTextEditor(async (editor) => {
         if (
           !editor ||
           !isBigQuery({
@@ -186,7 +186,7 @@ export async function activate(ctx: ExtensionContext) {
         }
 
         statusManager.onFocus({ fileName: editor.document.fileName });
-        validator.validate({
+        await validator.validate({
           document: editor.document,
         });
       }),
@@ -225,7 +225,8 @@ export async function activate(ctx: ExtensionContext) {
       })
     );
   } catch (err) {
-    window.showErrorMessage(`${err}`);
+    // show leaked error
+    await window.showErrorMessage(`${err}`);
   }
 }
 

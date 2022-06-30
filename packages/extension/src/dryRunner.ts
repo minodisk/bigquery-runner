@@ -15,12 +15,12 @@ export function createDryRunner({
   configManager,
   statusManager,
   errorMarker,
-}: {
-  readonly outputChannel: OutputChannel;
-  readonly configManager: ConfigManager;
-  readonly statusManager: StatusManager;
-  readonly errorMarker: ErrorMarker;
-}) {
+}: Readonly<{
+  outputChannel: OutputChannel;
+  configManager: ConfigManager;
+  statusManager: StatusManager;
+  errorMarker: ErrorMarker;
+}>) {
   return {
     async run({ document }: { document: TextDocument }): Promise<void> {
       try {

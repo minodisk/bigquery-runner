@@ -66,7 +66,6 @@ export function createRendererManager({
   ctx,
   configManager,
   outputChannel,
-  // statusManager,
   onPrevPageRequested,
   onNextPageRequested,
   onDownloadRequested,
@@ -76,7 +75,6 @@ export function createRendererManager({
   ctx: ExtensionContext;
   configManager: ConfigManager;
   outputChannel: OutputChannel;
-  // statusManager: StatusManager;
   onPrevPageRequested: (renderer: Renderer) => unknown;
   onNextPageRequested: (renderer: Renderer) => unknown;
   onDownloadRequested: (renderer: Renderer) => unknown;
