@@ -13,6 +13,7 @@ import {
   unwrap,
   UnknownError,
   StatementType,
+  fail,
 } from "types";
 
 export type NoJobError = Error<"NoJob">;
@@ -59,7 +60,7 @@ export type DryRunJob = Readonly<{
 
 export async function createClient(
   options: BigQueryOptions
-): Promise<Result<Error<"Authentication">, Client>> {
+): Promise<Result<Error<"Authentication" | "Unknown">, Client>> {
   const bigQuery = new BigQuery({
     scopes: [
       // Query Drive data: https://cloud.google.com/bigquery/external-data-drive

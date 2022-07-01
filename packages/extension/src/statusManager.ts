@@ -1,7 +1,19 @@
-import { StatusBarAlignment, StatusBarItem, window } from "vscode";
+import { RunnerID } from "types";
+import { StatusBarAlignment, window } from "vscode";
 import { Config } from "./config";
 
-type State = "loading" | "error" | "success";
+export type StatusManager = ReturnType<typeof createStatusManager>;
+export type Status = Readonly<{
+  loadProcessed(): void;
+  errorProcessed(): void;
+  succeedProcessed(usage: ProcessedUsage): void;
+  loadBilled(): void;
+  errorBilled(): void;
+  succeedBilled(usage: BilledUsage): void;
+  show(): void;
+}>;
+
+type State = "ready" | "loading" | "error" | "success";
 
 type Processed = { state: State; usage?: ProcessedUsage };
 
@@ -16,8 +28,6 @@ type BilledUsage = {
   cacheHit: boolean;
 };
 
-export type StatusManager = ReturnType<typeof createStatusManager>;
-
 export function createStatusManager({
   options,
   createStatusBarItem,
@@ -25,110 +35,112 @@ export function createStatusManager({
   options: Config["statusBarItem"];
   createStatusBarItem: ReturnType<typeof createStatusBarItemCreator>;
 }) {
+  const statuses = new Map<RunnerID, Status>();
   let statusBarItem = createStatusBarItem(options);
-  const processedMap = new Map<string, Processed>();
-  const billedMap = new Map<string, Billed>();
 
-  return {
-    loadProcessed({ fileName }: { fileName: string }) {
-      const current = processedMap.get(fileName);
-      processedMap.set(fileName, { ...current, state: "loading" });
-      update({
-        fileName,
-        statusBarItem,
-        processed: processedMap.get(fileName),
-        billed: billedMap.get(fileName),
-      });
+  const statusManager = {
+    get(runnerId: RunnerID): Status {
+      const s = statuses.get(runnerId);
+      if (s) {
+        return s;
+      }
+
+      const status = create();
+      statuses.set(runnerId, status);
+      return status;
     },
-    errorProcessed({ fileName }: { fileName: string }) {
-      const current = processedMap.get(fileName);
-      processedMap.set(fileName, { ...current, state: "error" });
-      update({
-        fileName,
-        statusBarItem,
-        processed: processedMap.get(fileName),
-        billed: billedMap.get(fileName),
-      });
+
+    updateOptions(options: Config["statusBarItem"]) {
+      statusBarItem.dispose();
+      statusBarItem = createStatusBarItem(options);
     },
-    succeedProcessed({
-      fileName,
-      processed,
-    }: {
-      fileName: string;
-      processed: ProcessedUsage;
-    }) {
-      processedMap.set(fileName, {
-        state: "success",
-        usage: processed,
-      });
-      update({
-        fileName,
-        statusBarItem,
-        processed: processedMap.get(fileName),
-        billed: billedMap.get(fileName),
-      });
-    },
-    loadBilled({ fileName }: { fileName: string }) {
-      const current = billedMap.get(fileName);
-      billedMap.set(fileName, { ...current, state: "loading" });
-      update({
-        fileName,
-        statusBarItem,
-        processed: processedMap.get(fileName),
-        billed: billedMap.get(fileName),
-      });
-    },
-    errorBilled({ fileName }: { fileName: string }) {
-      const current = billedMap.get(fileName);
-      billedMap.set(fileName, { ...current, state: "error" });
-      update({
-        fileName,
-        statusBarItem,
-        processed: processedMap.get(fileName),
-        billed: billedMap.get(fileName),
-      });
-    },
-    succeedBilled({
-      fileName,
-      billed,
-    }: {
-      fileName: string;
-      billed: BilledUsage;
-    }) {
-      billedMap.set(fileName, {
-        state: "success",
-        usage: billed,
-      });
-      update({
-        fileName,
-        statusBarItem,
-        processed: processedMap.get(fileName),
-        billed: billedMap.get(fileName),
-      });
-    },
-    onFocus({ fileName }: { fileName: string }) {
-      update({
-        fileName,
-        statusBarItem,
-        processed: processedMap.get(fileName),
-        billed: billedMap.get(fileName),
-      });
-    },
+
+    // show(runnerId: RunnerID) {
+    //   statuses.get(runnerId)?.show();
+    // },
+
     hide() {
       statusBarItem.hide();
       statusBarItem.text = "";
       statusBarItem.tooltip = undefined;
     },
-    updateOptions(options: Config["statusBarItem"]) {
-      statusBarItem.dispose();
-      statusBarItem = createStatusBarItem(options);
-    },
+
     dispose() {
       statusBarItem.dispose();
-      processedMap.forEach((_, key) => processedMap.delete(key));
-      billedMap.forEach((_, key) => billedMap.delete(key));
+      statuses.clear();
     },
   };
+
+  const create = () => {
+    const processed: Processed = {
+      state: "ready",
+      usage: {
+        bytes: "",
+      },
+    };
+    const billed: Billed = {
+      state: "ready",
+      usage: {
+        bytes: "",
+        cacheHit: false,
+      },
+    };
+
+    const apply = () => {
+      statusBarItem.text = [
+        getProcessedIcon(processed?.state),
+        processed?.usage?.bytes,
+        getBilledIcon(billed?.state),
+        billed?.usage?.bytes,
+      ].join(" ");
+      statusBarItem.tooltip = [
+        processed?.usage
+          ? `This query will process ${processed.usage.bytes} when run.`
+          : undefined,
+        billed?.usage
+          ? `In the last query that ran,
+the cache ${billed.usage.cacheHit ? "was" : "wasn't"} applied and ${
+              billed.usage.bytes
+            } was the target of the bill.`
+          : undefined,
+      ].join("\n");
+      statusBarItem.show();
+    };
+
+    return {
+      loadProcessed() {
+        processed.state = "loading";
+        apply();
+      },
+      errorProcessed() {
+        processed.state = "error";
+        apply();
+      },
+      succeedProcessed(usage: ProcessedUsage) {
+        processed.state = "success";
+        processed.usage = usage;
+        apply();
+      },
+      loadBilled() {
+        billed.state = "loading";
+        apply();
+      },
+      errorBilled() {
+        billed.state = "error";
+        apply();
+      },
+      succeedBilled(usage: BilledUsage) {
+        billed.state = "success";
+        billed.usage = usage;
+        apply();
+      },
+      show() {
+        apply();
+      },
+    };
+  };
+
+  return statusManager;
 }
 
 export function createStatusBarItemCreator(w: typeof window) {
@@ -142,41 +154,6 @@ export function createStatusBarItemCreator(w: typeof window) {
       options.priority
     );
   };
-}
-
-function update({
-  fileName,
-  statusBarItem,
-  processed,
-  billed,
-}: {
-  fileName: string;
-  statusBarItem: StatusBarItem;
-  processed?: Processed;
-  billed?: Billed;
-}) {
-  if (fileName !== window.activeTextEditor?.document.fileName) {
-    return;
-  }
-
-  statusBarItem.text = [
-    getProcessedIcon(processed?.state),
-    processed?.usage?.bytes,
-    getBilledIcon(billed?.state),
-    billed?.usage?.bytes,
-  ].join(" ");
-  statusBarItem.tooltip = [
-    processed?.usage
-      ? `This query will process ${processed.usage.bytes} when run.`
-      : undefined,
-    billed?.usage
-      ? `In the last query that ran,
-the cache ${billed.usage.cacheHit ? "was" : "wasn't"} applied and ${
-          billed.usage.bytes
-        } was the target of the bill.`
-      : undefined,
-  ].join("\n");
-  statusBarItem.show();
 }
 
 function getProcessedIcon(state?: State) {

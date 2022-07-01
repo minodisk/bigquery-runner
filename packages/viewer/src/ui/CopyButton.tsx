@@ -1,10 +1,22 @@
 import { CopyIcon } from "@chakra-ui/icons";
 import { IconButton, useToast, VStack } from "@chakra-ui/react";
-import React from "react";
+import React, { useCallback } from "react";
 import { CFC } from "../types";
 
 export const CopyButton: CFC<{ text?: string }> = ({ text, ...props }) => {
   const toast = useToast();
+
+  const copy = useCallback(async () => {
+    if (!text) {
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied",
+      status: "success",
+      duration: 1000,
+    });
+  }, [text, toast]);
 
   return (
     <VStack align="center">
@@ -14,17 +26,7 @@ export const CopyButton: CFC<{ text?: string }> = ({ text, ...props }) => {
         size="xs"
         variant="ghost"
         disabled={!text}
-        onClick={() => {
-          if (!text) {
-            return;
-          }
-          navigator.clipboard.writeText(text);
-          toast({
-            title: "Copied",
-            status: "success",
-            duration: 1000,
-          });
-        }}
+        onClick={copy}
         {...props}
       />
     </VStack>

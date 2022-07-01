@@ -12,21 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { basename } from "path";
+import { unwrap } from "types";
 import { commands, ExtensionContext, window, workspace } from "vscode";
 import { createConfigManager } from "./configManager";
 import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
-import { createErrorMarker } from "./errorMarker";
-import { getQueryText } from "./getQueryText";
-import { isBigQuery } from "./isBigQuery";
+import { createErrorMarkerManager } from "./errorMarker";
 import { createRendererManager } from "./renderer";
 import { createRunnerManager } from "./runner";
 import {
   createStatusBarItemCreator,
   createStatusManager,
 } from "./statusManager";
-import { createValidator } from "./validator";
 
 export type Result = {
   readonly jobId?: string;
@@ -51,42 +48,35 @@ export async function activate(ctx: ExtensionContext) {
       configManager,
       outputChannel,
       async onPrevPageRequested({ runnerId }) {
-        await runnerManager.get({ runnerId })?.prev();
+        await runnerManager.get(runnerId)?.prev();
       },
       async onNextPageRequested({ runnerId }) {
-        await runnerManager.get({ runnerId })?.next();
+        await runnerManager.get(runnerId)?.next();
       },
       async onDownloadRequested({ runnerId }) {
-        await runnerManager.get({ runnerId })?.download();
+        await runnerManager.get(runnerId)?.download();
       },
       async onPreviewRequested({ runnerId }) {
-        await runnerManager.get({ runnerId })?.preview();
+        await runnerManager.get(runnerId)?.preview();
       },
       async onDidDisposePanel({ runnerId }) {
-        await runnerManager.get({ runnerId })?.dispose();
+        runnerManager.get(runnerId)?.dispose();
       },
     });
-    const errorMarker = createErrorMarker({
-      section,
-    });
+    const errorMarkerManager = createErrorMarkerManager(section);
     const runnerManager = createRunnerManager({
       configManager,
       outputChannel,
       statusManager,
       rendererManager,
       downloader,
-      errorMarker,
+      errorMarkerManager,
     });
     const dryRunner = createDryRunner({
       outputChannel,
       configManager,
       statusManager,
-      errorMarker,
-    });
-    const validator = createValidator({
-      outputChannel,
-      configManager,
-      dryRunner,
+      errorMarkerManager,
     });
     ctx.subscriptions.push(
       outputChannel,
@@ -94,10 +84,9 @@ export async function activate(ctx: ExtensionContext) {
       downloader,
       rendererManager,
       statusManager,
-      errorMarker,
+      errorMarkerManager,
       runnerManager,
-      dryRunner,
-      validator
+      dryRunner
     );
 
     // Register all available commands and their actions.
@@ -110,7 +99,7 @@ export async function activate(ctx: ExtensionContext) {
           if (!window.activeTextEditor) {
             return;
           }
-          await dryRunner.run({ document: window.activeTextEditor.document });
+          await dryRunner.run(window.activeTextEditor);
         },
       ],
       [
@@ -119,18 +108,13 @@ export async function activate(ctx: ExtensionContext) {
           if (!window.activeTextEditor) {
             throw new Error(`no active text editor`);
           }
-          const { document, selections, viewColumn } = window.activeTextEditor;
-          const query = await getQueryText({
-            document,
-            selections,
-          });
-          await runnerManager.create({
-            query,
-            title: basename(document.fileName),
-            fileName: document.fileName,
-            selections,
-            baseViewColumn: viewColumn,
-          });
+          const runnerResult = await runnerManager.getWithEditor(
+            window.activeTextEditor
+          );
+          if (!runnerResult.success) {
+            return;
+          }
+          await unwrap(runnerResult).run();
         },
       ],
       [
@@ -139,9 +123,9 @@ export async function activate(ctx: ExtensionContext) {
           if (!window.activeTextEditor) {
             throw new Error(`no active text editor`);
           }
-          const runner = runnerManager.findWithFileName({
-            fileName: window.activeTextEditor.document.fileName,
-          });
+          const runner = runnerManager.findWithFileName(
+            window.activeTextEditor.document.fileName
+          );
           if (!runner) {
             return;
           }
@@ -154,9 +138,9 @@ export async function activate(ctx: ExtensionContext) {
           if (!window.activeTextEditor) {
             throw new Error(`no active text editor`);
           }
-          const runner = runnerManager.findWithFileName({
-            fileName: window.activeTextEditor.document.fileName,
-          });
+          const runner = runnerManager.findWithFileName(
+            window.activeTextEditor.document.fileName
+          );
           if (!runner) {
             return;
           }
@@ -167,48 +151,25 @@ export async function activate(ctx: ExtensionContext) {
       ctx.subscriptions.push(commands.registerCommand(name, action));
     });
 
-    workspace.textDocuments.forEach((document) =>
-      validator.validate({
-        document,
-      })
-    );
+    window.visibleTextEditors.forEach((editor) => dryRunner.validate(editor));
     ctx.subscriptions.push(
       window.onDidChangeActiveTextEditor(async (editor) => {
-        if (
-          !editor ||
-          !isBigQuery({
-            config: configManager.get(),
-            document: editor.document,
-          })
-        ) {
-          statusManager.hide();
+        if (!editor) {
           return;
         }
-
-        statusManager.onFocus({ fileName: editor.document.fileName });
-        await validator.validate({
-          document: editor.document,
-        });
+        await dryRunner.validate(editor);
       }),
       workspace.onDidOpenTextDocument((document) =>
-        validator.validate({
-          document,
-        })
+        dryRunner.validateWithDocument(document)
       ),
       workspace.onDidChangeTextDocument(({ document }) =>
-        validator.validate({
-          document,
-        })
+        dryRunner.validateWithDocument(document)
       ),
       workspace.onDidSaveTextDocument((document) =>
-        validator.validate({
-          document,
-        })
+        dryRunner.validateWithDocument(document)
       ),
       workspace.onDidCloseTextDocument((document) => {
-        const runner = runnerManager.findWithFileName({
-          fileName: document.fileName,
-        });
+        const runner = runnerManager.findWithFileName(document.fileName);
         if (!runner) {
           return;
         }

@@ -33,6 +33,7 @@ export const Table: FC<{
               <IconButton
                 aria-label="preview"
                 icon={<ViewIcon />}
+                size="xs"
                 onClick={onPreviewRequest}
               />
             </HStack>

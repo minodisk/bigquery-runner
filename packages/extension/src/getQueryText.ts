@@ -1,12 +1,8 @@
-import { Selection, TextDocument } from "vscode";
+import { TextEditor } from "vscode";
 
-export async function getQueryText({
-  document,
-  selections,
-}: {
-  readonly document: TextDocument;
-  readonly selections: readonly Selection[];
-}): Promise<string> {
+export async function getQueryText(editor: TextEditor): Promise<string> {
+  const { document, selections } = editor;
+
   const text = (() => {
     const sels = selections.filter((selection) => !selection.isEmpty);
     if (sels.length === 0) {

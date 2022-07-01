@@ -4,6 +4,6 @@ select
 from
     `bigquery-public-data.wikipedia.wikidata`
 where
-    array_length(labels) < 4
+    array_length(labels) < 5
 limit
     580

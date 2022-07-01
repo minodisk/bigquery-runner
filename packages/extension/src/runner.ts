@@ -1,38 +1,43 @@
-import { createHash } from "crypto";
+import { basename } from "path";
 import { format } from "bytes";
-import { createClient } from "core";
+import { createClient, RunJob } from "core";
 import {
   Metadata,
   Page,
   Routine,
-  RunnerID,
   Struct,
   Table,
   unwrap,
+  RunnerID,
+  succeed,
+  Result,
+  type Error,
 } from "types";
 import {
   OutputChannel,
-  Selection,
+  TextEditor,
   ViewColumn,
   window,
   workspace,
 } from "vscode";
+import { checksum } from "./checksum";
 import { ConfigManager } from "./configManager";
 import { Downloader } from "./downloader";
-import { ErrorMarker } from "./errorMarker";
-import { RendererManager } from "./renderer";
-import { StatusManager } from "./statusManager";
+import { ErrorMarker, ErrorMarkerManager } from "./errorMarker";
+import { getQueryText } from "./getQueryText";
+import { Renderer, RendererManager } from "./renderer";
+import { Status, StatusManager } from "./statusManager";
 
 export type RunnerManager = ReturnType<typeof createRunnerManager>;
 export type RunJobResponse = SelectResponse | RoutineResponse;
-export type Runner = {
-  isSaveFileName: (fileName: string) => boolean;
-  prev: () => Promise<void>;
-  next: () => Promise<void>;
-  download: () => Promise<void>;
-  preview: () => Promise<void>;
-  dispose: () => void;
-};
+export type Runner = Readonly<{
+  run(): Promise<void>;
+  prev(): Promise<void>;
+  next(): Promise<void>;
+  download(): Promise<void>;
+  preview(): Promise<void>;
+  dispose(): void;
+}>;
 
 export type SelectResponse = Readonly<{
   structs: Array<Struct>;
@@ -53,233 +58,296 @@ export function createRunnerManager({
   statusManager,
   rendererManager,
   downloader,
-  errorMarker,
+  errorMarkerManager,
 }: Readonly<{
   configManager: ConfigManager;
   outputChannel: OutputChannel;
   statusManager: StatusManager;
   rendererManager: RendererManager;
   downloader: Downloader;
-  errorMarker: ErrorMarker;
+  errorMarkerManager: ErrorMarkerManager;
 }>) {
   const runners = new Map<RunnerID, Runner>();
 
   const runnerManager = {
-    async create({
-      query,
-      title,
-      fileName,
-      selections,
-      baseViewColumn,
-    }: Readonly<{
-      query: string;
-      title: string;
-      fileName?: string;
-      selections?: readonly Selection[];
-      baseViewColumn?: ViewColumn;
-    }>) {
-      // const runnerId = randomUUID() as RunnerID;
-      const runnerId = createHash("md5")
-        .update(query.trimStart().trimEnd().replace(/\s+/g, " "))
-        .digest("hex") as RunnerID;
-      fileName = runnerId;
+    async getWithEditor(
+      editor: TextEditor
+    ): Promise<
+      Result<
+        Error<
+          "Unknown" | "Authentication" | "Query" | "QueryWithPosition" | "NoJob"
+        >,
+        Runner
+      >
+    > {
+      const {
+        document: { fileName, version },
+        viewColumn,
+      } = editor;
 
-      outputChannel.appendLine(`Run`);
+      const runnerId: RunnerID = `file://${fileName}`;
 
-      if (fileName) {
-        statusManager.loadBilled({ fileName });
-      }
+      const title = `${basename(fileName)}[${version}]`;
+      const query = await getQueryText(editor);
 
-      const rendererCreateResult = await rendererManager.create({
+      const getRendererResult = await rendererManager.get({
         runnerId,
         title,
-        baseViewColumn,
+        viewColumn,
       });
-      if (!rendererCreateResult.success) {
-        const { reason } = unwrap(rendererCreateResult);
+      if (!getRendererResult.success) {
+        const { reason } = unwrap(getRendererResult);
         outputChannel.appendLine(reason);
-        if (fileName) {
-          statusManager.errorBilled({ fileName });
-        }
-        return;
+        return getRendererResult;
       }
-      const renderer = unwrap(rendererCreateResult);
+      const renderer = unwrap(getRendererResult);
 
-      renderer.reveal();
+      const status = statusManager.get(runnerId);
+      const errorMarker = errorMarkerManager.get({
+        runnerId,
+        editor,
+      });
 
-      const rendererOpenResult = await renderer.startLoading();
-      if (!rendererOpenResult.success) {
-        const { reason } = unwrap(rendererOpenResult);
-        outputChannel.appendLine(reason);
-        await renderer.cancelLoading();
-        if (fileName) {
-          statusManager.errorBilled({ fileName });
-        }
-        return;
-      }
-
-      const config = configManager.get();
-
-      const clientResult = await createClient(config);
-      if (!clientResult.success) {
-        const { reason } = unwrap(clientResult);
-        outputChannel.appendLine(reason);
-        await window.showErrorMessage(reason);
-        await renderer.cancelLoading();
-        if (fileName) {
-          statusManager.errorBilled({ fileName });
-        }
-        return;
-      }
-      const client = unwrap(clientResult);
-
-      const runJobResult = await client.createRunJob({
+      const createResult = await createRunner({
+        runnerId,
         query,
-        maxResults: config.pagination.results,
+        renderer,
+        status,
+        errorMarker,
       });
-      if (fileName) {
-        errorMarker.clear({
-          fileName,
-        });
+      if (!createResult.success) {
+        return createResult;
       }
-      if (!runJobResult.success) {
-        const err = unwrap(runJobResult);
-        outputChannel.appendLine(err.reason);
-        await renderer.cancelLoading();
-        if (fileName) {
-          statusManager.errorBilled({ fileName });
-        }
-        if (fileName) {
-          if (err.type === "QueryWithPosition") {
-            errorMarker.markAt({
-              fileName,
-              reason: err.reason,
-              position: err.position,
-              selections: selections ?? [],
-            });
-            return;
-          }
-          if (err.type === "Query") {
-            errorMarker.markAll({
-              fileName,
-              reason: err.reason,
-              selections: selections ?? [],
-            });
-            return;
-          }
-        }
-        await window.showErrorMessage(err.reason);
-        return;
-      }
-      if (fileName) {
-        errorMarker.clear({
-          fileName,
-        });
-      }
-      const job = unwrap(runJobResult);
-      const { metadata } = job;
-      const {
-        statistics: {
-          numChildJobs,
-          query: { totalBytesBilled, cacheHit },
-        },
-      } = metadata;
+      const runner = unwrap(createResult);
 
-      outputChannel.appendLine(`Job ID: ${job.id}`);
+      runners.set(runnerId, runner);
+      return createResult;
+    },
 
-      const bytes = format(parseInt(totalBytesBilled, 10));
-      outputChannel.appendLine(
-        `Result: ${bytes} to be billed (cache: ${cacheHit})`
-      );
-      if (fileName) {
-        statusManager.succeedBilled({
-          fileName,
-          billed: {
-            bytes,
-            cacheHit: metadata.statistics.query.cacheHit,
+    async getWithQuery({
+      title,
+      query,
+      viewColumn,
+    }: Readonly<{
+      title: string;
+      query: string;
+      viewColumn: ViewColumn;
+    }>): Promise<
+      Result<
+        Error<
+          "Unknown" | "Authentication" | "Query" | "QueryWithPosition" | "NoJob"
+        >,
+        Runner
+      >
+    > {
+      const runnerId: RunnerID = `query://${checksum(query)}`;
+
+      const getRendererResult = await rendererManager.get({
+        runnerId,
+        title,
+        viewColumn,
+      });
+      if (!getRendererResult.success) {
+        const { reason } = unwrap(getRendererResult);
+        outputChannel.appendLine(reason);
+        return getRendererResult;
+      }
+      const renderer = unwrap(getRendererResult);
+
+      const status = statusManager.get(runnerId);
+
+      const createResult = await createRunner({
+        runnerId,
+        query,
+        renderer,
+        status,
+      });
+      if (!createResult.success) {
+        return createResult;
+      }
+      const runner = unwrap(createResult);
+
+      runners.set(runnerId, runner);
+      return createResult;
+    },
+
+    get(runnerId: RunnerID) {
+      return runners.get(runnerId);
+    },
+
+    findWithFileName(fileName: string) {
+      const runnerId: RunnerID = `file://${fileName}`;
+      return runners.get(runnerId);
+    },
+
+    dispose() {
+      runners.clear();
+    },
+  };
+
+  const createRunner = async ({
+    runnerId,
+    query,
+    renderer,
+    status,
+    errorMarker,
+  }: Readonly<{
+    runnerId: RunnerID;
+    query: string;
+    renderer: Renderer;
+    status: Status;
+    errorMarker?: ErrorMarker;
+  }>): Promise<
+    Result<
+      Error<
+        "Unknown" | "Authentication" | "NoJob" | "Query" | "QueryWithPosition"
+      >,
+      Runner
+    >
+  > => {
+    outputChannel.appendLine(`Run`);
+    let job: RunJob | undefined;
+
+    const runner: Runner = {
+      async run() {
+        renderer.reveal();
+        status.loadBilled();
+
+        const rendererOpenResult = await renderer.startLoading();
+        if (!rendererOpenResult.success) {
+          const { reason } = unwrap(rendererOpenResult);
+          outputChannel.appendLine(reason);
+          await renderer.cancelLoading();
+          status.errorBilled();
+          return;
+        }
+
+        const config = configManager.get();
+
+        const clientResult = await createClient(config);
+        if (!clientResult.success) {
+          const { reason } = unwrap(clientResult);
+          outputChannel.appendLine(reason);
+          await window.showErrorMessage(reason);
+          await renderer.cancelLoading();
+          status.errorBilled();
+          return;
+        }
+        const client = unwrap(clientResult);
+
+        const runJobResult = await client.createRunJob({
+          query,
+          maxResults: config.pagination.results,
+        });
+        errorMarker?.clear();
+        if (!runJobResult.success) {
+          const err = unwrap(runJobResult);
+          outputChannel.appendLine(err.reason);
+          await renderer.cancelLoading();
+          status.errorBilled();
+          if (errorMarker) {
+            if (err.type === "QueryWithPosition") {
+              errorMarker.markAt({
+                reason: err.reason,
+                position: err.position,
+              });
+              return;
+            }
+            if (err.type === "Query") {
+              errorMarker.markAll({
+                reason: err.reason,
+              });
+              return;
+            }
+          }
+          await window.showErrorMessage(err.reason);
+          return;
+        }
+        errorMarker?.clear();
+
+        job = unwrap(runJobResult);
+
+        const { metadata, statementType } = job;
+        const {
+          statistics: {
+            numChildJobs,
+            query: { totalBytesBilled, cacheHit },
           },
+        } = metadata;
+
+        outputChannel.appendLine(`Job ID: ${job.id}`);
+
+        const bytes = format(parseInt(totalBytesBilled, 10));
+        outputChannel.appendLine(
+          `Result: ${bytes} to be billed (cache: ${cacheHit})`
+        );
+        status.succeedBilled({
+          bytes,
+          cacheHit: metadata.statistics.query.cacheHit,
         });
-      }
 
-      const renderMedatadaResult = await renderer.renderMetadata(metadata);
-      if (!renderMedatadaResult.success) {
-        const { reason } = unwrap(renderMedatadaResult);
-        outputChannel.appendLine(reason);
-        await renderer.cancelLoading();
-        if (fileName) {
-          statusManager.errorBilled({ fileName });
-        }
-        return;
-      }
-
-      if (
-        numChildJobs &&
-        ["SCRIPT"].some((type) => job.statementType === type)
-      ) {
-        // Wait for completion of table creation job
-        // to get the records of the table just created.
-        const routineResult = await job.getRoutine();
-        if (!routineResult.success) {
-          const { reason } = unwrap(routineResult);
+        const renderMedatadaResult = await renderer.renderMetadata(metadata);
+        if (!renderMedatadaResult.success) {
+          const { reason } = unwrap(renderMedatadaResult);
           outputChannel.appendLine(reason);
           await renderer.cancelLoading();
-          if (fileName) {
-            statusManager.errorBilled({ fileName });
-          }
           return;
         }
-        const routine = unwrap(routineResult);
 
-        const renderRoutineResult = await renderer.renderRoutine(routine);
-        if (!renderRoutineResult.success) {
-          const { reason } = unwrap(renderRoutineResult);
+        if (numChildJobs && ["SCRIPT"].some((type) => statementType === type)) {
+          // Wait for completion of table creation job
+          // to get the records of the table just created.
+          const routineResult = await job.getRoutine();
+          if (!routineResult.success) {
+            const { reason } = unwrap(routineResult);
+            outputChannel.appendLine(reason);
+            await renderer.cancelLoading();
+            return;
+          }
+          const routine = unwrap(routineResult);
+
+          const renderRoutineResult = await renderer.renderRoutine(routine);
+          if (!renderRoutineResult.success) {
+            const { reason } = unwrap(renderRoutineResult);
+            outputChannel.appendLine(reason);
+            await renderer.cancelLoading();
+            return;
+          }
+
+          return;
+        }
+
+        const getTableResult = await job.getTable();
+        if (!getTableResult.success) {
+          const { reason } = unwrap(getTableResult);
           outputChannel.appendLine(reason);
           await renderer.cancelLoading();
-          if (fileName) {
-            statusManager.errorBilled({ fileName });
-          }
           return;
         }
-        return;
-      }
+        const table = unwrap(getTableResult);
 
-      const tableResult = await job.getTable();
-      if (!tableResult.success) {
-        const { reason } = unwrap(tableResult);
-        outputChannel.appendLine(reason);
-        await renderer.cancelLoading();
-        if (fileName) {
-          statusManager.errorBilled({ fileName });
+        const renderTableResult = await renderer.renderTable(table);
+        if (!renderTableResult.success) {
+          const { reason } = unwrap(renderTableResult);
+          outputChannel.appendLine(reason);
+          await renderer.cancelLoading();
+          return;
         }
-        return;
-      }
-      const table = unwrap(tableResult);
 
-      const renderTableResult = await renderer.renderTable(table);
-      if (!renderTableResult.success) {
-        const { reason } = unwrap(renderTableResult);
-        outputChannel.appendLine(reason);
-        await renderer.cancelLoading();
-        if (fileName) {
-          statusManager.errorBilled({ fileName });
+        if (
+          // There is no row in query result.
+          ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
+            (type) => statementType === type
+          )
+        ) {
+          return;
         }
-        return;
-      }
 
-      if (
-        // There is rows in query result.
-        !["CREATE_TABLE_AS_SELECT", "MERGE"].some(
-          (type) => job.statementType === type
-        )
-      ) {
         const getStructsResult = await job.getStructs();
         if (!getStructsResult.success) {
           const { reason } = unwrap(getStructsResult);
           outputChannel.appendLine(reason);
           await renderer.cancelLoading();
-          if (fileName) {
-            statusManager.errorBilled({ fileName });
-          }
           return;
         }
         const structs = unwrap(getStructsResult);
@@ -295,210 +363,176 @@ export function createRunnerManager({
           const { reason } = unwrap(renderRowsResult);
           outputChannel.appendLine(reason);
           await renderer.cancelLoading();
-          if (fileName) {
-            statusManager.errorBilled({ fileName });
-          }
           return;
         }
-      }
+      },
 
-      const runner: Runner = {
-        isSaveFileName(f) {
-          return f === fileName;
-        },
-
-        async prev() {
-          const rendererCreateResult = await rendererManager.create({
-            runnerId,
-            title,
-            baseViewColumn,
-          });
-          if (!rendererCreateResult.success) {
-            const { reason } = unwrap(rendererCreateResult);
-            outputChannel.appendLine(reason);
-            return;
-          }
-          const renderer = unwrap(rendererCreateResult);
-
-          renderer.reveal();
-
-          const rendererOpenResult = await renderer.startLoading();
-          if (!rendererOpenResult.success) {
-            const { reason } = unwrap(rendererOpenResult);
-            outputChannel.appendLine(reason);
-            return;
-          }
-
-          const tableResult = await job.getTable();
-          if (!tableResult.success) {
-            const { reason } = unwrap(tableResult);
-            outputChannel.appendLine(reason);
-            await renderer.cancelLoading();
-            return;
-          }
-          const { value: table } = tableResult;
-
-          const renderTableResult = await renderer.renderTable(table);
-          if (!renderTableResult.success) {
-            const { reason } = unwrap(renderTableResult);
-            outputChannel.appendLine(reason);
-            await renderer.cancelLoading();
-            return;
-          }
-
-          const getStructsResult = await job.getPrevStructs();
-          if (!getStructsResult.success) {
-            const { type, reason } = unwrap(getStructsResult);
-            outputChannel.appendLine(reason);
-            if (type === "NoPageToken") {
-              await window.showErrorMessage(reason);
-            }
-            await renderer.cancelLoading();
-            return;
-          }
-          const structs = unwrap(getStructsResult);
-
-          const page = job.getPage(table);
-
-          const renderRowsResult = await renderer.renderRows({
-            structs,
-            table,
-            page,
-          });
-          if (!renderRowsResult.success) {
-            const { reason } = unwrap(renderRowsResult);
-            outputChannel.appendLine(reason);
-            await renderer.cancelLoading();
-            return;
-          }
-        },
-
-        async next() {
-          const rendererCreateResult = await rendererManager.create({
-            runnerId,
-            title,
-            baseViewColumn,
-          });
-          if (!rendererCreateResult.success) {
-            const { reason } = unwrap(rendererCreateResult);
-            outputChannel.appendLine(reason);
-            return;
-          }
-          const renderer = unwrap(rendererCreateResult);
-
-          renderer.reveal();
-
-          const rendererOpenResult = await renderer.startLoading();
-          if (!rendererOpenResult.success) {
-            const { reason } = unwrap(rendererOpenResult);
-            outputChannel.appendLine(reason);
-            return;
-          }
-
-          const getTableResult = await job.getTable();
-          if (!getTableResult.success) {
-            const { reason } = unwrap(getTableResult);
-            outputChannel.appendLine(reason);
-            await renderer.cancelLoading();
-            return;
-          }
-          const { value: table } = getTableResult;
-
-          const renderTableResult = await renderer.renderTable(table);
-          if (!renderTableResult.success) {
-            const { reason } = unwrap(renderTableResult);
-            outputChannel.appendLine(reason);
-            await renderer.cancelLoading();
-            return;
-          }
-
-          const getStructsResult = await job.getNextStructs();
-          if (!getStructsResult.success) {
-            const { type, reason } = unwrap(getStructsResult);
-            outputChannel.appendLine(reason);
-            if (type === "NoPageToken") {
-              await window.showErrorMessage(reason);
-            }
-            await renderer.cancelLoading();
-            return;
-          }
-          const structs = unwrap(getStructsResult);
-
-          const page = job.getPage(table);
-
-          const renderRowsResult = await renderer.renderRows({
-            structs,
-            table,
-            page,
-          });
-          if (!renderRowsResult.success) {
-            const { reason } = unwrap(renderRowsResult);
-            outputChannel.appendLine(reason);
-            await renderer.cancelLoading();
-            return;
-          }
-        },
-
-        async download() {
-          const uri = await window.showSaveDialog({
-            defaultUri:
-              workspace.workspaceFolders &&
-              workspace.workspaceFolders[0] &&
-              workspace.workspaceFolders[0].uri,
-            filters: {
-              "JSON Lines": ["jsonl"],
-            },
-          });
-          if (!uri) {
-            return;
-          }
-
-          await downloader.jsonl({ uri, query: job.query });
-        },
-
-        async preview() {
-          if (!job.tableName) {
-            throw new Error(`preview is failed: table name is not defined`);
-          }
-          const query = `SELECT * FROM ${job.tableName}`;
-          await runnerManager.create({
-            title: job.tableName,
-            query,
-            baseViewColumn: renderer.viewColumn,
-          });
-        },
-
-        dispose() {
-          if (rendererManager.exists(runnerId)) {
-            return;
-          }
-          runners.delete(runnerId);
-        },
-      };
-      runners.set(runnerId, runner);
-    },
-
-    get({ runnerId }: Readonly<{ runnerId: RunnerID }>) {
-      return runners.get(runnerId);
-    },
-
-    findWithFileName({ fileName }: Readonly<{ fileName: string }>) {
-      for (const runner of runners.values()) {
-        if (runner.isSaveFileName(fileName)) {
-          return runner;
+      async prev() {
+        if (!job) {
+          return;
         }
-      }
-      return;
-    },
 
-    dispose() {
-      runners.clear();
-    },
+        renderer.reveal();
+
+        const rendererOpenResult = await renderer.startLoading();
+        if (!rendererOpenResult.success) {
+          const { reason } = unwrap(rendererOpenResult);
+          outputChannel.appendLine(reason);
+          return;
+        }
+
+        const tableResult = await job.getTable();
+        if (!tableResult.success) {
+          const { reason } = unwrap(tableResult);
+          outputChannel.appendLine(reason);
+          await renderer.cancelLoading();
+          return;
+        }
+        const { value: table } = tableResult;
+
+        const renderTableResult = await renderer.renderTable(table);
+        if (!renderTableResult.success) {
+          const { reason } = unwrap(renderTableResult);
+          outputChannel.appendLine(reason);
+          await renderer.cancelLoading();
+          return;
+        }
+
+        const getStructsResult = await job.getPrevStructs();
+        if (!getStructsResult.success) {
+          const { type, reason } = unwrap(getStructsResult);
+          outputChannel.appendLine(reason);
+          if (type === "NoPageToken") {
+            await window.showErrorMessage(reason);
+          }
+          await renderer.cancelLoading();
+          return;
+        }
+        const structs = unwrap(getStructsResult);
+
+        const page = job.getPage(table);
+
+        const renderRowsResult = await renderer.renderRows({
+          structs,
+          table,
+          page,
+        });
+        if (!renderRowsResult.success) {
+          const { reason } = unwrap(renderRowsResult);
+          outputChannel.appendLine(reason);
+          await renderer.cancelLoading();
+          return;
+        }
+      },
+
+      async next() {
+        if (!job) {
+          return;
+        }
+
+        renderer.reveal();
+
+        const rendererOpenResult = await renderer.startLoading();
+        if (!rendererOpenResult.success) {
+          const { reason } = unwrap(rendererOpenResult);
+          outputChannel.appendLine(reason);
+          return;
+        }
+
+        const getTableResult = await job.getTable();
+        if (!getTableResult.success) {
+          const { reason } = unwrap(getTableResult);
+          outputChannel.appendLine(reason);
+          await renderer.cancelLoading();
+          return;
+        }
+        const { value: table } = getTableResult;
+
+        const renderTableResult = await renderer.renderTable(table);
+        if (!renderTableResult.success) {
+          const { reason } = unwrap(renderTableResult);
+          outputChannel.appendLine(reason);
+          await renderer.cancelLoading();
+          return;
+        }
+
+        const getStructsResult = await job.getNextStructs();
+        if (!getStructsResult.success) {
+          const { type, reason } = unwrap(getStructsResult);
+          outputChannel.appendLine(reason);
+          if (type === "NoPageToken") {
+            await window.showErrorMessage(reason);
+          }
+          await renderer.cancelLoading();
+          return;
+        }
+        const structs = unwrap(getStructsResult);
+
+        const page = job.getPage(table);
+
+        const renderRowsResult = await renderer.renderRows({
+          structs,
+          table,
+          page,
+        });
+        if (!renderRowsResult.success) {
+          const { reason } = unwrap(renderRowsResult);
+          outputChannel.appendLine(reason);
+          await renderer.cancelLoading();
+          return;
+        }
+      },
+
+      async download() {
+        const uri = await window.showSaveDialog({
+          defaultUri:
+            workspace.workspaceFolders &&
+            workspace.workspaceFolders[0] &&
+            workspace.workspaceFolders[0].uri,
+          filters: {
+            "JSON Lines": ["jsonl"],
+          },
+        });
+        if (!uri) {
+          return;
+        }
+
+        await downloader.jsonl({ uri, query });
+      },
+
+      async preview() {
+        if (!job) {
+          return;
+        }
+
+        if (!job.tableName) {
+          throw new Error(`preview is failed: table name is not defined`);
+        }
+        const query = `SELECT * FROM ${job.tableName}`;
+
+        const runnerResult = await runnerManager.getWithQuery({
+          title: job.tableName,
+          query,
+          viewColumn: renderer.viewColumn,
+        });
+        if (!runnerResult.success) {
+          return;
+        }
+        const runner = unwrap(runnerResult);
+
+        await runner.run();
+      },
+
+      dispose() {
+        if (!renderer.disposed) {
+          return;
+        }
+        runners.delete(runnerId);
+      },
+    };
+
+    return succeed(runner);
   };
 
   return runnerManager;
-}
-
-export class ErrorWithId {
-  constructor(public error: unknown, public id: string) {}
 }

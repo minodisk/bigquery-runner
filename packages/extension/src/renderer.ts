@@ -12,11 +12,11 @@ import {
   RendererEvent,
   Result,
   Routine,
-  RunnerID,
   Table,
   tryCatch,
   ViewerEvent,
   UnknownError,
+  RunnerID,
 } from "types";
 import {
   ExtensionContext,
@@ -30,18 +30,19 @@ import { ConfigManager } from "./configManager";
 import { SelectResponse } from "./runner";
 
 export type RendererManager = Readonly<{
-  create(
+  get(
     props: Readonly<{
       runnerId: RunnerID;
       title: string;
-      baseViewColumn?: ViewColumn;
+      viewColumn?: ViewColumn;
     }>
   ): Promise<Result<UnknownError, Renderer>>;
-  exists(runnerId: RunnerID): boolean;
   dispose(): void;
 }>;
 
 export type Renderer = {
+  disposed: boolean;
+
   readonly runnerId: RunnerID;
   readonly viewColumn: ViewColumn;
   readonly reveal: () => void;
@@ -84,7 +85,7 @@ export function createRendererManager({
   const renderers = new Map<RunnerID, Renderer>();
 
   return {
-    create({ runnerId, title, baseViewColumn }) {
+    get({ runnerId, title, viewColumn: baseViewColumn }) {
       return tryCatch(
         async () => {
           const r = renderers.get(runnerId);
@@ -181,6 +182,8 @@ export function createRendererManager({
           });
 
           const renderer: Renderer = {
+            disposed: false,
+
             runnerId,
 
             viewColumn,
@@ -260,6 +263,7 @@ export function createRendererManager({
             },
 
             dispose() {
+              this.disposed = true;
               renderers.delete(runnerId);
               onDidDisposePanel(this);
             },
@@ -273,10 +277,6 @@ export function createRendererManager({
           reason: String(err),
         })
       );
-    },
-
-    exists(runnerId) {
-      return renderers.has(runnerId);
     },
 
     dispose() {
