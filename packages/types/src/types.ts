@@ -191,7 +191,7 @@ export type Metadata = Readonly<{
   configuration: Readonly<{
     query: Readonly<{
       query: string;
-      destinationTable: TableReference;
+      destinationTable?: TableReference;
       writeDisposition: string;
       priority: string;
       useLegacySql: boolean;

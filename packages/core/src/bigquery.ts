@@ -17,6 +17,7 @@ import {
 } from "types";
 
 export type NoJobError = Error<"NoJob">;
+export type NoDestinationTableError = Error<"NoDestinationTable">;
 export type NoPageTokenError = Error<"NoPageToken">;
 export type QueryError = Error<"Query">;
 export type QueryWithPositionError = {
@@ -50,7 +51,7 @@ export type RunJob = Readonly<{
   getNextStructs(): Promise<
     Result<UnknownError | NoPageTokenError, Array<Struct>>
   >;
-  getTable(): Promise<Result<UnknownError, Table>>;
+  getTable(): Promise<Result<UnknownError | NoDestinationTableError, Table>>;
   getRoutine(): Promise<Result<UnknownError, Routine>>;
 }>;
 export type DryRunJob = Readonly<{
@@ -80,17 +81,17 @@ export async function createClient(
     ) {
       if (options.keyFilename) {
         return fail({
-          type: "Authentication",
+          type: "Authentication" as const,
           reason: `Bad authentication: Make sure that "${options.keyFilename}", which is set in bigqueryRunner.keyFilename of setting.json, is the valid path to service account key file`,
         });
       }
       return fail({
-        type: "Authentication",
+        type: "Authentication" as const,
         reason: `Bad authentication: Set bigqueryRunner.keyFilename of your setting.json to the valid path to service account key file`,
       });
     }
     return fail({
-      type: "Unknown",
+      type: "Unknown" as const,
       reason: String(err),
     });
   }
@@ -122,7 +123,7 @@ export async function createClient(
             });
           });
         },
-        (err) => ({ type: "NoJob", reason: String(err) } as NoJobError)
+        (err) => ({ type: "NoJob" as const, reason: String(err) } as NoJobError)
       );
       if (!metadataResult.success) {
         return metadataResult;
@@ -137,7 +138,7 @@ export async function createClient(
       const tokens: Map<number, string | null> = new Map([[0, null]]);
       let current = 0;
 
-      return succeed({
+      const runJob: RunJob = {
         id: job.id,
         query: query.query,
         metadata,
@@ -168,7 +169,7 @@ export async function createClient(
               return structs;
             },
             (reason) => ({
-              type: "Unknown",
+              type: "Unknown" as const,
               reason: String(reason),
             })
           );
@@ -178,7 +179,7 @@ export async function createClient(
           const pageToken = tokens.get(current - 1);
           if (pageToken === undefined) {
             return fail({
-              type: "NoPageToken",
+              type: "NoPageToken" as const,
               reason: `no page token for page at ${current - 1}`,
             });
           }
@@ -196,7 +197,7 @@ export async function createClient(
               return structs;
             },
             (reason) => ({
-              type: "Unknown",
+              type: "Unknown" as const,
               reason: String(reason),
             })
           );
@@ -206,7 +207,7 @@ export async function createClient(
           const pageToken = tokens.get(current + 1);
           if (pageToken === undefined) {
             return fail({
-              type: "NoPageToken",
+              type: "NoPageToken" as const,
               reason: `no page token for page at ${current + 1}`,
             });
           }
@@ -224,16 +225,23 @@ export async function createClient(
               return structs;
             },
             (reason) => ({
-              type: "Unknown",
+              type: "Unknown" as const,
               reason: String(reason),
             })
           );
         },
 
-        getTable() {
+        async getTable() {
+          const { destinationTable } = metadata.configuration.query;
+          if (!destinationTable) {
+            return fail({
+              type: "NoDestinationTable" as const,
+              reason: "destination table is not defined",
+            });
+          }
+
           return tryCatch(
             async () => {
-              const { destinationTable } = metadata.configuration.query;
               const ref = bigQuery
                 .dataset(destinationTable.datasetId)
                 .table(destinationTable.tableId);
@@ -249,7 +257,7 @@ export async function createClient(
               return table;
             },
             (reason) => ({
-              type: "Unknown",
+              type: "Unknown" as const,
               reason: String(reason),
             })
           );
@@ -274,12 +282,14 @@ export async function createClient(
               )[0] as Routine;
             },
             (reason) => ({
-              type: "Unknown",
+              type: "Unknown" as const,
               reason: String(reason),
             })
           );
         },
-      });
+      };
+
+      return succeed(runJob);
     },
 
     async createDryRunJob(query) {

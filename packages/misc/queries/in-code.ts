@@ -1,5 +1,5 @@
 export function main() {
-  const query1 = `
+  const invalid = `
     select 
       *
     from 
@@ -9,12 +9,12 @@ export function main() {
         select 1 as id, 'bar' as type
       )
   `;
-  const query2 = `select 
+  const valid = `select 
       id
     from 
       (
         select 1 as id
         union all select 2 as id
       )`;
-  console.log(query1, query2);
+  console.log(invalid, valid);
 }

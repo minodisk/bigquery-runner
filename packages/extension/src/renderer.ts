@@ -135,7 +135,7 @@ export function createRendererManager({
               (err) => {
                 logger.error(err);
                 return {
-                  type: "Unknown",
+                  type: "Unknown" as const,
                   reason: errorToString(err),
                 };
               }
@@ -301,7 +301,7 @@ export function createRendererManager({
           return renderer;
         },
         (err) => ({
-          type: "Unknown",
+          type: "Unknown" as const,
           reason: errorToString(err),
         })
       );

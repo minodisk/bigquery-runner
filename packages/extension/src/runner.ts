@@ -289,7 +289,11 @@ export function createRunnerManager({
           return;
         }
 
-        if (numChildJobs && ["SCRIPT"].some((type) => statementType === type)) {
+        if (
+          !metadata.configuration.query.destinationTable &&
+          numChildJobs &&
+          ["SCRIPT"].some((type) => statementType === type)
+        ) {
           // Wait for completion of table creation job
           // to get the records of the table just created.
           const routineResult = await job.getRoutine();
