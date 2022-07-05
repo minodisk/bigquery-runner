@@ -37,6 +37,13 @@ export const theme = extendTheme({
       },
       variants: {
         ghost: {
+          _focus: {
+            background: "rgba(90, 93, 94, 0.15)",
+            boxShadow: "unset",
+          },
+          _hover: {
+            background: "rgba(90, 93, 94, 0.15)",
+          },
           _active: {
             background: "rgba(90, 93, 94, 0.31)",
           },
@@ -89,6 +96,25 @@ export const theme = extendTheme({
             fontSize: "var(--vscode-editor-font-size)",
             color: "foreground.600",
             borderColor: "border",
+          },
+        },
+      },
+    },
+    Menu: {
+      baseStyle: {
+        list: {
+          borderColor: "border",
+          backgroundColor: "background",
+        },
+        item: {
+          _focus: {
+            background: "rgba(90, 93, 94, 0.15)",
+          },
+          _hover: {
+            background: "rgba(90, 93, 94, 0.15)",
+          },
+          _active: {
+            background: "rgba(90, 93, 94, 0.31)",
           },
         },
       },

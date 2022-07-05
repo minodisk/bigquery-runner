@@ -12,6 +12,8 @@ import {
   succeed,
   Result,
   type Error,
+  Format,
+  formats,
 } from "types";
 import { TextEditor, ViewColumn, window, workspace } from "vscode";
 import { checksum } from "./checksum";
@@ -29,7 +31,7 @@ export type Runner = Readonly<{
   run(): Promise<void>;
   prev(): Promise<void>;
   next(): Promise<void>;
-  download(): Promise<void>;
+  download(format: Format): Promise<void>;
   preview(): Promise<void>;
   dispose(): void;
 }>;
@@ -482,21 +484,35 @@ export function createRunnerManager({
         }
       },
 
-      async download() {
+      async download(format) {
+        const name = formats[format];
         const uri = await window.showSaveDialog({
           defaultUri:
             workspace.workspaceFolders &&
             workspace.workspaceFolders[0] &&
             workspace.workspaceFolders[0].uri,
           filters: {
-            "JSON Lines": ["jsonl"],
+            [name]: [format],
           },
         });
         if (!uri) {
           return;
         }
 
-        await downloader.jsonl({ uri, query });
+        console.log(format, name);
+
+        switch (format) {
+          case "jsonl":
+            return downloader.jsonl({ uri, query });
+          case "json":
+            return downloader.json({ uri, query });
+          case "csv":
+            return downloader.csv({ uri, query });
+          case "md":
+            return downloader.markdown({ uri, query });
+          case "txt":
+            return downloader.text({ uri, query });
+        }
       },
 
       async preview() {

@@ -125,11 +125,11 @@ describe("formatter", () => {
       const flat = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
-      expect(formatter.header({ flat })).toEqual("");
+      expect(formatter.head({ flat })).toEqual("");
       expect(
-        await formatter.rows({ structs: [], rowNumberStart: 0n, flat })
+        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
       ).toEqual("\n");
-      expect(formatter.footer()).toEqual("");
+      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format simple", async () => {
@@ -137,9 +137,9 @@ describe("formatter", () => {
       const flat = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
-      expect(formatter.header({ flat })).toEqual("");
+      expect(formatter.head({ flat })).toEqual("");
       expect(
-        await formatter.rows({
+        await formatter.body({
           structs: [
             {
               foo: 123,
@@ -155,7 +155,7 @@ foo
 123
 `.trimStart()
       );
-      expect(formatter.footer()).toEqual("");
+      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format complex", async () => {
@@ -173,8 +173,8 @@ foo
         },
         { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
       ]);
-      expect(formatter.header({ flat })).toEqual("");
-      expect(await formatter.rows({ ...complexStructs, flat })).toEqual(
+      expect(formatter.head({ flat })).toEqual("");
+      expect(await formatter.body({ ...complexStructs, flat })).toEqual(
         `
 a    b.c    b.d  e    
 ---  -----  ---  -----
@@ -185,15 +185,15 @@ a    b.c    b.d  e
      0.21   baz
 `.trimStart()
       );
-      expect(formatter.footer()).toEqual("");
+      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format all types", async () => {
       const formatter = createTableFormatter();
       const flat = createFlat(fields);
-      expect(formatter.header({ flat })).toEqual(``);
+      expect(formatter.head({ flat })).toEqual(``);
       expect(
-        await formatter.rows({
+        await formatter.body({
           structs,
           rowNumberStart: 0n,
           flat,
@@ -207,7 +207,7 @@ false  0      0        0        0                          2016-01-02  2016-01-0
 null   null   null     null     null        null    null   null        null                  null       null                  null
 `.trimStart()
       );
-      expect(formatter.footer()).toEqual(``);
+      expect(formatter.foot()).toEqual(``);
     });
   });
 
@@ -217,16 +217,16 @@ null   null   null     null     null        null    null   null        null     
       const flat = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
-      expect(formatter.header({ flat })).toEqual(
+      expect(formatter.head({ flat })).toEqual(
         `
 |foo|
 |---|
 `.trimStart()
       );
       expect(
-        await formatter.rows({ structs: [], rowNumberStart: 0n, flat })
+        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
       ).toEqual("\n");
-      expect(formatter.footer()).toEqual("");
+      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format simple", async () => {
@@ -234,14 +234,14 @@ null   null   null     null     null        null    null   null        null     
       const flat = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
-      expect(formatter.header({ flat })).toEqual(
+      expect(formatter.head({ flat })).toEqual(
         `
 |foo|
 |---|
 `.trimStart()
       );
       expect(
-        await formatter.rows({
+        await formatter.body({
           structs: [
             {
               foo: 123,
@@ -255,7 +255,7 @@ null   null   null     null     null        null    null   null        null     
 |123|
 `.trimStart()
       );
-      expect(formatter.footer()).toEqual("");
+      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format complex", async () => {
@@ -273,13 +273,13 @@ null   null   null     null     null        null    null   null        null     
         },
         { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
       ]);
-      expect(formatter.header({ flat })).toEqual(
+      expect(formatter.head({ flat })).toEqual(
         `
 |a|b.c|b.d|e|
 |---|---|---|---|
 `.trimStart()
       );
-      expect(await formatter.rows({ ...complexStructs, flat })).toEqual(
+      expect(await formatter.body({ ...complexStructs, flat })).toEqual(
         `
 |123|0.456|foo|true|
 ||0.789|bar||
@@ -288,18 +288,18 @@ null   null   null     null     null        null    null   null        null     
 ||0.21|baz||
 `.trimStart()
       );
-      expect(formatter.footer()).toEqual("");
+      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format all types", async () => {
       const formatter = createMarkdownFormatter();
       const flat = createFlat(fields);
-      expect(formatter.header({ flat }))
+      expect(formatter.head({ flat }))
         .toEqual(`|bool|int64|float64|numeric|bignumeric|string|bytes|date|datetime|time|timestamp|interval|
 |---|---|---|---|---|---|---|---|---|---|---|---|
 `);
       expect(
-        await formatter.rows({
+        await formatter.body({
           structs,
           rowNumberStart: 0n,
           flat,
@@ -310,7 +310,7 @@ null   null   null     null     null        null    null   null        null     
 |null|null|null|null|null|null|null|null|null|null|null|null|
 `
       );
-      expect(formatter.footer()).toEqual(``);
+      expect(formatter.foot()).toEqual(``);
     });
   });
 
@@ -318,19 +318,19 @@ null   null   null     null     null        null    null   null        null     
     it("should be format empty", async () => {
       const formatter = createJSONLinesFormatter();
       const flat = createFlat([]);
-      expect(formatter.header({ flat })).toEqual("");
+      expect(formatter.head({ flat })).toEqual("");
       expect(
-        await formatter.rows({ structs: [], rowNumberStart: 0n, flat })
+        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
       ).toEqual("\n");
-      expect(formatter.footer()).toEqual("");
+      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format all types", async () => {
       const formatter = createJSONLinesFormatter();
       const flat = createFlat([]);
-      expect(formatter.header({ flat })).toEqual("");
+      expect(formatter.head({ flat })).toEqual("");
       expect(
-        await formatter.rows({
+        await formatter.body({
           structs,
           rowNumberStart: 0n,
           flat,
@@ -341,7 +341,7 @@ null   null   null     null     null        null    null   null        null     
 {"bool":null,"int64":null,"float64":null,"numeric":null,"bignumeric":null,"string":null,"bytes":null,"date":null,"datetime":null,"time":null,"timestamp":null,"interval":null}
 `
       );
-      expect(formatter.footer()).toEqual(``);
+      expect(formatter.foot()).toEqual(``);
     });
   });
 
@@ -349,20 +349,20 @@ null   null   null     null     null        null    null   null        null     
     it("should be format empty", async () => {
       const formatter = createJSONFormatter();
       const flat = createFlat([]);
-      expect(formatter.header({ flat })).toEqual("[");
+      expect(formatter.head({ flat })).toEqual("[");
       expect(
-        await formatter.rows({ structs: [], rowNumberStart: 0n, flat })
+        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
       ).toEqual("");
-      expect(formatter.footer()).toEqual(`]
+      expect(formatter.foot()).toEqual(`]
 `);
     });
 
     it("should be format all types", async () => {
       const formatter = createJSONFormatter();
       const flat = createFlat([]);
-      expect(formatter.header({ flat })).toEqual("[");
+      expect(formatter.head({ flat })).toEqual("[");
       expect(
-        await formatter.rows({
+        await formatter.body({
           structs,
           rowNumberStart: 0n,
           flat,
@@ -370,7 +370,7 @@ null   null   null     null     null        null    null   null        null     
       ).toEqual(
         `{"bool":true,"int64":123,"float64":123.45,"numeric":123,"bignumeric":99999999,"string":"foo","bytes":"bar","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"01 01-02 15:04:05"},{"bool":false,"int64":0,"float64":0,"numeric":0,"bignumeric":0,"string":"","bytes":"","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"0"},{"bool":null,"int64":null,"float64":null,"numeric":null,"bignumeric":null,"string":null,"bytes":null,"date":null,"datetime":null,"time":null,"timestamp":null,"interval":null}`
       );
-      expect(formatter.footer()).toEqual(`]
+      expect(formatter.foot()).toEqual(`]
 `);
     });
   });
@@ -381,11 +381,11 @@ null   null   null     null     null        null    null   null        null     
         options: {},
       });
       const flat = createFlat([]);
-      expect(formatter.header({ flat })).toEqual("");
+      expect(formatter.head({ flat })).toEqual("");
       expect(
-        await formatter.rows({ structs: [], rowNumberStart: 0n, flat })
+        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
       ).toEqual("");
-      expect(formatter.footer()).toEqual(``);
+      expect(formatter.foot()).toEqual(``);
     });
 
     it("should be format all types", async () => {
@@ -393,9 +393,9 @@ null   null   null     null     null        null    null   null        null     
         options: {},
       });
       const flat = createFlat(fields);
-      expect(formatter.header({ flat })).toEqual("");
+      expect(formatter.head({ flat })).toEqual("");
       expect(
-        await formatter.rows({
+        await formatter.body({
           structs,
           rowNumberStart: 0n,
           flat,
@@ -405,7 +405,7 @@ null   null   null     null     null        null    null   null        null     
 false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
 ,,,,,,,,,,,
 `);
-      expect(formatter.footer()).toEqual(``);
+      expect(formatter.foot()).toEqual(``);
     });
   });
 });

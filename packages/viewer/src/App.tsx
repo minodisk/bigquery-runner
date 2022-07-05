@@ -14,6 +14,7 @@ import {
   MetadataPayload,
   TablePayload,
   isTableEvent,
+  Format,
 } from "types";
 import { Header } from "./domain/Header";
 import { Job } from "./domain/Job";
@@ -30,15 +31,15 @@ type State = Partial<
     routinePayload: RoutinePayload;
   }>
 >;
-const vscode = acquireVsCodeApi<State>();
-// : // mock
-//   {
-//     getState() {
+
+const vscode = acquireVsCodeApi<State>(); // window["acquireVsCodeApi"] ?
+// : {
+//     getState(): State {
 //       // eslint-disable-next-line
-//       // const payload = require("../../misc/mock/rows.json");
-//       // require("../../misc/mock/vscode.css");
+//       const rowsPayload = require("../../misc/mock/rows.json");
+//       require("../../misc/mock/vscode.css");
 //       // return payload;
-//       return {};
+//       return { rowsPayload };
 //     },
 //     setState() {
 //       // do nothing
@@ -87,8 +88,8 @@ const App: FC = () => {
   const onNextRequest = useCallback(() => {
     vscode.postMessage({ event: "next" });
   }, []);
-  const onDownloadRequest = useCallback(() => {
-    vscode.postMessage({ event: "download" });
+  const onDownloadRequest = useCallback((format: Format) => {
+    vscode.postMessage({ event: "download", format });
   }, []);
   const onPreviewRequest = useCallback(() => {
     vscode.postMessage({ event: "preview" });

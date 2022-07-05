@@ -20,6 +20,10 @@ import {
   unwrap,
   Error,
   fail,
+  PrevEvent,
+  NextEvent,
+  DownloadEvent,
+  PreviewEvent,
 } from "types";
 import {
   ExtensionContext,
@@ -79,10 +83,22 @@ export function createRendererManager({
   ctx: ExtensionContext;
   logger: Logger;
   configManager: ConfigManager;
-  onPrevPageRequested: (renderer: Renderer) => unknown;
-  onNextPageRequested: (renderer: Renderer) => unknown;
-  onDownloadRequested: (renderer: Renderer) => unknown;
-  onPreviewRequested: (renderer: Renderer) => unknown;
+  onPrevPageRequested: (params: {
+    event: PrevEvent;
+    renderer: Renderer;
+  }) => unknown;
+  onNextPageRequested: (params: {
+    event: NextEvent;
+    renderer: Renderer;
+  }) => unknown;
+  onDownloadRequested: (params: {
+    event: DownloadEvent;
+    renderer: Renderer;
+  }) => unknown;
+  onPreviewRequested: (params: {
+    event: PreviewEvent;
+    renderer: Renderer;
+  }) => unknown;
   onDidDisposePanel: (renderer: Renderer) => unknown;
 }>): RendererManager {
   const renderers = new Map<RunnerID, Renderer>();
@@ -179,13 +195,13 @@ export function createRendererManager({
                 resolved = true;
                 resolve(panel);
               } else if (isPrevEvent(event)) {
-                onPrevPageRequested(renderer);
+                onPrevPageRequested({ event, renderer });
               } else if (isNextEvent(event)) {
-                onNextPageRequested(renderer);
+                onNextPageRequested({ event, renderer });
               } else if (isDownloadEvent(event)) {
-                onDownloadRequested(renderer);
+                onDownloadRequested({ event, renderer });
               } else if (isPreviewEvent(event)) {
-                onPreviewRequested(renderer);
+                onPreviewRequested({ event, renderer });
               }
             });
             panel.webview.html = html;

@@ -6,6 +6,10 @@ import {
 import {
   HStack,
   IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
   Table,
   Tbody,
   Td,
@@ -15,7 +19,7 @@ import {
   Tr,
 } from "@chakra-ui/react";
 import React, { FC } from "react";
-import { RowsPayload } from "types";
+import { Format, RowsPayload } from "types";
 import { Footer } from "./Footer";
 
 export const Rows: FC<
@@ -23,7 +27,7 @@ export const Rows: FC<
     rowsPayload: RowsPayload;
     onPrevRequest: () => unknown;
     onNextRequest: () => unknown;
-    onDownloadRequest: () => unknown;
+    onDownloadRequest: (format: Format) => unknown;
   }>
 > = ({
   rowsPayload: { header, rows, page },
@@ -84,12 +88,29 @@ export const Rows: FC<
           <Text>{page.numRows}</Text>
         </HStack>
         <HStack>
-          <IconButton
-            aria-label="download"
-            icon={<DownloadIcon />}
-            size="xs"
-            onClick={onDownloadRequest}
-          />
+          <Menu>
+            <MenuButton
+              aria-label="download"
+              as={IconButton}
+              icon={<DownloadIcon />}
+              size="xs"
+            />
+            <MenuList>
+              <MenuItem onClick={() => onDownloadRequest("jsonl")}>
+                JSON Lines
+              </MenuItem>
+              <MenuItem onClick={() => onDownloadRequest("json")}>
+                JSON
+              </MenuItem>
+              <MenuItem onClick={() => onDownloadRequest("csv")}>CSV</MenuItem>
+              <MenuItem onClick={() => onDownloadRequest("md")}>
+                Markdown
+              </MenuItem>
+              <MenuItem onClick={() => onDownloadRequest("txt")}>
+                Plain Text
+              </MenuItem>
+            </MenuList>
+          </Menu>
         </HStack>
       </Footer>
     </>

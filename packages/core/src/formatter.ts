@@ -4,25 +4,23 @@ import { Hash, Struct } from "types";
 import { Flat } from "./flat";
 
 export type Formatter = Readonly<{
-  type: "table" | "markdown" | "json-lines" | "json" | "csv";
-  header: (props: Readonly<{ flat: Flat }>) => string;
-  rows: (
+  head(props: Readonly<{ flat: Flat }>): string;
+  body(
     props: Readonly<{
       flat: Flat;
       structs: ReadonlyArray<Struct>;
       rowNumberStart: bigint;
     }>
-  ) => Promise<string>;
-  readonly footer: () => string;
+  ): Promise<string>;
+  foot(): string;
 }>;
 
 export function createTableFormatter(): Formatter {
   return {
-    type: "table",
-    header() {
+    head() {
       return "";
     },
-    async rows({ flat, structs, rowNumberStart }) {
+    async body({ flat, structs, rowNumberStart }) {
       const t = new EasyTable();
       flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) => {
         rows.forEach((row) => {
@@ -32,7 +30,7 @@ export function createTableFormatter(): Formatter {
       });
       return t.toString().trimEnd() + "\n";
     },
-    footer() {
+    foot() {
       return "";
     },
   };
@@ -40,8 +38,7 @@ export function createTableFormatter(): Formatter {
 
 export function createMarkdownFormatter(): Formatter {
   return {
-    type: "markdown",
-    header({ flat }) {
+    head({ flat }) {
       if (flat.heads.length === 0) {
         return "";
       }
@@ -49,7 +46,7 @@ export function createMarkdownFormatter(): Formatter {
 |${flat.heads.map(() => "---").join("|")}|
 `;
     },
-    async rows({ flat, structs, rowNumberStart }) {
+    async body({ flat, structs, rowNumberStart }) {
       return (
         flat
           .toRows({ structs, rowNumberStart })
@@ -70,7 +67,7 @@ export function createMarkdownFormatter(): Formatter {
           .join("\n") + "\n"
       );
     },
-    footer() {
+    foot() {
       return "";
     },
   };
@@ -78,14 +75,13 @@ export function createMarkdownFormatter(): Formatter {
 
 export function createJSONLinesFormatter(): Formatter {
   return {
-    type: "json-lines",
-    header() {
+    head() {
       return "";
     },
-    async rows({ structs }) {
+    async body({ structs }) {
       return structs.map((struct) => JSON.stringify(struct)).join("\n") + "\n";
     },
-    footer() {
+    foot() {
       return "";
     },
   };
@@ -94,32 +90,26 @@ export function createJSONLinesFormatter(): Formatter {
 export function createJSONFormatter(): Formatter {
   let len = 0;
   return {
-    type: "json",
-    header() {
+    head() {
       return "[";
     },
-    async rows({ structs }) {
+    async body({ structs }) {
       const prefix = len === 0 ? "" : ",";
       len += structs.length;
       return prefix + structs.map((struct) => JSON.stringify(struct)).join(",");
     },
-    footer() {
+    foot() {
       return "]\n";
     },
   };
 }
 
-export function createCSVFormatter({
-  options,
-}: {
-  options: CSV.Options;
-}): Formatter {
+export function createCSVFormatter(options: CSV.Options): Formatter {
   return {
-    type: "csv",
-    header() {
+    head() {
       return "";
     },
-    async rows({ flat, structs }) {
+    async body({ flat, structs }) {
       if (structs.length === 0) {
         return "";
       }
@@ -142,7 +132,7 @@ export function createCSVFormatter({
         );
       });
     },
-    footer() {
+    foot() {
       return "";
     },
   };

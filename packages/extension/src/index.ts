@@ -34,6 +34,7 @@ export async function activate(ctx: ExtensionContext) {
     const logger = createLogger(window.createOutputChannel(title));
     const configManager = createConfigManager(section);
     const downloader = createDownloader({
+      logger: logger.createChild("downloader"),
       configManager,
     });
     const statusManager = createStatusManager({
@@ -44,16 +45,16 @@ export async function activate(ctx: ExtensionContext) {
       ctx,
       logger: logger.createChild("renderer"),
       configManager,
-      async onPrevPageRequested({ runnerId }) {
+      async onPrevPageRequested({ renderer: { runnerId } }) {
         await runnerManager.get(runnerId)?.prev();
       },
-      async onNextPageRequested({ runnerId }) {
+      async onNextPageRequested({ renderer: { runnerId } }) {
         await runnerManager.get(runnerId)?.next();
       },
-      async onDownloadRequested({ runnerId }) {
-        await runnerManager.get(runnerId)?.download();
+      async onDownloadRequested({ renderer: { runnerId }, event: { format } }) {
+        await runnerManager.get(runnerId)?.download(format);
       },
-      async onPreviewRequested({ runnerId }) {
+      async onPreviewRequested({ renderer: { runnerId } }) {
         await runnerManager.get(runnerId)?.preview();
       },
       async onDidDisposePanel({ runnerId }) {

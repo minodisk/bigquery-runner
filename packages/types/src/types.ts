@@ -317,6 +317,7 @@ export type NextEvent = Readonly<{
 }>;
 export type DownloadEvent = Readonly<{
   event: "download";
+  format: Format;
 }>;
 export type PreviewEvent = Readonly<{
   event: "preview";
@@ -343,3 +344,12 @@ export function isDownloadEvent(e: ViewerEvent): e is DownloadEvent {
 export function isPreviewEvent(e: ViewerEvent): e is PreviewEvent {
   return e.event === "preview";
 }
+
+export const formats = {
+  jsonl: "JSON Lines",
+  json: "JSON",
+  csv: "CSV",
+  md: "Markdown",
+  txt: "Plain Text",
+};
+export type Format = keyof typeof formats;
