@@ -1,18 +1,20 @@
 import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
-import { Struct } from "types";
+import { Hash, Struct } from "types";
 import { Flat } from "./flat";
 
-export type Formatter = {
-  readonly type: "table" | "markdown" | "json-lines" | "json" | "csv";
-  readonly header: (props: { flat: Flat }) => string;
-  readonly rows: (props: {
-    flat: Flat;
-    structs: Array<Struct>;
-    rowNumberStart: bigint;
-  }) => Promise<string>;
+export type Formatter = Readonly<{
+  type: "table" | "markdown" | "json-lines" | "json" | "csv";
+  header: (props: Readonly<{ flat: Flat }>) => string;
+  rows: (
+    props: Readonly<{
+      flat: Flat;
+      structs: ReadonlyArray<Struct>;
+      rowNumberStart: bigint;
+    }>
+  ) => Promise<string>;
   readonly footer: () => string;
-};
+}>;
 
 export function createTableFormatter(): Formatter {
   return {
@@ -126,7 +128,7 @@ export function createCSVFormatter({
           flat.toHashes({
             structs,
             transform: (p) => (p === null ? "" : `${p}`),
-          }),
+          }) as Array<Hash>,
           options,
           (err?: Error, res?: string) => {
             if (err) {

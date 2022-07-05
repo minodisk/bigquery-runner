@@ -2,14 +2,12 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { createFlat, toSerializablePage } from "core";
 import {
-  type Error,
   isDownloadEvent,
   isLoadedEvent,
   isNextEvent,
   isPrevEvent,
   isPreviewEvent,
   Metadata,
-  RendererEvent,
   Result,
   Routine,
   Table,
@@ -17,16 +15,21 @@ import {
   ViewerEvent,
   UnknownError,
   RunnerID,
+  RendererEvent,
+  errorToString,
+  unwrap,
+  Error,
+  fail,
 } from "types";
 import {
   ExtensionContext,
-  OutputChannel,
   Uri,
   ViewColumn,
   WebviewPanel,
   window,
 } from "vscode";
 import { ConfigManager } from "./configManager";
+import { Logger } from "./logger";
 import { SelectResponse } from "./runner";
 
 export type RendererManager = Readonly<{
@@ -58,15 +61,15 @@ export type Renderer = {
   readonly renderTable: (table: Table) => Promise<Result<UnknownError, void>>;
   readonly renderRows: (
     data: SelectResponse
-  ) => Promise<Result<UnknownError, void>>;
+  ) => Promise<Result<UnknownError | Error<"NoSchema">, void>>;
 
   readonly dispose: () => void;
 };
 
 export function createRendererManager({
   ctx,
+  logger: parentLogger,
   configManager,
-  outputChannel,
   onPrevPageRequested,
   onNextPageRequested,
   onDownloadRequested,
@@ -74,8 +77,8 @@ export function createRendererManager({
   onDidDisposePanel,
 }: Readonly<{
   ctx: ExtensionContext;
+  logger: Logger;
   configManager: ConfigManager;
-  outputChannel: OutputChannel;
   onPrevPageRequested: (renderer: Renderer) => unknown;
   onNextPageRequested: (renderer: Renderer) => unknown;
   onDownloadRequested: (renderer: Renderer) => unknown;
@@ -115,9 +118,13 @@ export function createRendererManager({
             await readFile(join(root, "index.html"), "utf-8")
           ).replace("<head>", `<head><base href="${base}/" />`);
 
-          const postMessage = (
-            event: RendererEvent
-          ): Promise<Result<UnknownError, void>> => {
+          const postMessage = ({
+            logger,
+            event,
+          }: {
+            logger: Logger;
+            event: RendererEvent;
+          }): Promise<Result<UnknownError, void>> => {
             return tryCatch(
               async () => {
                 await panel.webview.postMessage({
@@ -125,10 +132,13 @@ export function createRendererManager({
                   payload: event,
                 });
               },
-              (err) => ({
-                type: "Unknown",
-                reason: String(err),
-              })
+              (err) => {
+                logger.error(err);
+                return {
+                  type: "Unknown",
+                  reason: errorToString(err),
+                };
+              }
             );
           };
 
@@ -194,72 +204,90 @@ export function createRendererManager({
 
             startLoading() {
               return postMessage({
-                event: "open",
+                logger: parentLogger.createChild("startLoading"),
+                event: {
+                  event: "open",
+                },
               });
             },
 
             cancelLoading() {
               return postMessage({
-                event: "close",
+                logger: parentLogger.createChild("cancelLoading"),
+                event: {
+                  event: "close",
+                },
               });
             },
 
             renderMetadata(metadata) {
               return postMessage({
-                event: "metadata",
-                payload: {
-                  metadata,
+                logger: parentLogger.createChild("renderMetadata"),
+                event: {
+                  event: "metadata",
+                  payload: {
+                    metadata,
+                  },
                 },
               });
             },
 
             renderRoutine(routine) {
               return postMessage({
-                event: "routine",
-                payload: {
-                  routine,
+                logger: parentLogger.createChild("renderRoutine"),
+                event: {
+                  event: "routine",
+                  payload: {
+                    routine,
+                  },
                 },
               });
             },
 
             renderTable(table) {
               return postMessage({
-                event: "table",
-                payload: {
-                  table,
+                logger: parentLogger.createChild("renderTable"),
+                event: {
+                  event: "table",
+                  payload: {
+                    table,
+                  },
                 },
               });
             },
 
-            renderRows({ structs, table, page }) {
-              return tryCatch(
-                async () => {
-                  outputChannel.appendLine(`Result: ${structs.length} rows`);
+            async renderRows({ structs, table, page }) {
+              const logger = parentLogger.createChild("renderRows");
 
-                  if (table.schema.fields === undefined) {
-                    throw new Error("fields is not defined");
-                  }
+              if (table.schema.fields === undefined) {
+                return fail({
+                  type: "NoSchema" as const,
+                  reason: "fields is not defined",
+                });
+              }
 
-                  const flat = createFlat(table.schema.fields);
-                  await postMessage({
-                    event: "rows",
-                    payload: {
-                      header: flat.heads.map(({ id }) => id),
-                      rows: flat.toRows({
-                        structs,
-                        rowNumberStart: page.rowNumberStart,
-                      }),
-                      page: toSerializablePage(page),
-                    },
-                  });
+              const flatResult = createFlat(table.schema.fields);
+              if (!flatResult.success) {
+                return flatResult;
+              }
+              const flat = unwrap(flatResult);
+
+              logger.log(`${structs.length} rows`);
+
+              return postMessage({
+                logger,
+                event: {
+                  event: "rows",
+                  payload: {
+                    header: flat.heads.map(({ id }) => id),
+                    rows: flat.toRows({
+                      structs,
+                      rowNumberStart: page.rowNumberStart,
+                    }),
+                    page: toSerializablePage(page),
+                  },
                 },
-                (reason) => {
-                  return {
-                    type: "Unknown",
-                    reason: String(reason),
-                  };
-                }
-              );
+              });
             },
 
             dispose() {
@@ -274,7 +302,7 @@ export function createRendererManager({
         },
         (err) => ({
           type: "Unknown",
-          reason: String(err),
+          reason: errorToString(err),
         })
       );
     },

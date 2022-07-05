@@ -19,7 +19,7 @@ export type StructField = Readonly<{
   name: string;
   type: StructFieldType;
   mode: FieldMode;
-  fields: Array<Field>;
+  fields: ReadonlyArray<Field>;
 }>;
 
 export type FieldType = PrimitiveFieldType | StructFieldType;
@@ -47,7 +47,7 @@ export type StructFieldType = typeof structTableFieldTypes[number];
 
 export type FieldMode = "NULLABLE" | "REQUIRED" | "REPEATED";
 
-export type Column = Array<Accessor>;
+export type Column = ReadonlyArray<Accessor>;
 export type Accessor = Readonly<{
   id: string;
   name: string;
@@ -56,7 +56,7 @@ export type Accessor = Readonly<{
 }>;
 
 export type Struct = Readonly<{
-  [name: string]: Value | Struct | Array<Value | Struct>;
+  [name: string]: Value | Struct | ReadonlyArray<Value | Struct>;
 }>;
 export type Value =
   | null
@@ -76,7 +76,7 @@ export type Primitive = null | number | string | boolean;
 
 export type NumberedRows = Readonly<{
   rowNumber: string;
-  rows: Array<Row>;
+  rows: ReadonlyArray<Row>;
 }>;
 
 export type Row = Array<Cell>;
@@ -169,8 +169,8 @@ export type RowsEvent = Readonly<{
   payload: RowsPayload;
 }>;
 export type RowsPayload = Readonly<{
-  header: Array<string>;
-  rows: Array<NumberedRows>;
+  header: ReadonlyArray<string>;
+  rows: ReadonlyArray<NumberedRows>;
   page: SerializablePage;
 }>;
 export function isRowsEvent(e: RendererEvent): e is RowsEvent {
@@ -267,7 +267,7 @@ export type Routine = Readonly<{
 }>;
 
 export type Schema = Readonly<{
-  fields?: Array<Field>;
+  fields?: ReadonlyArray<Field>;
 }>;
 
 export type TableReference = Readonly<{

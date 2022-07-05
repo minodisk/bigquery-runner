@@ -10,48 +10,65 @@ import {
   Row,
   Struct,
   Primitive,
+  errorToString,
+  Result,
+  tryCatchSync,
+  UnknownError,
 } from "types";
 import { valueToPrimitive } from "./transform";
 
 type Transform = (primitive: Primitive) => Primitive;
 
-export function createFlat(fields: Array<Field>) {
-  const heads = fieldsToHeads(fields);
-  const columns = fieldsToColumns(fields);
-  return {
-    heads,
-    columns,
-    toRows({
-      structs,
-      rowNumberStart,
-      transform,
-    }: {
-      readonly structs: Array<Struct>;
-      readonly rowNumberStart: bigint;
-      readonly transform?: Transform;
-    }) {
-      return structsToRows({
+export type Flat = Readonly<{
+  heads: ReadonlyArray<Accessor>;
+  columns: ReadonlyArray<Column>;
+  toRows(
+    props: Readonly<{
+      structs: ReadonlyArray<Struct>;
+      rowNumberStart: bigint;
+      transform?: Transform;
+    }>
+  ): ReadonlyArray<NumberedRows>;
+  toHashes(
+    props: Readonly<{
+      structs: ReadonlyArray<Struct>;
+      transform?: Transform;
+    }>
+  ): ReadonlyArray<Hash>;
+}>;
+
+export function createFlat(
+  fields: ReadonlyArray<Field>
+): Result<UnknownError, Flat> {
+  return tryCatchSync(
+    () => {
+      const heads = fieldsToHeads(fields);
+      const columns = fieldsToColumns(fields);
+      return {
         heads,
         columns,
-        structs,
-        rowNumberStart,
-        transform,
-      });
+        toRows({ structs, rowNumberStart, transform }) {
+          return structsToRows({
+            heads,
+            columns,
+            structs,
+            rowNumberStart,
+            transform,
+          });
+        },
+        toHashes({ structs, transform }) {
+          return structsToHashes({ columns, structs, transform });
+        },
+      };
     },
-    toHashes({
-      structs,
-      transform,
-    }: {
-      readonly structs: Array<Struct>;
-      readonly transform?: Transform;
-    }) {
-      return structsToHashes({ columns, structs, transform });
-    },
-  };
+    (err) => ({
+      type: "Unknown" as const,
+      reason: errorToString(err),
+    })
+  );
 }
-export type Flat = ReturnType<typeof createFlat>;
 
-function fieldsToHeads(fields: Array<Field>): Array<Accessor> {
+function fieldsToHeads(fields: ReadonlyArray<Field>): ReadonlyArray<Accessor> {
   return fields.flatMap((field) => {
     if (field.type === "STRUCT" || field.type === "RECORD") {
       return fieldsToHeads(field.fields).map((f) => ({
@@ -66,7 +83,7 @@ function fieldsToHeads(fields: Array<Field>): Array<Accessor> {
   });
 }
 
-function fieldsToColumns(fields: Array<Field>): Array<Column> {
+function fieldsToColumns(fields: ReadonlyArray<Field>): ReadonlyArray<Column> {
   return fields.flatMap((field) => {
     if (field.type === "STRUCT" || field.type === "RECORD") {
       return fieldsToColumns(field.fields).map((columns) => [
@@ -90,13 +107,13 @@ function structsToRows({
   structs,
   rowNumberStart,
   transform,
-}: {
-  readonly heads: Array<Accessor>;
-  readonly columns: Array<Column>;
-  readonly structs: Array<Struct>;
-  readonly rowNumberStart: bigint;
-  readonly transform?: Transform;
-}): Array<NumberedRows> {
+}: Readonly<{
+  heads: ReadonlyArray<Accessor>;
+  columns: ReadonlyArray<Column>;
+  structs: ReadonlyArray<Struct>;
+  rowNumberStart: bigint;
+  transform?: Transform;
+}>): ReadonlyArray<NumberedRows> {
   return structs.map((struct, i) => {
     const rows = structToRows({ heads, columns, struct, transform });
     return {
@@ -110,20 +127,31 @@ function structToRows({
   heads,
   columns,
   struct,
-  transform,
-}: {
-  readonly heads: Array<Accessor>;
-  readonly columns: Array<Column>;
-  readonly struct: Struct;
-  readonly transform?: Transform;
-}): Array<Row> {
+  transform = (primitive) => primitive,
+}: Readonly<{
+  heads: ReadonlyArray<Accessor>;
+  columns: ReadonlyArray<Column>;
+  struct: Struct;
+  transform?: Transform;
+}>): ReadonlyArray<Row> {
   const rows: Array<Row> = [];
-  const createFillWithRow = createFillWithRowCreator({
-    heads,
-    results: rows,
-    depths: new Array(columns.length).fill(0),
-    transform,
-  });
+  const depths = new Array(columns.length).fill(0);
+  const createFillWithRow = ({ columnIndex }: { columnIndex: number }) => {
+    return ({ accessor, value }: { value: Value; accessor: Accessor }) => {
+      if (!rows[depths[columnIndex]!]) {
+        rows[depths[columnIndex]!] = heads.map(({ id }) => ({
+          id,
+          value: undefined,
+        }));
+      }
+      rows[depths[columnIndex]!]![columnIndex] = {
+        id: accessor.id,
+        value: transform(valueToPrimitive(value)),
+      };
+      depths[columnIndex]! += 1;
+    };
+  };
+
   columns.forEach((column, columnIndex) =>
     walk({
       struct,
@@ -132,6 +160,7 @@ function structToRows({
       fill: createFillWithRow({ columnIndex }),
     })
   );
+
   return rows;
 }
 
@@ -139,11 +168,11 @@ function structsToHashes({
   columns,
   structs,
   transform,
-}: {
-  readonly columns: Array<Column>;
-  readonly structs: Array<Struct>;
-  readonly transform?: Transform;
-}): Array<Hash> {
+}: Readonly<{
+  columns: ReadonlyArray<Column>;
+  structs: ReadonlyArray<Struct>;
+  transform?: Transform;
+}>): ReadonlyArray<Hash> {
   return structs.flatMap((struct) =>
     structToHashes({ columns, struct, transform })
   );
@@ -152,18 +181,26 @@ function structsToHashes({
 function structToHashes({
   columns,
   struct,
-  transform,
-}: {
-  readonly columns: Array<Column>;
-  readonly struct: Struct;
-  readonly transform?: Transform;
-}): Array<Hash> {
+  transform = (primitive) => primitive,
+}: Readonly<{
+  columns: ReadonlyArray<Column>;
+  struct: Struct;
+  transform?: Transform;
+}>): ReadonlyArray<Hash> {
   const results: Array<Hash> = [];
-  const createFillWithHash = createFillWithHashCreator({
-    results,
-    depths: new Array(columns.length).fill(0),
-    transform,
-  });
+  const depths = new Array(columns.length).fill(0);
+  const createFillWithHash = ({ columnIndex }: { columnIndex: number }) => {
+    return ({ value, accessor }: { value: Value; accessor: Accessor }) => {
+      if (!results[depths[columnIndex]!]) {
+        results[depths[columnIndex]!] = {};
+      }
+      results[depths[columnIndex]!]![accessor.id] = transform(
+        valueToPrimitive(value)
+      );
+      depths[columnIndex]! += 1;
+    };
+  };
+
   columns.forEach((column, columnIndex) =>
     walk({
       struct,
@@ -172,6 +209,7 @@ function structToHashes({
       fill: createFillWithHash({ columnIndex }),
     })
   );
+
   return results;
 }
 
@@ -180,19 +218,19 @@ function walk({
   column,
   accessorIndex,
   fill,
-}: {
-  readonly struct: Struct;
-  readonly column: Column;
-  readonly accessorIndex: number;
+}: Readonly<{
+  struct: Struct;
+  column: Column;
+  accessorIndex: number;
   fill(props: { accessor: Accessor; value: Value }): void;
-}): void {
+}>): void {
   let s: Struct = struct;
   let isNull = false;
   for (let ai = accessorIndex; ai < column.length; ai += 1) {
     const accessor = column[ai]!;
     if (accessor.mode === "REPEATED") {
       if (accessor.type === "STRUCT" || accessor.type === "RECORD") {
-        (s[accessor.name] as Array<Struct>).forEach((struct) => {
+        (s[accessor.name] as ReadonlyArray<Struct>).forEach((struct) => {
           walk({
             struct,
             column,
@@ -202,7 +240,7 @@ function walk({
         });
         break;
       }
-      (s[accessor.name] as Array<Value>).forEach((value) =>
+      (s[accessor.name] as ReadonlyArray<Value>).forEach((value) =>
         fill({
           accessor,
           value,
@@ -222,54 +260,4 @@ function walk({
       });
     }
   }
-}
-
-function createFillWithRowCreator({
-  heads,
-  results,
-  depths,
-  transform = (primitive) => primitive,
-}: {
-  readonly heads: Array<Accessor>;
-  readonly results: Array<Row>;
-  readonly depths: Array<number>;
-  readonly transform?: Transform;
-}) {
-  return ({ columnIndex }: { columnIndex: number }) => {
-    return ({ accessor, value }: { value: Value; accessor: Accessor }) => {
-      if (!results[depths[columnIndex]!]) {
-        results[depths[columnIndex]!] = heads.map(({ id }) => ({
-          id,
-          value: undefined,
-        }));
-      }
-      results[depths[columnIndex]!]![columnIndex] = {
-        id: accessor.id,
-        value: transform(valueToPrimitive(value)),
-      };
-      depths[columnIndex]! += 1;
-    };
-  };
-}
-
-function createFillWithHashCreator({
-  results,
-  depths,
-  transform = (primitive) => primitive,
-}: {
-  readonly results: Array<Hash>;
-  readonly depths: Array<number>;
-  readonly transform?: Transform;
-}) {
-  return ({ columnIndex }: { columnIndex: number }) => {
-    return ({ value, accessor }: { value: Value; accessor: Accessor }) => {
-      if (!results[depths[columnIndex]!]) {
-        results[depths[columnIndex]!] = {};
-      }
-      results[depths[columnIndex]!]![accessor.id] = transform(
-        valueToPrimitive(value)
-      );
-      depths[columnIndex]! += 1;
-    };
-  };
 }

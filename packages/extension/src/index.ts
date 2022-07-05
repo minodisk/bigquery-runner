@@ -18,6 +18,7 @@ import { createConfigManager } from "./configManager";
 import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
 import { createErrorMarkerManager } from "./errorMarker";
+import { createLogger } from "./logger";
 import { createRendererManager } from "./renderer";
 import { createRunnerManager } from "./runner";
 import {
@@ -25,16 +26,12 @@ import {
   createStatusManager,
 } from "./statusManager";
 
-export type Result = {
-  readonly jobId?: string;
-};
-
 export async function activate(ctx: ExtensionContext) {
   try {
     const title = "BigQuery Runner";
     const section = "bigqueryRunner";
 
-    const outputChannel = window.createOutputChannel(title);
+    const logger = createLogger(window.createOutputChannel(title));
     const configManager = createConfigManager(section);
     const downloader = createDownloader({
       configManager,
@@ -45,8 +42,8 @@ export async function activate(ctx: ExtensionContext) {
     });
     const rendererManager = createRendererManager({
       ctx,
+      logger: logger.createChild("renderer"),
       configManager,
-      outputChannel,
       async onPrevPageRequested({ runnerId }) {
         await runnerManager.get(runnerId)?.prev();
       },
@@ -65,21 +62,21 @@ export async function activate(ctx: ExtensionContext) {
     });
     const errorMarkerManager = createErrorMarkerManager(section);
     const runnerManager = createRunnerManager({
+      logger: logger.createChild("runner"),
       configManager,
-      outputChannel,
       statusManager,
       rendererManager,
       downloader,
       errorMarkerManager,
     });
     const dryRunner = createDryRunner({
-      outputChannel,
+      logger: logger.createChild("dryRunner"),
       configManager,
       statusManager,
       errorMarkerManager,
     });
     ctx.subscriptions.push(
-      outputChannel,
+      logger,
       configManager,
       downloader,
       rendererManager,
@@ -92,19 +89,15 @@ export async function activate(ctx: ExtensionContext) {
     // Register all available commands and their actions.
     // CommandMap describes a map of extension commands (defined in package.json)
     // and the function they invoke.
-    new Map<string, () => void>([
-      [
-        `${section}.dryRun`,
-        async () => {
+    ctx.subscriptions.push(
+      ...Object.entries({
+        [`${section}.dryRun`]: async () => {
           if (!window.activeTextEditor) {
             return;
           }
           await dryRunner.run(window.activeTextEditor);
         },
-      ],
-      [
-        `${section}.run`,
-        async () => {
+        [`${section}.run`]: async () => {
           if (!window.activeTextEditor) {
             throw new Error(`no active text editor`);
           }
@@ -116,10 +109,7 @@ export async function activate(ctx: ExtensionContext) {
           }
           await unwrap(runnerResult).run();
         },
-      ],
-      [
-        `${section}.prevPage`,
-        async () => {
+        [`${section}.prevPage`]: async () => {
           if (!window.activeTextEditor) {
             throw new Error(`no active text editor`);
           }
@@ -131,10 +121,7 @@ export async function activate(ctx: ExtensionContext) {
           }
           await runner.prev();
         },
-      ],
-      [
-        `${section}.nextPage`,
-        async () => {
+        [`${section}.nextPage`]: async () => {
           if (!window.activeTextEditor) {
             throw new Error(`no active text editor`);
           }
@@ -146,10 +133,8 @@ export async function activate(ctx: ExtensionContext) {
           }
           await runner.next();
         },
-      ],
-    ]).forEach((action, name) => {
-      ctx.subscriptions.push(commands.registerCommand(name, action));
-    });
+      }).map(([name, action]) => commands.registerCommand(name, action))
+    );
 
     window.visibleTextEditors.forEach((editor) => dryRunner.validate(editor));
     ctx.subscriptions.push(

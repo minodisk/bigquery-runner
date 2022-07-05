@@ -95,37 +95,15 @@ export async function createClient(
     });
   }
 
-  return succeed({
+  const client: Client = {
     async createRunJob(query) {
-      const createQueryJobResult = await tryCatch(
-        async () => {
-          const [job] = await bigQuery.createQueryJob({
-            ...query,
-            dryRun: false,
-          });
-          return job;
-        },
-        (err) => {
-          const reason = String(err);
-          const rPosition = /^(.*?) at \[(\d+):(\d+)\]$/;
-          const res = rPosition.exec(reason);
-          if (!res) {
-            return {
-              type: "Query" as const,
-              reason,
-            };
-          }
-
-          const [_, r, l, c] = res;
-          const line = Number(l) - 1;
-          const character = Number(c) - 1;
-          return {
-            type: "QueryWithPosition" as const,
-            reason: r ?? reason,
-            position: { line, character },
-          };
-        }
-      );
+      const createQueryJobResult = await tryCatch(async () => {
+        const [job] = await bigQuery.createQueryJob({
+          ...query,
+          dryRun: false,
+        });
+        return job;
+      }, parseQueryJobError);
       if (!createQueryJobResult.success) {
         return createQueryJobResult;
       }
@@ -308,35 +286,13 @@ export async function createClient(
       const createQueryJobResult = await tryCatch<
         QueryError | QueryWithPositionError,
         Job
-      >(
-        async () => {
-          const [job] = await bigQuery.createQueryJob({
-            ...query,
-            dryRun: true,
-          });
-          return job;
-        },
-        (err) => {
-          const reason = String(err);
-          const rPosition = /^(.*?) at \[(\d+):(\d+)\]$/;
-          const res = rPosition.exec(reason);
-          if (!res) {
-            return {
-              type: "Query" as const,
-              reason,
-            };
-          }
-
-          const [_, r, l, c] = res;
-          const line = Number(l) - 1;
-          const character = Number(c) - 1;
-          return {
-            type: "QueryWithPosition" as const,
-            reason: r ?? reason,
-            position: { line, character },
-          };
-        }
-      );
+      >(async () => {
+        const [job] = await bigQuery.createQueryJob({
+          ...query,
+          dryRun: true,
+        });
+        return job;
+      }, parseQueryJobError);
       if (!createQueryJobResult.success) {
         return createQueryJobResult;
       }
@@ -348,7 +304,9 @@ export async function createClient(
         totalBytesProcessed: parseInt(totalBytesProcessed, 10),
       });
     },
-  });
+  };
+
+  return succeed(client);
 }
 
 export function createTableName(
@@ -363,6 +321,27 @@ export function createTableName(
   }
   const { projectId, datasetId, tableId } = table;
   return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
+}
+
+function parseQueryJobError(err: unknown) {
+  const reason = (err as { message: string }).message ?? String(err);
+  const rPosition = /^(.*?) at \[(\d+):(\d+)\]$/;
+  const res = rPosition.exec(reason);
+  if (!res) {
+    return {
+      type: "Query" as const,
+      reason,
+    };
+  }
+
+  const [_, r, l, c] = res;
+  const line = Number(l) - 1;
+  const character = Number(c) - 1;
+  return {
+    type: "QueryWithPosition" as const,
+    reason: r ?? reason,
+    position: { line, character },
+  };
 }
 
 function getPage(

@@ -1,22 +1,23 @@
 import { format as formatBytes } from "bytes";
 import { createClient } from "core";
 import { RunnerID, unwrap } from "types";
-import { OutputChannel, TextDocument, TextEditor, window } from "vscode";
+import { TextDocument, TextEditor, window } from "vscode";
 import { ConfigManager } from "./configManager";
 import { ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import { isBigQuery } from "./isBigQuery";
+import { Logger } from "./logger";
 import { StatusManager } from "./statusManager";
 
 export type DryRunner = ReturnType<typeof createDryRunner>;
 
 export function createDryRunner({
-  outputChannel,
+  logger,
   configManager,
   statusManager,
   errorMarkerManager,
 }: Readonly<{
-  outputChannel: OutputChannel;
+  logger: Logger;
   configManager: ConfigManager;
   statusManager: StatusManager;
   errorMarkerManager: ErrorMarkerManager;
@@ -50,7 +51,7 @@ export function createDryRunner({
       pathTimeoutId.set(
         runnerId,
         setTimeout(async () => {
-          outputChannel.appendLine(`Validate`);
+          logger.log(`validate`);
           await this.run(editor);
         }, config.validation.debounceInterval)
       );
@@ -70,7 +71,7 @@ export function createDryRunner({
 
       const query = await getQueryText(editor);
 
-      outputChannel.appendLine(`Dry run`);
+      logger.log(`run`);
       status.loadProcessed();
 
       const config = configManager.get();
@@ -78,7 +79,7 @@ export function createDryRunner({
       const clientResult = await createClient(config);
       if (!clientResult.success) {
         const { reason } = unwrap(clientResult);
-        outputChannel.appendLine(reason);
+        logger.log(reason);
         status.errorProcessed();
         await window.showErrorMessage(reason);
         return;
@@ -92,7 +93,7 @@ export function createDryRunner({
       errorMarker.clear();
       if (!dryRunJobResult.success) {
         const err = unwrap(dryRunJobResult);
-        outputChannel.appendLine(err.reason);
+        logger.error(err);
         status.errorProcessed();
         if (err.type === "QueryWithPosition") {
           errorMarker.markAt({
@@ -112,9 +113,9 @@ export function createDryRunner({
 
       const job = unwrap(dryRunJobResult);
 
-      outputChannel.appendLine(`Job ID: ${job.id}`);
+      logger.log(`job ID: ${job.id}`);
       const bytes = formatBytes(job.totalBytesProcessed);
-      outputChannel.appendLine(`Result: ${bytes} estimated to be read`);
+      logger.log(`result: ${bytes} estimated to be read`);
 
       status.succeedProcessed({
         bytes,
