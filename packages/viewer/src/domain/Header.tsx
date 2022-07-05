@@ -7,30 +7,16 @@ export const Header: CFC<{ loading?: string }> = ({
   children,
   ...props
 }) => (
-  <Box
-    position="sticky"
-    height="36px"
-    top={0}
-    bgColor="var(--vscode-editorGroupHeader-tabsBackground);"
-    css={{
-      "::before": {
-        content: "''",
-        position: "absolute",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: "block",
-        borderBottomColor: "var(--vscode-editorGroupHeader-tabsBorder)",
-        borderBottomWidth: 2,
-      },
-    }}
-  >
+  <Box position="sticky" height="36px" top={0}>
     <Flex
       position="fixed"
       height="36px"
       top={0}
       left={0}
       right={0}
+      bgColor="var(--vscode-editorGroupHeader-tabsBackground);"
+      borderBottomColor="var(--vscode-editorGroupHeader-tabsBorder)"
+      borderBottomWidth={2}
       justifyContent="space-between"
       {...props}
     >
