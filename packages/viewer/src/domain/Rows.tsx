@@ -87,6 +87,7 @@ export const Rows: FC<
           <IconButton
             aria-label="download"
             icon={<DownloadIcon />}
+            size="xs"
             onClick={onDownloadRequest}
           />
         </HStack>
