@@ -2,7 +2,6 @@ import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
 import deepmerge from "deepmerge";
 import React, { FC, useCallback, useEffect, useState } from "react";
 import {
-  isFocusedEvent,
   isCloseEvent,
   isData,
   isOpenEvent,
@@ -50,7 +49,7 @@ const vscode = acquireVsCodeApi<State>(); // window["acquireVsCodeApi"] ?
 //   };
 
 const App: FC = () => {
-  const [focused, setFocused] = useState(false);
+  // const [focused, setFocused] = useState(false);
   const [metadataPayload, setMetadataPayload] = useState<
     MetadataPayload | undefined
   >(vscode.getState()?.metadataPayload);
@@ -116,10 +115,10 @@ const App: FC = () => {
         return;
       }
       const { payload } = data;
-      if (isFocusedEvent(payload)) {
-        setFocused(payload.payload.focused);
-        return;
-      }
+      // if (isFocusedEvent(payload)) {
+      //   setFocused(payload.payload.focused);
+      //   return;
+      // }
       if (isOpenEvent(payload)) {
         setLoading("Fetching");
         return;

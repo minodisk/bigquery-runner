@@ -1,13 +1,11 @@
 import { describe } from "mocha";
-import { window } from "vscode";
 
 // async function sleep(ms: number) {
 //   return new Promise((resolve) => setTimeout(resolve, ms));
 // }
 
 describe("BigQuery Runner", () => {
-  window.showInformationMessage("Start all tests.");
-
+  // window.showInformationMessage("Start all tests.");
   // const dependencies = (() => {
   //   let output = "";
   //   let result = {};
@@ -45,7 +43,6 @@ describe("BigQuery Runner", () => {
   //     },
   //   };
   // })();
-
   // describe("activation", () => {
   //   it("should push disposable to subscriptions", async () => {
   //     const subscriptions: Array<{ dispose(): any }> = [];
@@ -59,7 +56,6 @@ describe("BigQuery Runner", () => {
   //     strictEqual(subscriptions.length, 9);
   //   });
   // });
-
   //   describe("commands", () => {
   //     it("should be subscribed", async () => {
   //       const doc = await workspace.openTextDocument({
@@ -78,21 +74,17 @@ describe("BigQuery Runner", () => {
   // id
   // --
   // a
-
   // `
   //       );
   //       dependencies.clear();
   //     });
   //   });
-
   //   describe("verification", () => {
   //     it("should run on file chaned", async () => {
   //       const config = workspace.getConfiguration("bigqueryRunner");
   //       await config.update("verifyOnSave.enabled", true, true);
   //       console.log("cofig:", config);
-
   //       dependencies.clear();
-
   //       const uri = Uri.joinPath(
   //         Uri.parse(__dirname),
   //         "../../../examples/error.bqsql"
@@ -101,23 +93,18 @@ describe("BigQuery Runner", () => {
   //       const document = await workspace.openTextDocument(uri);
   //       await window.showTextDocument(document);
   //       // await commands.executeCommand("bigqueryRunner.dryRun");
-
   //       await sleep(5000);
-
   //       const output = dependencies.outputChannel.get();
   //       const diagnostics = dependencies.diagnosticCollection.get(uri);
   //       console.log("->", diagnostics);
-
   //       // const { jobId } = dependencies.resultChannel.get();
   //       strictEqual(
   //         output,
   //         `Validate
   // Dry run
   // Error: Field 'ip' not found.
-
   // `
   //       );
-
   //       dependencies.clear();
   //     });
   //   });
