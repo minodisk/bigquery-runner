@@ -2,30 +2,31 @@
 // This file is generated from gen-src/config.d.ts.ejs.
 
 export type Config = {
-  readonly keyFilename: string | undefined;
-  readonly projectId: string | undefined;
-  readonly location: string | undefined;
-  readonly useLegacySql: boolean;
-  readonly maximumBytesBilled: string | undefined;
-  readonly validation: {
-    readonly enabled: boolean;
-    readonly debounceInterval: number;
-  };
-  readonly languageIds: Array<string>;
   readonly extensions: Array<string>;
-  readonly pagination: {
-    readonly results: number | undefined;
-  };
-  readonly csv: {
-    readonly header: boolean;
-    readonly delimiter: string;
+  readonly icon: boolean;
+  readonly keyFilename: string | undefined;
+  readonly languageIds: Array<string>;
+  readonly location: string | undefined;
+  readonly maximumBytesBilled: string | undefined;
+  readonly projectId: string | undefined;
+  readonly useLegacySql: boolean;
+  readonly downloader: {
+    readonly csv: {
+      readonly delimiter: string;
+      readonly header: boolean;
+    };
+    readonly rowsPerPage: number | undefined;
   };
   readonly viewer: {
     readonly column: string | number;
+    readonly rowsPerPage: number | undefined;
   };
-  readonly icon: boolean;
   readonly statusBarItem: {
     readonly align: "left" | "right" | undefined;
     readonly priority: number | undefined;
+  };
+  readonly validation: {
+    readonly enabled: boolean;
+    readonly debounceInterval: number;
   };
 };

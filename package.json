@@ -80,61 +80,6 @@
       "type": "object",
       "title": "BigQuery Runner",
       "properties": {
-        "bigqueryRunner.keyFilename": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VS Code. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used."
-        },
-        "bigqueryRunner.projectId": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used."
-        },
-        "bigqueryRunner.location": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location."
-        },
-        "bigqueryRunner.useLegacySql": {
-          "type": "boolean",
-          "default": false,
-          "description": "Flag whether to use legacy SQL. If `false`, use standard SQL."
-        },
-        "bigqueryRunner.maximumBytesBilled": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used."
-        },
-        "bigqueryRunner.validation.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Validate the query whenever the file set in `languageIds` or `extensions` is modified."
-        },
-        "bigqueryRunner.validation.debounceInterval": {
-          "type": "number",
-          "default": 600,
-          "description": "Debounce interval in milliseconds to validate the query when the file is modified."
-        },
-        "bigqueryRunner.languageIds": {
-          "type": "array",
-          "default": [
-            "bigquery",
-            "sql-bigquery"
-          ],
-          "description": "List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
-        },
         "bigqueryRunner.extensions": {
           "type": "array",
           "default": [
@@ -144,23 +89,73 @@
           ],
           "description": "List of file extensions for which the query is to be validated when the file is modified."
         },
-        "bigqueryRunner.pagination.results": {
+        "bigqueryRunner.icon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display GUI button to run on the editor title menu bar."
+        },
+        "bigqueryRunner.keyFilename": {
           "type": [
-            "number",
+            "string",
             "null"
           ],
-          "default": 100,
-          "description": "The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`."
+          "default": null,
+          "description": "The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VS Code. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used."
         },
-        "bigqueryRunner.csv.header": {
+        "bigqueryRunner.languageIds": {
+          "type": "array",
+          "default": [
+            "bigquery",
+            "sql-bigquery"
+          ],
+          "description": "List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
+        },
+        "bigqueryRunner.location": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location."
+        },
+        "bigqueryRunner.maximumBytesBilled": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used."
+        },
+        "bigqueryRunner.projectId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used."
+        },
+        "bigqueryRunner.useLegacySql": {
+          "type": "boolean",
+          "default": false,
+          "description": "Flag whether to use legacy SQL. If `false`, use standard SQL."
+        },
+        "bigqueryRunner.downloader.csv.delimiter": {
+          "type": "string",
+          "default": ",",
+          "description": "The delimiter for CSV. For example, if set to `\\t`, the output will be formatted as TSV."
+        },
+        "bigqueryRunner.downloader.csv.header": {
           "type": "boolean",
           "default": false,
           "description": "The flag whether to add column names to CSV."
         },
-        "bigqueryRunner.csv.delimiter": {
-          "type": "string",
-          "default": ",",
-          "description": "The delimiter for CSV. For example, if set to \t, the output will be formatted as TSV."
+        "bigqueryRunner.downloader.rowsPerPage": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": 10000,
+          "description": "The number of rows to fetch per page of paging when downloading."
         },
         "bigqueryRunner.viewer.column": {
           "type": [
@@ -170,10 +165,13 @@
           "default": "+1",
           "description": "A string such as '+N', '-N' can be set to specify a position relative to the column where the query file is opened. Then, if you set a number greater than 1, the viewer will appear in the specified number of columns from the left. A number of -1 means the viewer will appear in the same column as the query file, and a number of -2 means the viewer will appear in the column farthest to the right."
         },
-        "bigqueryRunner.icon": {
-          "type": "boolean",
-          "default": true,
-          "description": "Display GUI button to run on the editor title menu bar."
+        "bigqueryRunner.viewer.rowsPerPage": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": 100,
+          "description": "The number of rows to fetch per page of paging when displaying to viewer. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`."
         },
         "bigqueryRunner.statusBarItem.align": {
           "type": [
@@ -195,6 +193,16 @@
           ],
           "default": null,
           "description": "The priority of status bar item. Higher value means the item should be shown more to the left."
+        },
+        "bigqueryRunner.validation.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Validate the query whenever the file set in `languageIds` or `extensions` is modified."
+        },
+        "bigqueryRunner.validation.debounceInterval": {
+          "type": "number",
+          "default": 600,
+          "description": "Debounce interval in milliseconds to validate the query when the file is modified."
         }
       }
     }

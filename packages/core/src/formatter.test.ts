@@ -1,4 +1,4 @@
-import { Field, Struct } from "types";
+import { Field, Struct, unwrap } from "types";
 import {
   createCSVFormatter,
   createFlat,
@@ -122,9 +122,15 @@ describe("formatter", () => {
   describe("createTableFormatter", () => {
     it("should be format empty", async () => {
       const formatter = createTableFormatter();
-      const flat = createFlat([
+
+      const flatResult = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("");
       expect(
         await formatter.body({ structs: [], rowNumberStart: 0n, flat })
@@ -134,9 +140,15 @@ describe("formatter", () => {
 
     it("should be format simple", async () => {
       const formatter = createTableFormatter();
-      const flat = createFlat([
+
+      const flatResult = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("");
       expect(
         await formatter.body({
@@ -160,7 +172,8 @@ foo
 
     it("should be format complex", async () => {
       const formatter = createTableFormatter();
-      const flat = createFlat([
+
+      const flatResult = createFlat([
         { name: "a", type: "INTEGER", mode: "NULLABLE" },
         {
           name: "b",
@@ -173,6 +186,11 @@ foo
         },
         { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("");
       expect(await formatter.body({ ...complexStructs, flat })).toEqual(
         `
@@ -190,7 +208,13 @@ a    b.c    b.d  e
 
     it("should be format all types", async () => {
       const formatter = createTableFormatter();
-      const flat = createFlat(fields);
+
+      const flatResult = createFlat(fields);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual(``);
       expect(
         await formatter.body({
@@ -214,9 +238,15 @@ null   null   null     null     null        null    null   null        null     
   describe("createMarkdownFormatter", () => {
     it("should be format empty", async () => {
       const formatter = createMarkdownFormatter();
-      const flat = createFlat([
+
+      const flatResult = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual(
         `
 |foo|
@@ -231,9 +261,15 @@ null   null   null     null     null        null    null   null        null     
 
     it("should be format simple", async () => {
       const formatter = createMarkdownFormatter();
-      const flat = createFlat([
+
+      const flatResult = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual(
         `
 |foo|
@@ -260,7 +296,8 @@ null   null   null     null     null        null    null   null        null     
 
     it("should be format complex", async () => {
       const formatter = createMarkdownFormatter();
-      const flat = createFlat([
+
+      const flatResult = createFlat([
         { name: "a", type: "INTEGER", mode: "NULLABLE" },
         {
           name: "b",
@@ -273,6 +310,11 @@ null   null   null     null     null        null    null   null        null     
         },
         { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual(
         `
 |a|b.c|b.d|e|
@@ -293,7 +335,13 @@ null   null   null     null     null        null    null   null        null     
 
     it("should be format all types", async () => {
       const formatter = createMarkdownFormatter();
-      const flat = createFlat(fields);
+
+      const flatResult = createFlat(fields);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat }))
         .toEqual(`|bool|int64|float64|numeric|bignumeric|string|bytes|date|datetime|time|timestamp|interval|
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -317,7 +365,13 @@ null   null   null     null     null        null    null   null        null     
   describe("createJSONLinesFormatter", () => {
     it("should be format empty", async () => {
       const formatter = createJSONLinesFormatter();
-      const flat = createFlat([]);
+
+      const flatResult = createFlat([]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("");
       expect(
         await formatter.body({ structs: [], rowNumberStart: 0n, flat })
@@ -327,7 +381,13 @@ null   null   null     null     null        null    null   null        null     
 
     it("should be format all types", async () => {
       const formatter = createJSONLinesFormatter();
-      const flat = createFlat([]);
+
+      const flatResult = createFlat([]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("");
       expect(
         await formatter.body({
@@ -348,7 +408,13 @@ null   null   null     null     null        null    null   null        null     
   describe("createJSONFormatter", () => {
     it("should be format empty", async () => {
       const formatter = createJSONFormatter();
-      const flat = createFlat([]);
+
+      const flatResult = createFlat([]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("[");
       expect(
         await formatter.body({ structs: [], rowNumberStart: 0n, flat })
@@ -359,7 +425,13 @@ null   null   null     null     null        null    null   null        null     
 
     it("should be format all types", async () => {
       const formatter = createJSONFormatter();
-      const flat = createFlat([]);
+
+      const flatResult = createFlat([]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("[");
       expect(
         await formatter.body({
@@ -377,10 +449,14 @@ null   null   null     null     null        null    null   null        null     
 
   describe("createCSVFormatter", () => {
     it("should be format empty", async () => {
-      const formatter = createCSVFormatter({
-        options: {},
-      });
-      const flat = createFlat([]);
+      const formatter = createCSVFormatter({});
+
+      const flatResult = createFlat([]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("");
       expect(
         await formatter.body({ structs: [], rowNumberStart: 0n, flat })
@@ -389,10 +465,14 @@ null   null   null     null     null        null    null   null        null     
     });
 
     it("should be format all types", async () => {
-      const formatter = createCSVFormatter({
-        options: {},
-      });
-      const flat = createFlat(fields);
+      const formatter = createCSVFormatter({});
+
+      const flatResult = createFlat(fields);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(formatter.head({ flat })).toEqual("");
       expect(
         await formatter.body({

@@ -236,7 +236,7 @@ export function createRunnerManager({
 
         const runJobResult = await client.createRunJob({
           query,
-          maxResults: config.pagination.results,
+          maxResults: config.viewer.rowsPerPage,
         });
         errorMarker?.clear();
         if (!runJobResult.success) {

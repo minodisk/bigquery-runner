@@ -1,14 +1,20 @@
+import { unwrap } from "types";
 import { createFlat } from "./flat";
 
 describe("flat", () => {
   describe("structToRows", () => {
     it("Empty", () => {
-      const flatten = createFlat([]);
-      expect(flatten.toRows({ structs: [], rowNumberStart: 0n })).toEqual([]);
+      const flatResult = createFlat([]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
+      expect(flat.toRows({ structs: [], rowNumberStart: 0n })).toEqual([]);
     });
 
     it("Flat", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -20,8 +26,13 @@ describe("flat", () => {
           mode: "REQUIRED",
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: "foo",
@@ -44,7 +55,7 @@ describe("flat", () => {
     });
 
     it("Struct", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -68,8 +79,13 @@ describe("flat", () => {
           mode: "REQUIRED",
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: "foo",
@@ -96,7 +112,7 @@ describe("flat", () => {
     });
 
     it("Nullable Struct", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRUCT",
@@ -122,8 +138,13 @@ describe("flat", () => {
           ],
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: {
@@ -177,7 +198,7 @@ describe("flat", () => {
     });
 
     it("Array<Nullable Struct>", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRUCT",
@@ -210,8 +231,13 @@ describe("flat", () => {
           ],
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: [
@@ -260,7 +286,7 @@ describe("flat", () => {
     });
 
     it("Empty Array<Value>", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -277,8 +303,13 @@ describe("flat", () => {
           mode: "REQUIRED",
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: "foo",
@@ -303,7 +334,7 @@ describe("flat", () => {
     });
 
     it("Array<Value>", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -325,8 +356,13 @@ describe("flat", () => {
           mode: "REPEATED",
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: "foo",
@@ -365,7 +401,7 @@ describe("flat", () => {
     });
 
     it("Empty Array<Struct>", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -399,8 +435,13 @@ describe("flat", () => {
           mode: "REQUIRED",
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: "foo",
@@ -427,7 +468,7 @@ describe("flat", () => {
     });
 
     it("Array<Struct>", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -451,8 +492,13 @@ describe("flat", () => {
           ],
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: "foo",
@@ -499,7 +545,7 @@ describe("flat", () => {
     });
 
     it("Array<Struct<Array<Struct>>>", () => {
-      const flatten = createFlat([
+      const flatResult = createFlat([
         {
           name: "a",
           type: "STRUCT",
@@ -520,8 +566,13 @@ describe("flat", () => {
           ],
         },
       ]);
+      if (!flatResult.success) {
+        throw new Error("failed");
+      }
+      const flat = unwrap(flatResult);
+
       expect(
-        flatten.toRows({
+        flat.toRows({
           structs: [
             {
               a: [
@@ -578,7 +629,7 @@ describe("flat", () => {
 
   // describe("primitiveToCell", () => {
   //   it("should return primitive values as they are", () => {
-  //     const flatten = createFlat([
+  //     const flatResult = createFlat([
   //       {
   //         name: "BIGNUMERIC",
   //         type: "BIGNUMERIC",
@@ -653,7 +704,7 @@ describe("flat", () => {
   //       },
   //     ]);
   //     expect(
-  //       flatten.toRows({
+  //       flat.toRows({
   //         structs: [
   //           {
   //             a: "foo",

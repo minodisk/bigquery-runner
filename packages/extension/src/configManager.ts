@@ -25,12 +25,21 @@ function getConfigration(section: string): Config {
   const config = workspace.getConfiguration(section) as unknown as Config;
   return {
     ...config,
-    pagination: {
-      results:
-        config.pagination?.results === undefined ||
-        config.pagination?.results === null
+    viewer: {
+      ...config.viewer,
+      rowsPerPage:
+        config.viewer.rowsPerPage === undefined ||
+        config.viewer.rowsPerPage === null
           ? undefined
-          : config.pagination.results,
+          : config.viewer.rowsPerPage,
+    },
+    downloader: {
+      ...config.downloader,
+      rowsPerPage:
+        config.downloader.rowsPerPage === undefined ||
+        config.downloader.rowsPerPage === null
+          ? undefined
+          : config.downloader.rowsPerPage,
     },
     keyFilename:
       config.keyFilename === null || config.keyFilename === undefined
@@ -64,19 +73,18 @@ function setContext(config: Config): void {
 }
 
 function flatten(
-  source: { [key: string]: any },
+  source: { [key: string]: unknown },
   parentKey: string,
-  target: { [key: string]: any } = {}
-): { [key: string]: any } {
-  Object.keys(source).reduce((o, k) => {
+  target: { [key: string]: unknown } = {}
+): { [key: string]: unknown } {
+  return Object.keys(source).reduce((t, k) => {
     const v = source[k];
     const type = Object.prototype.toString.call(v);
     if (type === "[object Object]" && !Array.isArray(v)) {
-      o = flatten(v, parentKey + "." + k, o);
+      t = flatten(v as { [key: string]: unknown }, parentKey + "." + k, t);
     } else if (type !== "[object Function]") {
-      o[parentKey + "." + k] = v;
+      t[parentKey + "." + k] = v;
     }
-    return o;
+    return t;
   }, target);
-  return target;
 }

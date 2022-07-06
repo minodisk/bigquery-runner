@@ -38,7 +38,7 @@ export function createDownloader({
     csv: createWriter({
       configManager,
       logger: parentLogger.createChild("csv"),
-      createFormatter: (config) => createCSVFormatter(config.csv),
+      createFormatter: (config) => createCSVFormatter(config.downloader.csv),
     }),
     markdown: createWriter({
       configManager,
@@ -67,32 +67,35 @@ const createWriter =
     createFormatter: (config: Config) => Formatter;
   }) =>
   async ({ uri, query }: { uri: Uri; query: string }) => {
+    logger.log(`start downloading to ${uri.path}`);
+
     const config = configManager.get();
 
     const createClientResult = await createClient(config);
     if (!createClientResult.success) {
-      const { reason } = unwrap(createClientResult);
-      logger.log(reason);
+      logger.error(createClientResult);
       return;
     }
     const client = unwrap(createClientResult);
 
     const createRunJobResult = await client.createRunJob({
       query,
+      maxResults: config.downloader.rowsPerPage,
     });
     if (!createRunJobResult.success) {
-      const { reason } = unwrap(createRunJobResult);
-      logger.log(reason);
+      logger.error(createRunJobResult);
       return;
     }
     const job = unwrap(createRunJobResult);
+    logger.log(`job created ${job.id}`);
 
     const getTableResult = await job.getTable();
     if (!getTableResult.success) {
-      logger.error(unwrap(getTableResult));
+      logger.error(getTableResult);
       return;
     }
     const table = unwrap(getTableResult);
+    logger.log(`table fetched ${table.id}`);
     if (!table.schema.fields) {
       logger.error("no schema");
       return;
@@ -100,25 +103,29 @@ const createWriter =
 
     const flatResult = createFlat(table.schema.fields);
     if (!flatResult.success) {
-      logger.error(unwrap(flatResult));
+      logger.error(flatResult);
       return;
     }
     const flat = unwrap(flatResult);
+    logger.log(`flat created ${flat.heads.map(({ name }) => name).join(", ")}`);
 
     const stream = createWriteStream(uri.path);
-
     const formatter = createFormatter(config);
 
+    logger.log(`writing head`);
     stream.write(formatter.head({ flat }));
+
+    logger.log(`writing body`);
 
     const getStructsResult = await job.getStructs();
     if (!getStructsResult.success) {
-      const { reason } = unwrap(getStructsResult);
-      logger.log(reason);
+      logger.error(getStructsResult);
       return;
     }
     const structs = unwrap(getStructsResult);
+    logger.log(`fetched ${structs.length} rows`);
     const page = job.getPage(table);
+    logger.log(`page ${page.rowNumberStart} - ${page.rowNumberEnd}`);
     stream.write(
       await formatter.body({
         flat,
@@ -126,16 +133,19 @@ const createWriter =
         rowNumberStart: page.rowNumberStart,
       })
     );
+    logger.log(`written ${structs.length} rows`);
 
     while (job.hasNext()) {
-      const getStructsResult = await job.getStructs();
+      const getStructsResult = await job.getNextStructs();
       if (!getStructsResult.success) {
         const { reason } = unwrap(getStructsResult);
         logger.log(reason);
         return;
       }
       const structs = unwrap(getStructsResult);
+      logger.log(`fetched ${structs.length} rows`);
       const page = job.getPage(table);
+      logger.log(`page ${page.rowNumberStart} - ${page.rowNumberEnd}`);
       stream.write(
         await formatter.body({
           flat,
@@ -143,7 +153,13 @@ const createWriter =
           rowNumberStart: page.rowNumberStart,
         })
       );
+      logger.log(`written ${structs.length} rows`);
     }
 
+    logger.log(`writing foot`);
+
     stream.write(formatter.foot());
+    stream.end();
+
+    logger.log(`complete`);
   };

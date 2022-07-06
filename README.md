@@ -6,7 +6,7 @@ This file is generated from gen-src/README.md.ejs. -->
 
 1. Go to [the page of this extension in Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner)
 2. Click the `Install` button
-3. This will open the VS Code page for this extension, and click the `Install` button
+3. This will open the VSCode page for this extension, and click the `Install` button
 
 ## Authentication
 
@@ -64,6 +64,22 @@ Dry-run a query in BigQuery and display the result. If there is an error in the 
 
 The extension can be customized by modifying your `settings.json` file. The available configuration options, and their defaults, are below.
 
+### `bigqueryRunner.extensions`
+
+|Type|Default|
+|---|---|
+|array|[".bqsql",".bqddl",".bqdml"]|
+
+List of file extensions for which the query is to be validated when the file is modified.
+
+### `bigqueryRunner.icon`
+
+|Type|Default|
+|---|---|
+|boolean|true|
+
+Display GUI button to run on the editor title menu bar.
+
 ### `bigqueryRunner.keyFilename`
 
 |Type|Default|
@@ -71,54 +87,6 @@ The extension can be customized by modifying your `settings.json` file. The avai
 |string &#x7C; null|null|
 
 The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VS Code. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used.
-
-### `bigqueryRunner.projectId`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used.
-
-### `bigqueryRunner.location`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
-
-### `bigqueryRunner.useLegacySql`
-
-|Type|Default|
-|---|---|
-|boolean|false|
-
-Flag whether to use legacy SQL. If `false`, use standard SQL.
-
-### `bigqueryRunner.maximumBytesBilled`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used.
-
-### `bigqueryRunner.validation.enabled`
-
-|Type|Default|
-|---|---|
-|boolean|true|
-
-Validate the query whenever the file set in `languageIds` or `extensions` is modified.
-
-### `bigqueryRunner.validation.debounceInterval`
-
-|Type|Default|
-|---|---|
-|number|600|
-
-Debounce interval in milliseconds to validate the query when the file is modified.
 
 ### `bigqueryRunner.languageIds`
 
@@ -128,23 +96,47 @@ Debounce interval in milliseconds to validate the query when the file is modifie
 
 List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified.
 
-### `bigqueryRunner.extensions`
+### `bigqueryRunner.location`
 
 |Type|Default|
 |---|---|
-|array|[".bqsql",".bqddl",".bqdml"]|
+|string &#x7C; null|null|
 
-List of file extensions for which the query is to be validated when the file is modified.
+The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
 
-### `bigqueryRunner.pagination.results`
+### `bigqueryRunner.maximumBytesBilled`
 
 |Type|Default|
 |---|---|
-|number &#x7C; null|100|
+|string &#x7C; null|null|
 
-The number of rows per page. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`.
+Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used.
 
-### `bigqueryRunner.csv.header`
+### `bigqueryRunner.projectId`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used.
+
+### `bigqueryRunner.useLegacySql`
+
+|Type|Default|
+|---|---|
+|boolean|false|
+
+Flag whether to use legacy SQL. If `false`, use standard SQL.
+
+### `bigqueryRunner.downloader.csv.delimiter`
+
+|Type|Default|
+|---|---|
+|string|","|
+
+The delimiter for CSV. For example, if set to `\t`, the output will be formatted as TSV.
+
+### `bigqueryRunner.downloader.csv.header`
 
 |Type|Default|
 |---|---|
@@ -152,13 +144,13 @@ The number of rows per page. If a number is specified, only that number of rows 
 
 The flag whether to add column names to CSV.
 
-### `bigqueryRunner.csv.delimiter`
+### `bigqueryRunner.downloader.rowsPerPage`
 
 |Type|Default|
 |---|---|
-|string|","|
+|number &#x7C; null|10000|
 
-The delimiter for CSV. For example, if set to 	, the output will be formatted as TSV.
+The number of rows to fetch per page of paging when downloading.
 
 ### `bigqueryRunner.viewer.column`
 
@@ -168,13 +160,13 @@ The delimiter for CSV. For example, if set to 	, the output will be formatted as
 
 A string such as '+N', '-N' can be set to specify a position relative to the column where the query file is opened. Then, if you set a number greater than 1, the viewer will appear in the specified number of columns from the left. A number of -1 means the viewer will appear in the same column as the query file, and a number of -2 means the viewer will appear in the column farthest to the right.
 
-### `bigqueryRunner.icon`
+### `bigqueryRunner.viewer.rowsPerPage`
 
 |Type|Default|
 |---|---|
-|boolean|true|
+|number &#x7C; null|100|
 
-Display GUI button to run on the editor title menu bar.
+The number of rows to fetch per page of paging when displaying to viewer. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`.
 
 ### `bigqueryRunner.statusBarItem.align`
 
@@ -192,24 +184,37 @@ The alignment of the status bar item.
 
 The priority of status bar item. Higher value means the item should be shown more to the left.
 
+### `bigqueryRunner.validation.enabled`
+
+|Type|Default|
+|---|---|
+|boolean|true|
+
+Validate the query whenever the file set in `languageIds` or `extensions` is modified.
+
+### `bigqueryRunner.validation.debounceInterval`
+
+|Type|Default|
+|---|---|
+|number|600|
+
+Debounce interval in milliseconds to validate the query when the file is modified.
+
 
 ## Features
 
-- Write SQL in VS Code and query BigQuery datasets directly
-- Query from selected text
-- Marking errors in a query
-- Fast rendering of huge results
-- Pagination
-- Format in a variety of formats
-    - HTML `<table>`
-    - Text neatly formatted into a table
-    - JSON
+- Write queries in VSCode and run them directly against BigQuery datasets and view the results
+- Execute queries from selected text
+- Mark errors for queries in VSCode
+- Fast rendering of large result tables
+- Paging of results
+- Download result tables in a variety of formats
     - JSON Lines
+    - JSON
     - CSV
-- Output to various destinations
-    - Viewer that is highly compatible with the themes and fonts set in your VS Code
-    - Log window, the UI of VS Code
-    - File
+    - Markdown
+    - Formatted plain text
+- Operations can be executed from commands
 
 ## Additional Settings
 
@@ -249,18 +254,6 @@ The priority of status bar item. Higher value means the item should be shown mor
 }
 ```
 
-### If `bigqueryRunner.output.type` is set as `log` and word wrap causes the table to collapse
-
-`settings.json`:
-
-```json:settings.json
-{
-  "[Log]": {
-    "editor.wordWrap": "off"
-  }
-}
-```
-
 ## License
 
-Apache 2.0 licensed. See the LICENSE file for details.
+Apache 2.0 licensed. See the [LICENSE](LICENSE) file for details.
