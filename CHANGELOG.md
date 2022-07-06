@@ -2,6 +2,42 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.0.0
+
+### Added
+
+- Add a download button to the bottom right corner of the Results tab in the viewer.
+  - Click it and select the save format and destination to save the results to a file.
+- Added a preview button next to the table ID in the viewer.
+  - Click it, another viewer will open and display the results of SELECTing that table.
+- Added config:
+  - `bigqueryRunner.downloader.rowsPerPage`
+    - The number of rows to fetch per page of paging when downloading.
+
+### Changed
+
+- Rename config:
+  - `queryValidation.enabled` -> `validation.enabled`
+  - `queryValidation.debounceInterval` -> `validation.debounceInterval`
+  - `bigqueryRunner.format.csv.header` -> `bigqueryRunner.downloader.csv.header`
+  - `bigqueryRunner.format.csv.delimiter` -> `bigqueryRunner.downloader.csv.delimiter`
+  - `bigqueryRunner.pagination.results` -> `bigqueryRunner.viewer.rowsPerPage`
+  - `bigqueryRunner.output.viewer.column` -> `bigqueryRunner.viewer.column`
+- Detailed log output to output panel.
+- Viewer tabs are now rendered sequentially as data becomes available.
+- Fixed a problem that results were not displayed when DECLARE.
+  - [#14](https://github.com/minodisk/bigquery-runner/issues/14)
+
+### Removed
+
+- Removed config:
+  - `bigqueryRunner.output.type`
+    - Removed option to output results to output panel
+      - Instead, you can see the results in a nice table that is output to the viewer.
+  - `bigqueryRunner.output.file.path`
+    - Removed option to output results to file
+      - Instead, when you select an output format from the Download button in the Viewer, a dialog box will appear asking you to specify the path where you want to save the file. Once the path is specified in that dialog, output to a file will begin.
+
 ## v0.0.53
 
 ### Added
