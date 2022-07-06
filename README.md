@@ -86,7 +86,7 @@ Display GUI button to run on the editor title menu bar.
 |---|---|
 |string &#x7C; null|null|
 
-The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VS Code. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used.
+The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VSCode. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used.
 
 ### `bigqueryRunner.languageIds`
 

@@ -2,7 +2,7 @@
   "private": true,
   "name": "bigquery-runner",
   "displayName": "BigQuery Runner",
-  "description": "An extension for querying Google Cloud Platform's BigQuery analytics datasets directly from VS Code.",
+  "description": "An extension for querying Google Cloud Platform's BigQuery analytics datasets directly from VSCode.",
   "version": "1.0.0",
   "license": "Apach-2",
   "publisher": "minodisk",
@@ -100,7 +100,7 @@
             "null"
           ],
           "default": null,
-          "description": "The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VS Code. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used."
+          "description": "The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VSCode. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used."
         },
         "bigqueryRunner.languageIds": {
           "type": "array",
