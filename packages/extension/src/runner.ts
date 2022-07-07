@@ -214,8 +214,7 @@ export function createRunnerManager({
 
         const rendererOpenResult = await renderer.startLoading();
         if (!rendererOpenResult.success) {
-          const { reason } = unwrap(rendererOpenResult);
-          logger.log(reason);
+          logger.error(rendererOpenResult);
           await renderer.cancelLoading();
           status.errorBilled();
           return;
@@ -225,8 +224,8 @@ export function createRunnerManager({
 
         const clientResult = await createClient(config);
         if (!clientResult.success) {
+          logger.error(clientResult);
           const { reason } = unwrap(clientResult);
-          logger.log(reason);
           await window.showErrorMessage(reason);
           await renderer.cancelLoading();
           status.errorBilled();
@@ -237,6 +236,10 @@ export function createRunnerManager({
         const runJobResult = await client.createRunJob({
           query,
           maxResults: config.viewer.rowsPerPage,
+          params: {
+            corpus: "romeoandjuliet",
+            min_word_count: 250,
+          },
         });
         errorMarker?.clear();
         if (!runJobResult.success) {
@@ -285,8 +288,7 @@ export function createRunnerManager({
 
         const renderMetadataResult = await renderer.renderMetadata(metadata);
         if (!renderMetadataResult.success) {
-          const { reason } = unwrap(renderMetadataResult);
-          logger.log(reason);
+          logger.error(renderMetadataResult);
           await renderer.cancelLoading();
           return;
         }
@@ -300,8 +302,7 @@ export function createRunnerManager({
           // to get the records of the table just created.
           const routineResult = await job.getRoutine();
           if (!routineResult.success) {
-            const { reason } = unwrap(routineResult);
-            logger.log(reason);
+            logger.error(routineResult);
             await renderer.cancelLoading();
             return;
           }
@@ -309,8 +310,7 @@ export function createRunnerManager({
 
           const renderRoutineResult = await renderer.renderRoutine(routine);
           if (!renderRoutineResult.success) {
-            const { reason } = unwrap(renderRoutineResult);
-            logger.log(reason);
+            logger.error(renderRoutineResult);
             await renderer.cancelLoading();
             return;
           }
@@ -320,8 +320,7 @@ export function createRunnerManager({
 
         const getTableResult = await job.getTable();
         if (!getTableResult.success) {
-          const { reason } = unwrap(getTableResult);
-          logger.log(reason);
+          logger.error(getTableResult);
           await renderer.cancelLoading();
           return;
         }
@@ -329,8 +328,7 @@ export function createRunnerManager({
 
         const renderTableResult = await renderer.renderTable(table);
         if (!renderTableResult.success) {
-          const { reason } = unwrap(renderTableResult);
-          logger.log(reason);
+          logger.error(renderTableResult);
           await renderer.cancelLoading();
           return;
         }
@@ -346,8 +344,7 @@ export function createRunnerManager({
 
         const getStructsResult = await job.getStructs();
         if (!getStructsResult.success) {
-          const { reason } = unwrap(getStructsResult);
-          logger.log(reason);
+          logger.error(getStructsResult);
           await renderer.cancelLoading();
           return;
         }
@@ -361,8 +358,7 @@ export function createRunnerManager({
           page,
         });
         if (!renderRowsResult.success) {
-          const { reason } = unwrap(renderRowsResult);
-          logger.log(reason);
+          logger.error(renderRowsResult);
           await renderer.cancelLoading();
           return;
         }
@@ -377,8 +373,7 @@ export function createRunnerManager({
 
         const rendererOpenResult = await renderer.startLoading();
         if (!rendererOpenResult.success) {
-          const { reason } = unwrap(rendererOpenResult);
-          logger.log(reason);
+          logger.error(rendererOpenResult);
           return;
         }
 
@@ -393,16 +388,15 @@ export function createRunnerManager({
 
         const renderTableResult = await renderer.renderTable(table);
         if (!renderTableResult.success) {
-          const { reason } = unwrap(renderTableResult);
-          logger.log(reason);
+          logger.error(renderTableResult);
           await renderer.cancelLoading();
           return;
         }
 
         const getStructsResult = await job.getPrevStructs();
         if (!getStructsResult.success) {
+          logger.error(getStructsResult);
           const { type, reason } = unwrap(getStructsResult);
-          logger.log(reason);
           if (type === "NoPageToken") {
             await window.showErrorMessage(reason);
           }
@@ -419,8 +413,7 @@ export function createRunnerManager({
           page,
         });
         if (!renderRowsResult.success) {
-          const { reason } = unwrap(renderRowsResult);
-          logger.log(reason);
+          logger.error(renderRowsResult);
           await renderer.cancelLoading();
           return;
         }
@@ -435,15 +428,13 @@ export function createRunnerManager({
 
         const rendererOpenResult = await renderer.startLoading();
         if (!rendererOpenResult.success) {
-          const { reason } = unwrap(rendererOpenResult);
-          logger.log(reason);
+          logger.error(rendererOpenResult);
           return;
         }
 
         const getTableResult = await job.getTable();
         if (!getTableResult.success) {
-          const { reason } = unwrap(getTableResult);
-          logger.log(reason);
+          logger.error(getTableResult);
           await renderer.cancelLoading();
           return;
         }
@@ -451,16 +442,15 @@ export function createRunnerManager({
 
         const renderTableResult = await renderer.renderTable(table);
         if (!renderTableResult.success) {
-          const { reason } = unwrap(renderTableResult);
-          logger.log(reason);
+          logger.error(renderTableResult);
           await renderer.cancelLoading();
           return;
         }
 
         const getStructsResult = await job.getNextStructs();
         if (!getStructsResult.success) {
+          logger.error(getStructsResult);
           const { type, reason } = unwrap(getStructsResult);
-          logger.log(reason);
           if (type === "NoPageToken") {
             await window.showErrorMessage(reason);
           }
@@ -477,8 +467,7 @@ export function createRunnerManager({
           page,
         });
         if (!renderRowsResult.success) {
-          const { reason } = unwrap(renderRowsResult);
-          logger.log(reason);
+          logger.error(renderRowsResult);
           await renderer.cancelLoading();
           return;
         }
@@ -498,8 +487,6 @@ export function createRunnerManager({
         if (!uri) {
           return;
         }
-
-        console.log(format, name);
 
         switch (format) {
           case "jsonl":

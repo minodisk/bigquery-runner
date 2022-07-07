@@ -11,7 +11,9 @@ export const createLogger = (chan: OutputChannel) => {
       },
       error(err: unknown) {
         chan.appendLine(
-          [...names.map((n) => `[${n}]`), errorToString(err)].join(" ")
+          [...names.map((n) => `[${n}]`), "Error:", errorToString(err)].join(
+            " "
+          )
         );
       },
       createChild(name: string) {

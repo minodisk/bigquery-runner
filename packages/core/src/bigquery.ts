@@ -98,7 +98,6 @@ export async function createClient(
 
   const client: Client = {
     async createRunJob(query) {
-      console.log("createRunJob", query);
       const createQueryJobResult = await tryCatch(async () => {
         const [job] = await bigQuery.createQueryJob({
           ...query,

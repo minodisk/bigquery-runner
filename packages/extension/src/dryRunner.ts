@@ -78,8 +78,9 @@ export function createDryRunner({
 
       const clientResult = await createClient(config);
       if (!clientResult.success) {
+        logger.error(clientResult);
+
         const { reason } = unwrap(clientResult);
-        logger.log(reason);
         status.errorProcessed();
         await window.showErrorMessage(reason);
         return;
@@ -92,8 +93,9 @@ export function createDryRunner({
 
       errorMarker.clear();
       if (!dryRunJobResult.success) {
+        logger.error(dryRunJobResult);
+
         const err = unwrap(dryRunJobResult);
-        logger.error(err);
         status.errorProcessed();
         if (err.type === "QueryWithPosition") {
           errorMarker.markAt({
