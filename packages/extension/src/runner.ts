@@ -1,6 +1,6 @@
 import { basename } from "path";
 import { format } from "bytes";
-import { createClient, RunJob } from "core";
+import { createClient, parse, RunJob } from "core";
 import {
   Metadata,
   Page,
@@ -222,6 +222,48 @@ export function createRunnerManager({
 
         const config = configManager.get();
 
+        const parseResult = parse(query);
+        const namedParams: { [name: string]: number | string } = {};
+        const positionalParams: Array<number | string> = [];
+        if (!parseResult.success) {
+          logger.error(parseResult);
+        } else {
+          const { params } = unwrap(parseResult);
+          const paramsResult = params();
+          if (!paramsResult.success) {
+            logger.error(paramsResult);
+          } else {
+            const { names, positions } = unwrap(paramsResult);
+            if (names.length > 0) {
+              for (const name of names) {
+                const value = await window.showInputBox({
+                  title: `@${name}`,
+                  prompt: `Enter the value for '@${name}'`,
+                });
+                if (value === undefined) {
+                  continue;
+                }
+                namedParams[name] = isNaN(Number(value))
+                  ? value
+                  : Number(value);
+              }
+            } else if (positions > 0) {
+              for (let i = 0; i < positions; i++) {
+                const value = await window.showInputBox({
+                  title: `?[${i}]`,
+                  prompt: `Enter the value for '?[${i}]'`,
+                });
+                if (value === undefined) {
+                  continue;
+                }
+                positionalParams[i] = isNaN(Number(value))
+                  ? value
+                  : Number(value);
+              }
+            }
+          }
+        }
+
         const clientResult = await createClient(config);
         if (!clientResult.success) {
           logger.error(clientResult);
@@ -236,10 +278,12 @@ export function createRunnerManager({
         const runJobResult = await client.createRunJob({
           query,
           maxResults: config.viewer.rowsPerPage,
-          params: {
-            corpus: "romeoandjuliet",
-            min_word_count: 250,
-          },
+          params:
+            Object.keys(namedParams).length > 0
+              ? namedParams
+              : positionalParams.length > 0
+              ? positionalParams
+              : undefined,
         });
         errorMarker?.clear();
         if (!runJobResult.success) {

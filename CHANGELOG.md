@@ -2,6 +2,16 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.1.0
+
+### Added
+
+- Added parameter support experimentally.
+  - **This feature could be removed in the future.**
+  - References:
+    - [Named parameters](https://cloud.google.com/bigquery/docs/samples/bigquery-query-params-named)
+    - [Positional parameters](https://cloud.google.com/bigquery/docs/samples/bigquery-query-params-positional)
+
 ## v1.0.0
 
 ### Added
