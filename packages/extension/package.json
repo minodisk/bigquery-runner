@@ -10,7 +10,7 @@
     "build:debug": "npm run build -- --sourcemap",
     "build:production": "npm run build -- --minify",
     "pretest": "run-p build:test lint",
-    "lint": "eslint './src/**/*.ts'",
+    "lint": "eslint \"./src/**/*.ts\"",
     "lint-fix": "npm run lint -- --fix",
     "test": "tsc && node ../../out/test/runTest.js"
   }

@@ -3,7 +3,7 @@
   "name": "core",
   "main": "src/index.ts",
   "scripts": {
-    "lint": "eslint './src/**/*.ts'",
+    "lint": "eslint \"./src/**/*.ts\"",
     "lint-fix": "npm run lint -- --fix",
     "test": "tsc && jest --silent=false",
     "test-coverage": "npm run test -- --coverage --coverageDirectory ../../coverage/core",

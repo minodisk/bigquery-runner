@@ -9,7 +9,7 @@ import {
   createTableFormatter,
   Formatter,
 } from "core";
-import { unwrap } from "types";
+import { errorToString, tryCatchSync, unwrap } from "types";
 import { Uri } from "vscode";
 import { Config } from "./config";
 import { ConfigManager } from "./configManager";
@@ -109,10 +109,26 @@ const createWriter =
     const flat = unwrap(flatResult);
     logger.log(`flat created ${flat.heads.map(({ name }) => name).join(", ")}`);
 
-    const stream = createWriteStream(uri.path);
+    logger.log(`create stream for ${uri.fsPath}`);
+    const streamResult = tryCatchSync(
+      () => {
+        return createWriteStream(uri.fsPath);
+      },
+      (err) => ({
+        type: "NoStream",
+        reason: errorToString(err),
+      })
+    );
+    if (!streamResult.success) {
+      logger.error(streamResult);
+      return;
+    }
+    const stream = unwrap(streamResult);
+    await new Promise((resolve) => stream.on("open", resolve));
+    logger.log(`stream is opened`);
+
     const formatter = createFormatter(config);
 
-    logger.log(`writing head`);
     stream.write(formatter.head({ flat }));
 
     logger.log(`writing body`);

@@ -3,6 +3,6 @@
   "name": "misc",
   "version": "0.0.0",
   "scripts": {
-    "build": "mkdir -p ../../out && cp -rf assets ../../out"
+    "build": "mkdirp ../../out && cpx ./assets/* ../../out/assets"
   }
 }
