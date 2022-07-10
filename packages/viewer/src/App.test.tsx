@@ -1,6 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
-import { CloseEvent, Data, OpenEvent, RowsEvent, Table } from "types";
+import {
+  SuccessProcessingEvent,
+  Data,
+  StartProcessingEvent,
+  RowsEvent,
+  Table,
+} from "types";
 import metadata from "../../core/src/metadata.json";
 import t from "../../core/src/table.json";
 import App from "./App";
@@ -15,9 +21,9 @@ describe("App", () => {
         {
           source: "bigquery-runner",
           payload: {
-            event: "open",
+            event: "startProcessing",
           },
-        } as Data<OpenEvent>,
+        } as Data<StartProcessingEvent>,
         "*"
       );
       window.postMessage(
@@ -58,9 +64,9 @@ describe("App", () => {
         {
           source: "bigquery-runner",
           payload: {
-            event: "close",
+            event: "successProcessing",
           },
-        } as Data<CloseEvent>,
+        } as Data<SuccessProcessingEvent>,
         "*"
       );
 

@@ -212,10 +212,10 @@ export function createRunnerManager({
         renderer.reveal();
         status.loadBilled();
 
-        const rendererOpenResult = await renderer.startLoading();
+        const rendererOpenResult = await renderer.startProcessing();
         if (!rendererOpenResult.success) {
           logger.error(rendererOpenResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(rendererOpenResult.value);
           status.errorBilled();
           return;
         }
@@ -269,7 +269,7 @@ export function createRunnerManager({
           logger.error(clientResult);
           const { reason } = unwrap(clientResult);
           await window.showErrorMessage(reason);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(clientResult.value);
           status.errorBilled();
           return;
         }
@@ -289,7 +289,7 @@ export function createRunnerManager({
         if (!runJobResult.success) {
           const err = unwrap(runJobResult);
           logger.log(err.reason);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(runJobResult.value);
           status.errorBilled();
           if (errorMarker) {
             if (err.type === "QueryWithPosition") {
@@ -333,7 +333,7 @@ export function createRunnerManager({
         const renderMetadataResult = await renderer.renderMetadata(metadata);
         if (!renderMetadataResult.success) {
           logger.error(renderMetadataResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(renderMetadataResult.value);
           return;
         }
 
@@ -347,7 +347,7 @@ export function createRunnerManager({
           const routineResult = await job.getRoutine();
           if (!routineResult.success) {
             logger.error(routineResult);
-            await renderer.cancelLoading();
+            await renderer.failProcessing(routineResult.value);
             return;
           }
           const routine = unwrap(routineResult);
@@ -355,17 +355,18 @@ export function createRunnerManager({
           const renderRoutineResult = await renderer.renderRoutine(routine);
           if (!renderRoutineResult.success) {
             logger.error(renderRoutineResult);
-            await renderer.cancelLoading();
+            await renderer.failProcessing(renderRoutineResult.value);
             return;
           }
 
+          await renderer.successProcessing();
           return;
         }
 
         const getTableResult = await job.getTable();
         if (!getTableResult.success) {
           logger.error(getTableResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(getTableResult.value);
           return;
         }
         const table = unwrap(getTableResult);
@@ -373,7 +374,7 @@ export function createRunnerManager({
         const renderTableResult = await renderer.renderTable(table);
         if (!renderTableResult.success) {
           logger.error(renderTableResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(renderTableResult.value);
           return;
         }
 
@@ -383,13 +384,14 @@ export function createRunnerManager({
             (type) => statementType === type
           )
         ) {
+          await renderer.successProcessing();
           return;
         }
 
         const getStructsResult = await job.getStructs();
         if (!getStructsResult.success) {
           logger.error(getStructsResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(getStructsResult.value);
           return;
         }
         const structs = unwrap(getStructsResult);
@@ -403,9 +405,11 @@ export function createRunnerManager({
         });
         if (!renderRowsResult.success) {
           logger.error(renderRowsResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(renderRowsResult.value);
           return;
         }
+
+        await renderer.successProcessing();
       },
 
       async prev() {
@@ -415,7 +419,7 @@ export function createRunnerManager({
 
         renderer.reveal();
 
-        const rendererOpenResult = await renderer.startLoading();
+        const rendererOpenResult = await renderer.startProcessing();
         if (!rendererOpenResult.success) {
           logger.error(rendererOpenResult);
           return;
@@ -425,7 +429,7 @@ export function createRunnerManager({
         if (!tableResult.success) {
           const { reason } = unwrap(tableResult);
           logger.log(reason);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(tableResult.value);
           return;
         }
         const { value: table } = tableResult;
@@ -433,7 +437,7 @@ export function createRunnerManager({
         const renderTableResult = await renderer.renderTable(table);
         if (!renderTableResult.success) {
           logger.error(renderTableResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(renderTableResult.value);
           return;
         }
 
@@ -444,7 +448,7 @@ export function createRunnerManager({
           if (type === "NoPageToken") {
             await window.showErrorMessage(reason);
           }
-          await renderer.cancelLoading();
+          await renderer.failProcessing(getStructsResult.value);
           return;
         }
         const structs = unwrap(getStructsResult);
@@ -458,7 +462,7 @@ export function createRunnerManager({
         });
         if (!renderRowsResult.success) {
           logger.error(renderRowsResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(renderRowsResult.value);
           return;
         }
       },
@@ -470,7 +474,7 @@ export function createRunnerManager({
 
         renderer.reveal();
 
-        const rendererOpenResult = await renderer.startLoading();
+        const rendererOpenResult = await renderer.startProcessing();
         if (!rendererOpenResult.success) {
           logger.error(rendererOpenResult);
           return;
@@ -479,7 +483,7 @@ export function createRunnerManager({
         const getTableResult = await job.getTable();
         if (!getTableResult.success) {
           logger.error(getTableResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(getTableResult.value);
           return;
         }
         const { value: table } = getTableResult;
@@ -487,7 +491,7 @@ export function createRunnerManager({
         const renderTableResult = await renderer.renderTable(table);
         if (!renderTableResult.success) {
           logger.error(renderTableResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(renderTableResult.value);
           return;
         }
 
@@ -498,7 +502,7 @@ export function createRunnerManager({
           if (type === "NoPageToken") {
             await window.showErrorMessage(reason);
           }
-          await renderer.cancelLoading();
+          await renderer.failProcessing(getStructsResult.value);
           return;
         }
         const structs = unwrap(getStructsResult);
@@ -512,7 +516,7 @@ export function createRunnerManager({
         });
         if (!renderRowsResult.success) {
           logger.error(renderRowsResult);
-          await renderer.cancelLoading();
+          await renderer.failProcessing(renderRowsResult.value);
           return;
         }
       },

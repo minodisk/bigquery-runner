@@ -53,8 +53,7 @@ export type Renderer = {
   readonly runnerId: RunnerID;
   readonly viewColumn: ViewColumn;
   readonly reveal: () => void;
-  readonly startLoading: () => Promise<Result<UnknownError, void>>;
-  readonly cancelLoading: () => Promise<Result<UnknownError, void>>;
+  readonly startProcessing: () => Promise<Result<UnknownError, void>>;
 
   readonly renderMetadata: (
     metadata: Metadata
@@ -66,6 +65,11 @@ export type Renderer = {
   readonly renderRows: (
     data: SelectResponse
   ) => Promise<Result<UnknownError | Error<"NoSchema">, void>>;
+
+  readonly successProcessing: () => Promise<Result<UnknownError, void>>;
+  readonly failProcessing: (
+    error: Error<string>
+  ) => Promise<Result<UnknownError, void>>;
 
   readonly dispose: () => void;
 };
@@ -218,20 +222,11 @@ export function createRendererManager({
               panel.reveal(undefined, true);
             },
 
-            startLoading() {
+            startProcessing() {
               return postMessage({
-                logger: parentLogger.createChild("startLoading"),
+                logger: parentLogger.createChild("startProcessing"),
                 event: {
-                  event: "open",
-                },
-              });
-            },
-
-            cancelLoading() {
-              return postMessage({
-                logger: parentLogger.createChild("cancelLoading"),
-                event: {
-                  event: "close",
+                  event: "startProcessing",
                 },
               });
             },
@@ -302,6 +297,25 @@ export function createRendererManager({
                     }),
                     page: toSerializablePage(page),
                   },
+                },
+              });
+            },
+
+            successProcessing() {
+              return postMessage({
+                logger: parentLogger.createChild("successProcessing"),
+                event: {
+                  event: "successProcessing",
+                },
+              });
+            },
+
+            failProcessing(error) {
+              return postMessage({
+                logger: parentLogger.createChild("failProcessing"),
+                event: {
+                  event: "failProcessing",
+                  payload: error,
                 },
               });
             },

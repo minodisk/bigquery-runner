@@ -6,6 +6,7 @@ import type {
   BigQueryTimestamp,
   Geography,
 } from "@google-cloud/bigquery";
+import { Error } from "./error";
 
 export type RunnerID = `${"file" | "query"}://${string}`;
 
@@ -100,12 +101,13 @@ export function isData(data: { source?: string }): data is Data<RendererEvent> {
 
 export type RendererEvent =
   | FocusedEvent
-  | OpenEvent
-  | CloseEvent
+  | StartProcessingEvent
   | MetadataEvent
   | TableEvent
   | RoutineEvent
-  | RowsEvent;
+  | RowsEvent
+  | SuccessProcessingEvent
+  | FailProcessingEvent;
 
 export type FocusedEvent = Readonly<{
   event: "focused";
@@ -117,18 +119,13 @@ export function isFocusedEvent(e: RendererEvent): e is FocusedEvent {
   return e.event === "focused";
 }
 
-export type OpenEvent = Readonly<{
-  event: "open";
+export type StartProcessingEvent = Readonly<{
+  event: "startProcessing";
 }>;
-export function isOpenEvent(e: RendererEvent): e is OpenEvent {
-  return e.event === "open";
-}
-
-export type CloseEvent = Readonly<{
-  event: "close";
-}>;
-export function isCloseEvent(e: RendererEvent): e is CloseEvent {
-  return e.event === "close";
+export function isStartProcessingEvent(
+  e: RendererEvent
+): e is StartProcessingEvent {
+  return e.event === "startProcessing";
 }
 
 export type MetadataEvent = Readonly<{
@@ -175,6 +172,25 @@ export type RowsPayload = Readonly<{
 }>;
 export function isRowsEvent(e: RendererEvent): e is RowsEvent {
   return e.event === "rows";
+}
+
+export type SuccessProcessingEvent = Readonly<{
+  event: "successProcessing";
+}>;
+export function isSuccessLoadingEvent(
+  e: RendererEvent
+): e is SuccessProcessingEvent {
+  return e.event === "successProcessing";
+}
+
+export type FailProcessingEvent = Readonly<{
+  event: "failProcessing";
+  payload: Error<string>;
+}>;
+export function isFailProcessingEvent(
+  e: RendererEvent
+): e is FailProcessingEvent {
+  return e.event === "failProcessing";
 }
 
 export type RunInfo = Readonly<{

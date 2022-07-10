@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.3.0
+
+### Added
+
+- Added the feature to display query errors in the viewer.
+  ![bigquery-runner-1657465278847](https://user-images.githubusercontent.com/514164/178150411-0ccf2ae1-a92f-4718-85a9-ad7981b3223b.gif)
+
 ## v1.2.0
 
 ### Added

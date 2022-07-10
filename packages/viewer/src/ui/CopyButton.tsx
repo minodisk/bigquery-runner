@@ -14,6 +14,7 @@ export const CopyButton: CFC<{ text?: string }> = ({ text, ...props }) => {
     toast({
       title: "Copied",
       status: "success",
+      position: "bottom-right",
       duration: 1000,
     });
   }, [text, toast]);

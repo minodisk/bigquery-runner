@@ -1,10 +1,15 @@
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react";
+import {
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  useToast,
+} from "@chakra-ui/react";
 import deepmerge from "deepmerge";
 import React, { FC, useCallback, useEffect, useState } from "react";
 import {
-  isCloseEvent,
   isData,
-  isOpenEvent,
   isRowsEvent,
   RowsPayload,
   isRoutineEvent,
@@ -14,6 +19,10 @@ import {
   TablePayload,
   isTableEvent,
   Format,
+  isStartProcessingEvent,
+  isSuccessLoadingEvent,
+  isFailProcessingEvent,
+  type Error,
 } from "types";
 import { Header } from "./domain/Header";
 import { Job } from "./domain/Job";
@@ -50,6 +59,9 @@ const vscode = acquireVsCodeApi<State>(); // window["acquireVsCodeApi"] ?
 
 const App: FC = () => {
   // const [focused, setFocused] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<Error<string> | undefined>(undefined);
+  const toast = useToast();
   const [metadataPayload, setMetadataPayload] = useState<
     MetadataPayload | undefined
   >(vscode.getState()?.metadataPayload);
@@ -62,19 +74,6 @@ const App: FC = () => {
   const [rowsPayload, setRowsPayload] = useState<RowsPayload | undefined>(
     vscode.getState()?.rowsPayload
   );
-  const [loading, setLoading] = useState<string | undefined>("Initializing");
-  const [isPending, startTransition] = (
-    React as unknown as {
-      useTransition: (props: {
-        timeoutMs: number;
-      }) => [
-        isPending: boolean,
-        startTransition: (callback: () => unknown) => void
-      ];
-    }
-  ).useTransition({
-    timeoutMs: 5000,
-  });
   const [tabIndex, setTabIndex] = useState(vscode.getState()?.tabIndex ?? 0);
 
   const setState = useCallback((state: State) => {
@@ -119,61 +118,62 @@ const App: FC = () => {
       //   setFocused(payload.payload.focused);
       //   return;
       // }
-      if (isOpenEvent(payload)) {
-        setLoading("Fetching");
+      if (isStartProcessingEvent(payload)) {
+        setProcessing(true);
+        setError(undefined);
         return;
       }
       if (isMetadataEvent(payload)) {
-        setLoading(undefined);
-        startTransition(() => {
-          setMetadataPayload(payload.payload);
-          setState({ metadataPayload: payload.payload });
-        });
+        setMetadataPayload(payload.payload);
+        setState({ metadataPayload: payload.payload });
         return;
       }
       if (isTableEvent(payload)) {
-        setLoading(undefined);
-        startTransition(() => {
-          setTablePayload(payload.payload);
-          setState({ tablePayload: payload.payload });
-        });
+        setTablePayload(payload.payload);
+        setState({ tablePayload: payload.payload });
         return;
       }
       if (isRowsEvent(payload)) {
-        setLoading(undefined);
-        startTransition(() => {
-          setRowsPayload(payload.payload);
-          setState({ rowsPayload: payload.payload });
-        });
+        setRowsPayload(payload.payload);
+        setState({ rowsPayload: payload.payload });
         return;
       }
       if (isRoutineEvent(payload)) {
-        setLoading(undefined);
-        startTransition(() => {
-          setRoutinePayload(payload.payload);
-          setState({ routinePayload: payload.payload });
-        });
+        setRoutinePayload(payload.payload);
+        setState({ routinePayload: payload.payload });
         return;
       }
-      if (isCloseEvent(payload)) {
-        setLoading(undefined);
+      if (isSuccessLoadingEvent(payload)) {
+        setProcessing(false);
+        setError(undefined);
+        return;
+      }
+      if (isFailProcessingEvent(payload)) {
+        setProcessing(false);
+        setError(payload.payload);
         return;
       }
       throw new Error(`undefined data payload:\n'${JSON.stringify(payload)}'`);
     });
-  }, [setState, startTransition]);
+  }, [setState]);
 
   useEffect(() => {
-    if (isPending) {
-      setLoading("Rendering");
+    if (error) {
+      toast({
+        title: error.type,
+        description: error.reason,
+        status: "error",
+        position: "bottom-right",
+        duration: 8000,
+      });
     } else {
-      setLoading(undefined);
+      toast.closeAll();
     }
-  }, [isPending]);
+  }, [error, toast]);
 
   return (
     <Tabs index={tabIndex} onChange={onTabChange}>
-      <Header loading={loading}>
+      <Header processing={processing}>
         <TabList>
           {rowsPayload ? <Tab>Results</Tab> : null}
           {tablePayload ? <Tab>Table</Tab> : null}
