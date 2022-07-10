@@ -19,6 +19,7 @@ import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
 import { createErrorMarkerManager } from "./errorMarker";
 import { createLogger } from "./logger";
+import { createQuickFixManager } from "./quickfix";
 import { createRendererManager } from "./renderer";
 import { createRunnerManager } from "./runner";
 import {
@@ -38,7 +39,7 @@ export async function activate(ctx: ExtensionContext) {
       configManager,
     });
     const statusManager = createStatusManager({
-      options: configManager.get().statusBarItem,
+      configManager,
       createStatusBarItem: createStatusBarItemCreator(window),
     });
     const rendererManager = createRendererManager({
@@ -62,6 +63,8 @@ export async function activate(ctx: ExtensionContext) {
       },
     });
     const errorMarkerManager = createErrorMarkerManager(section);
+    const quickFixManager = createQuickFixManager({ configManager });
+
     const runnerManager = createRunnerManager({
       logger: logger.createChild("runner"),
       configManager,
@@ -75,6 +78,7 @@ export async function activate(ctx: ExtensionContext) {
       configManager,
       statusManager,
       errorMarkerManager,
+      quickFixManager,
     });
     ctx.subscriptions.push(
       logger,
@@ -83,6 +87,7 @@ export async function activate(ctx: ExtensionContext) {
       rendererManager,
       statusManager,
       errorMarkerManager,
+      quickFixManager,
       runnerManager,
       dryRunner
     );
@@ -160,15 +165,6 @@ export async function activate(ctx: ExtensionContext) {
           return;
         }
         runner.dispose();
-      }),
-      // Listen for configuration changes and trigger an update, so that users don't
-      // have to reload the VS Code environment after a config update.
-      workspace.onDidChangeConfiguration((e) => {
-        if (!e.affectsConfiguration(section)) {
-          return;
-        }
-        configManager.refresh();
-        statusManager.updateOptions(configManager.get().statusBarItem);
       })
     );
   } catch (err) {

@@ -12,7 +12,7 @@
   },
   "homepage": "https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner",
   "engines": {
-    "vscode": "^1.68.1"
+    "vscode": "^1.69.0"
   },
   "workspaces": [
     "packages/codegen",
@@ -30,7 +30,7 @@
     "sql",
     "runner",
     "query",
-    "erorr"
+    "error"
   ],
   "main": "out/extension/index.js",
   "icon": "out/assets/icon.png",
@@ -263,7 +263,7 @@
     "@types/node": "^18.0.3",
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
-    "@types/vscode": "^1.68.1",
+    "@types/vscode": "^1.69.0",
     "@types/vscode-webview": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.30.5",
@@ -281,7 +281,7 @@
     "glob": "^8.0.3",
     "jest": "^28.1.2",
     "jest-environment-jsdom": "^28.1.2",
-    "jest-watch-typeahead": "^1.1.0",
+    "jest-watch-typeahead": "^2.0.0",
     "mkdirp": "^1.0.4",
     "mocha": "^10.0.0",
     "nodemon": "^2.0.19",

@@ -1,27 +1,52 @@
 import { isAbsolute, join } from "path";
-import { commands, workspace } from "vscode";
+import { commands, Disposable, workspace } from "vscode";
 import { Config } from "./config";
 
 export type ConfigManager = ReturnType<typeof createConfigManager>;
 
+type Callback = (config: Config) => unknown;
+
 export function createConfigManager(section: string) {
-  let config = getConfigration(section);
+  let config = getConfig(section);
   setContext(config);
+
+  const callbacks = new Set<Callback>();
+
+  const subscriptions = [
+    workspace.onDidChangeConfiguration((e) => {
+      if (!e.affectsConfiguration(section)) {
+        return;
+      }
+
+      config = getConfig(section);
+      setContext(config);
+
+      callbacks.forEach((cb) => cb(config));
+    }),
+  ];
+
   return {
     get(): Config {
       return config;
     },
-    refresh(): void {
-      config = getConfigration(section);
-      setContext(config);
+
+    onChange(callback: Callback): Disposable {
+      callbacks.add(callback);
+      return {
+        dispose() {
+          callbacks.delete(callback);
+        },
+      };
     },
+
     dispose(): void {
-      // do nothing
+      subscriptions.forEach((s) => s.dispose());
+      callbacks.clear();
     },
   };
 }
 
-function getConfigration(section: string): Config {
+function getConfig(section: string): Config {
   const config = workspace.getConfiguration(section) as unknown as Config;
   return {
     ...config,

@@ -7,6 +7,7 @@ import { ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import { isBigQuery } from "./isBigQuery";
 import { Logger } from "./logger";
+import { QuickFixManager } from "./quickfix";
 import { StatusManager } from "./statusManager";
 
 export type DryRunner = ReturnType<typeof createDryRunner>;
@@ -16,11 +17,13 @@ export function createDryRunner({
   configManager,
   statusManager,
   errorMarkerManager,
+  quickFixManager,
 }: Readonly<{
   logger: Logger;
   configManager: ConfigManager;
   statusManager: StatusManager;
   errorMarkerManager: ErrorMarkerManager;
+  quickFixManager: QuickFixManager;
 }>) {
   const pathTimeoutId = new Map<RunnerID, NodeJS.Timeout>();
 
@@ -68,6 +71,7 @@ export function createDryRunner({
         runnerId,
         editor,
       });
+      const quickFix = quickFixManager.get(editor.document);
 
       const query = await getQueryText(editor);
 
@@ -92,12 +96,19 @@ export function createDryRunner({
       });
 
       errorMarker.clear();
+      quickFix.clear();
       if (!dryRunJobResult.success) {
         logger.error(dryRunJobResult);
 
         const err = unwrap(dryRunJobResult);
         status.errorProcessed();
         if (err.type === "QueryWithPosition") {
+          if (err.suggestion) {
+            quickFix.register({
+              start: err.position,
+              ...err.suggestion,
+            });
+          }
           errorMarker.markAt({
             reason: err.reason,
             position: err.position,
@@ -112,6 +123,7 @@ export function createDryRunner({
         return;
       }
       errorMarker.clear();
+      quickFix.clear();
 
       const job = unwrap(dryRunJobResult);
 

@@ -24,6 +24,7 @@ export type QueryWithPositionError = {
   type: "QueryWithPosition";
   reason: string;
   position: { line: number; character: number };
+  suggestion?: { before: string; after: string };
 };
 
 export type Client = Readonly<{
@@ -333,24 +334,54 @@ export function createTableName(
   return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
 }
 
-function parseQueryJobError(err: unknown) {
+function parseQueryJobError(err: unknown): QueryError | QueryWithPositionError {
   const reason = (err as { message: string }).message ?? String(err);
-  const rPosition = /^(.*?) at \[(\d+):(\d+)\]$/;
-  const res = rPosition.exec(reason);
-  if (!res) {
+  const rPosition = /^(.+?) at \[(\d+?):(\d+?)\]$/;
+  const rPositionResult = rPosition.exec(reason);
+  if (!rPositionResult) {
     return {
       type: "Query" as const,
       reason,
     };
   }
 
-  const [_, r, l, c] = res;
+  const [, r, l, c] = rPositionResult;
   const line = Number(l) - 1;
   const character = Number(c) - 1;
+
+  if (!r?.startsWith("Unrecognized name: ")) {
+    return {
+      type: "QueryWithPosition" as const,
+      reason: r ?? "No reason",
+      position: { line, character },
+    };
+  }
+
+  const rSuggestion = /^Unrecognized name: (.+?); Did you mean (.+?)\?$/;
+  const rSuggestionResult = rSuggestion.exec(r);
+
+  if (!rSuggestionResult) {
+    return {
+      type: "QueryWithPosition" as const,
+      reason: r,
+      position: { line, character },
+    };
+  }
+
+  const [, before, after] = rSuggestionResult;
+  if (!before || !after) {
+    return {
+      type: "QueryWithPosition" as const,
+      reason: r,
+      position: { line, character },
+    };
+  }
+
   return {
     type: "QueryWithPosition" as const,
-    reason: r ?? reason,
+    reason: r,
     position: { line, character },
+    suggestion: { before, after },
   };
 }
 

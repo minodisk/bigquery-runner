@@ -1,6 +1,7 @@
 import { RunnerID } from "types";
 import { StatusBarAlignment, window } from "vscode";
 import { Config } from "./config";
+import { ConfigManager } from "./configManager";
 
 export type StatusManager = ReturnType<typeof createStatusManager>;
 export type Status = Readonly<{
@@ -29,14 +30,21 @@ type BilledUsage = {
 };
 
 export function createStatusManager({
-  options,
+  configManager,
   createStatusBarItem,
 }: {
-  options: Config["statusBarItem"];
+  configManager: ConfigManager;
   createStatusBarItem: ReturnType<typeof createStatusBarItemCreator>;
 }) {
   const statuses = new Map<RunnerID, Status>();
-  let statusBarItem = createStatusBarItem(options);
+
+  let statusBarItem = createStatusBarItem(configManager.get().statusBarItem);
+  const subscriptions = [
+    configManager.onChange((config) => {
+      statusBarItem.dispose();
+      statusBarItem = createStatusBarItem(config.statusBarItem);
+    }),
+  ];
 
   const statusManager = {
     get(runnerId: RunnerID): Status {
@@ -50,15 +58,6 @@ export function createStatusManager({
       return status;
     },
 
-    updateOptions(options: Config["statusBarItem"]) {
-      statusBarItem.dispose();
-      statusBarItem = createStatusBarItem(options);
-    },
-
-    // show(runnerId: RunnerID) {
-    //   statuses.get(runnerId)?.show();
-    // },
-
     hide() {
       statusBarItem.hide();
       statusBarItem.text = "";
@@ -66,6 +65,7 @@ export function createStatusManager({
     },
 
     dispose() {
+      subscriptions.forEach((s) => s.dispose());
       statusBarItem.dispose();
       statuses.clear();
     },

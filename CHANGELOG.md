@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.2.0
+
+### Added
+
+- Added the feature to allow quick fixes for query errors.
+  ![bigquery-runner-1657414563419](https://user-images.githubusercontent.com/514164/178132836-7dffb6bd-b840-4e2b-8879-e3d6106e510b.gif)
+
 ## v1.1.1
 
 ### Changed
@@ -22,7 +29,7 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ### Added
 
-- Add a download button to the bottom right corner of the Results tab in the viewer.
+- Added a download button to the bottom right corner of the Results tab in the viewer.
   - Click it and select the save format and destination to save the results to a file.
 - Added a preview button next to the table ID in the viewer.
   - Click it, another viewer will open and display the results of SELECTing that table.
