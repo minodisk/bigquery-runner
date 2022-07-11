@@ -565,7 +565,7 @@ const getParamValues = async (
     switch (param.type) {
       case "named": {
         const value = await window.showInputBox({
-          title: `Set parameter ${param.token}`,
+          title: `Set a parameter to ${param.token}`,
           prompt: `Specify in JSON format`,
         });
         if (value === undefined) {
@@ -580,7 +580,7 @@ const getParamValues = async (
       }
       case "positional": {
         const value = await window.showInputBox({
-          title: `${param.token}[${param.index}]`,
+          title: `Set a parameter for the ${param.index}-th ${param.token}`,
           prompt: `Specify in JSON format`,
         });
         if (value === undefined) {
