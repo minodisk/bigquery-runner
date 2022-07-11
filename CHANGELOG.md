@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.4.0
+
+### Added
+
+- Added support for setting Array/Struct/Timestamp as parameters.
+  ![bigquery-runner-1657536115053](https://user-images.githubusercontent.com/514164/178248203-a24126dc-4ade-4e6f-93ae-200702edfa51.gif)
+
 ## v1.3.0
 
 ### Added
