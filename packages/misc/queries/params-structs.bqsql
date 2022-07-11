@@ -1,0 +1,2 @@
+SELECT 
+    @struct_value AS struct_obj; -- {"x": 1, "y": "foo"}

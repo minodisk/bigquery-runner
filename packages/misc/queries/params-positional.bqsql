@@ -1,10 +1,11 @@
 SELECT
+    corpus,
     word,
     word_count
 FROM 
     `bigquery-public-data.samples.shakespeare`
 WHERE
-    corpus = ?
-    AND word_count >= ?
+    corpus = ?          -- "romeoandjuliet"
+    AND word_count >= ? -- 250
 ORDER BY
     word_count DESC

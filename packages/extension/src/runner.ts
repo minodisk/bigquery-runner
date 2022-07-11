@@ -1,6 +1,6 @@
 import { basename } from "path";
 import { format } from "bytes";
-import { createClient, parse, RunJob } from "core";
+import { createClient, Parameter, parse, RunJob } from "core";
 import {
   Metadata,
   Page,
@@ -14,6 +14,8 @@ import {
   type Error,
   Format,
   formats,
+  tryCatchSync,
+  errorToString,
 } from "types";
 import { TextEditor, ViewColumn, window, workspace } from "vscode";
 import { checksum } from "./checksum";
@@ -222,47 +224,14 @@ export function createRunnerManager({
 
         const config = configManager.get();
 
-        const parseResult = parse(query);
-        const namedParams: { [name: string]: number | string } = {};
-        const positionalParams: Array<number | string> = [];
-        if (!parseResult.success) {
-          logger.error(parseResult);
-        } else {
-          const { params } = unwrap(parseResult);
-          const paramsResult = params();
-          if (!paramsResult.success) {
-            logger.error(paramsResult);
-          } else {
-            const { names, positions } = unwrap(paramsResult);
-            if (names.length > 0) {
-              for (const name of names) {
-                const value = await window.showInputBox({
-                  title: `@${name}`,
-                  prompt: `Enter the value for '@${name}'`,
-                });
-                if (value === undefined) {
-                  continue;
-                }
-                namedParams[name] = isNaN(Number(value))
-                  ? value
-                  : Number(value);
-              }
-            } else if (positions > 0) {
-              for (let i = 0; i < positions; i++) {
-                const value = await window.showInputBox({
-                  title: `?[${i}]`,
-                  prompt: `Enter the value for '?[${i}]'`,
-                });
-                if (value === undefined) {
-                  continue;
-                }
-                positionalParams[i] = isNaN(Number(value))
-                  ? value
-                  : Number(value);
-              }
-            }
-          }
+        const getParamValuesResult = await getParamValues(parse(query));
+        if (!getParamValuesResult.success) {
+          logger.error(getParamValuesResult);
+          await renderer.failProcessing(getParamValuesResult.value);
+          status.errorBilled();
+          return;
         }
+        const params = getParamValuesResult.value;
 
         const clientResult = await createClient(config);
         if (!clientResult.success) {
@@ -278,12 +247,7 @@ export function createRunnerManager({
         const runJobResult = await client.createRunJob({
           query,
           maxResults: config.viewer.rowsPerPage,
-          params:
-            Object.keys(namedParams).length > 0
-              ? namedParams
-              : positionalParams.length > 0
-              ? positionalParams
-              : undefined,
+          params,
         });
         errorMarker?.clear();
         if (!runJobResult.success) {
@@ -586,3 +550,67 @@ export function createRunnerManager({
 
   return runnerManager;
 }
+
+type ParamValues = NamedParamValues | PositionalParamValues;
+type NamedParamValues = { [name: string]: unknown };
+type PositionalParamValues = Array<unknown>;
+
+const getParamValues = async (
+  params: ReadonlyArray<Parameter>
+): Promise<Result<Error<"InvalidJSON">, ParamValues | undefined>> => {
+  const namedParams: NamedParamValues = {};
+  const positionalParams: PositionalParamValues = [];
+
+  for (const param of params) {
+    switch (param.type) {
+      case "named": {
+        const value = await window.showInputBox({
+          title: `Set parameter ${param.token}`,
+          prompt: `Specify in JSON format`,
+        });
+        if (value === undefined) {
+          continue;
+        }
+        const parseJSONResult = parseJSON(value);
+        if (!parseJSONResult.success) {
+          return parseJSONResult;
+        }
+        namedParams[param.name] = parseJSONResult.value;
+        break;
+      }
+      case "positional": {
+        const value = await window.showInputBox({
+          title: `${param.token}[${param.index}]`,
+          prompt: `Specify in JSON format`,
+        });
+        if (value === undefined) {
+          continue;
+        }
+        const parseJSONResult = parseJSON(value);
+        if (!parseJSONResult.success) {
+          return parseJSONResult;
+        }
+        positionalParams[param.index] = parseJSONResult.value;
+        break;
+      }
+    }
+  }
+
+  return succeed(
+    Object.keys(namedParams).length > 0
+      ? namedParams
+      : positionalParams.length > 0
+      ? positionalParams
+      : undefined
+  );
+};
+
+const parseJSON = (value: string): Result<Error<"InvalidJSON">, unknown> => {
+  return tryCatchSync(
+    () => JSON.parse(value),
+    (err) => ({
+      type: "InvalidJSON",
+      reason: errorToString(err),
+    })
+  );
+};

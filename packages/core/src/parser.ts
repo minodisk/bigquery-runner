@@ -1,109 +1,105 @@
-import { AST, ColumnRef, Parser } from "node-sql-parser";
-import {
-  Error,
-  errorToString,
-  Result,
-  succeed,
-  tryCatchSync,
-  unwrap,
-} from "types";
+export type Position = { line: number; character: number };
+export type Range = { start: Position; end: Position };
 
-export type BinaryExpr = {
-  type: "binary_expr";
-  left: Chunk;
-  operator: string;
-  right: Chunk;
-};
+export type Parameter =
+  | {
+      type: "named";
+      token: `@${string}`;
+      name: string;
+      range: Range;
+    }
+  | {
+      type: "positional";
+      token: "?";
+      index: number;
+      range: Range;
+    };
 
-export type Chunk = BinaryExpr | ColumnRef | Var | Origin;
+export const parse = (query: string): ReadonlyArray<Parameter> => {
+  const params: Array<Parameter> = [];
 
-export type Var = {
-  type: "var";
-  prefix: string;
-  name: string;
-  members: Array<unknown>;
-};
+  let pointer = 0;
+  let line = 0;
+  let character = 0;
+  let index = 0;
+  while (pointer < query.length) {
+    const curr = query[pointer];
+    if (!curr) {
+      break;
+    }
+    const next = query[pointer + 1];
 
-export type Origin = {
-  type: "origin";
-  value: string;
-};
+    if (curr === "\n") {
+      pointer += 1;
+      line += 1;
+      character = 0;
+      continue;
+    }
+    if (curr === "\r" && next === "\n") {
+      pointer += 2;
+      line += 1;
+      character = 0;
+      continue;
+    }
 
-export type Params = Readonly<{
-  names: ReadonlyArray<string>;
-  positions: number;
-}>;
-
-export type Traverser = Readonly<{
-  params(): Result<Error<"Params">, Params>;
-}>;
-
-export const parse = (query: string): Result<Error<"Parse">, Traverser> => {
-  const astsResult = tryCatchSync(
-    () => {
-      const parser = new Parser();
-      return parser.astify(query);
-    },
-    (err) => ({
-      type: "Parse" as const,
-      reason: errorToString(err),
-    })
-  );
-  if (!astsResult.success) {
-    return astsResult;
-  }
-  const asts = unwrap(astsResult);
-
-  return succeed({
-    params() {
-      return tryCatchSync(
-        () => {
-          const findParamsWithAST = (ast: AST, p: Params): Params => {
-            if (ast.type !== "select") {
-              return p;
-            }
-            return binaryExpr(ast.where, p);
-          };
-
-          const binaryExpr = (b: BinaryExpr, p: Params): Params => {
-            return chunk(b.right, chunk(b.left, p));
-          };
-
-          const chunk = (c: Chunk, p: Params): Params => {
-            if (c.type === "var" && c.prefix === "@") {
-              return {
-                ...p,
-                names: [...p.names, c.name],
-              };
-            }
-            if (c.type === "origin" && c.value === "?") {
-              return {
-                ...p,
-                positions: p.positions + 1,
-              };
-            }
-            if (c.type === "binary_expr") {
-              return binaryExpr(c, p);
-            }
-            if (c.type === "column_ref") {
-              return p;
-            }
-            return p;
-          };
-
-          {
-            const params: Params = { names: [], positions: 0 };
-            if (Array.isArray(asts)) {
-              return asts.reduce((p, ast) => findParamsWithAST(ast, p), params);
-            }
-            return findParamsWithAST(asts, params);
-          }
+    if (curr === "?" && !isTokenChar(next)) {
+      params.push({
+        type: "positional",
+        token: "?",
+        index,
+        range: {
+          start: { line, character },
+          end: { line, character: character + 1 },
         },
-        (err) => ({
-          type: "Params",
-          reason: errorToString(err),
-        })
-      );
-    },
-  });
+      });
+
+      pointer += 1;
+      character += 1;
+      index += 1;
+      continue;
+    }
+
+    if (curr === "@") {
+      const start = { line, character };
+
+      pointer += 1;
+      character += 1;
+
+      let name = "";
+      for (let p = pointer; p < query.length; p += 1) {
+        const c = query[p];
+        if (!c || !isTokenChar(c)) {
+          break;
+        }
+
+        name += c;
+
+        pointer += 1;
+        character += 1;
+      }
+
+      params.push({
+        type: "named",
+        token: `@${name}`,
+        name,
+        range: {
+          start,
+          end: { line, character },
+        },
+      });
+
+      continue;
+    }
+
+    pointer += 1;
+    character += 1;
+  }
+
+  return params;
 };
+
+const tokenChar =
+  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+
+const isTokenChar = (c: string | undefined) =>
+  c ? tokenChar.indexOf(c) !== -1 : false;
