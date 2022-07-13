@@ -79,9 +79,8 @@ export function createCSVFormatter({
   writer: NodeJS.WritableStream;
   options: Options;
 }): Formatter {
-  const columns = flat.heads.map(({ id }) => id);
   const stringifier = stringify(
-    options.header ? { ...options, columns } : options
+    options.header ? { ...options, columns: [...flat.ids] } : options
   );
   stringifier.pipe(writer);
   const promise = new Promise<void>((resolve, reject) => {
@@ -97,7 +96,7 @@ export function createCSVFormatter({
         return;
       }
 
-      flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) =>
+      flat.getNumberedRows({ structs, rowNumberStart }).forEach(({ rows }) =>
         rows.forEach((row) => {
           stringifier.write(
             row.map(({ value }) =>
@@ -123,14 +122,14 @@ export function createMarkdownFormatter({
 }): Formatter {
   return {
     head() {
-      if (flat.heads.length === 0) {
+      if (flat.ids.length === 0) {
         return;
       }
       writer.write(`|`);
-      flat.heads.forEach(({ id }) => writer.write(`${id}|`));
+      flat.ids.forEach((id) => writer.write(`${id}|`));
       writer.write(`\n`);
       writer.write(`|`);
-      flat.heads.forEach(() => writer.write("---|"));
+      flat.ids.forEach(() => writer.write("---|"));
       writer.write(`\n`);
     },
     body({
@@ -140,7 +139,7 @@ export function createMarkdownFormatter({
       structs: ReadonlyArray<StructuralRow>;
       rowNumberStart: bigint;
     }>) {
-      flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) =>
+      flat.getNumberedRows({ structs, rowNumberStart }).forEach(({ rows }) =>
         rows.forEach((row) => {
           writer.write(`|`);
           row.forEach(({ value }) => {
@@ -184,7 +183,7 @@ export function createTableFormatter({
       rowNumberStart: bigint;
     }>) {
       const t = new EasyTable();
-      flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) => {
+      flat.getNumberedRows({ structs, rowNumberStart }).forEach(({ rows }) => {
         rows.forEach((row) => {
           row.forEach((cell) => t.cell(cell.id, cell.value));
           t.newRow();

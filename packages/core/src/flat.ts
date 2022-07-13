@@ -8,23 +8,18 @@ import type {
   Value,
   Row,
   StructuralRow,
-  Primitive,
   Result,
   UnknownError,
 } from "types";
 import { errorToString, tryCatchSync } from "types";
 import { valueToPrimitive } from "./transform";
 
-type Transform = (primitive: Primitive) => Primitive;
-
 export type Flat = Readonly<{
-  heads: ReadonlyArray<Accessor>;
-  columns: ReadonlyArray<Column>;
-  toRows(
+  ids: ReadonlyArray<string>;
+  getNumberedRows(
     props: Readonly<{
       structs: ReadonlyArray<StructuralRow>;
       rowNumberStart: bigint;
-      transform?: Transform;
     }>
   ): ReadonlyArray<NumberedRows>;
 }>;
@@ -37,15 +32,14 @@ export function createFlat(
       const heads = fieldsToHeads(fields);
       const columns = fieldsToColumns(fields);
       return {
-        heads,
-        columns,
-        toRows({ structs, rowNumberStart, transform }) {
-          return structsToRows({
-            heads,
-            columns,
-            structs,
-            rowNumberStart,
-            transform,
+        ids: heads.map(({ id }) => id),
+        getNumberedRows({ structs, rowNumberStart }) {
+          return structs.map((struct, i) => {
+            const rows = structToRows({ heads, columns, struct });
+            return {
+              rowNumber: `${rowNumberStart + BigInt(i)}`,
+              rows,
+            };
           });
         },
       };
@@ -90,38 +84,14 @@ function fieldsToColumns(fields: ReadonlyArray<Field>): ReadonlyArray<Column> {
   });
 }
 
-function structsToRows({
-  heads,
-  columns,
-  structs,
-  rowNumberStart,
-  transform,
-}: Readonly<{
-  heads: ReadonlyArray<Accessor>;
-  columns: ReadonlyArray<Column>;
-  structs: ReadonlyArray<StructuralRow>;
-  rowNumberStart: bigint;
-  transform?: Transform;
-}>): ReadonlyArray<NumberedRows> {
-  return structs.map((struct, i) => {
-    const rows = structToRows({ heads, columns, struct, transform });
-    return {
-      rowNumber: `${rowNumberStart + BigInt(i)}`,
-      rows,
-    };
-  });
-}
-
 function structToRows({
   heads,
   columns,
   struct,
-  transform = (primitive) => primitive,
 }: Readonly<{
   heads: ReadonlyArray<Accessor>;
   columns: ReadonlyArray<Column>;
   struct: StructuralRow;
-  transform?: Transform;
 }>): ReadonlyArray<Row> {
   const rows: Array<Row> = [];
   const depths = new Array(columns.length).fill(0);
@@ -135,7 +105,7 @@ function structToRows({
       }
       rows[depths[columnIndex]!]![columnIndex] = {
         id: accessor.id,
-        value: transform(valueToPrimitive(value)),
+        value: valueToPrimitive(value),
       };
       depths[columnIndex]! += 1;
     };
@@ -152,55 +122,6 @@ function structToRows({
 
   return rows;
 }
-
-// function structsToHashes({
-//   columns,
-//   structs,
-//   transform,
-// }: Readonly<{
-//   columns: ReadonlyArray<Column>;
-//   structs: ReadonlyArray<StructuralRow>;
-//   transform?: Transform;
-// }>): ReadonlyArray<Hash> {
-//   return structs.flatMap((struct) =>
-//     structToHashes({ columns, struct, transform })
-//   );
-// }
-
-// function structToHashes({
-//   columns,
-//   struct,
-//   transform = (primitive) => primitive,
-// }: Readonly<{
-//   columns: ReadonlyArray<Column>;
-//   struct: StructuralRow;
-//   transform?: Transform;
-// }>): ReadonlyArray<Hash> {
-//   const results: Array<Hash> = [];
-//   const depths = new Array(columns.length).fill(0);
-//   const createFillWithHash = ({ columnIndex }: { columnIndex: number }) => {
-//     return ({ value, accessor }: { value: Value; accessor: Accessor }) => {
-//       if (!results[depths[columnIndex]!]) {
-//         results[depths[columnIndex]!] = {};
-//       }
-//       results[depths[columnIndex]!]![accessor.id] = transform(
-//         valueToPrimitive(value)
-//       );
-//       depths[columnIndex]! += 1;
-//     };
-//   };
-
-//   columns.forEach((column, columnIndex) =>
-//     walk({
-//       struct,
-//       column,
-//       accessorIndex: 0,
-//       fill: createFillWithHash({ columnIndex }),
-//     })
-//   );
-
-//   return results;
-// }
 
 function walk({
   struct,

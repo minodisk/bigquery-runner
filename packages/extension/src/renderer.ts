@@ -287,8 +287,8 @@ export function createRendererManager({
                 event: {
                   event: "rows",
                   payload: {
-                    header: flat.heads.map(({ id }) => id),
-                    rows: flat.toRows({
+                    header: flat.ids,
+                    rows: flat.getNumberedRows({
                       structs,
                       rowNumberStart: page.rowNumberStart,
                     }),

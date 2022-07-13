@@ -10,7 +10,9 @@ describe("flat", () => {
       }
       const flat = unwrap(flatResult);
 
-      expect(flat.toRows({ structs: [], rowNumberStart: 0n })).toEqual([]);
+      expect(flat.getNumberedRows({ structs: [], rowNumberStart: 0n })).toEqual(
+        []
+      );
     });
 
     it("Flat", () => {
@@ -32,7 +34,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: "foo",
@@ -85,7 +87,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: "foo",
@@ -144,7 +146,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: {
@@ -237,7 +239,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: [
@@ -309,7 +311,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: "foo",
@@ -362,7 +364,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: "foo",
@@ -441,7 +443,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: "foo",
@@ -498,7 +500,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: "foo",
@@ -572,7 +574,7 @@ describe("flat", () => {
       const flat = unwrap(flatResult);
 
       expect(
-        flat.toRows({
+        flat.getNumberedRows({
           structs: [
             {
               a: [
