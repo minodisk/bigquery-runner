@@ -56,8 +56,8 @@ export type Accessor = Readonly<{
   mode: FieldMode;
 }>;
 
-export type Struct = Readonly<{
-  [name: string]: Value | Struct | ReadonlyArray<Value | Struct>;
+export type StructuralRow = Readonly<{
+  [name: string]: Value | StructuralRow | ReadonlyArray<Value | StructuralRow>;
 }>;
 export type Value =
   | null

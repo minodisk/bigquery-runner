@@ -7,7 +7,7 @@ import type {
   Table,
   Routine,
   Result,
-  Struct,
+  StructuralRow,
   UnknownError,
   StatementType,
   Err,
@@ -43,12 +43,12 @@ export type RunJob = Readonly<{
   tableName?: string;
   hasNext(): boolean;
   getPage(table: Table): Page;
-  getStructs(): Promise<Result<UnknownError, Array<Struct>>>;
+  getStructuralRows(): Promise<Result<UnknownError, Array<StructuralRow>>>;
   getPrevStructs(): Promise<
-    Result<UnknownError | NoPageTokenError, Array<Struct>>
+    Result<UnknownError | NoPageTokenError, Array<StructuralRow>>
   >;
   getNextStructs(): Promise<
-    Result<UnknownError | NoPageTokenError, Array<Struct>>
+    Result<UnknownError | NoPageTokenError, Array<StructuralRow>>
   >;
   getTable(): Promise<Result<UnknownError | NoDestinationTableError, Table>>;
   getRoutine(): Promise<Result<UnknownError, Routine>>;
@@ -156,7 +156,7 @@ export async function createClient(
           });
         },
 
-        getStructs() {
+        getStructuralRows() {
           return tryCatch(
             async () => {
               const [structs, next] = await job.getQueryResults({

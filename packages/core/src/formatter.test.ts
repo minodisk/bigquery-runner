@@ -1,4 +1,5 @@
-import type { Field, Struct } from "types";
+import { PassThrough } from "stream";
+import type { Field, StructuralRow } from "types";
 import { unwrap } from "types";
 import {
   createCSVFormatter,
@@ -23,7 +24,7 @@ const fields: Array<Field> = [
   { name: "timestamp", type: "TIMESTAMP", mode: "NULLABLE" },
   { name: "interval", type: "INTERVAL", mode: "NULLABLE" },
 ];
-const structs: Array<Struct> = [
+const structs: Array<StructuralRow> = [
   {
     bool: true,
     int64: 123,
@@ -119,10 +120,28 @@ const complexStructs = {
   rowNumberStart: 0n,
 };
 
+const createMockStream = () => {
+  const writer = new PassThrough();
+  let data = "";
+  writer.on("data", (d) => (data += d.toString("utf-8")));
+  const promise = new Promise((resolve) => {
+    writer.on("end", () => resolve(data));
+  });
+  return {
+    writer,
+    async read() {
+      return promise;
+    },
+  };
+};
+
 describe("formatter", () => {
   describe("createTableFormatter", () => {
     it("should be format empty", async () => {
-      const formatter = createTableFormatter();
+      const stream = createMockStream();
+      const formatter = createTableFormatter({
+        writer: stream.writer,
+      });
 
       const flatResult = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
@@ -132,15 +151,16 @@ describe("formatter", () => {
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("");
-      expect(
-        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
-      ).toEqual("\n");
-      expect(formatter.foot()).toEqual("");
+      formatter.head({ flat });
+      formatter.body({ structs: [], rowNumberStart: 0n, flat });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual("\n");
     });
 
     it("should be format simple", async () => {
-      const formatter = createTableFormatter();
+      const stream = createMockStream();
+      const formatter = createTableFormatter(stream);
 
       const flatResult = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
@@ -150,29 +170,30 @@ describe("formatter", () => {
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("");
-      expect(
-        await formatter.body({
-          structs: [
-            {
-              foo: 123,
-            },
-          ],
-          rowNumberStart: 0n,
-          flat,
-        })
-      ).toEqual(
+      formatter.head({ flat });
+      formatter.body({
+        structs: [
+          {
+            foo: 123,
+          },
+        ],
+        rowNumberStart: 0n,
+        flat,
+      });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual(
         `
 foo
 ---
 123
 `.trimStart()
       );
-      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format complex", async () => {
-      const formatter = createTableFormatter();
+      const stream = createMockStream();
+      const formatter = createTableFormatter(stream);
 
       const flatResult = createFlat([
         { name: "a", type: "INTEGER", mode: "NULLABLE" },
@@ -192,8 +213,12 @@ foo
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("");
-      expect(await formatter.body({ ...complexStructs, flat })).toEqual(
+      formatter.head({ flat });
+      formatter.body({ ...complexStructs, flat });
+      await formatter.foot();
+
+      const actual = await stream.read();
+      expect(actual).toEqual(
         `
 a    b.c    b.d  e    
 ---  -----  ---  -----
@@ -204,11 +229,11 @@ a    b.c    b.d  e
      0.21   baz
 `.trimStart()
       );
-      expect(formatter.foot()).toEqual("");
     });
 
     it("should be format all types", async () => {
-      const formatter = createTableFormatter();
+      const stream = createMockStream();
+      const formatter = createTableFormatter(stream);
 
       const flatResult = createFlat(fields);
       if (!flatResult.success) {
@@ -216,14 +241,15 @@ a    b.c    b.d  e
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual(``);
-      expect(
-        await formatter.body({
-          structs,
-          rowNumberStart: 0n,
-          flat,
-        })
-      ).toEqual(
+      formatter.head({ flat });
+      formatter.body({
+        structs,
+        rowNumberStart: 0n,
+        flat,
+      });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual(
         `
 bool   int64  float64  numeric  bignumeric  string  bytes  date        datetime              time       timestamp             interval         
 -----  -----  -------  -------  ----------  ------  -----  ----------  --------------------  ---------  --------------------  -----------------
@@ -232,13 +258,13 @@ false  0      0        0        0                          2016-01-02  2016-01-0
 null   null   null     null     null        null    null   null        null                  null       null                  null
 `.trimStart()
       );
-      expect(formatter.foot()).toEqual(``);
     });
   });
 
   describe("createMarkdownFormatter", () => {
     it("should be format empty", async () => {
-      const formatter = createMarkdownFormatter();
+      const stream = createMockStream();
+      const formatter = createMarkdownFormatter(stream);
 
       const flatResult = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
@@ -248,20 +274,18 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual(
-        `
-|foo|
+      formatter.head({ flat });
+      formatter.body({ structs: [], rowNumberStart: 0n, flat });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual(`|foo|
 |---|
-`.trimStart()
-      );
-      expect(
-        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
-      ).toEqual("\n");
-      expect(formatter.foot()).toEqual("");
+`);
     });
 
     it("should be format simple", async () => {
-      const formatter = createMarkdownFormatter();
+      const stream = createMockStream();
+      const formatter = createMarkdownFormatter(stream);
 
       const flatResult = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
@@ -271,32 +295,27 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual(
-        `
-|foo|
+      formatter.head({ flat });
+      formatter.body({
+        structs: [
+          {
+            foo: 123,
+          },
+        ],
+        rowNumberStart: 0n,
+        flat,
+      });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual(`|foo|
 |---|
-`.trimStart()
-      );
-      expect(
-        await formatter.body({
-          structs: [
-            {
-              foo: 123,
-            },
-          ],
-          rowNumberStart: 0n,
-          flat,
-        })
-      ).toEqual(
-        `
 |123|
-`.trimStart()
-      );
-      expect(formatter.foot()).toEqual("");
+`);
     });
 
     it("should be format complex", async () => {
-      const formatter = createMarkdownFormatter();
+      const stream = createMockStream();
+      const formatter = createMarkdownFormatter(stream);
 
       const flatResult = createFlat([
         { name: "a", type: "INTEGER", mode: "NULLABLE" },
@@ -316,26 +335,23 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual(
-        `
-|a|b.c|b.d|e|
+      formatter.head({ flat });
+      formatter.body({ ...complexStructs, flat });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual(`|a|b.c|b.d|e|
 |---|---|---|---|
-`.trimStart()
-      );
-      expect(await formatter.body({ ...complexStructs, flat })).toEqual(
-        `
 |123|0.456|foo|true|
 ||0.789|bar||
 |987|0.65|foo|false|
 ||0.43|bar||
 ||0.21|baz||
-`.trimStart()
-      );
-      expect(formatter.foot()).toEqual("");
+`);
     });
 
     it("should be format all types", async () => {
-      const formatter = createMarkdownFormatter();
+      const stream = createMockStream();
+      const formatter = createMarkdownFormatter(stream);
 
       const flatResult = createFlat(fields);
       if (!flatResult.success) {
@@ -343,29 +359,28 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat }))
+      formatter.head({ flat });
+      formatter.body({
+        structs,
+        rowNumberStart: 0n,
+        flat,
+      });
+      await formatter.foot();
+
+      expect(await stream.read())
         .toEqual(`|bool|int64|float64|numeric|bignumeric|string|bytes|date|datetime|time|timestamp|interval|
 |---|---|---|---|---|---|---|---|---|---|---|---|
-`);
-      expect(
-        await formatter.body({
-          structs,
-          rowNumberStart: 0n,
-          flat,
-        })
-      ).toEqual(
-        `|true|123|123.45|123|99999999|foo|bar|2016-01-02|2016-01-02T15:04:05Z|15:04:05Z|2016-01-02T15:04:05Z|01 01-02 15:04:05|
+|true|123|123.45|123|99999999|foo|bar|2016-01-02|2016-01-02T15:04:05Z|15:04:05Z|2016-01-02T15:04:05Z|01 01-02 15:04:05|
 |false|0|0|0|0|||2016-01-02|2016-01-02T15:04:05Z|15:04:05Z|2016-01-02T15:04:05Z|0|
 |null|null|null|null|null|null|null|null|null|null|null|null|
-`
-      );
-      expect(formatter.foot()).toEqual(``);
+`);
     });
   });
 
   describe("createJSONLinesFormatter", () => {
     it("should be format empty", async () => {
-      const formatter = createJSONLinesFormatter();
+      const stream = createMockStream();
+      const formatter = createJSONLinesFormatter(stream);
 
       const flatResult = createFlat([]);
       if (!flatResult.success) {
@@ -373,15 +388,16 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("");
-      expect(
-        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
-      ).toEqual("\n");
-      expect(formatter.foot()).toEqual("");
+      formatter.head({ flat });
+      formatter.body({ structs: [], rowNumberStart: 0n, flat });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual("");
     });
 
     it("should be format all types", async () => {
-      const formatter = createJSONLinesFormatter();
+      const stream = createMockStream();
+      const formatter = createJSONLinesFormatter(stream);
 
       const flatResult = createFlat([]);
       if (!flatResult.success) {
@@ -389,26 +405,27 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("");
-      expect(
-        await formatter.body({
-          structs,
-          rowNumberStart: 0n,
-          flat,
-        })
-      ).toEqual(
+      formatter.head({ flat });
+      formatter.body({
+        structs,
+        rowNumberStart: 0n,
+        flat,
+      });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual(
         `{"bool":true,"int64":123,"float64":123.45,"numeric":123,"bignumeric":99999999,"string":"foo","bytes":"bar","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"01 01-02 15:04:05"}
 {"bool":false,"int64":0,"float64":0,"numeric":0,"bignumeric":0,"string":"","bytes":"","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"0"}
 {"bool":null,"int64":null,"float64":null,"numeric":null,"bignumeric":null,"string":null,"bytes":null,"date":null,"datetime":null,"time":null,"timestamp":null,"interval":null}
 `
       );
-      expect(formatter.foot()).toEqual(``);
     });
   });
 
   describe("createJSONFormatter", () => {
     it("should be format empty", async () => {
-      const formatter = createJSONFormatter();
+      const stream = createMockStream();
+      const formatter = createJSONFormatter(stream);
 
       const flatResult = createFlat([]);
       if (!flatResult.success) {
@@ -416,16 +433,17 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("[");
-      expect(
-        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
-      ).toEqual("");
-      expect(formatter.foot()).toEqual(`]
+      formatter.head({ flat });
+      formatter.body({ structs: [], rowNumberStart: 0n, flat });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual(`[]
 `);
     });
 
     it("should be format all types", async () => {
-      const formatter = createJSONFormatter();
+      const stream = createMockStream();
+      const formatter = createJSONFormatter(stream);
 
       const flatResult = createFlat([]);
       if (!flatResult.success) {
@@ -433,24 +451,28 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("[");
-      expect(
-        await formatter.body({
-          structs,
-          rowNumberStart: 0n,
-          flat,
-        })
-      ).toEqual(
-        `{"bool":true,"int64":123,"float64":123.45,"numeric":123,"bignumeric":99999999,"string":"foo","bytes":"bar","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"01 01-02 15:04:05"},{"bool":false,"int64":0,"float64":0,"numeric":0,"bignumeric":0,"string":"","bytes":"","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"0"},{"bool":null,"int64":null,"float64":null,"numeric":null,"bignumeric":null,"string":null,"bytes":null,"date":null,"datetime":null,"time":null,"timestamp":null,"interval":null}`
+      formatter.head({ flat });
+      formatter.body({
+        structs,
+        rowNumberStart: 0n,
+        flat,
+      });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual(
+        `[{"bool":true,"int64":123,"float64":123.45,"numeric":123,"bignumeric":99999999,"string":"foo","bytes":"bar","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"01 01-02 15:04:05"},{"bool":false,"int64":0,"float64":0,"numeric":0,"bignumeric":0,"string":"","bytes":"","date":"2016-01-02","datetime":"2016-01-02T15:04:05Z","time":"15:04:05Z","timestamp":"2016-01-02T15:04:05Z","interval":"0"},{"bool":null,"int64":null,"float64":null,"numeric":null,"bignumeric":null,"string":null,"bytes":null,"date":null,"datetime":null,"time":null,"timestamp":null,"interval":null}]
+`
       );
-      expect(formatter.foot()).toEqual(`]
-`);
     });
   });
 
   describe("createCSVFormatter", () => {
     it("should be format empty", async () => {
-      const formatter = createCSVFormatter({});
+      const stream = createMockStream();
+      const formatter = createCSVFormatter({
+        writer: stream.writer,
+        options: {},
+      });
 
       const flatResult = createFlat([]);
       if (!flatResult.success) {
@@ -458,15 +480,19 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("");
-      expect(
-        await formatter.body({ structs: [], rowNumberStart: 0n, flat })
-      ).toEqual("");
-      expect(formatter.foot()).toEqual(``);
+      formatter.head({ flat });
+      formatter.body({ structs: [], rowNumberStart: 0n, flat });
+      await formatter.foot();
+
+      expect(await stream.read()).toEqual("");
     });
 
     it("should be format all types", async () => {
-      const formatter = createCSVFormatter({});
+      const stream = createMockStream();
+      const formatter = createCSVFormatter({
+        writer: stream.writer,
+        options: {},
+      });
 
       const flatResult = createFlat(fields);
       if (!flatResult.success) {
@@ -474,19 +500,19 @@ null   null   null     null     null        null    null   null        null     
       }
       const flat = unwrap(flatResult);
 
-      expect(formatter.head({ flat })).toEqual("");
-      expect(
-        await formatter.body({
-          structs,
-          rowNumberStart: 0n,
-          flat,
-        })
-      )
+      formatter.head({ flat });
+      formatter.body({
+        structs,
+        rowNumberStart: 0n,
+        flat,
+      });
+      await formatter.foot();
+
+      expect(await stream.read())
         .toEqual(`true,123,123.45,123,99999999,foo,bar,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,01 01-02 15:04:05
 false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
 ,,,,,,,,,,,
 `);
-      expect(formatter.foot()).toEqual(``);
     });
   });
 });

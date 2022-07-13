@@ -28,27 +28,37 @@ export function createDownloader({
     jsonl: createWriter({
       configManager,
       logger: parentLogger.createChild("jsonl"),
-      createFormatter: () => createJSONLinesFormatter(),
+      createFormatter: (params) => createJSONLinesFormatter(params),
     }),
     json: createWriter({
       configManager,
       logger: parentLogger.createChild("json"),
-      createFormatter: () => createJSONFormatter(),
+      createFormatter: (params) => createJSONFormatter(params),
     }),
     csv: createWriter({
       configManager,
       logger: parentLogger.createChild("csv"),
-      createFormatter: (config) => createCSVFormatter(config.downloader.csv),
+      createFormatter: ({
+        writer,
+        config,
+      }: {
+        writer: NodeJS.WritableStream;
+        config: Config;
+      }) =>
+        createCSVFormatter({
+          writer,
+          options: config.downloader.csv,
+        }),
     }),
     markdown: createWriter({
       configManager,
       logger: parentLogger.createChild("markdown"),
-      createFormatter: () => createMarkdownFormatter(),
+      createFormatter: (params) => createMarkdownFormatter(params),
     }),
     text: createWriter({
       configManager,
       logger: parentLogger.createChild("text"),
-      createFormatter: () => createTableFormatter(),
+      createFormatter: (params) => createTableFormatter(params),
     }),
     dispose() {
       // do nothing
@@ -64,7 +74,10 @@ const createWriter =
   }: {
     configManager: ConfigManager;
     logger: Logger;
-    createFormatter: (config: Config) => Formatter;
+    createFormatter: (params: {
+      writer: NodeJS.WritableStream;
+      config: Config;
+    }) => Formatter;
   }) =>
   async ({ uri, query }: { uri: Uri; query: string }) => {
     logger.log(`start downloading to ${uri.path}`);
@@ -127,28 +140,29 @@ const createWriter =
     await new Promise((resolve) => stream.on("open", resolve));
     logger.log(`stream is opened`);
 
-    const formatter = createFormatter(config);
+    const formatter = createFormatter({
+      writer: stream,
+      config,
+    });
 
-    stream.write(formatter.head({ flat }));
+    formatter.head({ flat });
 
     logger.log(`writing body`);
 
-    const getStructsResult = await job.getStructs();
-    if (!getStructsResult.success) {
-      logger.error(getStructsResult);
+    const getStructuralRowsResult = await job.getStructuralRows();
+    if (!getStructuralRowsResult.success) {
+      logger.error(getStructuralRowsResult);
       return;
     }
-    const structs = unwrap(getStructsResult);
+    const structs = unwrap(getStructuralRowsResult);
     logger.log(`fetched ${structs.length} rows`);
     const page = job.getPage(table);
     logger.log(`page ${page.rowNumberStart} - ${page.rowNumberEnd}`);
-    stream.write(
-      await formatter.body({
-        flat,
-        structs,
-        rowNumberStart: page.rowNumberStart,
-      })
-    );
+    formatter.body({
+      flat,
+      structs,
+      rowNumberStart: page.rowNumberStart,
+    });
     logger.log(`written ${structs.length} rows`);
 
     while (job.hasNext()) {
@@ -162,20 +176,17 @@ const createWriter =
       logger.log(`fetched ${structs.length} rows`);
       const page = job.getPage(table);
       logger.log(`page ${page.rowNumberStart} - ${page.rowNumberEnd}`);
-      stream.write(
-        await formatter.body({
-          flat,
-          structs,
-          rowNumberStart: page.rowNumberStart,
-        })
-      );
+      formatter.body({
+        flat,
+        structs,
+        rowNumberStart: page.rowNumberStart,
+      });
       logger.log(`written ${structs.length} rows`);
     }
 
     logger.log(`writing foot`);
 
-    stream.write(formatter.foot());
-    stream.end();
+    await formatter.foot();
 
     logger.log(`complete`);
   };

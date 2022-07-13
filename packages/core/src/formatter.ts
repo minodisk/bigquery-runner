@@ -1,26 +1,156 @@
-import * as CSV from "csv-stringify";
+import type { Options } from "csv-stringify";
+import { stringify } from "csv-stringify";
 import EasyTable from "easy-table";
-import type { Hash, Struct } from "types";
+import type { StructuralRow } from "types";
 import type { Flat } from "./flat";
 
 export type Formatter = Readonly<{
-  head(props: Readonly<{ flat: Flat }>): string;
+  head(props: Readonly<{ flat: Flat }>): void;
   body(
     props: Readonly<{
       flat: Flat;
-      structs: ReadonlyArray<Struct>;
+      structs: ReadonlyArray<StructuralRow>;
       rowNumberStart: bigint;
     }>
-  ): Promise<string>;
-  foot(): string;
+  ): void;
+  foot(): Promise<void>;
 }>;
 
-export function createTableFormatter(): Formatter {
+export function createJSONLinesFormatter({
+  writer,
+}: {
+  writer: NodeJS.WritableStream;
+}): Formatter {
   return {
     head() {
-      return "";
+      // do nothing
     },
-    async body({ flat, structs, rowNumberStart }) {
+    body({ structs }) {
+      structs.forEach((struct) => {
+        writer.write(JSON.stringify(struct));
+        writer.write("\n");
+      });
+    },
+    async foot() {
+      return new Promise((resolve) => writer.end(resolve));
+    },
+  };
+}
+
+export function createJSONFormatter({
+  writer,
+}: {
+  writer: NodeJS.WritableStream;
+}): Formatter {
+  let first = true;
+  return {
+    head() {
+      writer.write("[");
+    },
+    body({ structs }) {
+      structs.forEach((struct) => {
+        if (!first) {
+          writer.write(",");
+        }
+        writer.write(JSON.stringify(struct));
+        first = false;
+      });
+    },
+    async foot() {
+      writer.write("]\n");
+      return new Promise((resolve) => writer.end(resolve));
+    },
+  };
+}
+
+export function createCSVFormatter({
+  writer,
+  options,
+}: {
+  writer: NodeJS.WritableStream;
+  options: Options;
+}): Formatter {
+  const stringifier = stringify(options);
+  stringifier.pipe(writer);
+  const promise = new Promise<void>((resolve, reject) => {
+    stringifier.on("error", reject);
+    stringifier.on("finish", () => resolve());
+  });
+  return {
+    head() {
+      // do nothing
+    },
+    body({ flat, structs }) {
+      if (structs.length === 0) {
+        return;
+      }
+      flat
+        .toHashes({
+          structs,
+          transform: (p) => (p === null ? "" : `${p}`),
+        })
+        .forEach((hash) => stringifier.write(hash));
+    },
+    async foot() {
+      stringifier.end();
+      return promise;
+    },
+  };
+}
+
+export function createMarkdownFormatter({
+  writer,
+}: {
+  writer: NodeJS.WritableStream;
+}): Formatter {
+  return {
+    head({ flat }) {
+      if (flat.heads.length === 0) {
+        return;
+      }
+      writer.write(`|`);
+      flat.heads.forEach(({ id }) => writer.write(`${id}|`));
+      writer.write(`\n`);
+      writer.write(`|`);
+      flat.heads.forEach(() => writer.write("---|"));
+      writer.write(`\n`);
+    },
+    body({ flat, structs, rowNumberStart }) {
+      flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) =>
+        rows.forEach((row) => {
+          writer.write(`|`);
+          row.forEach(({ value }) => {
+            if (value === undefined) {
+              writer.write("|");
+              return;
+            }
+            if (typeof value !== "string") {
+              writer.write(`${value}|`);
+              return;
+            }
+            writer.write(value.replace(/\n/g, "<br/>"));
+            writer.write("|");
+          });
+          writer.write(`\n`);
+        })
+      );
+    },
+    async foot() {
+      return new Promise((resolve) => writer.end(resolve));
+    },
+  };
+}
+
+export function createTableFormatter({
+  writer,
+}: {
+  writer: NodeJS.WritableStream;
+}): Formatter {
+  return {
+    head() {
+      // do nothing
+    },
+    body({ flat, structs, rowNumberStart }) {
       const t = new EasyTable();
       flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) => {
         rows.forEach((row) => {
@@ -28,112 +158,11 @@ export function createTableFormatter(): Formatter {
           t.newRow();
         });
       });
-      return t.toString().trimEnd() + "\n";
+      writer.write(t.toString().trimEnd());
+      writer.write("\n");
     },
-    foot() {
-      return "";
-    },
-  };
-}
-
-export function createMarkdownFormatter(): Formatter {
-  return {
-    head({ flat }) {
-      if (flat.heads.length === 0) {
-        return "";
-      }
-      return `|${flat.heads.map(({ id }) => id).join("|")}|
-|${flat.heads.map(() => "---").join("|")}|
-`;
-    },
-    async body({ flat, structs, rowNumberStart }) {
-      return (
-        flat
-          .toRows({ structs, rowNumberStart })
-          .flatMap(({ rows }) =>
-            rows.map(
-              (row) =>
-                `|${row
-                  .map(({ value }) =>
-                    value === undefined
-                      ? ""
-                      : typeof value === "string"
-                      ? value.replace(/\n/g, "<br/>")
-                      : `${value}`
-                  )
-                  .join("|")}|`
-            )
-          )
-          .join("\n") + "\n"
-      );
-    },
-    foot() {
-      return "";
-    },
-  };
-}
-
-export function createJSONLinesFormatter(): Formatter {
-  return {
-    head() {
-      return "";
-    },
-    async body({ structs }) {
-      return structs.map((struct) => JSON.stringify(struct)).join("\n") + "\n";
-    },
-    foot() {
-      return "";
-    },
-  };
-}
-
-export function createJSONFormatter(): Formatter {
-  let len = 0;
-  return {
-    head() {
-      return "[";
-    },
-    async body({ structs }) {
-      const prefix = len === 0 ? "" : ",";
-      len += structs.length;
-      return prefix + structs.map((struct) => JSON.stringify(struct)).join(",");
-    },
-    foot() {
-      return "]\n";
-    },
-  };
-}
-
-export function createCSVFormatter(options: CSV.Options): Formatter {
-  return {
-    head() {
-      return "";
-    },
-    async body({ flat, structs }) {
-      if (structs.length === 0) {
-        return "";
-      }
-      return await new Promise<string>((resolve, reject) => {
-        CSV.stringify(
-          flat.toHashes({
-            structs,
-            transform: (p) => (p === null ? "" : `${p}`),
-          }) as Array<Hash>,
-          options,
-          (err?: Error, res?: string) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            if (res) {
-              resolve(res);
-            }
-          }
-        );
-      });
-    },
-    foot() {
-      return "";
+    async foot() {
+      return new Promise((resolve) => writer.end(resolve));
     },
   };
 }

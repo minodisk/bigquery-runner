@@ -6,7 +6,7 @@ import type {
   Metadata,
   Page,
   Routine,
-  Struct,
+  StructuralRow,
   Table,
   RunnerID,
   Result,
@@ -37,7 +37,7 @@ export type Runner = Readonly<{
 }>;
 
 export type SelectResponse = Readonly<{
-  structs: Array<Struct>;
+  structs: Array<StructuralRow>;
   table: Table;
   page: Page;
 }>;
@@ -350,7 +350,7 @@ export function createRunnerManager({
           return;
         }
 
-        const getStructsResult = await job.getStructs();
+        const getStructsResult = await job.getStructuralRows();
         if (!getStructsResult.success) {
           logger.error(getStructsResult);
           await renderer.failProcessing(getStructsResult.value);

@@ -8,7 +8,7 @@ import type {
   NumberedRows,
   Value,
   Row,
-  Struct,
+  StructuralRow,
   Primitive,
   Result,
   UnknownError,
@@ -23,14 +23,14 @@ export type Flat = Readonly<{
   columns: ReadonlyArray<Column>;
   toRows(
     props: Readonly<{
-      structs: ReadonlyArray<Struct>;
+      structs: ReadonlyArray<StructuralRow>;
       rowNumberStart: bigint;
       transform?: Transform;
     }>
   ): ReadonlyArray<NumberedRows>;
   toHashes(
     props: Readonly<{
-      structs: ReadonlyArray<Struct>;
+      structs: ReadonlyArray<StructuralRow>;
       transform?: Transform;
     }>
   ): ReadonlyArray<Hash>;
@@ -109,7 +109,7 @@ function structsToRows({
 }: Readonly<{
   heads: ReadonlyArray<Accessor>;
   columns: ReadonlyArray<Column>;
-  structs: ReadonlyArray<Struct>;
+  structs: ReadonlyArray<StructuralRow>;
   rowNumberStart: bigint;
   transform?: Transform;
 }>): ReadonlyArray<NumberedRows> {
@@ -130,7 +130,7 @@ function structToRows({
 }: Readonly<{
   heads: ReadonlyArray<Accessor>;
   columns: ReadonlyArray<Column>;
-  struct: Struct;
+  struct: StructuralRow;
   transform?: Transform;
 }>): ReadonlyArray<Row> {
   const rows: Array<Row> = [];
@@ -169,7 +169,7 @@ function structsToHashes({
   transform,
 }: Readonly<{
   columns: ReadonlyArray<Column>;
-  structs: ReadonlyArray<Struct>;
+  structs: ReadonlyArray<StructuralRow>;
   transform?: Transform;
 }>): ReadonlyArray<Hash> {
   return structs.flatMap((struct) =>
@@ -183,7 +183,7 @@ function structToHashes({
   transform = (primitive) => primitive,
 }: Readonly<{
   columns: ReadonlyArray<Column>;
-  struct: Struct;
+  struct: StructuralRow;
   transform?: Transform;
 }>): ReadonlyArray<Hash> {
   const results: Array<Hash> = [];
@@ -218,18 +218,18 @@ function walk({
   accessorIndex,
   fill,
 }: Readonly<{
-  struct: Struct;
+  struct: StructuralRow;
   column: Column;
   accessorIndex: number;
   fill(props: { accessor: Accessor; value: Value }): void;
 }>): void {
-  let s: Struct = struct;
+  let s: StructuralRow = struct;
   let isNull = false;
   for (let ai = accessorIndex; ai < column.length; ai += 1) {
     const accessor = column[ai]!;
     if (accessor.mode === "REPEATED") {
       if (accessor.type === "STRUCT" || accessor.type === "RECORD") {
-        (s[accessor.name] as ReadonlyArray<Struct>).forEach((struct) => {
+        (s[accessor.name] as ReadonlyArray<StructuralRow>).forEach((struct) => {
           walk({
             struct,
             column,
@@ -248,7 +248,7 @@ function walk({
     } else {
       if (accessor.type === "STRUCT" || accessor.type === "RECORD") {
         if (!isNull) {
-          s = s[accessor.name] as Struct;
+          s = s[accessor.name] as StructuralRow;
           isNull = s === null;
         }
         continue;
