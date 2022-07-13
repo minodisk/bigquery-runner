@@ -1,25 +1,23 @@
-import { BigQuery, BigQueryOptions, Job, Query } from "@google-cloud/bigquery";
-import {
+import type { BigQueryOptions, Job, Query } from "@google-cloud/bigquery";
+import { BigQuery } from "@google-cloud/bigquery";
+import type {
   Page,
   Metadata,
   SerializablePage,
   Table,
   Routine,
-  tryCatch,
-  type Error,
   Result,
   Struct,
-  succeed,
-  unwrap,
   UnknownError,
   StatementType,
-  fail,
+  Err,
 } from "types";
+import { tryCatch, succeed, unwrap, fail } from "types";
 
-export type NoJobError = Error<"NoJob">;
-export type NoDestinationTableError = Error<"NoDestinationTable">;
-export type NoPageTokenError = Error<"NoPageToken">;
-export type QueryError = Error<"Query">;
+export type NoJobError = Err<"NoJob">;
+export type NoDestinationTableError = Err<"NoDestinationTable">;
+export type NoPageTokenError = Err<"NoPageToken">;
+export type QueryError = Err<"Query">;
 export type QueryWithPositionError = {
   type: "QueryWithPosition";
   reason: string;
@@ -62,7 +60,7 @@ export type DryRunJob = Readonly<{
 
 export async function createClient(
   options: BigQueryOptions
-): Promise<Result<Error<"Authentication" | "Unknown">, Client>> {
+): Promise<Result<Err<"Authentication" | "Unknown">, Client>> {
   const bigQuery = new BigQuery({
     scopes: [
       // Query Drive data: https://cloud.google.com/bigquery/external-data-drive

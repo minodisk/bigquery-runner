@@ -11,7 +11,11 @@
     "build:production": "npm run build -- --minify",
     "pretest": "run-p build:test lint",
     "lint": "eslint \"./src/**/*.ts\"",
-    "lint-fix": "npm run lint -- --fix",
-    "test": "tsc && node ../../out/test/runTest.js"
+    "fix": "run-p fix:*",
+    "fix:lint": "npm run lint -- --fix",
+    "fix:format": "npm run format -- --write",
+    "check": "npm run format -- --check",
+    "test": "tsc && node ../../out/test/runTest.js",
+    "format": "prettier --write src"
   }
 }

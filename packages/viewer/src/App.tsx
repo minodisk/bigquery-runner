@@ -7,22 +7,25 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import deepmerge from "deepmerge";
-import React, { FC, useCallback, useEffect, useState } from "react";
+import type { FC } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import type {
+  RowsPayload,
+  RoutinePayload,
+  MetadataPayload,
+  TablePayload,
+  Format,
+} from "types";
 import {
   isData,
   isRowsEvent,
-  RowsPayload,
   isRoutineEvent,
-  RoutinePayload,
   isMetadataEvent,
-  MetadataPayload,
-  TablePayload,
   isTableEvent,
-  Format,
   isStartProcessingEvent,
   isSuccessLoadingEvent,
   isFailProcessingEvent,
-  type Error,
+  type Err,
 } from "types";
 import { Header } from "./domain/Header";
 import { Job } from "./domain/Job";
@@ -60,7 +63,7 @@ const vscode = acquireVsCodeApi<State>(); // window["acquireVsCodeApi"] ?
 const App: FC = () => {
   // const [focused, setFocused] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<Error<string> | undefined>(undefined);
+  const [error, setError] = useState<Err<string> | undefined>(undefined);
   const toast = useToast();
   const [metadataPayload, setMetadataPayload] = useState<
     MetadataPayload | undefined

@@ -1,6 +1,6 @@
 import { Box, Flex } from "@chakra-ui/react";
 import React from "react";
-import { CFC } from "../types";
+import type { CFC } from "../types";
 
 export const Footer: CFC = ({ children, ...props }) => (
   <Box position="sticky" height="25px" bottom={0}>

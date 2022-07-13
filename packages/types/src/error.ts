@@ -1,20 +1,21 @@
-import { Failure, unwrap } from "./result";
+import type { Failure } from "./result";
+import { unwrap } from "./result";
 
-export type Error<T extends string> = {
+export type Err<T extends string> = {
   type: T;
   reason: string;
 };
 
-export type UnknownError = Error<"Unknown">;
+export type UnknownError = Err<"Unknown">;
 
 export const errorToString = (err: unknown): string => {
-  const failure = err as Failure<Error<string>>;
+  const failure = err as Failure<Err<string>>;
   if (failure.success === false) {
     const error = unwrap(failure);
     return `${error.type}: ${error.reason}`;
   }
 
-  const error = err as Error<string>;
+  const error = err as Err<string>;
   if (error.type && error.reason) {
     return `${error.type}: ${error.reason}`;
   }

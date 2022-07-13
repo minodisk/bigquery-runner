@@ -10,7 +10,8 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:import/recommended",
-    "plugin:react/recommended"
+    "plugin:react/recommended",
+    "prettier"
   ],
   "plugins": [
     "@typescript-eslint",
@@ -45,9 +46,14 @@
       }
     ],
     "@typescript-eslint/semi": "warn",
-
     "@typescript-eslint/no-floating-promises": "error",
     "@typescript-eslint/no-invalid-void-type": "error",
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports"
+      }
+    ],
 
     // Use unused-imports/no-unused-vars
     "@typescript-eslint/no-unused-vars": "off",

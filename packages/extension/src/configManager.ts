@@ -1,6 +1,7 @@
 import { isAbsolute, join } from "path";
-import { commands, Disposable, workspace } from "vscode";
-import { Config } from "./config";
+import type { Disposable } from "vscode";
+import { commands, workspace } from "vscode";
+import type { Config } from "./config";
 
 export type ConfigManager = ReturnType<typeof createConfigManager>;
 

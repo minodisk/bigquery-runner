@@ -1,7 +1,7 @@
 import { CopyIcon } from "@chakra-ui/icons";
 import { IconButton, useToast, VStack } from "@chakra-ui/react";
 import React, { useCallback } from "react";
-import { CFC } from "../types";
+import type { CFC } from "../types";
 
 export const CopyButton: CFC<{ text?: string }> = ({ text, ...props }) => {
   const toast = useToast();

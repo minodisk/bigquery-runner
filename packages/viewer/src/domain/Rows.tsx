@@ -18,8 +18,9 @@ import {
   Thead,
   Tr,
 } from "@chakra-ui/react";
-import React, { FC } from "react";
-import { Format, RowsPayload } from "types";
+import type { FC } from "react";
+import React from "react";
+import type { Format, RowsPayload } from "types";
 import { Footer } from "./Footer";
 
 export const Rows: FC<

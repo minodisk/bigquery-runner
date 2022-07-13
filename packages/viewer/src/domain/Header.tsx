@@ -1,6 +1,6 @@
 import { Box, Flex, HStack, Spinner } from "@chakra-ui/react";
 import React from "react";
-import { CFC } from "../types";
+import type { CFC } from "../types";
 
 export const Header: CFC<{ processing: boolean }> = ({
   processing,

@@ -1,40 +1,37 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { createFlat, toSerializablePage } from "core";
-import {
-  isDownloadEvent,
-  isLoadedEvent,
-  isNextEvent,
-  isPrevEvent,
-  isPreviewEvent,
+import type {
   Metadata,
   Result,
   Routine,
   Table,
-  tryCatch,
   ViewerEvent,
   UnknownError,
   RunnerID,
   RendererEvent,
-  errorToString,
-  unwrap,
-  Error,
-  fail,
+  Err,
   PrevEvent,
   NextEvent,
   DownloadEvent,
   PreviewEvent,
 } from "types";
 import {
-  ExtensionContext,
-  Uri,
-  ViewColumn,
-  WebviewPanel,
-  window,
-} from "vscode";
-import { ConfigManager } from "./configManager";
-import { Logger } from "./logger";
-import { SelectResponse } from "./runner";
+  isDownloadEvent,
+  isLoadedEvent,
+  isNextEvent,
+  isPrevEvent,
+  isPreviewEvent,
+  tryCatch,
+  errorToString,
+  unwrap,
+  fail,
+} from "types";
+import type { ExtensionContext, WebviewPanel } from "vscode";
+import { Uri, ViewColumn, window } from "vscode";
+import type { ConfigManager } from "./configManager";
+import type { Logger } from "./logger";
+import type { SelectResponse } from "./runner";
 
 export type RendererManager = Readonly<{
   get(
@@ -64,11 +61,11 @@ export type Renderer = {
   readonly renderTable: (table: Table) => Promise<Result<UnknownError, void>>;
   readonly renderRows: (
     data: SelectResponse
-  ) => Promise<Result<UnknownError | Error<"NoSchema">, void>>;
+  ) => Promise<Result<UnknownError | Err<"NoSchema">, void>>;
 
   readonly successProcessing: () => Promise<Result<UnknownError, void>>;
   readonly failProcessing: (
-    error: Error<string>
+    error: Err<string>
   ) => Promise<Result<UnknownError, void>>;
 
   readonly dispose: () => void;

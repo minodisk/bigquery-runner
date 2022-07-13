@@ -1,14 +1,16 @@
 import { format as formatBytes } from "bytes";
 import { createClient } from "core";
-import { RunnerID, unwrap } from "types";
-import { TextDocument, TextEditor, window } from "vscode";
-import { ConfigManager } from "./configManager";
-import { ErrorMarkerManager } from "./errorMarker";
+import type { RunnerID } from "types";
+import { unwrap } from "types";
+import type { TextDocument, TextEditor } from "vscode";
+import { window } from "vscode";
+import type { ConfigManager } from "./configManager";
+import type { ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import { isBigQuery } from "./isBigQuery";
-import { Logger } from "./logger";
-import { QuickFixManager } from "./quickfix";
-import { StatusManager } from "./statusManager";
+import type { Logger } from "./logger";
+import type { QuickFixManager } from "./quickfix";
+import type { StatusManager } from "./statusManager";
 
 export type DryRunner = ReturnType<typeof createDryRunner>;
 

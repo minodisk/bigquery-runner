@@ -19,6 +19,8 @@ jobs:
         uses: "google-github-actions/auth@v0.4.0"
         with:
           credentials_json: "${{ secrets.GOOGLE_CREDENTIALS }}"
+      - name: Check
+        run: npm run check
       - name: Lint
         run: npm run lint
       - name: Run headless test

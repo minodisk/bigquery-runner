@@ -1,12 +1,6 @@
-import { RunnerID } from "types";
-import {
-  Diagnostic,
-  languages,
-  Position,
-  Range,
-  TextEditor,
-  workspace,
-} from "vscode";
+import type { RunnerID } from "types";
+import type { TextEditor } from "vscode";
+import { Diagnostic, languages, Position, Range, workspace } from "vscode";
 
 export type ErrorMarkerManager = ReturnType<typeof createErrorMarkerManager>;
 export type ErrorMarker = Readonly<{

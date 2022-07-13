@@ -6,7 +6,7 @@ import {
   BigQueryTimestamp,
   Geography,
 } from "@google-cloud/bigquery";
-import { Value } from "types";
+import type { Value } from "types";
 import { valueToPrimitive } from "./transform";
 
 describe("transform", () => {

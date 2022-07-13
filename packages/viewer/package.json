@@ -12,10 +12,14 @@
     "copy:public": "mkdirp ../../out/viewer && cpx ./public/* ../../out/viewer",
     "pretest": "run-p build:test lint",
     "lint": "eslint \"./src/**/*.@(ts|tsx)\"",
-    "lint-fix": "npm run lint -- --fix",
+    "fix": "run-p fix:*",
+    "fix:lint": "npm run lint -- --fix",
+    "fix:format": "npm run format -- --write",
+    "check": "npm run format -- --check",
     "test": "tsc && node scripts/test.js",
     "test-coverage": "npm run test -- --coverage --coverageDirectory ../../coverage/viewer",
-    "test-watch": "npm test -- --watchAll"
+    "test-watch": "npm test -- --watchAll",
+    "format": "prettier --write src"
   },
   "jest": {
     "roots": [

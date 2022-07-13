@@ -1,4 +1,4 @@
-import { TextEditor } from "vscode";
+import type { TextEditor } from "vscode";
 
 export async function getQueryText(editor: TextEditor): Promise<string> {
   const { document, selections } = editor;

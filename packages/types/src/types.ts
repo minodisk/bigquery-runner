@@ -6,7 +6,7 @@ import type {
   BigQueryTimestamp,
   Geography,
 } from "@google-cloud/bigquery";
-import { Error } from "./error";
+import type { Err } from "./error";
 
 export type RunnerID = `${"file" | "query"}://${string}`;
 
@@ -185,7 +185,7 @@ export function isSuccessLoadingEvent(
 
 export type FailProcessingEvent = Readonly<{
   event: "failProcessing";
-  payload: Error<string>;
+  payload: Err<string>;
 }>;
 export function isFailProcessingEvent(
   e: RendererEvent

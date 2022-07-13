@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { unwrap } from "types";
-import { commands, ExtensionContext, window, workspace } from "vscode";
+import type { ExtensionContext } from "vscode";
+import { commands, window, workspace } from "vscode";
 import { createConfigManager } from "./configManager";
 import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";

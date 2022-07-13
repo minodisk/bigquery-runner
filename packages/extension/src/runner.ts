@@ -1,31 +1,29 @@
 import { basename } from "path";
 import { format } from "bytes";
-import { createClient, Parameter, parse, RunJob } from "core";
-import {
+import type { Parameter, RunJob } from "core";
+import { createClient, parse } from "core";
+import type {
   Metadata,
   Page,
   Routine,
   Struct,
   Table,
-  unwrap,
   RunnerID,
-  succeed,
   Result,
-  type Error,
   Format,
-  formats,
-  tryCatchSync,
-  errorToString,
+  Err,
 } from "types";
-import { TextEditor, ViewColumn, window, workspace } from "vscode";
+import { unwrap, succeed, formats, tryCatchSync, errorToString } from "types";
+import type { TextEditor, ViewColumn } from "vscode";
+import { window, workspace } from "vscode";
 import { checksum } from "./checksum";
-import { ConfigManager } from "./configManager";
-import { Downloader } from "./downloader";
-import { ErrorMarker, ErrorMarkerManager } from "./errorMarker";
+import type { ConfigManager } from "./configManager";
+import type { Downloader } from "./downloader";
+import type { ErrorMarker, ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
-import { Logger } from "./logger";
-import { Renderer, RendererManager } from "./renderer";
-import { Status, StatusManager } from "./statusManager";
+import type { Logger } from "./logger";
+import type { Renderer, RendererManager } from "./renderer";
+import type { Status, StatusManager } from "./statusManager";
 
 export type RunnerManager = ReturnType<typeof createRunnerManager>;
 export type RunJobResponse = SelectResponse | RoutineResponse;
@@ -73,7 +71,7 @@ export function createRunnerManager({
       editor: TextEditor
     ): Promise<
       Result<
-        Error<
+        Err<
           "Unknown" | "Authentication" | "Query" | "QueryWithPosition" | "NoJob"
         >,
         Runner
@@ -132,7 +130,7 @@ export function createRunnerManager({
       viewColumn: ViewColumn;
     }>): Promise<
       Result<
-        Error<
+        Err<
           "Unknown" | "Authentication" | "Query" | "QueryWithPosition" | "NoJob"
         >,
         Runner
@@ -199,7 +197,7 @@ export function createRunnerManager({
     errorMarker?: ErrorMarker;
   }>): Promise<
     Result<
-      Error<
+      Err<
         "Unknown" | "Authentication" | "NoJob" | "Query" | "QueryWithPosition"
       >,
       Runner
@@ -557,7 +555,7 @@ type PositionalParamValues = Array<unknown>;
 
 const getParamValues = async (
   params: ReadonlyArray<Parameter>
-): Promise<Result<Error<"InvalidJSON">, ParamValues | undefined>> => {
+): Promise<Result<Err<"InvalidJSON">, ParamValues | undefined>> => {
   const namedParams: NamedParamValues = {};
   const positionalParams: PositionalParamValues = [];
 
@@ -605,7 +603,7 @@ const getParamValues = async (
   );
 };
 
-const parseJSON = (value: string): Result<Error<"InvalidJSON">, unknown> => {
+const parseJSON = (value: string): Result<Err<"InvalidJSON">, unknown> => {
   return tryCatchSync(
     () => JSON.parse(value),
     (err) => ({

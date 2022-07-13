@@ -3,6 +3,11 @@
   "name": "types",
   "main": "src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint \"./src/**/*.ts\"",
+    "fix": "run-p fix:*",
+    "fix:lint": "npm run lint -- --fix",
+    "fix:format": "npm run format -- --write",
+    "check": "npm run format -- --check",
+    "format": "prettier --write src"
   }
 }

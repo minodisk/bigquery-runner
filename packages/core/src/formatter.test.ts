@@ -1,4 +1,5 @@
-import { Field, Struct, unwrap } from "types";
+import type { Field, Struct } from "types";
+import { unwrap } from "types";
 import {
   createCSVFormatter,
   createFlat,

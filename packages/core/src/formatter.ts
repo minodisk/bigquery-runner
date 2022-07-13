@@ -1,7 +1,7 @@
 import * as CSV from "csv-stringify";
 import EasyTable from "easy-table";
-import { Hash, Struct } from "types";
-import { Flat } from "./flat";
+import type { Hash, Struct } from "types";
+import type { Flat } from "./flat";
 
 export type Formatter = Readonly<{
   head(props: Readonly<{ flat: Flat }>): string;

@@ -4,10 +4,14 @@
   "main": "src/index.ts",
   "scripts": {
     "lint": "eslint \"./src/**/*.ts\"",
-    "lint-fix": "npm run lint -- --fix",
+    "check": "npm run format -- --check",
+    "fix": "run-p fix:*",
+    "fix:lint": "npm run lint -- --fix",
+    "fix:format": "npm run format -- --write",
     "test": "tsc && jest --silent=false",
     "test-coverage": "npm run test -- --coverage --coverageDirectory ../../coverage/core",
-    "test-watch": "npm run test -- --watchAll"
+    "test-watch": "npm run test -- --watchAll",
+    "format": "prettier src"
   },
   "jest": {
     "roots": [

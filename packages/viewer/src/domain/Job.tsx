@@ -3,7 +3,7 @@ import bytes from "bytes";
 import formatDuration from "date-fns/formatDuration";
 import formatISO from "date-fns/formatISO";
 import React from "react";
-import { Metadata } from "types";
+import type { Metadata } from "types";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 

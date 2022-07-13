@@ -1,6 +1,6 @@
 import { extname } from "path";
-import { TextDocument } from "vscode";
-import { Config } from "./config";
+import type { TextDocument } from "vscode";
+import type { Config } from "./config";
 
 export function isBigQuery({
   config,

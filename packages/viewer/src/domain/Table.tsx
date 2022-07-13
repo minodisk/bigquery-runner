@@ -10,8 +10,9 @@ import {
 } from "@chakra-ui/react";
 import bytes from "bytes";
 import formatISO from "date-fns/formatISO";
-import React, { FC } from "react";
-import { Table as TableData } from "types";
+import type { FC } from "react";
+import React from "react";
+import type { Table as TableData } from "types";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 

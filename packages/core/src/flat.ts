@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {
+import type {
   Accessor,
   Column,
   Field,
@@ -10,11 +10,10 @@ import {
   Row,
   Struct,
   Primitive,
-  errorToString,
   Result,
-  tryCatchSync,
   UnknownError,
 } from "types";
+import { errorToString, tryCatchSync } from "types";
 import { valueToPrimitive } from "./transform";
 
 type Transform = (primitive: Primitive) => Primitive;

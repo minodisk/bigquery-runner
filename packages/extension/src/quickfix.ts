@@ -1,15 +1,14 @@
+import type { Disposable, TextDocument } from "vscode";
 import {
   CodeAction,
   CodeActionKind,
-  Disposable,
   languages,
   Position,
   Range,
-  TextDocument,
   WorkspaceEdit,
 } from "vscode";
-import { Config } from "./config";
-import { ConfigManager } from "./configManager";
+import type { Config } from "./config";
+import type { ConfigManager } from "./configManager";
 
 export type QuickFixManager = ReturnType<typeof createQuickFixManager>;
 

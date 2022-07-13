@@ -1,4 +1,5 @@
 import { createWriteStream } from "fs";
+import type { Formatter } from "core";
 import {
   createClient,
   createCSVFormatter,
@@ -7,13 +8,12 @@ import {
   createJSONLinesFormatter,
   createMarkdownFormatter,
   createTableFormatter,
-  Formatter,
 } from "core";
 import { errorToString, tryCatchSync, unwrap } from "types";
-import { Uri } from "vscode";
-import { Config } from "./config";
-import { ConfigManager } from "./configManager";
-import { Logger } from "./logger";
+import type { Uri } from "vscode";
+import type { Config } from "./config";
+import type { ConfigManager } from "./configManager";
+import type { Logger } from "./logger";
 
 export type Downloader = ReturnType<typeof createDownloader>;
 

@@ -6,7 +6,7 @@ import {
   BigQueryTimestamp,
   Geography,
 } from "@google-cloud/bigquery";
-import { Primitive, Value } from "types";
+import type { Primitive, Value } from "types";
 
 export function valueToPrimitive(value: Value): Primitive {
   if (
