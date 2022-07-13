@@ -16,6 +16,7 @@ import {
   Text,
   Th,
   Thead,
+  Tooltip,
   Tr,
 } from "@chakra-ui/react";
 import type { FC } from "react";
@@ -31,7 +32,7 @@ export const Rows: FC<
     onDownloadRequest: (format: Format) => unknown;
   }>
 > = ({
-  rowsPayload: { header, rows, page },
+  rowsPayload: { heads, rows, page },
   onPrevRequest,
   onNextRequest,
   onDownloadRequest,
@@ -42,8 +43,12 @@ export const Rows: FC<
         <Thead position="sticky" top="36px">
           <Tr>
             <Th isNumeric />
-            {header.map((head) => (
-              <Th key={head}>{head}</Th>
+            {heads.map((head) => (
+              <Th key={head.id}>
+                <Tooltip label={`${head.type}(${head.mode})`}>
+                  {head.id}
+                </Tooltip>
+              </Th>
             ))}
           </Tr>
         </Thead>

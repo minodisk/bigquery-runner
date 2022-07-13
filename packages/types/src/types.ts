@@ -166,7 +166,7 @@ export type RowsEvent = Readonly<{
   payload: RowsPayload;
 }>;
 export type RowsPayload = Readonly<{
-  header: ReadonlyArray<string>;
+  heads: ReadonlyArray<Accessor>;
   rows: ReadonlyArray<NumberedRows>;
   page: SerializablePage;
 }>;

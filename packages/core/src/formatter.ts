@@ -80,7 +80,9 @@ export function createCSVFormatter({
   options: Options;
 }): Formatter {
   const stringifier = stringify(
-    options.header ? { ...options, columns: [...flat.ids] } : options
+    options.header
+      ? { ...options, columns: flat.heads.map(({ id }) => id) }
+      : options
   );
   stringifier.pipe(writer);
   const promise = new Promise<void>((resolve, reject) => {
@@ -95,7 +97,6 @@ export function createCSVFormatter({
       if (structs.length === 0) {
         return;
       }
-
       flat.getNumberedRows({ structs, rowNumberStart }).forEach(({ rows }) =>
         rows.forEach((row) => {
           stringifier.write(
@@ -122,14 +123,14 @@ export function createMarkdownFormatter({
 }): Formatter {
   return {
     head() {
-      if (flat.ids.length === 0) {
+      if (flat.heads.length === 0) {
         return;
       }
       writer.write(`|`);
-      flat.ids.forEach((id) => writer.write(`${id}|`));
+      flat.heads.forEach(({ id }) => writer.write(`${id}|`));
       writer.write(`\n`);
       writer.write(`|`);
-      flat.ids.forEach(() => writer.write("---|"));
+      flat.heads.forEach(() => writer.write("---|"));
       writer.write(`\n`);
     },
     body({

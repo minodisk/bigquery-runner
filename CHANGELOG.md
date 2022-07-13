@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.5.0
+
+### Added
+
+- Display type and mode tooltips, when moused over in the column header.
+  ![image](https://user-images.githubusercontent.com/514164/178778903-8b390e6a-399c-4a31-951d-3a1142311c39.png)
+
 ## v1.4.0
 
 ### Added

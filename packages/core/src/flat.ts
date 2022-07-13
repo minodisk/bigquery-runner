@@ -15,7 +15,7 @@ import { errorToString, tryCatchSync } from "types";
 import { valueToPrimitive } from "./transform";
 
 export type Flat = Readonly<{
-  ids: ReadonlyArray<string>;
+  heads: ReadonlyArray<Accessor>;
   getNumberedRows(
     props: Readonly<{
       structs: ReadonlyArray<StructuralRow>;
@@ -32,7 +32,7 @@ export function createFlat(
       const heads = fieldsToHeads(fields);
       const columns = fieldsToColumns(fields);
       return {
-        ids: heads.map(({ id }) => id),
+        heads,
         getNumberedRows({ structs, rowNumberStart }) {
           return structs.map((struct, i) => {
             const rows = structToRows({ heads, columns, struct });

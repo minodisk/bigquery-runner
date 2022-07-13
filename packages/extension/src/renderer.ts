@@ -287,7 +287,7 @@ export function createRendererManager({
                 event: {
                   event: "rows",
                   payload: {
-                    header: flat.ids,
+                    heads: flat.heads,
                     rows: flat.getNumberedRows({
                       structs,
                       rowNumberStart: page.rowNumberStart,
