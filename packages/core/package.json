@@ -4,11 +4,13 @@
   "main": "src/index.ts",
   "scripts": {
     "lint": "eslint \"./src/**/*.ts\"",
-    "check": "npm run format -- --check",
+    "check": "run-p check:*",
+    "check:tsc": "tsc",
+    "check:format": "npm run format -- --check",
     "fix": "run-p fix:*",
     "fix:lint": "npm run lint -- --fix",
     "fix:format": "npm run format -- --write",
-    "test": "tsc && jest --silent=false",
+    "test": "jest --silent=false",
     "test-coverage": "npm run test -- --coverage --coverageDirectory ../../coverage/core",
     "test-watch": "npm run test -- --watchAll",
     "format": "prettier src"

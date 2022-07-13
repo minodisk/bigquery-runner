@@ -1,18 +1,7 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS",
-    "target": "ES2020",
-    "rootDir": "src",
-    "outDir": "../../out",
-    "lib": ["ES2020"],
-    "sourceMap": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedParameters": true,
-    "noUncheckedIndexedAccess": true
+    "rootDir": "src"
   },
-  "exclude": ["node_modules", ".vscode-test"]
+  "include": ["src"]
 }

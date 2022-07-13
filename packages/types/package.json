@@ -7,7 +7,9 @@
     "fix": "run-p fix:*",
     "fix:lint": "npm run lint -- --fix",
     "fix:format": "npm run format -- --write",
-    "check": "npm run format -- --check",
+    "check": "run-p check:*",
+    "check:tsc": "tsc",
+    "check:format": "npm run format -- --check",
     "format": "prettier --write src"
   }
 }
