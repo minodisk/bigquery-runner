@@ -5,10 +5,9 @@ import type { StructuralRow } from "types";
 import type { Flat } from "./flat";
 
 export type Formatter = Readonly<{
-  head(props: Readonly<{ flat: Flat }>): void;
+  head(): void;
   body(
     props: Readonly<{
-      flat: Flat;
       structs: ReadonlyArray<StructuralRow>;
       rowNumberStart: bigint;
     }>
@@ -64,12 +63,18 @@ export function createJSONFormatter({
 }
 
 export function createCSVFormatter({
+  flat,
   writer,
   options,
 }: {
+  flat: Flat;
   writer: NodeJS.WritableStream;
   options: Options;
 }): Formatter {
+  const columns = flat.heads.map(({ name }) => name);
+  if (options.header) {
+    options.columns = columns;
+  }
   const stringifier = stringify(options);
   stringifier.pipe(writer);
   const promise = new Promise<void>((resolve, reject) => {
@@ -80,16 +85,18 @@ export function createCSVFormatter({
     head() {
       // do nothing
     },
-    body({ flat, structs }) {
+    body({ structs }) {
       if (structs.length === 0) {
         return;
       }
-      flat
-        .toHashes({
-          structs,
-          transform: (p) => (p === null ? "" : `${p}`),
-        })
-        .forEach((hash) => stringifier.write(hash));
+      structs.forEach((row) =>
+        stringifier.write(
+          columns.map((column) => {
+            const value = row[column];
+            return value === null ? "" : `${value}`;
+          })
+        )
+      );
     },
     async foot() {
       stringifier.end();
@@ -99,12 +106,14 @@ export function createCSVFormatter({
 }
 
 export function createMarkdownFormatter({
+  flat,
   writer,
 }: {
+  flat: Flat;
   writer: NodeJS.WritableStream;
 }): Formatter {
   return {
-    head({ flat }) {
+    head() {
       if (flat.heads.length === 0) {
         return;
       }
@@ -115,7 +124,7 @@ export function createMarkdownFormatter({
       flat.heads.forEach(() => writer.write("---|"));
       writer.write(`\n`);
     },
-    body({ flat, structs, rowNumberStart }) {
+    body({ structs, rowNumberStart }) {
       flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) =>
         rows.forEach((row) => {
           writer.write(`|`);
@@ -142,15 +151,17 @@ export function createMarkdownFormatter({
 }
 
 export function createTableFormatter({
+  flat,
   writer,
 }: {
+  flat: Flat;
   writer: NodeJS.WritableStream;
 }): Formatter {
   return {
     head() {
       // do nothing
     },
-    body({ flat, structs, rowNumberStart }) {
+    body({ structs, rowNumberStart }) {
       const t = new EasyTable();
       flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) => {
         rows.forEach((row) => {

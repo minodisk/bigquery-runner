@@ -1,5 +1,5 @@
 import { createWriteStream } from "fs";
-import type { Formatter } from "core";
+import type { Flat, Formatter } from "core";
 import {
   createClient,
   createCSVFormatter,
@@ -39,13 +39,16 @@ export function createDownloader({
       configManager,
       logger: parentLogger.createChild("csv"),
       createFormatter: ({
+        flat,
         writer,
         config,
       }: {
+        flat: Flat;
         writer: NodeJS.WritableStream;
         config: Config;
       }) =>
         createCSVFormatter({
+          flat,
           writer,
           options: config.downloader.csv,
         }),
@@ -75,6 +78,7 @@ const createWriter =
     configManager: ConfigManager;
     logger: Logger;
     createFormatter: (params: {
+      flat: Flat;
       writer: NodeJS.WritableStream;
       config: Config;
     }) => Formatter;
@@ -141,11 +145,12 @@ const createWriter =
     logger.log(`stream is opened`);
 
     const formatter = createFormatter({
+      flat,
       writer: stream,
       config,
     });
 
-    formatter.head({ flat });
+    formatter.head();
 
     logger.log(`writing body`);
 
@@ -159,7 +164,6 @@ const createWriter =
     const page = job.getPage(table);
     logger.log(`page ${page.rowNumberStart} - ${page.rowNumberEnd}`);
     formatter.body({
-      flat,
       structs,
       rowNumberStart: page.rowNumberStart,
     });
@@ -177,7 +181,6 @@ const createWriter =
       const page = job.getPage(table);
       logger.log(`page ${page.rowNumberStart} - ${page.rowNumberEnd}`);
       formatter.body({
-        flat,
         structs,
         rowNumberStart: page.rowNumberStart,
       });

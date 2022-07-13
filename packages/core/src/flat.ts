@@ -4,7 +4,6 @@ import type {
   Accessor,
   Column,
   Field,
-  Hash,
   NumberedRows,
   Value,
   Row,
@@ -28,12 +27,6 @@ export type Flat = Readonly<{
       transform?: Transform;
     }>
   ): ReadonlyArray<NumberedRows>;
-  toHashes(
-    props: Readonly<{
-      structs: ReadonlyArray<StructuralRow>;
-      transform?: Transform;
-    }>
-  ): ReadonlyArray<Hash>;
 }>;
 
 export function createFlat(
@@ -54,9 +47,6 @@ export function createFlat(
             rowNumberStart,
             transform,
           });
-        },
-        toHashes({ structs, transform }) {
-          return structsToHashes({ columns, structs, transform });
         },
       };
     },
@@ -163,54 +153,54 @@ function structToRows({
   return rows;
 }
 
-function structsToHashes({
-  columns,
-  structs,
-  transform,
-}: Readonly<{
-  columns: ReadonlyArray<Column>;
-  structs: ReadonlyArray<StructuralRow>;
-  transform?: Transform;
-}>): ReadonlyArray<Hash> {
-  return structs.flatMap((struct) =>
-    structToHashes({ columns, struct, transform })
-  );
-}
+// function structsToHashes({
+//   columns,
+//   structs,
+//   transform,
+// }: Readonly<{
+//   columns: ReadonlyArray<Column>;
+//   structs: ReadonlyArray<StructuralRow>;
+//   transform?: Transform;
+// }>): ReadonlyArray<Hash> {
+//   return structs.flatMap((struct) =>
+//     structToHashes({ columns, struct, transform })
+//   );
+// }
 
-function structToHashes({
-  columns,
-  struct,
-  transform = (primitive) => primitive,
-}: Readonly<{
-  columns: ReadonlyArray<Column>;
-  struct: StructuralRow;
-  transform?: Transform;
-}>): ReadonlyArray<Hash> {
-  const results: Array<Hash> = [];
-  const depths = new Array(columns.length).fill(0);
-  const createFillWithHash = ({ columnIndex }: { columnIndex: number }) => {
-    return ({ value, accessor }: { value: Value; accessor: Accessor }) => {
-      if (!results[depths[columnIndex]!]) {
-        results[depths[columnIndex]!] = {};
-      }
-      results[depths[columnIndex]!]![accessor.id] = transform(
-        valueToPrimitive(value)
-      );
-      depths[columnIndex]! += 1;
-    };
-  };
+// function structToHashes({
+//   columns,
+//   struct,
+//   transform = (primitive) => primitive,
+// }: Readonly<{
+//   columns: ReadonlyArray<Column>;
+//   struct: StructuralRow;
+//   transform?: Transform;
+// }>): ReadonlyArray<Hash> {
+//   const results: Array<Hash> = [];
+//   const depths = new Array(columns.length).fill(0);
+//   const createFillWithHash = ({ columnIndex }: { columnIndex: number }) => {
+//     return ({ value, accessor }: { value: Value; accessor: Accessor }) => {
+//       if (!results[depths[columnIndex]!]) {
+//         results[depths[columnIndex]!] = {};
+//       }
+//       results[depths[columnIndex]!]![accessor.id] = transform(
+//         valueToPrimitive(value)
+//       );
+//       depths[columnIndex]! += 1;
+//     };
+//   };
 
-  columns.forEach((column, columnIndex) =>
-    walk({
-      struct,
-      column,
-      accessorIndex: 0,
-      fill: createFillWithHash({ columnIndex }),
-    })
-  );
+//   columns.forEach((column, columnIndex) =>
+//     walk({
+//       struct,
+//       column,
+//       accessorIndex: 0,
+//       fill: createFillWithHash({ columnIndex }),
+//     })
+//   );
 
-  return results;
-}
+//   return results;
+// }
 
 function walk({
   struct,
