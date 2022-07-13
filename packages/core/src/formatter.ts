@@ -24,13 +24,17 @@ export function createJSONLinesFormatter({
     head() {
       // do nothing
     },
-    body({ structs }) {
+    body({
+      structs,
+    }: Readonly<{
+      structs: ReadonlyArray<StructuralRow>;
+    }>) {
       structs.forEach((struct) => {
         writer.write(JSON.stringify(struct));
         writer.write("\n");
       });
     },
-    async foot() {
+    async foot(): Promise<void> {
       return new Promise((resolve) => writer.end(resolve));
     },
   };
@@ -46,7 +50,11 @@ export function createJSONFormatter({
     head() {
       writer.write("[");
     },
-    body({ structs }) {
+    body({
+      structs,
+    }: Readonly<{
+      structs: ReadonlyArray<StructuralRow>;
+    }>) {
       structs.forEach((struct) => {
         if (!first) {
           writer.write(",");
@@ -55,7 +63,7 @@ export function createJSONFormatter({
         first = false;
       });
     },
-    async foot() {
+    async foot(): Promise<void> {
       writer.write("]\n");
       return new Promise((resolve) => writer.end(resolve));
     },
@@ -71,11 +79,10 @@ export function createCSVFormatter({
   writer: NodeJS.WritableStream;
   options: Options;
 }): Formatter {
-  const columns = flat.heads.map(({ name }) => name);
-  if (options.header) {
-    options.columns = columns;
-  }
-  const stringifier = stringify(options);
+  const columns = flat.heads.map(({ id }) => id);
+  const stringifier = stringify(
+    options.header ? { ...options, columns } : options
+  );
   stringifier.pipe(writer);
   const promise = new Promise<void>((resolve, reject) => {
     stringifier.on("error", reject);
@@ -85,17 +92,19 @@ export function createCSVFormatter({
     head() {
       // do nothing
     },
-    body({ structs }) {
+    body({ structs, rowNumberStart }) {
       if (structs.length === 0) {
         return;
       }
-      structs.forEach((row) =>
-        stringifier.write(
-          columns.map((column) => {
-            const value = row[column];
-            return value === null ? "" : `${value}`;
-          })
-        )
+
+      flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) =>
+        rows.forEach((row) => {
+          stringifier.write(
+            row.map(({ value }) =>
+              value === null || value === undefined ? "" : `${value}`
+            )
+          );
+        })
       );
     },
     async foot() {
@@ -124,7 +133,13 @@ export function createMarkdownFormatter({
       flat.heads.forEach(() => writer.write("---|"));
       writer.write(`\n`);
     },
-    body({ structs, rowNumberStart }) {
+    body({
+      structs,
+      rowNumberStart,
+    }: Readonly<{
+      structs: ReadonlyArray<StructuralRow>;
+      rowNumberStart: bigint;
+    }>) {
       flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) =>
         rows.forEach((row) => {
           writer.write(`|`);
@@ -144,7 +159,7 @@ export function createMarkdownFormatter({
         })
       );
     },
-    async foot() {
+    async foot(): Promise<void> {
       return new Promise((resolve) => writer.end(resolve));
     },
   };
@@ -161,7 +176,13 @@ export function createTableFormatter({
     head() {
       // do nothing
     },
-    body({ structs, rowNumberStart }) {
+    body({
+      structs,
+      rowNumberStart,
+    }: Readonly<{
+      structs: ReadonlyArray<StructuralRow>;
+      rowNumberStart: bigint;
+    }>) {
       const t = new EasyTable();
       flat.toRows({ structs, rowNumberStart }).forEach(({ rows }) => {
         rows.forEach((row) => {
@@ -172,7 +193,7 @@ export function createTableFormatter({
       writer.write(t.toString().trimEnd());
       writer.write("\n");
     },
-    async foot() {
+    async foot(): Promise<void> {
       return new Promise((resolve) => writer.end(resolve));
     },
   };

@@ -1,5 +1,5 @@
 import { createWriteStream } from "fs";
-import type { Flat, Formatter } from "core";
+import type { Formatter } from "core";
 import {
   createClient,
   createCSVFormatter,
@@ -9,7 +9,8 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
 } from "core";
-import { errorToString, tryCatchSync, unwrap } from "types";
+import type { Field, Result, UnknownError } from "types";
+import { succeed, errorToString, tryCatchSync, unwrap } from "types";
 import type { Uri } from "vscode";
 import type { Config } from "./config";
 import type { ConfigManager } from "./configManager";
@@ -28,40 +29,61 @@ export function createDownloader({
     jsonl: createWriter({
       configManager,
       logger: parentLogger.createChild("jsonl"),
-      createFormatter: (params) => createJSONLinesFormatter(params),
+      createFormatter: ({ writer }) => {
+        return succeed(createJSONLinesFormatter({ writer }));
+      },
     }),
     json: createWriter({
       configManager,
       logger: parentLogger.createChild("json"),
-      createFormatter: (params) => createJSONFormatter(params),
+      createFormatter({ writer }) {
+        return succeed(createJSONFormatter({ writer }));
+      },
     }),
     csv: createWriter({
       configManager,
       logger: parentLogger.createChild("csv"),
-      createFormatter: ({
-        flat,
-        writer,
-        config,
-      }: {
-        flat: Flat;
-        writer: NodeJS.WritableStream;
-        config: Config;
-      }) =>
-        createCSVFormatter({
-          flat,
-          writer,
-          options: config.downloader.csv,
-        }),
+      createFormatter({ fields, writer, config }) {
+        const flatResult = createFlat(fields);
+        if (!flatResult.success) {
+          return flatResult;
+        }
+        const flat = unwrap(flatResult);
+
+        return succeed(
+          createCSVFormatter({
+            flat,
+            writer,
+            options: config.downloader.csv,
+          })
+        );
+      },
     }),
     markdown: createWriter({
       configManager,
       logger: parentLogger.createChild("markdown"),
-      createFormatter: (params) => createMarkdownFormatter(params),
+      createFormatter({ fields, writer }) {
+        const flatResult = createFlat(fields);
+        if (!flatResult.success) {
+          return flatResult;
+        }
+        const flat = unwrap(flatResult);
+
+        return succeed(createMarkdownFormatter({ flat, writer }));
+      },
     }),
     text: createWriter({
       configManager,
       logger: parentLogger.createChild("text"),
-      createFormatter: (params) => createTableFormatter(params),
+      createFormatter({ fields, writer }) {
+        const flatResult = createFlat(fields);
+        if (!flatResult.success) {
+          return flatResult;
+        }
+        const flat = unwrap(flatResult);
+
+        return succeed(createTableFormatter({ flat, writer }));
+      },
     }),
     dispose() {
       // do nothing
@@ -77,11 +99,13 @@ const createWriter =
   }: {
     configManager: ConfigManager;
     logger: Logger;
-    createFormatter: (params: {
-      flat: Flat;
-      writer: NodeJS.WritableStream;
-      config: Config;
-    }) => Formatter;
+    createFormatter: (
+      params: Readonly<{
+        fields: ReadonlyArray<Field>;
+        writer: NodeJS.WritableStream;
+        config: Config;
+      }>
+    ) => Result<UnknownError, Formatter>;
   }) =>
   async ({ uri, query }: { uri: Uri; query: string }) => {
     logger.log(`start downloading to ${uri.path}`);
@@ -118,14 +142,6 @@ const createWriter =
       return;
     }
 
-    const flatResult = createFlat(table.schema.fields);
-    if (!flatResult.success) {
-      logger.error(flatResult);
-      return;
-    }
-    const flat = unwrap(flatResult);
-    logger.log(`flat created ${flat.heads.map(({ name }) => name).join(", ")}`);
-
     logger.log(`create stream for ${uri.fsPath}`);
     const streamResult = tryCatchSync(
       () => {
@@ -144,11 +160,16 @@ const createWriter =
     await new Promise((resolve) => stream.on("open", resolve));
     logger.log(`stream is opened`);
 
-    const formatter = createFormatter({
-      flat,
+    const createFormatterResult = createFormatter({
+      fields: table.schema.fields,
       writer: stream,
       config,
     });
+    if (!createFormatterResult.success) {
+      logger.error(createFormatterResult);
+      return;
+    }
+    const formatter = createFormatterResult.value;
 
     formatter.head();
 
@@ -172,8 +193,7 @@ const createWriter =
     while (job.hasNext()) {
       const getStructsResult = await job.getNextStructs();
       if (!getStructsResult.success) {
-        const { reason } = unwrap(getStructsResult);
-        logger.log(reason);
+        logger.error(getStructsResult);
         return;
       }
       const structs = unwrap(getStructsResult);
