@@ -20,8 +20,6 @@ export const Table: FC<{
   table: TableData;
   onPreviewRequest: () => unknown;
 }> = ({ table, onPreviewRequest }) => {
-  const tableId = `${table.tableReference.projectId}.${table.tableReference.datasetId}.${table.tableReference.tableId}`;
-
   return (
     <TableComponent>
       <Tbody>
@@ -29,8 +27,8 @@ export const Table: FC<{
           <Th>Table ID</Th>
           <Td>
             <HStack gap={2}>
-              <Breakable>{tableId}</Breakable>
-              <CopyButton text={tableId} />
+              <Breakable>{table.id}</Breakable>
+              <CopyButton text={table.id} />
               <IconButton
                 aria-label="preview"
                 icon={<ViewIcon />}

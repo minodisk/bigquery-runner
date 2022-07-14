@@ -1,6 +1,5 @@
 select
-    en_label,
-    labels,
+*
 from
     `bigquery-public-data.wikipedia.wikidata`
 where

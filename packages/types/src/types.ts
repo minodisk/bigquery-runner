@@ -144,6 +144,7 @@ export type TableEvent = Readonly<{
   payload: TablePayload;
 }>;
 export type TablePayload = {
+  heads: ReadonlyArray<Accessor>;
   table: Table;
 };
 export function isTableEvent(e: RendererEvent): e is TableEvent {
@@ -283,7 +284,7 @@ export type Routine = Readonly<{
 }>;
 
 export type Schema = Readonly<{
-  fields?: ReadonlyArray<Field>;
+  fields: ReadonlyArray<Field>;
 }>;
 
 export type TableReference = Readonly<{

@@ -1,7 +1,7 @@
 import { basename } from "path";
 import { format } from "bytes";
 import type { Parameter, RunJob } from "core";
-import { createClient, parse } from "core";
+import { createFlat, createClient, parse } from "core";
 import type {
   Metadata,
   Page,
@@ -333,7 +333,18 @@ export function createRunnerManager({
         }
         const table = unwrap(getTableResult);
 
-        const renderTableResult = await renderer.renderTable(table);
+        const getFlatResult = createFlat(table.schema.fields);
+        if (!getFlatResult.success) {
+          logger.error(getFlatResult);
+          await renderer.failProcessing(getFlatResult.value);
+          return;
+        }
+        const flat = getFlatResult.value;
+
+        const renderTableResult = await renderer.renderTable({
+          table,
+          heads: flat.heads,
+        });
         if (!renderTableResult.success) {
           logger.error(renderTableResult);
           await renderer.failProcessing(renderTableResult.value);

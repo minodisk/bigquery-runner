@@ -31,6 +31,7 @@ import { Header } from "./domain/Header";
 import { Job } from "./domain/Job";
 import { Routine } from "./domain/Routine";
 import { Rows } from "./domain/Rows";
+import { Schema } from "./domain/Schema";
 import { Table } from "./domain/Table";
 
 type State = Partial<
@@ -179,6 +180,7 @@ const App: FC = () => {
       <Header processing={processing}>
         <TabList>
           {rowsPayload ? <Tab>Results</Tab> : null}
+          {tablePayload ? <Tab>Schema</Tab> : null}
           {tablePayload ? <Tab>Table</Tab> : null}
           {routinePayload ? <Tab>Routine</Tab> : null}
           {metadataPayload ? <Tab>Job</Tab> : null}
@@ -193,6 +195,11 @@ const App: FC = () => {
               onNextRequest={onNextRequest}
               onDownloadRequest={onDownloadRequest}
             />
+          </TabPanel>
+        ) : null}
+        {tablePayload ? (
+          <TabPanel>
+            <Schema heads={tablePayload.heads} />
           </TabPanel>
         ) : null}
         {tablePayload ? (

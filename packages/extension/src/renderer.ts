@@ -15,6 +15,7 @@ import type {
   NextEvent,
   DownloadEvent,
   PreviewEvent,
+  Accessor,
 } from "types";
 import {
   isDownloadEvent,
@@ -25,7 +26,6 @@ import {
   tryCatch,
   errorToString,
   unwrap,
-  fail,
 } from "types";
 import type { ExtensionContext, WebviewPanel } from "vscode";
 import { Uri, ViewColumn, window } from "vscode";
@@ -58,7 +58,10 @@ export type Renderer = {
   readonly renderRoutine: (
     routine: Routine
   ) => Promise<Result<UnknownError, void>>;
-  readonly renderTable: (table: Table) => Promise<Result<UnknownError, void>>;
+  readonly renderTable: (data: {
+    heads: ReadonlyArray<Accessor>;
+    table: Table;
+  }) => Promise<Result<UnknownError, void>>;
   readonly renderRows: (
     data: SelectResponse
   ) => Promise<Result<UnknownError | Err<"NoSchema">, void>>;
@@ -252,12 +255,13 @@ export function createRendererManager({
               });
             },
 
-            renderTable(table) {
+            renderTable({ heads, table }) {
               return postMessage({
                 logger: parentLogger.createChild("renderTable"),
                 event: {
                   event: "table",
                   payload: {
+                    heads,
                     table,
                   },
                 },
@@ -266,13 +270,6 @@ export function createRendererManager({
 
             async renderRows({ structs, table, page }) {
               const logger = parentLogger.createChild("renderRows");
-
-              if (table.schema.fields === undefined) {
-                return fail({
-                  type: "NoSchema" as const,
-                  reason: "fields is not defined",
-                });
-              }
 
               const flatResult = createFlat(table.schema.fields);
               if (!flatResult.success) {
