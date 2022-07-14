@@ -7,7 +7,7 @@ import { CopyButton } from "../ui/CopyButton";
 
 export const Routine = ({ routine }: { routine: RoutineData }) => {
   const { projectId, datasetId, routineId } = routine.metadata.routineReference;
-  const id = [projectId, datasetId, routineId].join(".");
+  const id = `${projectId}.${datasetId}.${routineId}`;
 
   return (
     <Table>

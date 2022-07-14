@@ -180,8 +180,8 @@ const App: FC = () => {
       <Header processing={processing}>
         <TabList>
           {rowsPayload ? <Tab>Results</Tab> : null}
-          {tablePayload ? <Tab>Schema</Tab> : null}
           {tablePayload ? <Tab>Table</Tab> : null}
+          {tablePayload ? <Tab>Schema</Tab> : null}
           {routinePayload ? <Tab>Routine</Tab> : null}
           {metadataPayload ? <Tab>Job</Tab> : null}
         </TabList>
@@ -199,15 +199,15 @@ const App: FC = () => {
         ) : null}
         {tablePayload ? (
           <TabPanel>
-            <Schema heads={tablePayload.heads} />
-          </TabPanel>
-        ) : null}
-        {tablePayload ? (
-          <TabPanel>
             <Table
               table={tablePayload.table}
               onPreviewRequest={onPreviewRequest}
             />
+          </TabPanel>
+        ) : null}
+        {tablePayload ? (
+          <TabPanel>
+            <Schema heads={tablePayload.heads} />
           </TabPanel>
         ) : null}
         {routinePayload ? (

@@ -203,7 +203,17 @@ export function createRunnerManager({
       Runner
     >
   > => {
-    let job: RunJob | undefined;
+    let pageable:
+      | {
+          job: RunJob;
+          table: Table;
+        }
+      | undefined;
+    let previewable:
+      | {
+          table: Table;
+        }
+      | undefined;
 
     const runner: Runner = {
       async run() {
@@ -273,23 +283,21 @@ export function createRunnerManager({
         }
         errorMarker?.clear();
 
-        job = unwrap(runJobResult);
+        const job = unwrap(runJobResult);
+        logger.log(`job ID: ${job.id}`);
 
-        const { metadata, statementType } = job;
+        const { metadata } = job;
         const {
           statistics: {
-            numChildJobs,
             query: { totalBytesBilled, cacheHit },
           },
         } = metadata;
-
-        logger.log(`job ID: ${job.id}`);
 
         const bytes = format(parseInt(totalBytesBilled, 10));
         logger.log(`result: ${bytes} to be billed (cache: ${cacheHit})`);
         status.succeedBilled({
           bytes,
-          cacheHit: metadata.statistics.query.cacheHit,
+          cacheHit,
         });
 
         const renderMetadataResult = await renderer.renderMetadata(metadata);
@@ -299,47 +307,44 @@ export function createRunnerManager({
           return;
         }
 
-        if (
-          !metadata.configuration.query.destinationTable &&
-          numChildJobs &&
-          ["SCRIPT"].some((type) => statementType === type)
-        ) {
-          // Wait for completion of table creation job
-          // to get the records of the table just created.
-          const routineResult = await job.getRoutine();
-          if (!routineResult.success) {
-            logger.error(routineResult);
-            await renderer.failProcessing(routineResult.value);
-            return;
-          }
-          const routine = unwrap(routineResult);
-
-          const renderRoutineResult = await renderer.renderRoutine(routine);
-          if (!renderRoutineResult.success) {
-            logger.error(renderRoutineResult);
-            await renderer.failProcessing(renderRoutineResult.value);
-            return;
-          }
-
-          await renderer.successProcessing();
-          return;
-        }
-
         const getTableResult = await job.getTable();
         if (!getTableResult.success) {
+          const error = getTableResult.value;
+          if (error.type === "NoDestinationTable") {
+            //----- CREATE PROCEDURE
+            const routineResult = await job.getRoutine();
+            if (!routineResult.success) {
+              logger.error(routineResult);
+              await renderer.failProcessing(routineResult.value);
+              return;
+            }
+            const routine = unwrap(routineResult);
+
+            const renderRoutineResult = await renderer.renderRoutine(routine);
+            if (!renderRoutineResult.success) {
+              logger.error(renderRoutineResult);
+              await renderer.failProcessing(renderRoutineResult.value);
+              return;
+            }
+
+            await renderer.successProcessing();
+            return;
+          }
+
           logger.error(getTableResult);
           await renderer.failProcessing(getTableResult.value);
           return;
         }
         const table = unwrap(getTableResult);
+        previewable = { table };
 
-        const getFlatResult = createFlat(table.schema.fields);
-        if (!getFlatResult.success) {
-          logger.error(getFlatResult);
-          await renderer.failProcessing(getFlatResult.value);
+        const createFlatResult = createFlat(table.schema.fields);
+        if (!createFlatResult.success) {
+          logger.error(createFlatResult);
+          await renderer.failProcessing(createFlatResult.value);
           return;
         }
-        const flat = getFlatResult.value;
+        const flat = createFlatResult.value;
 
         const renderTableResult = await renderer.renderTable({
           table,
@@ -351,23 +356,21 @@ export function createRunnerManager({
           return;
         }
 
-        if (
-          // There is no row in query result.
-          ["CREATE_TABLE_AS_SELECT", "MERGE"].some(
-            (type) => statementType === type
-          )
-        ) {
-          await renderer.successProcessing();
-          return;
-        }
+        const getStructuralRowsResult = await job.getStructuralRows();
+        if (!getStructuralRowsResult.success) {
+          const error = getStructuralRowsResult.value;
+          if (error.type === "NoRows") {
+            //----- CREATE TABLE
+            //----- MERGE
+            await renderer.successProcessing();
+            return;
+          }
 
-        const getStructsResult = await job.getStructuralRows();
-        if (!getStructsResult.success) {
-          logger.error(getStructsResult);
-          await renderer.failProcessing(getStructsResult.value);
+          logger.error(getStructuralRowsResult);
+          await renderer.failProcessing(getStructuralRowsResult.value);
           return;
         }
-        const structs = unwrap(getStructsResult);
+        const structs = unwrap(getStructuralRowsResult);
 
         const page = job.getPage(table);
 
@@ -382,35 +385,23 @@ export function createRunnerManager({
           return;
         }
 
+        //----- SELECT
+        pageable = { job, table };
         await renderer.successProcessing();
       },
 
       async prev() {
-        if (!job) {
+        if (!pageable) {
           return;
         }
+
+        const { job, table } = pageable;
 
         renderer.reveal();
 
         const rendererOpenResult = await renderer.startProcessing();
         if (!rendererOpenResult.success) {
           logger.error(rendererOpenResult);
-          return;
-        }
-
-        const tableResult = await job.getTable();
-        if (!tableResult.success) {
-          const { reason } = unwrap(tableResult);
-          logger.log(reason);
-          await renderer.failProcessing(tableResult.value);
-          return;
-        }
-        const { value: table } = tableResult;
-
-        const renderTableResult = await renderer.renderTable(table);
-        if (!renderTableResult.success) {
-          logger.error(renderTableResult);
-          await renderer.failProcessing(renderTableResult.value);
           return;
         }
 
@@ -438,33 +429,22 @@ export function createRunnerManager({
           await renderer.failProcessing(renderRowsResult.value);
           return;
         }
+
+        await renderer.successProcessing();
       },
 
       async next() {
-        if (!job) {
+        if (!pageable) {
           return;
         }
+
+        const { job, table } = pageable;
 
         renderer.reveal();
 
         const rendererOpenResult = await renderer.startProcessing();
         if (!rendererOpenResult.success) {
           logger.error(rendererOpenResult);
-          return;
-        }
-
-        const getTableResult = await job.getTable();
-        if (!getTableResult.success) {
-          logger.error(getTableResult);
-          await renderer.failProcessing(getTableResult.value);
-          return;
-        }
-        const { value: table } = getTableResult;
-
-        const renderTableResult = await renderer.renderTable(table);
-        if (!renderTableResult.success) {
-          logger.error(renderTableResult);
-          await renderer.failProcessing(renderTableResult.value);
           return;
         }
 
@@ -492,6 +472,8 @@ export function createRunnerManager({
           await renderer.failProcessing(renderRowsResult.value);
           return;
         }
+
+        await renderer.successProcessing();
       },
 
       async download(format) {
@@ -524,17 +506,25 @@ export function createRunnerManager({
       },
 
       async preview() {
-        if (!job) {
+        if (!previewable) {
+          logger.error(`not previewable`);
           return;
         }
 
-        if (!job.tableName) {
-          throw new Error(`preview is failed: table name is not defined`);
-        }
-        const query = `SELECT * FROM ${job.tableName}`;
+        logger.log(`preview`);
+
+        const {
+          table: {
+            tableReference: { projectId, datasetId, tableId },
+          },
+        } = previewable;
+
+        const id = `${projectId}.${datasetId}.${tableId}`;
+        const query = `SELECT * FROM \`${id}\``;
+        logger.log("query:", query);
 
         const runnerResult = await runnerManager.getWithQuery({
-          title: job.tableName,
+          title: tableId,
           query,
           viewColumn: renderer.viewColumn,
         });

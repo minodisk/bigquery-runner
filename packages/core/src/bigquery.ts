@@ -43,7 +43,9 @@ export type RunJob = Readonly<{
   tableName?: string;
   hasNext(): boolean;
   getPage(table: Table): Page;
-  getStructuralRows(): Promise<Result<UnknownError, Array<StructuralRow>>>;
+  getStructuralRows(): Promise<
+    Result<UnknownError | Err<"NoRows">, Array<StructuralRow>>
+  >;
   getPrevStructs(): Promise<
     Result<UnknownError | NoPageTokenError, Array<StructuralRow>>
   >;
@@ -156,22 +158,36 @@ export async function createClient(
           });
         },
 
-        getStructuralRows() {
-          return tryCatch(
+        async getStructuralRows() {
+          const result = await tryCatch(
             async () => {
-              const [structs, next] = await job.getQueryResults({
+              return await job.getQueryResults({
                 maxResults: query.maxResults,
               });
-              if (next?.pageToken) {
-                tokens.set(current + 1, next.pageToken);
-              }
-              return structs;
             },
             (reason) => ({
               type: "Unknown" as const,
               reason: String(reason),
             })
           );
+          if (!result.success) {
+            return result;
+          }
+
+          const [structs, next, res] = result.value;
+
+          if (!res?.rows) {
+            return fail({
+              type: "NoRows",
+              reason: `no rows field in the response`,
+            });
+          }
+
+          if (next?.pageToken) {
+            tokens.set(current + 1, next.pageToken);
+          }
+
+          return succeed(structs);
         },
 
         async getPrevStructs() {
@@ -233,6 +249,7 @@ export async function createClient(
         async getTable() {
           const { destinationTable } = metadata.configuration.query;
           if (!destinationTable) {
+            // maybe CREATE PROCEDURE
             return fail({
               type: "NoDestinationTable" as const,
               reason: "destination table is not defined",

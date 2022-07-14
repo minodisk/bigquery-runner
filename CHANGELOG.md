@@ -2,6 +2,20 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.6.0
+
+### Added
+
+- Added a tab for table schema.
+  ![image](https://user-images.githubusercontent.com/514164/178914359-5d3c547d-dedb-40a0-a87e-8eabc7e2695f.png)
+- More queries supported.
+  - Changed the implementation of data fetching as follows; instead of assuming that it is unlikely to be able to fetch the data necessary for the tab to be displayed and not fetching it, if it is not possible to display the tab as a result of fetching it, it is not displayed.
+
+### Changed
+
+- Reduced the time it takes to change pages.
+  - Avoided fetching extraneous data.
+
 ## v1.5.0
 
 ### Added
