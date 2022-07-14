@@ -10,6 +10,8 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
   ![image](https://user-images.githubusercontent.com/514164/178914359-5d3c547d-dedb-40a0-a87e-8eabc7e2695f.png)
 - More queries supported.
   - Changed the implementation of data fetching as follows; instead of assuming that it is unlikely to be able to fetch the data necessary for the tab to be displayed and not fetching it, if it is not possible to display the tab as a result of fetching it, it is not displayed.
+- Added commands for download.
+  ![image](https://user-images.githubusercontent.com/514164/178990174-32e7f5c6-2826-4211-abf4-327ecd9d2714.png)
 
 ### Changed
 

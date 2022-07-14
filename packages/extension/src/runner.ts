@@ -10,15 +10,13 @@ import type {
   Table,
   RunnerID,
   Result,
-  Format,
   Err,
 } from "types";
-import { unwrap, succeed, formats, tryCatchSync, errorToString } from "types";
+import { unwrap, succeed, tryCatchSync, errorToString } from "types";
 import type { TextEditor, ViewColumn } from "vscode";
-import { window, workspace } from "vscode";
+import { window } from "vscode";
 import { checksum } from "./checksum";
 import type { ConfigManager } from "./configManager";
-import type { Downloader } from "./downloader";
 import type { ErrorMarker, ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
@@ -28,10 +26,10 @@ import type { Status, StatusManager } from "./statusManager";
 export type RunnerManager = ReturnType<typeof createRunnerManager>;
 export type RunJobResponse = SelectResponse | RoutineResponse;
 export type Runner = Readonly<{
+  query: string;
   run(): Promise<void>;
   prev(): Promise<void>;
   next(): Promise<void>;
-  download(format: Format): Promise<void>;
   preview(): Promise<void>;
   dispose(): void;
 }>;
@@ -54,14 +52,12 @@ export function createRunnerManager({
   configManager,
   statusManager,
   rendererManager,
-  downloader,
   errorMarkerManager,
 }: Readonly<{
   logger: Logger;
   configManager: ConfigManager;
   statusManager: StatusManager;
   rendererManager: RendererManager;
-  downloader: Downloader;
   errorMarkerManager: ErrorMarkerManager;
 }>) {
   const runners = new Map<RunnerID, Runner>();
@@ -216,6 +212,8 @@ export function createRunnerManager({
       | undefined;
 
     const runner: Runner = {
+      query,
+
       async run() {
         logger.log(`run`);
 
@@ -474,35 +472,6 @@ export function createRunnerManager({
         }
 
         await renderer.successProcessing();
-      },
-
-      async download(format) {
-        const name = formats[format];
-        const uri = await window.showSaveDialog({
-          defaultUri:
-            workspace.workspaceFolders &&
-            workspace.workspaceFolders[0] &&
-            workspace.workspaceFolders[0].uri,
-          filters: {
-            [name]: [format],
-          },
-        });
-        if (!uri) {
-          return;
-        }
-
-        switch (format) {
-          case "jsonl":
-            return downloader.jsonl({ uri, query });
-          case "json":
-            return downloader.json({ uri, query });
-          case "csv":
-            return downloader.csv({ uri, query });
-          case "md":
-            return downloader.markdown({ uri, query });
-          case "txt":
-            return downloader.text({ uri, query });
-        }
       },
 
       async preview() {

@@ -34,7 +34,7 @@ This extension requires authentication to the Google Cloud API. You can start us
 |---|
 |bigqueryRunner.run|
 
-Run a query in BigQuery and display the results. If text is selected, it will run the selected text as a query. If no text is selected, the entire file will be executed as a query.
+Run the query in BigQuery and display the results. If text is selected, it will run the selected text as a query. If no text is selected, the entire file will be executed as a query.
 
 ### BigQuery Runner: Previous Page
 
@@ -58,7 +58,47 @@ Fetch and display the results of the next page.
 |---|
 |bigqueryRunner.dryRun|
 
-Dry-run a query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked.
+Dry-run the query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked.
+
+### BigQuery Runner: Download as JSON Lines
+
+|ID|
+|---|
+|bigqueryRunner.downloadAsJSONL|
+
+Run the query in BigQuery and save the results to a file in JSON Lines format
+
+### BigQuery Runner: Download as JSON
+
+|ID|
+|---|
+|bigqueryRunner.downloadAsJSON|
+
+Run the query in BigQuery and save the results to a file in JSON format
+
+### BigQuery Runner: Download as CSV
+
+|ID|
+|---|
+|bigqueryRunner.downloadAsCSV|
+
+Run the query in BigQuery and save the results to a file in CSV format
+
+### BigQuery Runner: Download as Markdown
+
+|ID|
+|---|
+|bigqueryRunner.downloadAsMarkdown|
+
+Run the query in BigQuery and save the results to a file in Markdown format
+
+### BigQuery Runner: Download as Plain Text
+
+|ID|
+|---|
+|bigqueryRunner.downloadAsText|
+
+Run the query in BigQuery and save the results to a file in plain text
 
 ## Configuration
 

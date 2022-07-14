@@ -54,7 +54,14 @@ export async function activate(ctx: ExtensionContext) {
         await runnerManager.get(runnerId)?.next();
       },
       async onDownloadRequested({ renderer: { runnerId }, event: { format } }) {
-        await runnerManager.get(runnerId)?.download(format);
+        const runner = runnerManager.get(runnerId);
+        if (!runner) {
+          return;
+        }
+        await downloader.download({
+          format,
+          query: runner.query,
+        });
       },
       async onPreviewRequested({ renderer: { runnerId } }) {
         await runnerManager.get(runnerId)?.preview();
@@ -71,7 +78,6 @@ export async function activate(ctx: ExtensionContext) {
       configManager,
       statusManager,
       rendererManager,
-      downloader,
       errorMarkerManager,
     });
     const dryRunner = createDryRunner({
@@ -139,6 +145,51 @@ export async function activate(ctx: ExtensionContext) {
             return;
           }
           await runner.next();
+        },
+        [`${section}.downloadAsJSONL`]: async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          await downloader.downloadWithEditor({
+            format: "jsonl",
+            editor: window.activeTextEditor,
+          });
+        },
+        [`${section}.downloadAsJSON`]: async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          await downloader.downloadWithEditor({
+            format: "json",
+            editor: window.activeTextEditor,
+          });
+        },
+        [`${section}.downloadAsCSV`]: async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          await downloader.downloadWithEditor({
+            format: "csv",
+            editor: window.activeTextEditor,
+          });
+        },
+        [`${section}.downloadAsMarkdown`]: async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          await downloader.downloadWithEditor({
+            format: "md",
+            editor: window.activeTextEditor,
+          });
+        },
+        [`${section}.downloadAsText`]: async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          await downloader.downloadWithEditor({
+            format: "txt",
+            editor: window.activeTextEditor,
+          });
         },
       }).map(([name, action]) => commands.registerCommand(name, action))
     );

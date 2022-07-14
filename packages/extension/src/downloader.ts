@@ -9,11 +9,13 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
 } from "core";
-import type { Field, Result, UnknownError } from "types";
-import { succeed, errorToString, tryCatchSync, unwrap } from "types";
-import type { Uri } from "vscode";
+import type { Field, Format, Result, UnknownError } from "types";
+import { formats, succeed, errorToString, tryCatchSync, unwrap } from "types";
+import type { TextEditor, Uri } from "vscode";
+import { workspace, window } from "vscode";
 import type { Config } from "./config";
 import type { ConfigManager } from "./configManager";
+import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
 
 export type Downloader = ReturnType<typeof createDownloader>;
@@ -25,66 +27,113 @@ export function createDownloader({
   logger: Logger;
   configManager: ConfigManager;
 }>) {
+  const jsonl = createWriter({
+    configManager,
+    logger: parentLogger.createChild("jsonl"),
+    createFormatter: ({ writer }) => {
+      return succeed(createJSONLinesFormatter({ writer }));
+    },
+  });
+  const json = createWriter({
+    configManager,
+    logger: parentLogger.createChild("json"),
+    createFormatter({ writer }) {
+      return succeed(createJSONFormatter({ writer }));
+    },
+  });
+  const csv = createWriter({
+    configManager,
+    logger: parentLogger.createChild("csv"),
+    createFormatter({ fields, writer, config }) {
+      const flatResult = createFlat(fields);
+      if (!flatResult.success) {
+        return flatResult;
+      }
+      const flat = unwrap(flatResult);
+
+      return succeed(
+        createCSVFormatter({
+          flat,
+          writer,
+          options: config.downloader.csv,
+        })
+      );
+    },
+  });
+  const markdown = createWriter({
+    configManager,
+    logger: parentLogger.createChild("markdown"),
+    createFormatter({ fields, writer }) {
+      const flatResult = createFlat(fields);
+      if (!flatResult.success) {
+        return flatResult;
+      }
+      const flat = unwrap(flatResult);
+
+      return succeed(createMarkdownFormatter({ flat, writer }));
+    },
+  });
+  const text = createWriter({
+    configManager,
+    logger: parentLogger.createChild("text"),
+    createFormatter({ fields, writer }) {
+      const flatResult = createFlat(fields);
+      if (!flatResult.success) {
+        return flatResult;
+      }
+      const flat = unwrap(flatResult);
+
+      return succeed(createTableFormatter({ flat, writer }));
+    },
+  });
+
   return {
-    jsonl: createWriter({
-      configManager,
-      logger: parentLogger.createChild("jsonl"),
-      createFormatter: ({ writer }) => {
-        return succeed(createJSONLinesFormatter({ writer }));
-      },
-    }),
-    json: createWriter({
-      configManager,
-      logger: parentLogger.createChild("json"),
-      createFormatter({ writer }) {
-        return succeed(createJSONFormatter({ writer }));
-      },
-    }),
-    csv: createWriter({
-      configManager,
-      logger: parentLogger.createChild("csv"),
-      createFormatter({ fields, writer, config }) {
-        const flatResult = createFlat(fields);
-        if (!flatResult.success) {
-          return flatResult;
-        }
-        const flat = unwrap(flatResult);
+    async downloadWithEditor({
+      format,
+      editor,
+    }: {
+      format: Format;
+      editor: TextEditor;
+    }): Promise<void> {
+      const query = await getQueryText(editor);
+      await this.download({ format, query });
+    },
 
-        return succeed(
-          createCSVFormatter({
-            flat,
-            writer,
-            options: config.downloader.csv,
-          })
-        );
-      },
-    }),
-    markdown: createWriter({
-      configManager,
-      logger: parentLogger.createChild("markdown"),
-      createFormatter({ fields, writer }) {
-        const flatResult = createFlat(fields);
-        if (!flatResult.success) {
-          return flatResult;
-        }
-        const flat = unwrap(flatResult);
+    async download({
+      format,
+      query,
+    }: {
+      format: Format;
+      query: string;
+    }): Promise<void> {
+      const name = formats[format];
+      const uri = await window.showSaveDialog({
+        defaultUri:
+          workspace.workspaceFolders &&
+          workspace.workspaceFolders[0] &&
+          workspace.workspaceFolders[0].uri,
+        filters: {
+          [name]: [format],
+        },
+      });
+      if (!uri) {
+        return;
+      }
 
-        return succeed(createMarkdownFormatter({ flat, writer }));
-      },
-    }),
-    text: createWriter({
-      configManager,
-      logger: parentLogger.createChild("text"),
-      createFormatter({ fields, writer }) {
-        const flatResult = createFlat(fields);
-        if (!flatResult.success) {
-          return flatResult;
-        }
-        const flat = unwrap(flatResult);
+      switch (format) {
+        case "jsonl":
+          return jsonl({ uri, query });
+        case "json":
+          return json({ uri, query });
+        case "csv":
+          return csv({ uri, query });
+        case "md":
+          return markdown({ uri, query });
+        case "txt":
+          return text({ uri, query });
+      }
+    },
 
-        return succeed(createTableFormatter({ flat, writer }));
-      },
-    }),
     dispose() {
       // do nothing
     },
