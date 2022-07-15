@@ -35,13 +35,14 @@ export async function activate(ctx: ExtensionContext) {
 
     const logger = createLogger(window.createOutputChannel(title));
     const configManager = createConfigManager(section);
-    const downloader = createDownloader({
-      logger: logger.createChild("downloader"),
-      configManager,
-    });
     const statusManager = createStatusManager({
       configManager,
       createStatusBarItem: createStatusBarItemCreator(window),
+    });
+    const downloader = createDownloader({
+      logger: logger.createChild("downloader"),
+      configManager,
+      statusManager,
     });
     const rendererManager = createRendererManager({
       ctx,
@@ -58,7 +59,7 @@ export async function activate(ctx: ExtensionContext) {
         if (!runner) {
           return;
         }
-        await downloader.download({
+        await downloader.downloadWithQuery({
           format,
           query: runner.query,
         });
