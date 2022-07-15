@@ -87,11 +87,11 @@ export const Rows: FC<
             disabled={!page.hasNext}
             onClick={onNextRequest}
           />
-          <Text>{`${page.rowNumberStart}`}</Text>
+          <Text>{`${page.startRowNumber}`}</Text>
           <Text>-</Text>
-          <Text>{`${page.rowNumberEnd}`}</Text>
+          <Text>{`${page.endRowNumber}`}</Text>
           <Text>of</Text>
-          <Text>{page.numRows}</Text>
+          <Text>{page.totalRows}</Text>
         </HStack>
         <HStack>
           <Menu>

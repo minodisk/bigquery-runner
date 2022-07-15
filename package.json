@@ -179,8 +179,8 @@
             "number",
             "null"
           ],
-          "default": 10000,
-          "description": "The number of rows to fetch per page of paging when downloading."
+          "default": null,
+          "description": "Maximum number of rows to retrieve per page for downloading. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched."
         },
         "bigqueryRunner.viewer.column": {
           "type": [
@@ -196,7 +196,7 @@
             "null"
           ],
           "default": 100,
-          "description": "The number of rows to fetch per page of paging when displaying to viewer. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`."
+          "description": "Maximum number of rows to retrieve per page for display in the viewer. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched. You can use the `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage` command to perform paging."
         },
         "bigqueryRunner.statusBarItem.align": {
           "type": [

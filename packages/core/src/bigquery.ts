@@ -24,6 +24,7 @@ export type QueryWithPositionError = {
   position: { line: number; character: number };
   suggestion?: { before: string; after: string };
 };
+export type NoRowsError = Err<"NoRows">;
 
 export type Client = Readonly<{
   createRunJob(
@@ -42,15 +43,23 @@ export type RunJob = Readonly<{
   statementType?: StatementType;
   tableName?: string;
   hasNext(): boolean;
-  getPage(table: Table): Page;
   getStructuralRows(): Promise<
-    Result<UnknownError | Err<"NoRows">, Array<StructuralRow>>
+    Result<
+      UnknownError | NoRowsError,
+      { structs: Array<StructuralRow>; page: Page }
+    >
   >;
   getPrevStructs(): Promise<
-    Result<UnknownError | NoPageTokenError, Array<StructuralRow>>
+    Result<
+      UnknownError | NoRowsError | NoPageTokenError,
+      { structs: Array<StructuralRow>; page: Page }
+    >
   >;
   getNextStructs(): Promise<
-    Result<UnknownError | NoPageTokenError, Array<StructuralRow>>
+    Result<
+      UnknownError | NoRowsError | NoPageTokenError,
+      { structs: Array<StructuralRow>; page: Page }
+    >
   >;
   getTable(): Promise<Result<UnknownError | NoDestinationTableError, Table>>;
   getRoutine(): Promise<Result<UnknownError, Routine>>;
@@ -136,6 +145,7 @@ export async function createClient(
         metadata.configuration.query.destinationTable
       );
 
+      const pages: Map<number, Page> = new Map();
       const tokens: Map<number, string | null> = new Map([[0, null]]);
       let current = 0;
 
@@ -148,14 +158,6 @@ export async function createClient(
 
         hasNext() {
           return !!tokens.get(current + 1);
-        },
-
-        getPage(table) {
-          return getPage({
-            maxResults: query.maxResults,
-            current,
-            numRows: table.numRows,
-          });
         },
 
         async getStructuralRows() {
@@ -173,21 +175,39 @@ export async function createClient(
           if (!result.success) {
             return result;
           }
-
           const [structs, next, res] = result.value;
 
-          if (!res?.rows) {
+          if (!res?.totalRows) {
             return fail({
               type: "NoRows",
-              reason: `no rows field in the response`,
+              reason: `no rows in the query result`,
             });
           }
 
+          const totalRows = BigInt(res.totalRows);
+          const rows = BigInt(structs.length);
+          const prevPage = pages.get(current - 1);
+          const page = prevPage
+            ? {
+                hasPrev: true,
+                hasNext: !!next,
+                startRowNumber: prevPage.endRowNumber + 1n,
+                endRowNumber: prevPage.endRowNumber + rows,
+                totalRows,
+              }
+            : {
+                hasPrev: false,
+                hasNext: !!next,
+                startRowNumber: 1n,
+                endRowNumber: rows,
+                totalRows,
+              };
+          pages.set(current, page);
           if (next?.pageToken) {
             tokens.set(current + 1, next.pageToken);
           }
 
-          return succeed(structs);
+          return succeed({ structs, page });
         },
 
         async getPrevStructs() {
@@ -200,22 +220,54 @@ export async function createClient(
           }
           current -= 1;
 
-          return tryCatch(
+          const result = await tryCatch(
             async () => {
-              const [structs, next] = await job.getQueryResults({
+              return job.getQueryResults({
                 maxResults: query.maxResults,
                 pageToken: pageToken ?? undefined,
               });
-              if (next?.pageToken) {
-                tokens.set(current + 1, next.pageToken);
-              }
-              return structs;
             },
             (reason) => ({
               type: "Unknown" as const,
               reason: String(reason),
             })
           );
+          if (!result.success) {
+            return result;
+          }
+          const [structs, next, res] = result.value;
+
+          if (!res?.totalRows) {
+            return fail({
+              type: "NoRows",
+              reason: `no rows in the query result`,
+            });
+          }
+
+          const totalRows = BigInt(res.totalRows);
+          const rows = BigInt(structs.length);
+          const prevPage = pages.get(current - 1);
+          const page = prevPage
+            ? {
+                hasPrev: true,
+                hasNext: !!next,
+                startRowNumber: prevPage.endRowNumber + 1n,
+                endRowNumber: prevPage.endRowNumber + rows,
+                totalRows,
+              }
+            : {
+                hasPrev: false,
+                hasNext: !!next,
+                startRowNumber: 1n,
+                endRowNumber: rows,
+                totalRows,
+              };
+          pages.set(current, page);
+          if (next?.pageToken) {
+            tokens.set(current + 1, next.pageToken);
+          }
+
+          return succeed({ structs, page });
         },
 
         async getNextStructs() {
@@ -228,22 +280,54 @@ export async function createClient(
           }
           current += 1;
 
-          return tryCatch(
+          const result = await tryCatch(
             async () => {
-              const [structs, next] = await job.getQueryResults({
+              return job.getQueryResults({
                 maxResults: query.maxResults,
                 pageToken: pageToken ?? undefined,
               });
-              if (next?.pageToken) {
-                tokens.set(current + 1, next.pageToken);
-              }
-              return structs;
             },
             (reason) => ({
               type: "Unknown" as const,
               reason: String(reason),
             })
           );
+          if (!result.success) {
+            return result;
+          }
+          const [structs, next, res] = result.value;
+
+          if (!res?.totalRows) {
+            return fail({
+              type: "NoRows",
+              reason: `no rows in the query result`,
+            });
+          }
+
+          const totalRows = BigInt(res.totalRows);
+          const rows = BigInt(structs.length);
+          const prevPage = pages.get(current - 1);
+          const page = prevPage
+            ? {
+                hasPrev: true,
+                hasNext: !!next,
+                startRowNumber: prevPage.endRowNumber + 1n,
+                endRowNumber: prevPage.endRowNumber + rows,
+                totalRows,
+              }
+            : {
+                hasPrev: false,
+                hasNext: !!next,
+                startRowNumber: 1n,
+                endRowNumber: rows,
+                totalRows,
+              };
+          pages.set(current, page);
+          if (next?.pageToken) {
+            tokens.set(current + 1, next.pageToken);
+          }
+
+          return succeed({ structs, page });
         },
 
         async getTable() {
@@ -400,45 +484,45 @@ function parseQueryJobError(err: unknown): QueryError | QueryWithPositionError {
   };
 }
 
-function getPage(
-  params: Readonly<{
-    maxResults?: number;
-    current: number;
-    numRows: string;
-  }>
-): Page {
-  const numRows = BigInt(params.numRows);
-  if (params.maxResults === undefined) {
-    return {
-      hasPrev: false,
-      hasNext: false,
-      rowNumberStart: BigInt(1),
-      rowNumberEnd: numRows,
-      numRows,
-    };
-  }
+// function getPage(
+//   params: Readonly<{
+//     maxResults?: number;
+//     current: number;
+//     numRows: string;
+//   }>
+// ): Page {
+//   const numRows = BigInt(params.numRows);
+//   if (params.maxResults === undefined) {
+//     return {
+//       hasPrev: false,
+//       hasNext: false,
+//       rowNumberStart: 1n,
+//       rowNumberEnd: numRows,
+//       numRows,
+//     };
+//   }
 
-  const maxResults = BigInt(params.maxResults);
-  const current = BigInt(params.current);
-  const next = current + 1n;
-  const hasPrev = 0n < current;
-  const hasNext = maxResults * next < numRows;
-  const rowNumberStart = maxResults * current + 1n;
-  const rowNumberEnd = hasNext ? maxResults * next : numRows;
-  return {
-    hasPrev,
-    hasNext,
-    rowNumberStart,
-    rowNumberEnd,
-    numRows,
-  };
-}
+//   const maxResults = BigInt(params.maxResults);
+//   const current = BigInt(params.current);
+//   const next = current + 1n;
+//   const hasPrev = 0n < current;
+//   const hasNext = maxResults * next < numRows;
+//   const rowNumberStart = maxResults * current + 1n;
+//   const rowNumberEnd = hasNext ? maxResults * next : numRows;
+//   return {
+//     hasPrev,
+//     hasNext,
+//     rowNumberStart,
+//     rowNumberEnd,
+//     numRows,
+//   };
+// }
 
 export function toSerializablePage(page: Page): SerializablePage {
   return {
     ...page,
-    rowNumberStart: `${page.rowNumberStart}`,
-    rowNumberEnd: `${page.rowNumberEnd}`,
-    numRows: `${page.numRows}`,
+    startRowNumber: `${page.startRowNumber}`,
+    endRowNumber: `${page.endRowNumber}`,
+    totalRows: `${page.totalRows}`,
   };
 }

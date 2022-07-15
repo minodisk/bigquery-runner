@@ -273,13 +273,13 @@ const createWriter =
       status.errorBilled();
       return;
     }
-    const structs = unwrap(getStructuralRowsResult);
-    logger.log(`fetched ${structs.length} rows`);
-    const page = job.getPage(table);
-    logger.log(`page ${page.rowNumberStart} - ${page.rowNumberEnd}`);
+    const { structs, page } = unwrap(getStructuralRowsResult);
+    logger.log(
+      `fetched: ${page.startRowNumber} - ${page.endRowNumber} of ${page.totalRows}`
+    );
     formatter.body({
       structs,
-      rowNumberStart: page.rowNumberStart,
+      rowNumberStart: page.startRowNumber,
     });
     logger.log(`written ${structs.length} rows`);
 
@@ -290,13 +290,13 @@ const createWriter =
         status.errorBilled();
         return;
       }
-      const structs = unwrap(getStructsResult);
-      logger.log(`fetched ${structs.length} rows`);
-      const page = job.getPage(table);
-      logger.log(`page ${page.rowNumberStart} - ${page.rowNumberEnd}`);
+      const { structs, page } = unwrap(getStructsResult);
+      logger.log(
+        `fetched: ${page.startRowNumber} - ${page.endRowNumber} of ${page.totalRows}`
+      );
       formatter.body({
         structs,
-        rowNumberStart: page.rowNumberStart,
+        rowNumberStart: page.startRowNumber,
       });
       logger.log(`written ${structs.length} rows`);
     }

@@ -2,6 +2,17 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.7.0
+
+### Added
+
+- Display download progress, errors and completion in the status bar.
+
+### Changed
+
+- Fixed a problem in which the number of rows that should be retrieved was not displayed or downloaded when retrieving results with a large amount of data per row.
+  - The row information displayed on the page is now correct accordingly.
+
 ## v1.6.0
 
 ### Added

@@ -368,9 +368,10 @@ export function createRunnerManager({
           await renderer.failProcessing(getStructuralRowsResult.value);
           return;
         }
-        const structs = unwrap(getStructuralRowsResult);
-
-        const page = job.getPage(table);
+        const { structs, page } = unwrap(getStructuralRowsResult);
+        logger.log(
+          `fetched: ${page.startRowNumber} - ${page.endRowNumber} (${page.totalRows} rows)`
+        );
 
         const renderRowsResult = await renderer.renderRows({
           structs,
@@ -413,9 +414,10 @@ export function createRunnerManager({
           await renderer.failProcessing(getStructsResult.value);
           return;
         }
-        const structs = unwrap(getStructsResult);
-
-        const page = job.getPage(table);
+        const { structs, page } = unwrap(getStructsResult);
+        logger.log(
+          `fetched: ${page.startRowNumber} - ${page.endRowNumber} (${page.totalRows} rows)`
+        );
 
         const renderRowsResult = await renderer.renderRows({
           structs,
@@ -456,9 +458,10 @@ export function createRunnerManager({
           await renderer.failProcessing(getStructsResult.value);
           return;
         }
-        const structs = unwrap(getStructsResult);
-
-        const page = job.getPage(table);
+        const { structs, page } = unwrap(getStructsResult);
+        logger.log(
+          `fetched: ${page.startRowNumber} - ${page.endRowNumber} (${page.totalRows} rows)`
+        );
 
         const renderRowsResult = await renderer.renderRows({
           structs,

@@ -296,17 +296,17 @@ export type TableReference = Readonly<{
 export type Page = Readonly<{
   hasPrev: boolean;
   hasNext: boolean;
-  rowNumberStart: bigint;
-  rowNumberEnd: bigint;
-  numRows: bigint;
+  startRowNumber: bigint;
+  endRowNumber: bigint;
+  totalRows: bigint;
 }>;
 
 export type SerializablePage = Readonly<{
   hasPrev: boolean;
   hasNext: boolean;
-  rowNumberStart: string;
-  rowNumberEnd: string;
-  numRows: string;
+  startRowNumber: string;
+  endRowNumber: string;
+  totalRows: string;
 }>;
 
 export type ViewerEvent =

@@ -188,9 +188,9 @@ The flag whether to add column names to CSV.
 
 |Type|Default|
 |---|---|
-|number &#x7C; null|10000|
+|number &#x7C; null|null|
 
-The number of rows to fetch per page of paging when downloading.
+Maximum number of rows to retrieve per page for downloading. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched.
 
 ### `bigqueryRunner.viewer.column`
 
@@ -206,7 +206,7 @@ A string such as '+N', '-N' can be set to specify a position relative to the col
 |---|---|
 |number &#x7C; null|100|
 
-The number of rows to fetch per page of paging when displaying to viewer. If a number is specified, only that number of rows will be fetched and displayed as a result. If null is specified, all results will be fetched and displayed. Paging by command `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage`.
+Maximum number of rows to retrieve per page for display in the viewer. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched. You can use the `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage` command to perform paging.
 
 ### `bigqueryRunner.statusBarItem.align`
 

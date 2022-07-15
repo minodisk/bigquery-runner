@@ -287,7 +287,7 @@ export function createRendererManager({
                     heads: flat.heads,
                     rows: flat.getNumberedRows({
                       structs,
-                      rowNumberStart: page.rowNumberStart,
+                      rowNumberStart: page.startRowNumber,
                     }),
                     page: toSerializablePage(page),
                   },

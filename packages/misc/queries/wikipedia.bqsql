@@ -1,9 +1,8 @@
 select
-    en_label,
-    labels,
+    *
 from
     `bigquery-public-data.wikipedia.wikidata`
 where
     array_length(labels) < 5
 limit
-    100001
+    5000
