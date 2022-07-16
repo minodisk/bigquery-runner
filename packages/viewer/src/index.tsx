@@ -1,8 +1,9 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import React from "react";
-import ReactDOM from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import type { State } from "./App";
 import App from "./App";
+import { ClipboardProvider } from "./context/Clipboard";
 import { theme } from "./theme";
 // import reportWebVitals from "./reportWebVitals";
 
@@ -14,10 +15,12 @@ import { theme } from "./theme";
 
   const webview = acquireVsCodeApi<State>();
 
-  ReactDOM.createRoot(root).render(
+  createRoot(root).render(
     <React.StrictMode>
       <ChakraProvider theme={theme}>
-        <App webview={webview} />
+        <ClipboardProvider>
+          <App webview={webview} />
+        </ClipboardProvider>
       </ChakraProvider>
     </React.StrictMode>
   );

@@ -10,6 +10,7 @@ import type {
 import type { WebviewApi } from "vscode-webview";
 import type { State } from "./App";
 import App from "./App";
+import { ClipboardProvider } from "./context/Clipboard";
 import tableEvent from "./tableEvent.json";
 
 export const mockWebview = ({
@@ -181,10 +182,16 @@ describe("App", () => {
 
   describe("with Schema", () => {
     it("should render schema table", async () => {
+      const writeText = jest.fn();
+
       const postMessage = jest.fn();
       const webview = mockWebview({ postMessage });
 
-      render(<App webview={webview} />);
+      render(
+        <ClipboardProvider writeText={writeText}>
+          <App webview={webview} />
+        </ClipboardProvider>
+      );
       window.postMessage(
         {
           source: "bigquery-runner",
@@ -222,6 +229,21 @@ describe("App", () => {
         expect(screen.getByText("Last modified")).toBeInTheDocument();
         expect(screen.getByText("Table expiration")).toBeInTheDocument();
         expect(screen.getByText("Data location")).toBeInTheDocument();
+
+        expect(writeText).toBeCalledTimes(0);
+        const copy = screen.getByLabelText("Copy");
+        expect(copy).toBeInTheDocument();
+        fireEvent.click(copy);
+        expect(writeText).toBeCalledTimes(1);
+        expect(writeText).toBeCalledWith(
+          "minodisk-api._974002322e1183b3df64c0f31d9b6832d25246ef.anon283b16a2558286aa168497689737d8c844796c95"
+        );
+
+        const preview = screen.getByLabelText("Preview");
+        expect(preview).toBeInTheDocument();
+        fireEvent.click(preview);
+        expect(postMessage).toHaveBeenCalledTimes(2);
+        expect(postMessage).toHaveBeenCalledWith({ event: "preview" });
 
         const schema = screen.getByLabelText("Schema");
         expect(schema).toBeInTheDocument();

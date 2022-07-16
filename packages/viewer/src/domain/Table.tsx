@@ -33,7 +33,7 @@ export const Table: FC<{
               <Breakable>{id}</Breakable>
               <CopyButton text={id} />
               <IconButton
-                aria-label="preview"
+                aria-label="Preview"
                 icon={<ViewIcon />}
                 size="xs"
                 onClick={onPreviewRequest}
