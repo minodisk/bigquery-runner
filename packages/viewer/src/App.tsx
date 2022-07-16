@@ -27,6 +27,7 @@ import {
   isFailProcessingEvent,
   type Err,
 } from "types";
+import type { WebviewApi } from "vscode-webview";
 import { Header } from "./domain/Header";
 import { Job } from "./domain/Job";
 import { Routine } from "./domain/Routine";
@@ -34,7 +35,7 @@ import { Rows } from "./domain/Rows";
 import { Schema } from "./domain/Schema";
 import { Table } from "./domain/Table";
 
-type State = Partial<
+export type State = Partial<
   Readonly<{
     tabIndex: number;
     metadataPayload: MetadataPayload;
@@ -44,24 +45,7 @@ type State = Partial<
   }>
 >;
 
-const vscode = acquireVsCodeApi<State>(); // window["acquireVsCodeApi"] ?
-// : {
-//     getState(): State {
-//       // eslint-disable-next-line
-//       const rowsPayload = require("../../misc/mock/rows.json");
-//       require("../../misc/mock/vscode.css");
-//       // return payload;
-//       return { rowsPayload };
-//     },
-//     setState() {
-//       // do nothing
-//     },
-//     postMessage() {
-//       // do nothing
-//     },
-//   };
-
-const App: FC = () => {
+const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
   // const [focused, setFocused] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<Err<string> | undefined>(undefined);
@@ -80,22 +64,28 @@ const App: FC = () => {
   );
   const [tabIndex, setTabIndex] = useState(vscode.getState()?.tabIndex ?? 0);
 
-  const setState = useCallback((state: State) => {
-    vscode.setState(deepmerge(vscode.getState() ?? {}, state));
-  }, []);
+  const setState = useCallback(
+    (state: State) => {
+      vscode.setState(deepmerge(vscode.getState() ?? {}, state));
+    },
+    [vscode]
+  );
 
   const onPrevRequest = useCallback(() => {
     vscode.postMessage({ event: "prev" });
-  }, []);
+  }, [vscode]);
   const onNextRequest = useCallback(() => {
     vscode.postMessage({ event: "next" });
-  }, []);
-  const onDownloadRequest = useCallback((format: Format) => {
-    vscode.postMessage({ event: "download", format });
-  }, []);
+  }, [vscode]);
+  const onDownloadRequest = useCallback(
+    (format: Format) => {
+      vscode.postMessage({ event: "download", format });
+    },
+    [vscode]
+  );
   const onPreviewRequest = useCallback(() => {
     vscode.postMessage({ event: "preview" });
-  }, []);
+  }, [vscode]);
 
   const onTabChange = useCallback(
     (tabIndex: number) => {
@@ -107,7 +97,7 @@ const App: FC = () => {
 
   useEffect(() => {
     vscode.postMessage({ event: "loaded" });
-  }, []);
+  }, [vscode]);
 
   useEffect(() => {
     window.addEventListener("message", (e: MessageEvent) => {

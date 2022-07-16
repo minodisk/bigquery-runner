@@ -16,9 +16,10 @@
     "check": "run-p check:*",
     "check:tsc": "tsc",
     "check:format": "npm run format -- --check",
-    "test": "tsc && node scripts/test.js",
+    "test": "jest --silent=false",
     "test-coverage": "npm run test -- --coverage --coverageDirectory ../../coverage/viewer",
-    "test-watch": "npm test -- --watchAll",
+    "test-watch": "npm test -- --watch",
+    "test-watchAll": "npm test -- --watchAll",
     "format": "prettier --write src"
   },
   "jest": {
@@ -41,9 +42,7 @@
     ],
     "testEnvironment": "jsdom",
     "transform": {
-      "^.+\\.(js|jsx|mjs|cjs|ts|tsx)$": "<rootDir>/config/jest/babelTransform.js",
-      "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
-      "^(?!.*\\.(js|jsx|mjs|cjs|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
+      "^.+\\.(ts|tsx)$": "ts-jest"
     },
     "transformIgnorePatterns": [
       "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|mjs|cjs|ts|tsx)$",

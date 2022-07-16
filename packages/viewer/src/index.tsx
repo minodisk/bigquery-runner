@@ -1,6 +1,7 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
+import type { State } from "./App";
 import App from "./App";
 import { theme } from "./theme";
 // import reportWebVitals from "./reportWebVitals";
@@ -11,10 +12,12 @@ import { theme } from "./theme";
     throw new Error("root element is not found");
   }
 
+  const webview = acquireVsCodeApi<State>();
+
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
       <ChakraProvider theme={theme}>
-        <App />
+        <App webview={webview} />
       </ChakraProvider>
     </React.StrictMode>
   );
