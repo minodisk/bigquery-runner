@@ -10,7 +10,7 @@ const ClipboardContext = createContext({
 });
 
 export const ClipboardProvider: CFC<Partial<Clipboard>> = ({
-  writeText = navigator.clipboard.writeText,
+  writeText = (data) => navigator.clipboard.writeText(data),
   children,
 }) => {
   return (

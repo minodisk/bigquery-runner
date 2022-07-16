@@ -374,12 +374,14 @@ export async function createClient(
               if (!routine) {
                 throw new Error(`no routine`);
               }
-              return (
+              const { id, baseUrl, metadata } = (
                 await bigQuery
                   .dataset(routine.datasetId)
                   .routine(routine.routineId)
                   .get()
               )[0] as Routine;
+              // Remove unnecessary data, including credentials
+              return { id, baseUrl, metadata };
             },
             (reason) => ({
               type: "Unknown" as const,

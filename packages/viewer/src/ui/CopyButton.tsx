@@ -5,7 +5,7 @@ import { useClipboard } from "../context/Clipboard";
 import type { CFC } from "../types";
 
 export const CopyButton: CFC<{
-  text?: string;
+  text: string;
 }> = ({ text, ...props }) => {
   const toast = useToast();
   const { writeText } = useClipboard();

@@ -266,8 +266,8 @@ export type Table = Readonly<{
 }>;
 
 export type Routine = Readonly<{
-  baseUrl: string;
   id: string;
+  baseUrl: string;
   metadata: {
     creationTime: string;
     definitionBody: string;

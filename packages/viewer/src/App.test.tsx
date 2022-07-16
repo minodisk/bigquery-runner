@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import type {
   Data,
+  MetadataEvent,
+  RoutineEvent,
   RowsEvent,
   StartProcessingEvent,
   SuccessProcessingEvent,
@@ -11,6 +13,8 @@ import type { WebviewApi } from "vscode-webview";
 import type { State } from "./App";
 import App from "./App";
 import { ClipboardProvider } from "./context/Clipboard";
+import jobEvent from "./jobEvent.json";
+import routineEvent from "./routineEvent.json";
 import tableEvent from "./tableEvent.json";
 
 export const mockWebview = ({
@@ -257,6 +261,127 @@ describe("App", () => {
         expect(screen.getAllByText("STRING")).toHaveLength(3);
         expect(screen.getByText("Mode")).toBeInTheDocument();
         expect(screen.getAllByText("NULLABLE")).toHaveLength(3);
+      });
+    });
+  });
+
+  describe("JobEvent", () => {
+    it("should render Job tab", async () => {
+      const writeText = jest.fn();
+
+      const postMessage = jest.fn();
+      const webview = mockWebview({ postMessage });
+
+      render(
+        <ClipboardProvider writeText={writeText}>
+          <App webview={webview} />
+        </ClipboardProvider>
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "startProcessing",
+          },
+        } as Data<StartProcessingEvent>,
+        "*"
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: jobEvent,
+        } as Data<MetadataEvent>,
+        "*"
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "successProcessing",
+          },
+        } as Data<SuccessProcessingEvent>,
+        "*"
+      );
+      await waitFor(() => {
+        expect(postMessage).toHaveBeenCalledTimes(1);
+        expect(postMessage).toHaveBeenCalledWith({ event: "loaded" });
+
+        expect(screen.getByText("Job ID")).toBeInTheDocument();
+        expect(screen.getByText("User")).toBeInTheDocument();
+        expect(screen.getByText("Location")).toBeInTheDocument();
+        expect(screen.getByText("Creation time")).toBeInTheDocument();
+        expect(screen.getByText("Start time")).toBeInTheDocument();
+        expect(screen.getByText("End time")).toBeInTheDocument();
+        expect(screen.getByText("Duration")).toBeInTheDocument();
+        expect(screen.getByText("Bytes processed")).toBeInTheDocument();
+        expect(screen.getByText("Bytes billed")).toBeInTheDocument();
+        expect(screen.getByText("Use legacy SQL")).toBeInTheDocument();
+
+        expect(writeText).toBeCalledTimes(0);
+        const copy = screen.getByLabelText("Copy");
+        expect(copy).toBeInTheDocument();
+        fireEvent.click(copy);
+        expect(writeText).toBeCalledTimes(1);
+        expect(writeText).toBeCalledWith(
+          "minodisk-api:US.6654cc27-8a00-464c-b9d6-4df155a9b66d"
+        );
+      });
+    });
+  });
+
+  describe("RoutineEvent", () => {
+    it("should render Routine tab", async () => {
+      const writeText = jest.fn();
+
+      const postMessage = jest.fn();
+      const webview = mockWebview({ postMessage });
+
+      render(
+        <ClipboardProvider writeText={writeText}>
+          <App webview={webview} />
+        </ClipboardProvider>
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "startProcessing",
+          },
+        } as Data<StartProcessingEvent>,
+        "*"
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: routineEvent,
+        } as Data<RoutineEvent>,
+        "*"
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "successProcessing",
+          },
+        } as Data<SuccessProcessingEvent>,
+        "*"
+      );
+      await waitFor(() => {
+        expect(postMessage).toHaveBeenCalledTimes(1);
+        expect(postMessage).toHaveBeenCalledWith({ event: "loaded" });
+
+        expect(screen.getByText("Routine ID")).toBeInTheDocument();
+        expect(screen.getByText("Created")).toBeInTheDocument();
+        expect(screen.getByText("Last modified")).toBeInTheDocument();
+        expect(screen.getByText("Language")).toBeInTheDocument();
+        expect(screen.getByText("Definition")).toBeInTheDocument();
+
+        expect(writeText).toBeCalledTimes(0);
+        const copy = screen.getByLabelText("Copy");
+        expect(copy).toBeInTheDocument();
+        fireEvent.click(copy);
+        expect(writeText).toBeCalledTimes(1);
+        expect(writeText).toBeCalledWith("minodisk-api.testing.procedure");
       });
     });
   });
