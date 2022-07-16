@@ -5,10 +5,12 @@ import type {
   RowsEvent,
   StartProcessingEvent,
   SuccessProcessingEvent,
+  TableEvent,
 } from "types";
 import type { WebviewApi } from "vscode-webview";
 import type { State } from "./App";
 import App from "./App";
+import tableEvent from "./tableEvent.json";
 
 export const mockWebview = ({
   postMessage,
@@ -175,273 +177,65 @@ describe("App", () => {
         });
       });
     });
+  });
 
-    //     it("should not render undefined", async () => {
-    //       render(<App />);
-    //       const rows: Data<RowsEvent> = {
-    //         source: "bigquery-runner",
-    //         payload: {
-    //           event: "rows",
-    //           payload: {
-    //             header: ["a", "b", "c", "d", "e"],
-    //             rows: [
-    //               {
-    //                 rowNumber: "1",
-    //                 rows: [
-    //                   [
-    //                     { id: "a", value: 100 },
-    //                     { id: "b", value: 200 },
-    //                     { id: "c", value: undefined },
-    //                     { id: "d", value: 300 },
-    //                     { id: "e", value: 400 },
-    //                   ],
-    //                 ],
-    //               },
-    //             ],
-    //             // metadata,
-    //             // table,
-    //             page: {
-    //               hasPrev: false,
-    //               hasNext: false,
-    //               rowNumberStart: "1",
-    //               rowNumberEnd: "2",
-    //               numRows: "123000",
-    //             },
-    //           },
-    //         },
-    //       };
-    //       window.postMessage(JSON.stringify(rows), "*");
-    //       await waitFor(() => {
-    //         expect(() => screen.getByText(/undefined/i)).toThrow();
-    //       });
-    //     });
-    //   });
-    //   it("should render complex table", async () => {
-    //     render(<App />);
-    //     const rows: Data<RowsEvent> = {
-    //       source: "bigquery-runner",
-    //       payload: {
-    //         event: "rows",
-    //         payload: {
-    //           header: [
-    //             "order_id",
-    //             "items.product_id",
-    //             "items.quantity",
-    //             "items.name",
-    //             "items.price",
-    //           ],
-    //           rows: [
-    //             {
-    //               rowNumber: "0",
-    //               rows: [
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //               ],
-    //             },
-    //             {
-    //               rowNumber: "0",
-    //               rows: [
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //               ],
-    //             },
-    //             {
-    //               rowNumber: "0",
-    //               rows: [
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //               ],
-    //             },
-    //             {
-    //               rowNumber: "0",
-    //               rows: [
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //               ],
-    //             },
-    //             {
-    //               rowNumber: "0",
-    //               rows: [
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //               ],
-    //             },
-    //             {
-    //               rowNumber: "0",
-    //               rows: [
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //               ],
-    //             },
-    //             {
-    //               rowNumber: "1",
-    //               rows: [
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //               ],
-    //             },
-    //             {
-    //               rowNumber: "1",
-    //               rows: [
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //                 [
-    //                   { id: "order_id", value: 1 },
-    //                   { id: "items.product_id", value: 1001 },
-    //                   { id: "items.quantity", value: 4 },
-    //                   { id: "items.name", value: "wallet" },
-    //                   { id: "items.price", value: 30000 },
-    //                 ],
-    //               ],
-    //             },
-    //           ],
-    //           // metadata,
-    //           // table,
-    //           page: {
-    //             hasPrev: false,
-    //             hasNext: false,
-    //             rowNumberStart: "1",
-    //             rowNumberEnd: "2",
-    //             numRows: "123000",
-    //           },
-    //         },
-    //       },
-    //     };
-    //     window.postMessage(JSON.stringify(rows), "*");
-    //     await waitFor(() => {
-    //       const els = screen.getAllByText(/wallet/i);
-    //       els.forEach((el) => expect(el).toBeInTheDocument());
-    // });
+  describe("with Schema", () => {
+    it("should render schema table", async () => {
+      const postMessage = jest.fn();
+      const webview = mockWebview({ postMessage });
+
+      render(<App webview={webview} />);
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "startProcessing",
+          },
+        } as Data<StartProcessingEvent>,
+        "*"
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: tableEvent,
+        } as Data<TableEvent>,
+        "*"
+      );
+      window.postMessage(
+        {
+          source: "bigquery-runner",
+          payload: {
+            event: "successProcessing",
+          },
+        } as Data<SuccessProcessingEvent>,
+        "*"
+      );
+      await waitFor(() => {
+        expect(postMessage).toHaveBeenCalledTimes(1);
+        expect(postMessage).toHaveBeenCalledWith({ event: "loaded" });
+
+        expect(screen.getByText("Table ID")).toBeInTheDocument();
+        expect(screen.getByText("Table size")).toBeInTheDocument();
+        expect(screen.getByText("Long-term storage size")).toBeInTheDocument();
+        expect(screen.getByText("Number of rows")).toBeInTheDocument();
+        expect(screen.getByText("Created")).toBeInTheDocument();
+        expect(screen.getByText("Last modified")).toBeInTheDocument();
+        expect(screen.getByText("Table expiration")).toBeInTheDocument();
+        expect(screen.getByText("Data location")).toBeInTheDocument();
+
+        const schema = screen.getByLabelText("Schema");
+        expect(schema).toBeInTheDocument();
+        fireEvent.click(schema);
+
+        expect(screen.getByText("en_label")).toBeInTheDocument();
+        expect(screen.getByText("labels.language")).toBeInTheDocument();
+        expect(screen.getByText("labels.value")).toBeInTheDocument();
+
+        expect(screen.getByText("Type")).toBeInTheDocument();
+        expect(screen.getAllByText("STRING")).toHaveLength(3);
+        expect(screen.getByText("Mode")).toBeInTheDocument();
+        expect(screen.getAllByText("NULLABLE")).toHaveLength(3);
+      });
+    });
   });
 });
