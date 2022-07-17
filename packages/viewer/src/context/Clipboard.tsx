@@ -1,27 +1,30 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useCallback, useContext } from "react";
 import type { CFC } from "../types";
 
 export type Clipboard = Readonly<{
   writeText(data: string): Promise<void>;
 }>;
 
-const ClipboardContext = createContext({
-  writeText: (data: string) => navigator.clipboard.writeText(data),
+const ClipboardContext = createContext<Clipboard>({
+  async writeText() {
+    // do nothing
+  },
 });
 
-export const ClipboardProvider: CFC<Partial<Clipboard>> = ({
-  writeText = (data) => navigator.clipboard.writeText(data),
-  children,
-}) => {
+export const ClipboardProvider: CFC<Clipboard> = ({ children, ...value }) => {
   return (
-    <ClipboardContext.Provider
-      value={{
-        writeText,
-      }}
-    >
+    <ClipboardContext.Provider value={value}>
       {children}
     </ClipboardContext.Provider>
   );
+};
+
+export const BrowserClipboardProvider: CFC = (props) => {
+  const writeText = useCallback(
+    (data: string) => window.navigator.clipboard.writeText(data),
+    []
+  );
+  return <ClipboardProvider {...props} writeText={writeText} />;
 };
 
 export const useClipboard = () => {

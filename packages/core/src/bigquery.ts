@@ -1,4 +1,9 @@
-import type { BigQueryOptions, Job, Query } from "@google-cloud/bigquery";
+import type {
+  BigQueryOptions,
+  Job,
+  JobResponse,
+  Query,
+} from "@google-cloud/bigquery";
 import { BigQuery } from "@google-cloud/bigquery";
 import type {
   Page,
@@ -12,8 +17,9 @@ import type {
   StatementType,
   Err,
 } from "types";
-import { tryCatch, succeed, unwrap, fail } from "types";
+import { errorToString, tryCatch, succeed, unwrap, fail } from "types";
 
+export type AuthenticationError = Err<"Authentication">;
 export type NoJobError = Err<"NoJob">;
 export type NoDestinationTableError = Err<"NoDestinationTable">;
 export type NoPageTokenError = Err<"NoPageToken">;
@@ -81,40 +87,20 @@ export async function createClient(
   });
 
   // Check authentication
-  try {
-    await bigQuery.authClient.getProjectId();
-  } catch (err) {
-    if (
-      String(err).startsWith(
-        "Unable to detect a Project ID in the current environment."
-      )
-    ) {
-      if (options.keyFilename) {
-        return fail({
-          type: "Authentication" as const,
-          reason: `Bad authentication: Make sure that "${options.keyFilename}", which is set in bigqueryRunner.keyFilename of setting.json, is the valid path to service account key file`,
-        });
-      }
-      return fail({
-        type: "Authentication" as const,
-        reason: `Bad authentication: Set bigqueryRunner.keyFilename of your setting.json to the valid path to service account key file`,
-      });
-    }
-    return fail({
-      type: "Unknown" as const,
-      reason: String(err),
-    });
-  }
+  await checkAuthentication({
+    keyFilename: options.keyFilename,
+    getProjectId: bigQuery.getProjectId,
+  });
 
   const client: Client = {
     async createRunJob(query) {
-      const createQueryJobResult = await tryCatch(async () => {
-        const [job] = await bigQuery.createQueryJob({
+      const createQueryJobResult = await createQueryJob({
+        createQueryJob: bigQuery.createQueryJob,
+        options: {
           ...query,
           dryRun: false,
-        });
-        return job;
-      }, parseQueryJobError);
+        },
+      });
       if (!createQueryJobResult.success) {
         return createQueryJobResult;
       }
@@ -184,24 +170,12 @@ export async function createClient(
             });
           }
 
-          const totalRows = BigInt(res.totalRows);
-          const rows = BigInt(structs.length);
-          const prevPage = pages.get(current - 1);
-          const page = prevPage
-            ? {
-                hasPrev: true,
-                hasNext: !!next,
-                startRowNumber: prevPage.endRowNumber + 1n,
-                endRowNumber: prevPage.endRowNumber + rows,
-                totalRows,
-              }
-            : {
-                hasPrev: false,
-                hasNext: !!next,
-                startRowNumber: 1n,
-                endRowNumber: rows,
-                totalRows,
-              };
+          const page = getPage({
+            totalRows: res.totalRows,
+            rows: structs.length,
+            prevPage: pages.get(current - 1),
+            nextPageToken: next?.pageToken,
+          });
           pages.set(current, page);
           if (next?.pageToken) {
             tokens.set(current + 1, next.pageToken);
@@ -244,24 +218,12 @@ export async function createClient(
             });
           }
 
-          const totalRows = BigInt(res.totalRows);
-          const rows = BigInt(structs.length);
-          const prevPage = pages.get(current - 1);
-          const page = prevPage
-            ? {
-                hasPrev: true,
-                hasNext: !!next,
-                startRowNumber: prevPage.endRowNumber + 1n,
-                endRowNumber: prevPage.endRowNumber + rows,
-                totalRows,
-              }
-            : {
-                hasPrev: false,
-                hasNext: !!next,
-                startRowNumber: 1n,
-                endRowNumber: rows,
-                totalRows,
-              };
+          const page = getPage({
+            totalRows: res.totalRows,
+            rows: structs.length,
+            prevPage: pages.get(current - 1),
+            nextPageToken: next?.pageToken,
+          });
           pages.set(current, page);
           if (next?.pageToken) {
             tokens.set(current + 1, next.pageToken);
@@ -304,24 +266,12 @@ export async function createClient(
             });
           }
 
-          const totalRows = BigInt(res.totalRows);
-          const rows = BigInt(structs.length);
-          const prevPage = pages.get(current - 1);
-          const page = prevPage
-            ? {
-                hasPrev: true,
-                hasNext: !!next,
-                startRowNumber: prevPage.endRowNumber + 1n,
-                endRowNumber: prevPage.endRowNumber + rows,
-                totalRows,
-              }
-            : {
-                hasPrev: false,
-                hasNext: !!next,
-                startRowNumber: 1n,
-                endRowNumber: rows,
-                totalRows,
-              };
+          const page = getPage({
+            totalRows: res.totalRows,
+            rows: structs.length,
+            prevPage: pages.get(current - 1),
+            nextPageToken: next?.pageToken,
+          });
           pages.set(current, page);
           if (next?.pageToken) {
             tokens.set(current + 1, next.pageToken);
@@ -395,16 +345,13 @@ export async function createClient(
     },
 
     async createDryRunJob(query) {
-      const createQueryJobResult = await tryCatch<
-        QueryError | QueryWithPositionError,
-        Job
-      >(async () => {
-        const [job] = await bigQuery.createQueryJob({
+      const createQueryJobResult = await createQueryJob({
+        createQueryJob: bigQuery.createQueryJob,
+        options: {
           ...query,
           dryRun: true,
-        });
-        return job;
-      }, parseQueryJobError);
+        },
+      });
       if (!createQueryJobResult.success) {
         return createQueryJobResult;
       }
@@ -421,7 +368,106 @@ export async function createClient(
   return succeed(client);
 }
 
-export function createTableName(
+export const checkAuthentication = async ({
+  keyFilename,
+  getProjectId,
+}: {
+  keyFilename?: string;
+  getProjectId(): Promise<string>;
+}): Promise<Result<UnknownError | AuthenticationError, string>> => {
+  return tryCatch(
+    async () => getProjectId(),
+    (err) => {
+      const reason = errorToString(err);
+      if (
+        reason.startsWith(
+          "Unable to detect a Project ID in the current environment."
+        )
+      ) {
+        if (keyFilename) {
+          return {
+            type: "Authentication" as const,
+            reason: `Bad authentication: Make sure that "${keyFilename}", which is set in bigqueryRunner.keyFilename of setting.json, is the valid path to service account key file`,
+          };
+        }
+        return {
+          type: "Authentication" as const,
+          reason: `Bad authentication: Set bigqueryRunner.keyFilename of your setting.json to the valid path to service account key file`,
+        };
+      }
+      return {
+        type: "Unknown" as const,
+        reason,
+      };
+    }
+  );
+};
+
+export const createQueryJob = async ({
+  createQueryJob,
+  options,
+}: {
+  createQueryJob(options: Query | string): Promise<JobResponse>;
+  options: Query;
+}): Promise<Result<QueryError | QueryWithPositionError, Job>> => {
+  return tryCatch(
+    async () => {
+      const [job] = await createQueryJob(options);
+      return job;
+    },
+    (err: unknown) => {
+      const reason = errorToString(err);
+      const rPosition = /^(.+?) at \[(\d+?):(\d+?)\]$/;
+      const rPositionResult = rPosition.exec(reason);
+      if (!rPositionResult) {
+        return {
+          type: "Query" as const,
+          reason,
+        };
+      }
+
+      const [, r, l, c] = rPositionResult;
+      const line = Number(l) - 1;
+      const character = Number(c) - 1;
+
+      if (!r?.startsWith("Unrecognized name: ")) {
+        return {
+          type: "QueryWithPosition" as const,
+          reason: r ?? "No reason",
+          position: { line, character },
+        };
+      }
+
+      const rSuggestion = /^Unrecognized name: (.+?); Did you mean (.+?)\?$/;
+      const rSuggestionResult = rSuggestion.exec(r);
+
+      if (!rSuggestionResult) {
+        return {
+          type: "QueryWithPosition" as const,
+          reason: r,
+          position: { line, character },
+        };
+      }
+      const [, before, after] = rSuggestionResult;
+      if (!before || !after) {
+        return {
+          type: "QueryWithPosition" as const,
+          reason: r,
+          position: { line, character },
+        };
+      }
+
+      return {
+        type: "QueryWithPosition" as const,
+        reason: r,
+        position: { line, character },
+        suggestion: { before, after },
+      };
+    }
+  );
+};
+
+function createTableName(
   table?: Readonly<{
     projectId?: string;
     datasetId?: string;
@@ -435,90 +481,34 @@ export function createTableName(
   return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
 }
 
-function parseQueryJobError(err: unknown): QueryError | QueryWithPositionError {
-  const reason = (err as { message: string }).message ?? String(err);
-  const rPosition = /^(.+?) at \[(\d+?):(\d+?)\]$/;
-  const rPositionResult = rPosition.exec(reason);
-  if (!rPositionResult) {
+export function getPage(props: {
+  totalRows: string;
+  rows: number;
+  prevPage?: Pick<Page, "endRowNumber">;
+  nextPageToken?: string;
+}): Page {
+  const totalRows = BigInt(props.totalRows);
+  const rows = BigInt(props.rows);
+  const hasNext = !!props.nextPageToken;
+  if (!props.prevPage) {
+    // 1st page
     return {
-      type: "Query" as const,
-      reason,
+      hasPrev: false,
+      hasNext,
+      startRowNumber: 1n,
+      endRowNumber: rows,
+      totalRows,
     };
   }
-
-  const [, r, l, c] = rPositionResult;
-  const line = Number(l) - 1;
-  const character = Number(c) - 1;
-
-  if (!r?.startsWith("Unrecognized name: ")) {
-    return {
-      type: "QueryWithPosition" as const,
-      reason: r ?? "No reason",
-      position: { line, character },
-    };
-  }
-
-  const rSuggestion = /^Unrecognized name: (.+?); Did you mean (.+?)\?$/;
-  const rSuggestionResult = rSuggestion.exec(r);
-
-  if (!rSuggestionResult) {
-    return {
-      type: "QueryWithPosition" as const,
-      reason: r,
-      position: { line, character },
-    };
-  }
-
-  const [, before, after] = rSuggestionResult;
-  if (!before || !after) {
-    return {
-      type: "QueryWithPosition" as const,
-      reason: r,
-      position: { line, character },
-    };
-  }
-
+  // n-th page
   return {
-    type: "QueryWithPosition" as const,
-    reason: r,
-    position: { line, character },
-    suggestion: { before, after },
+    hasPrev: true,
+    hasNext,
+    startRowNumber: props.prevPage.endRowNumber + 1n,
+    endRowNumber: props.prevPage.endRowNumber + rows,
+    totalRows,
   };
 }
-
-// function getPage(
-//   params: Readonly<{
-//     maxResults?: number;
-//     current: number;
-//     numRows: string;
-//   }>
-// ): Page {
-//   const numRows = BigInt(params.numRows);
-//   if (params.maxResults === undefined) {
-//     return {
-//       hasPrev: false,
-//       hasNext: false,
-//       rowNumberStart: 1n,
-//       rowNumberEnd: numRows,
-//       numRows,
-//     };
-//   }
-
-//   const maxResults = BigInt(params.maxResults);
-//   const current = BigInt(params.current);
-//   const next = current + 1n;
-//   const hasPrev = 0n < current;
-//   const hasNext = maxResults * next < numRows;
-//   const rowNumberStart = maxResults * current + 1n;
-//   const rowNumberEnd = hasNext ? maxResults * next : numRows;
-//   return {
-//     hasPrev,
-//     hasNext,
-//     rowNumberStart,
-//     rowNumberEnd,
-//     numRows,
-//   };
-// }
 
 export function toSerializablePage(page: Page): SerializablePage {
   return {

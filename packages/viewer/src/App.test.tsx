@@ -17,7 +17,7 @@ import jobEvent from "./jobEvent.json";
 import routineEvent from "./routineEvent.json";
 import tableEvent from "./tableEvent.json";
 
-export const mockWebview = ({
+const mockWebview = ({
   postMessage,
 }: {
   postMessage: jest.Mock;

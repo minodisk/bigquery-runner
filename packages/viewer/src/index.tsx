@@ -3,7 +3,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import type { State } from "./App";
 import App from "./App";
-import { ClipboardProvider } from "./context/Clipboard";
+import { BrowserClipboardProvider } from "./context/Clipboard";
 import { theme } from "./theme";
 // import reportWebVitals from "./reportWebVitals";
 
@@ -18,9 +18,9 @@ import { theme } from "./theme";
   createRoot(root).render(
     <React.StrictMode>
       <ChakraProvider theme={theme}>
-        <ClipboardProvider>
+        <BrowserClipboardProvider>
           <App webview={webview} />
-        </ClipboardProvider>
+        </BrowserClipboardProvider>
       </ChakraProvider>
     </React.StrictMode>
   );
