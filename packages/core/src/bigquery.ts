@@ -14,10 +14,16 @@ import type {
   Result,
   StructuralRow,
   UnknownError,
-  StatementType,
   Err,
 } from "types";
-import { errorToString, tryCatch, succeed, unwrap, fail } from "types";
+import {
+  getTableName,
+  errorToString,
+  tryCatch,
+  succeed,
+  unwrap,
+  fail,
+} from "types";
 
 export type AuthenticationError = Err<"Authentication">;
 export type NoJobError = Err<"NoJob">;
@@ -43,11 +49,7 @@ export type Client = Readonly<{
   >;
 }>;
 export type RunJob = Readonly<{
-  id?: string;
-  query: string;
   metadata: Metadata;
-  statementType?: StatementType;
-  tableName?: string;
   hasNext(): boolean;
   getStructuralRows(): Promise<
     Result<
@@ -126,21 +128,12 @@ export async function createClient(
       }
       const metadata = unwrap(metadataResult);
 
-      const statementType = metadata.statistics.query.statementType;
-      const tableName = createTableName(
-        metadata.configuration.query.destinationTable
-      );
-
       const pages: Map<number, Page> = new Map();
       const tokens: Map<number, string | null> = new Map([[0, null]]);
       let current = 0;
 
       const runJob: RunJob = {
-        id: job.id,
-        query: query.query,
         metadata,
-        statementType,
-        tableName,
 
         hasNext() {
           return !!tokens.get(current + 1);
@@ -301,7 +294,7 @@ export async function createClient(
               );
               if (!table) {
                 throw new Error(
-                  `table not found: ${createTableName(destinationTable)}`
+                  `table not found: ${getTableName(destinationTable)}`
                 );
               }
               return table;
@@ -466,20 +459,6 @@ export const createQueryJob = async ({
     }
   );
 };
-
-function createTableName(
-  table?: Readonly<{
-    projectId?: string;
-    datasetId?: string;
-    tableId?: string;
-  }>
-): string | undefined {
-  if (!table) {
-    return;
-  }
-  const { projectId, datasetId, tableId } = table;
-  return [projectId, datasetId, tableId].filter((v) => !!v).join(".");
-}
 
 export function getPage(props: {
   totalRows: string;

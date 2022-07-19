@@ -2,12 +2,12 @@ import { HStack, Table, Tbody, Td, Text, Th, Tr } from "@chakra-ui/react";
 import formatISO from "date-fns/formatISO";
 import React from "react";
 import type { Routine as RoutineData } from "types";
+import { getRoutineName } from "types";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 
 export const Routine = ({ routine }: { routine: RoutineData }) => {
-  const { projectId, datasetId, routineId } = routine.metadata.routineReference;
-  const id = `${projectId}.${datasetId}.${routineId}`;
+  const id = getRoutineName(routine.metadata.routineReference);
 
   return (
     <Table>

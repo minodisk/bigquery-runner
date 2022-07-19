@@ -13,6 +13,7 @@ import formatISO from "date-fns/formatISO";
 import type { FC } from "react";
 import React from "react";
 import type { Table as TableData } from "types";
+import { getTableName } from "types";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 
@@ -20,8 +21,7 @@ export const Table: FC<{
   table: TableData;
   onPreviewRequest: () => unknown;
 }> = ({ table, onPreviewRequest }) => {
-  const { projectId, datasetId, tableId } = table.tableReference;
-  const id = `${projectId}.${datasetId}.${tableId}`;
+  const id = getTableName(table.tableReference);
 
   return (
     <TableComponent>

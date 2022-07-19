@@ -4,11 +4,12 @@ import formatDuration from "date-fns/formatDuration";
 import formatISO from "date-fns/formatISO";
 import React from "react";
 import type { Metadata } from "types";
+import { getJobName } from "types";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 
 export const Job = ({ metadata }: { metadata: Metadata }) => {
-  const jobId = `${metadata.jobReference.projectId}:${metadata.jobReference.location}.${metadata.jobReference.jobId}`;
+  const id = getJobName(metadata.jobReference);
 
   return (
     <Table>
@@ -17,8 +18,8 @@ export const Job = ({ metadata }: { metadata: Metadata }) => {
           <Th>Job ID</Th>
           <Td>
             <HStack gap={2}>
-              <Breakable>{jobId}</Breakable>
-              <CopyButton text={jobId} />
+              <Breakable>{id}</Breakable>
+              <CopyButton text={id} />
             </HStack>
           </Td>
         </Tr>

@@ -216,7 +216,6 @@ const createWriter =
       return;
     }
     const job = unwrap(createRunJobResult);
-    logger.log(`job created ${job.id}`);
 
     const getTableResult = await job.getTable();
     if (!getTableResult.success) {

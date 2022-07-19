@@ -95,10 +95,6 @@ export type Data<E extends RendererEvent> = Readonly<{
   payload: E;
 }>;
 
-export function isData(data: { source?: string }): data is Data<RendererEvent> {
-  return data.source === "bigquery-runner";
-}
-
 export type RendererEvent =
   | FocusedEvent
   | StartProcessingEvent
@@ -115,18 +111,10 @@ export type FocusedEvent = Readonly<{
     focused: boolean;
   };
 }>;
-export function isFocusedEvent(e: RendererEvent): e is FocusedEvent {
-  return e.event === "focused";
-}
 
 export type StartProcessingEvent = Readonly<{
   event: "startProcessing";
 }>;
-export function isStartProcessingEvent(
-  e: RendererEvent
-): e is StartProcessingEvent {
-  return e.event === "startProcessing";
-}
 
 export type MetadataEvent = Readonly<{
   event: "metadata";
@@ -135,9 +123,6 @@ export type MetadataEvent = Readonly<{
 export type MetadataPayload = {
   metadata: Metadata;
 };
-export function isMetadataEvent(e: RendererEvent): e is MetadataEvent {
-  return e.event === "metadata";
-}
 
 export type TableEvent = Readonly<{
   event: "table";
@@ -147,9 +132,6 @@ export type TablePayload = {
   heads: ReadonlyArray<Accessor>;
   table: Table;
 };
-export function isTableEvent(e: RendererEvent): e is TableEvent {
-  return e.event === "table";
-}
 
 export type RoutineEvent = Readonly<{
   event: "routine";
@@ -158,9 +140,6 @@ export type RoutineEvent = Readonly<{
 export type RoutinePayload = {
   routine: Routine;
 };
-export function isRoutineEvent(e: RendererEvent): e is RoutineEvent {
-  return e.event === "routine";
-}
 
 export type RowsEvent = Readonly<{
   event: "rows";
@@ -171,28 +150,15 @@ export type RowsPayload = Readonly<{
   rows: ReadonlyArray<NumberedRows>;
   page: SerializablePage;
 }>;
-export function isRowsEvent(e: RendererEvent): e is RowsEvent {
-  return e.event === "rows";
-}
 
 export type SuccessProcessingEvent = Readonly<{
   event: "successProcessing";
 }>;
-export function isSuccessLoadingEvent(
-  e: RendererEvent
-): e is SuccessProcessingEvent {
-  return e.event === "successProcessing";
-}
 
 export type FailProcessingEvent = Readonly<{
   event: "failProcessing";
   payload: Err<string>;
 }>;
-export function isFailProcessingEvent(
-  e: RendererEvent
-): e is FailProcessingEvent {
-  return e.event === "failProcessing";
-}
 
 export type RunInfo = Readonly<{
   metadata: Metadata;
@@ -215,11 +181,7 @@ export type Metadata = Readonly<{
     }>;
     jobType: string;
   }>;
-  jobReference: Readonly<{
-    projectId: string;
-    jobId: string;
-    location: string;
-  }>;
+  jobReference: JobReference;
   statistics: Readonly<{
     creationTime: string;
     startTime: string;
@@ -237,6 +199,12 @@ export type Metadata = Readonly<{
     state: string;
   }>;
   user_email: string;
+}>;
+
+export type JobReference = Readonly<{
+  projectId: string;
+  location: string;
+  jobId: string;
 }>;
 
 export type StatementType =
@@ -268,19 +236,21 @@ export type Table = Readonly<{
 export type Routine = Readonly<{
   id: string;
   baseUrl: string;
-  metadata: {
+  metadata: Readonly<{
     creationTime: string;
     definitionBody: string;
     etag: string;
     language: "SQL";
     lastModifiedTime: string;
-    routineReference: {
-      datasetId: string;
-      projectId: string;
-      routineId: string;
-    };
+    routineReference: RoutineReference;
     routineType: "PROCEDURE";
-  };
+  }>;
+}>;
+
+export type RoutineReference = Readonly<{
+  projectId: string;
+  datasetId: string;
+  routineId: string;
 }>;
 
 export type Schema = Readonly<{
@@ -339,28 +309,6 @@ export type DownloadEvent = Readonly<{
 export type PreviewEvent = Readonly<{
   event: "preview";
 }>;
-
-export function isLoadedEvent(e: ViewerEvent): e is StartEvent {
-  return e.event === "loaded";
-}
-export function isStartEvent(e: ViewerEvent): e is StartEvent {
-  return e.event === "start";
-}
-export function isEndEvent(e: ViewerEvent): e is EndEvent {
-  return e.event === "end";
-}
-export function isPrevEvent(e: ViewerEvent): e is PrevEvent {
-  return e.event === "prev";
-}
-export function isNextEvent(e: ViewerEvent): e is NextEvent {
-  return e.event === "next";
-}
-export function isDownloadEvent(e: ViewerEvent): e is DownloadEvent {
-  return e.event === "download";
-}
-export function isPreviewEvent(e: ViewerEvent): e is PreviewEvent {
-  return e.event === "preview";
-}
 
 export const formats = {
   jsonl: "JSON Lines",

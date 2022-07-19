@@ -282,7 +282,6 @@ export function createRunnerManager({
         errorMarker?.clear();
 
         const job = unwrap(runJobResult);
-        logger.log(`job ID: ${job.id}`);
 
         const { metadata } = job;
         const {
