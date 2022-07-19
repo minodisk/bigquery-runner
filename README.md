@@ -168,6 +168,22 @@ Project ID for Google Cloud Platform. If not specified, the value of `project_id
 
 Flag whether to use legacy SQL. If `false`, use standard SQL.
 
+### `bigqueryRunner.defaultDataset.datasetId`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+Specifies the default datasetId to assume for any unqualified table names in the query. If not set, all table names in the query string must be qualified in the format 'datasetId.tableId'.
+
+### `bigqueryRunner.defaultDataset.projectId`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+Specifies the default projectId to assume for any unqualified table names in the query. If `defaultDataset.datasetId` is not set, setting this value has no effect.
+
 ### `bigqueryRunner.downloader.csv.delimiter`
 
 |Type|Default|

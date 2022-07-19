@@ -253,6 +253,7 @@ export function createRunnerManager({
         const runJobResult = await client.createRunJob({
           query,
           maxResults: config.viewer.rowsPerPage,
+          defaultDataset: config.defaultDataset,
           params,
         });
         errorMarker?.clear();

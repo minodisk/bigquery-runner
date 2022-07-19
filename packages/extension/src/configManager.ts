@@ -1,9 +1,13 @@
 import { isAbsolute, join } from "path";
 import type { Disposable } from "vscode";
 import { commands, workspace } from "vscode";
-import type { Config } from "./config";
+import type { OrigConfig } from "./OrigConfig";
 
 export type ConfigManager = ReturnType<typeof createConfigManager>;
+
+export type Config = Omit<OrigConfig, "defaultDataset"> & {
+  defaultDataset?: OrigConfig["defaultDataset"];
+};
 
 type Callback = (config: Config) => unknown;
 
@@ -48,17 +52,13 @@ export function createConfigManager(section: string) {
 }
 
 function getConfig(section: string): Config {
-  const config = workspace.getConfiguration(section) as unknown as Config;
+  const config = workspace.getConfiguration(section) as unknown as OrigConfig;
   return {
     ...config,
-    viewer: {
-      ...config.viewer,
-      rowsPerPage:
-        config.viewer.rowsPerPage === undefined ||
-        config.viewer.rowsPerPage === null
-          ? undefined
-          : config.viewer.rowsPerPage,
-    },
+    defaultDataset:
+      config.defaultDataset.datasetId || config.defaultDataset.projectId
+        ? config.defaultDataset
+        : undefined,
     downloader: {
       ...config.downloader,
       rowsPerPage:
@@ -87,6 +87,14 @@ function getConfig(section: string): Config {
         config.statusBarItem.priority === undefined
           ? undefined
           : config.statusBarItem.priority,
+    },
+    viewer: {
+      ...config.viewer,
+      rowsPerPage:
+        config.viewer.rowsPerPage === undefined ||
+        config.viewer.rowsPerPage === null
+          ? undefined
+          : config.viewer.rowsPerPage,
     },
   };
 }

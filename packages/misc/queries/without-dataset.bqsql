@@ -1,0 +1,9 @@
+select
+    en_label,
+    labels
+from
+    wikidata
+where
+    array_length(labels) < 5
+limit
+    5000

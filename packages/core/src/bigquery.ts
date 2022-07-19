@@ -96,7 +96,7 @@ export async function createClient(
 
   const client: Client = {
     async createRunJob(query) {
-      const createQueryJobResult = await createQueryJob({
+      const createQueryJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
         options: {
           ...query,
@@ -306,7 +306,7 @@ export async function createClient(
           );
         },
 
-        getRoutine() {
+        async getRoutine() {
           return tryCatch(
             async () => {
               const [[j]] = await bigQuery.getJobs({ parentJobId: job.id });
@@ -338,7 +338,7 @@ export async function createClient(
     },
 
     async createDryRunJob(query) {
-      const createQueryJobResult = await createQueryJob({
+      const createQueryJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
         options: {
           ...query,
@@ -396,7 +396,7 @@ export const checkAuthentication = async ({
   );
 };
 
-export const createQueryJob = async ({
+export const runQuery = async ({
   createQueryJob,
   options,
 }: {
