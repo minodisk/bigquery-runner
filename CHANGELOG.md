@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.8.0
+
+### Added
+
+- Support default dataset
+  ![image](https://user-images.githubusercontent.com/514164/179751508-d5997f84-e1be-40a2-9b44-e8ef0a39136d.png)
+
 ## v1.7.0
 
 ### Added
