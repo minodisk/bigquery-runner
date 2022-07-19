@@ -22,6 +22,7 @@ export const parse = (query: string): ReadonlyArray<Parameter> => {
   let line = 0;
   let character = 0;
   let index = 0;
+  let comment: "single" | "multi" | null = null;
   while (pointer < query.length) {
     const curr = query[pointer];
     if (!curr) {
@@ -29,19 +30,66 @@ export const parse = (query: string): ReadonlyArray<Parameter> => {
     }
     const next = query[pointer + 1];
 
+    // Line break
     if (curr === "\n") {
       pointer += 1;
       line += 1;
       character = 0;
+      // End single-line comment
+      if (comment === "single") {
+        comment = null;
+      }
       continue;
     }
     if (curr === "\r" && next === "\n") {
       pointer += 2;
       line += 1;
       character = 0;
+      // End single-line comment
+      if (comment === "single") {
+        comment = null;
+      }
       continue;
     }
 
+    // End asterisk multi-line comment
+    if (curr === "*" && next === "/" && comment === "multi") {
+      pointer += 2;
+      character += 2;
+      comment = null;
+      continue;
+    }
+
+    // During commenting, stop parsing and just move the pointer forward.
+    if (comment) {
+      pointer += 1;
+      character += 1;
+      continue;
+    }
+
+    // Start sharp single-line comment
+    if (curr === "#") {
+      pointer += 1;
+      character += 1;
+      comment = "single";
+      continue;
+    }
+    // Start dash single-line comment
+    if (curr === "-" && next === "-") {
+      pointer += 2;
+      character += 2;
+      comment = "single";
+      continue;
+    }
+    // Start asterisk multi-line comment
+    if (curr === "/" && next === "*") {
+      pointer += 2;
+      character += 2;
+      comment = "multi";
+      continue;
+    }
+
+    // Positional parameter
     if (curr === "?" && !isTokenChar(next)) {
       params.push({
         type: "positional",
@@ -59,6 +107,7 @@ export const parse = (query: string): ReadonlyArray<Parameter> => {
       continue;
     }
 
+    // Named parameter
     if (curr === "@") {
       const start = { line, character };
 

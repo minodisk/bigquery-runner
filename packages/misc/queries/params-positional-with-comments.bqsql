@@ -1,0 +1,16 @@
+SELECT
+    corpus,
+    word,
+    # @foo,
+    # @bar # -- @baz */ @qux,
+    word_count
+    -- @bar # @baz -- @foo #-- @qux
+FROM 
+    `bigquery-public-data.samples.shakespeare`
+WHERE
+    corpus = ?/* @foo -- @bar          -- "romeoandjuliet"
+    @baz # /* @qux
+    @foo
+        @foo@bar    */AND word_count >= ? -- 250
+ORDER BY
+    word_count DESC

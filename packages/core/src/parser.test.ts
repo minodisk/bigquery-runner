@@ -116,6 +116,71 @@ ORDER BY
       ]);
     });
 
+    it("should find positional params from complex query with comment", () => {
+      expect(
+        parse(`SELECT
+    corpus,
+    word,
+    # @foo,
+    # @bar # -- @baz */ @qux,
+    word_count
+    -- @bar # @baz -- @foo #-- @qux
+FROM 
+    \`bigquery-public-data.samples.shakespeare\`
+WHERE
+    corpus = ?/* @foo -- @bar          -- "romeoandjuliet"
+    @baz # /* @qux
+    @foo
+        @foo@bar    */AND word_count >= ? -- 250
+ORDER BY
+    word_count DESC
+`)
+      ).toStrictEqual([
+        {
+          type: "positional",
+          token: "?",
+          index: 0,
+          range: {
+            start: {
+              line: 10,
+              character: 13,
+            },
+            end: {
+              line: 10,
+              character: 14,
+            },
+          },
+        },
+        {
+          type: "positional",
+          token: "?",
+          index: 1,
+          range: {
+            start: {
+              line: 13,
+              character: 40,
+            },
+            end: {
+              line: 13,
+              character: 41,
+            },
+          },
+        },
+      ]);
+    });
+
+    it("should ignore sharp commented @", async () => {
+      expect(parse(`#@foo`)).toStrictEqual([]);
+    });
+
+    it("should ignore dash commented @", async () => {
+      expect(parse(`--@foo`)).toStrictEqual([]);
+    });
+
+    it("should ignore multiline commented @", async () => {
+      expect(parse(`/*\n@foo\n*/`)).toStrictEqual([]);
+    });
+
     it("should find named param with @", async () => {
       expect(parse(`@`)).toStrictEqual([
         {
@@ -200,6 +265,59 @@ ORDER BY
             end: {
               line: 7,
               character: 37,
+            },
+          },
+        },
+      ]);
+    });
+
+    it("should find named params from complex query with comment", () => {
+      expect(
+        parse(`SELECT
+    corpus,
+    word,
+    # @foo,
+    # @bar # -- @baz */ @qux,
+    word_count
+    -- @bar # @baz -- @foo #-- @qux
+FROM
+    \`bigquery-public-data.samples.shakespeare\`
+WHERE
+    corpus = @corpus/* @foo -- @bar                   -- "romeoandjuliet" 
+    @baz # /* @qux
+    @foo
+        @foo@bar    */AND word_count >= @min_word_count   -- 250
+ORDER BY
+    word_count DESC
+`)
+      ).toStrictEqual([
+        {
+          type: "named",
+          token: "@corpus",
+          name: "corpus",
+          range: {
+            start: {
+              line: 10,
+              character: 13,
+            },
+            end: {
+              line: 10,
+              character: 20,
+            },
+          },
+        },
+        {
+          type: "named",
+          token: "@min_word_count",
+          name: "min_word_count",
+          range: {
+            start: {
+              line: 13,
+              character: 40,
+            },
+            end: {
+              line: 13,
+              character: 55,
             },
           },
         },
