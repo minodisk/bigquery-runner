@@ -1,7 +1,7 @@
 // DO NOT EDIT
 // This file is generated from gen-src/config.d.ts.ejs.
 
-export type Config = {
+export type OrigConfig = {
   readonly extensions: Array<string>;
   readonly icon: boolean;
   readonly keyFilename: string | undefined;
@@ -10,6 +10,10 @@ export type Config = {
   readonly maximumBytesBilled: string | undefined;
   readonly projectId: string | undefined;
   readonly useLegacySql: boolean;
+  readonly defaultDataset: {
+    readonly datasetId: string | undefined;
+    readonly projectId: string | undefined;
+  };
   readonly downloader: {
     readonly csv: {
       readonly delimiter: string;

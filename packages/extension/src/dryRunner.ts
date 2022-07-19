@@ -95,6 +95,7 @@ export function createDryRunner({
 
       const dryRunJobResult = await client.createDryRunJob({
         query,
+        defaultDataset: config.defaultDataset,
       });
 
       errorMarker.clear();

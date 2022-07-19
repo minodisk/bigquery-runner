@@ -24,7 +24,7 @@ const config = Object.keys(contributes.configuration.properties).reduce((obj, pr
 function build(config, indent = 0) {
   return `{
 ${Object.keys(config).map((key) =>
-  `${'  '.repeat(indent + 1)}readonly ${key}: ${(config[key].description) ? buildType(config[key]) : build(config[key], indent + 1)};`
+  `${'  '.repeat(indent + 1)}readonly ${key}: ${(config[key].description != null) ? buildType(config[key]) : build(config[key], indent + 1)};`
 ).join('\n')}
 ${'  '.repeat(indent)}}`
 }
@@ -48,4 +48,4 @@ function buildType(value) {
   return value.type
 }
 -%>
-export type Config = <%- build(config) %>;
+export type OrigConfig = <%- build(config) %>;

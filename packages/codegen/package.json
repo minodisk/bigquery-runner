@@ -8,7 +8,7 @@
     "dev": "nodemon --exec 'npm run build'",
     "build": "run-p build:*",
     "build:readme": "ejs ./src/README.md.ejs -f ../../package.json -o ../../README.md",
-    "build:dts": "ejs ./src/config.d.ts.ejs -f ../../package.json -o ../extension/src/config.d.ts"
+    "build:dts": "ejs ./src/OrigConfig.d.ts.ejs -f ../../package.json -o ../extension/src/OrigConfig.d.ts"
   },
   "nodemonConfig": {
     "watch": [

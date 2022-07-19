@@ -7,8 +7,7 @@ import {
   Range,
   WorkspaceEdit,
 } from "vscode";
-import type { Config } from "./config";
-import type { ConfigManager } from "./configManager";
+import type { Config, ConfigManager } from "./configManager";
 
 export type QuickFixManager = ReturnType<typeof createQuickFixManager>;
 

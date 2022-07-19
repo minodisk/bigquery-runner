@@ -1,8 +1,7 @@
 import type { RunnerID } from "types";
 import type { window } from "vscode";
 import { StatusBarAlignment } from "vscode";
-import type { Config } from "./config";
-import type { ConfigManager } from "./configManager";
+import type { Config, ConfigManager } from "./configManager";
 
 export type StatusManager = ReturnType<typeof createStatusManager>;
 export type Status = Readonly<{

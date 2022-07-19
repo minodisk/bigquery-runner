@@ -164,6 +164,22 @@
           "default": false,
           "description": "Flag whether to use legacy SQL. If `false`, use standard SQL."
         },
+        "bigqueryRunner.defaultDataset.datasetId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Specifies the default datasetId to assume for any unqualified table names in the query. If not set, all table names in the query string must be qualified in the format 'datasetId.tableId'."
+        },
+        "bigqueryRunner.defaultDataset.projectId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Specifies the default projectId to assume for any unqualified table names in the query. If `defaultDataset.datasetId` is not set, setting this value has no effect."
+        },
         "bigqueryRunner.downloader.csv.delimiter": {
           "type": "string",
           "default": ",",

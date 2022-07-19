@@ -15,8 +15,7 @@ import { formats, succeed, errorToString, tryCatchSync, unwrap } from "types";
 import type { TextEditor, Uri } from "vscode";
 import { workspace, window } from "vscode";
 import { checksum } from "./checksum";
-import type { Config } from "./config";
-import type { ConfigManager } from "./configManager";
+import type { Config, ConfigManager } from "./configManager";
 import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
 import type { StatusManager } from "./statusManager";
@@ -209,6 +208,7 @@ const createWriter =
     const createRunJobResult = await client.createRunJob({
       query,
       maxResults: config.downloader.rowsPerPage,
+      defaultDataset: config.defaultDataset,
     });
     if (!createRunJobResult.success) {
       logger.error(createRunJobResult);

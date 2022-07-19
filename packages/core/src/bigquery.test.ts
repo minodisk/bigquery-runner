@@ -1,6 +1,6 @@
 import {
   checkAuthentication,
-  createQueryJob,
+  runQuery,
   getPage,
   toSerializablePage,
 } from "./bigquery";
@@ -68,7 +68,7 @@ describe("bigquery", () => {
       const options = { dryRun: false };
       const job = {};
       const createQueryJobMock = jest.fn(() => Promise.resolve([job] as any));
-      const result = await createQueryJob({
+      const result = await runQuery({
         createQueryJob: createQueryJobMock,
         options,
       });
@@ -82,7 +82,7 @@ describe("bigquery", () => {
       const createQueryJobMock = jest.fn(() =>
         Promise.reject(new Error("foo"))
       );
-      const result = await createQueryJob({
+      const result = await runQuery({
         createQueryJob: createQueryJobMock,
         options,
       });
@@ -99,7 +99,7 @@ describe("bigquery", () => {
       const createQueryJobMock = jest.fn(() =>
         Promise.reject(new Error("foo bar baz at [3:40]"))
       );
-      const result = await createQueryJob({
+      const result = await runQuery({
         createQueryJob: createQueryJobMock,
         options,
       });
@@ -119,7 +119,7 @@ describe("bigquery", () => {
           new Error("Unrecognized name: foo; Did you mean bar? at [3:40]")
         )
       );
-      const result = await createQueryJob({
+      const result = await runQuery({
         createQueryJob: createQueryJobMock,
         options,
       });
