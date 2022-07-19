@@ -1,22 +1,27 @@
 export type Position = { line: number; character: number };
 export type Range = { start: Position; end: Position };
 
-export type Parameter =
-  | {
-      type: "named";
-      token: `@${string}`;
-      name: string;
-      range: Range;
-    }
-  | {
-      type: "positional";
-      token: "?";
-      index: number;
-      range: Range;
-    };
+export type NamedParameter = {
+  type: "named";
+  token: `@${string}`;
+  name: string;
+  ranges: ReadonlyArray<Range>;
+};
+export type PositionalParameter = {
+  type: "positional";
+  token: "?";
+  index: number;
+  range: Range;
+};
 
-export const parse = (query: string): ReadonlyArray<Parameter> => {
-  const params: Array<Parameter> = [];
+export type Parameters = {
+  named: ReadonlyArray<NamedParameter>;
+  positional: ReadonlyArray<PositionalParameter>;
+};
+
+export const parse = (query: string): Parameters => {
+  const named = new Map<string, NamedParameter>();
+  const positional: Array<PositionalParameter> = [];
 
   let pointer = 0;
   let line = 0;
@@ -91,7 +96,7 @@ export const parse = (query: string): ReadonlyArray<Parameter> => {
 
     // Positional parameter
     if (curr === "?" && !isTokenChar(next)) {
-      params.push({
+      positional.push({
         type: "positional",
         token: "?",
         index,
@@ -127,15 +132,29 @@ export const parse = (query: string): ReadonlyArray<Parameter> => {
         character += 1;
       }
 
-      params.push({
-        type: "named",
-        token: `@${name}`,
-        name,
-        range: {
-          start,
-          end: { line, character },
-        },
-      });
+      const n = named.get(name);
+      const range = {
+        start,
+        end: { line, character },
+      };
+      if (!n) {
+        named.set(name, {
+          type: "named",
+          token: `@${name}`,
+          name,
+          ranges: [
+            {
+              start,
+              end: { line, character },
+            },
+          ],
+        });
+      } else {
+        named.set(name, {
+          ...n,
+          ranges: [...n.ranges, range],
+        });
+      }
 
       continue;
     }
@@ -144,7 +163,10 @@ export const parse = (query: string): ReadonlyArray<Parameter> => {
     character += 1;
   }
 
-  return params;
+  return {
+    named: Array.from(named.entries()).map(([, n]) => n),
+    positional,
+  };
 };
 
 const tokenChar =

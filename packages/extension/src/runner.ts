@@ -1,6 +1,6 @@
 import { basename } from "path";
 import { format } from "bytes";
-import type { Parameter, RunJob } from "core";
+import type { Parameters, RunJob } from "core";
 import { createFlat, createClient, parse } from "core";
 import type {
   Metadata,
@@ -526,54 +526,54 @@ type ParamValues = NamedParamValues | PositionalParamValues;
 type NamedParamValues = { [name: string]: unknown };
 type PositionalParamValues = Array<unknown>;
 
-const getParamValues = async (
-  params: ReadonlyArray<Parameter>
-): Promise<Result<Err<"InvalidJSON">, ParamValues | undefined>> => {
-  const namedParams: NamedParamValues = {};
-  const positionalParams: PositionalParamValues = [];
-
-  for (const param of params) {
-    switch (param.type) {
-      case "named": {
-        const value = await window.showInputBox({
-          title: `Set a parameter to ${param.token}`,
-          prompt: `Specify in JSON format`,
-        });
-        if (value === undefined) {
-          continue;
-        }
-        const parseJSONResult = parseJSON(value);
-        if (!parseJSONResult.success) {
-          return parseJSONResult;
-        }
-        namedParams[param.name] = parseJSONResult.value;
-        break;
+const getParamValues = async ({
+  named,
+  positional,
+}: Parameters): Promise<
+  Result<Err<"InvalidJSON">, ParamValues | undefined>
+> => {
+  console.log("--------------");
+  console.log(named);
+  console.log(positional);
+  if (named.length > 0) {
+    const namedParams: NamedParamValues = {};
+    for (const param of named) {
+      const value = await window.showInputBox({
+        title: `Set a parameter to ${param.token}`,
+        prompt: `Specify in JSON format`,
+      });
+      if (value === undefined) {
+        continue;
       }
-      case "positional": {
-        const value = await window.showInputBox({
-          title: `Set a parameter for the ${param.index}-th ${param.token}`,
-          prompt: `Specify in JSON format`,
-        });
-        if (value === undefined) {
-          continue;
-        }
-        const parseJSONResult = parseJSON(value);
-        if (!parseJSONResult.success) {
-          return parseJSONResult;
-        }
-        positionalParams[param.index] = parseJSONResult.value;
-        break;
+      const parseJSONResult = parseJSON(value);
+      if (!parseJSONResult.success) {
+        return parseJSONResult;
       }
+      namedParams[param.name] = parseJSONResult.value;
     }
+    return succeed(namedParams);
   }
 
-  return succeed(
-    Object.keys(namedParams).length > 0
-      ? namedParams
-      : positionalParams.length > 0
-      ? positionalParams
-      : undefined
-  );
+  if (positional.length > 0) {
+    const positionalParams: PositionalParamValues = [];
+    for (const param of positional) {
+      const value = await window.showInputBox({
+        title: `Set a parameter for the ${param.index}-th ${param.token}`,
+        prompt: `Specify in JSON format`,
+      });
+      if (value === undefined) {
+        continue;
+      }
+      const parseJSONResult = parseJSON(value);
+      if (!parseJSONResult.success) {
+        return parseJSONResult;
+      }
+      positionalParams[param.index] = parseJSONResult.value;
+    }
+    return succeed(positionalParams);
+  }
+
+  return succeed(undefined);
 };
 
 const parseJSON = (value: string): Result<Err<"InvalidJSON">, unknown> => {
