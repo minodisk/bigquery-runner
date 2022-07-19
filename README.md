@@ -261,6 +261,7 @@ Debounce interval in milliseconds to validate the query when the file is modifie
 
 - Write queries in VSCode and run them directly against BigQuery datasets and view the results
 - Run queries from selected text
+- Run queries with query parameters
 - Mark errors for queries in VSCode
 - Suggest a candidate for a quick fix
 - Fast rendering of large result tables
@@ -273,10 +274,6 @@ Debounce interval in milliseconds to validate the query when the file is modifie
     - Formatted plain text
 - All operations can be executed by command
     - This means that all operations can be done using the keyboard
-
-### Experimental features
-
-- Run queries with query parameters
 
 ## Additional Settings
 

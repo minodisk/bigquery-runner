@@ -2,6 +2,14 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.9.0
+
+### Changed
+
+- Fixed bugs around query parameters.
+  - Stop asking to commented out query parameters #22
+  - Ask the same named parameter only once #23
+
 ## v1.8.0
 
 ### Added
