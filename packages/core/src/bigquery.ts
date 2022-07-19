@@ -91,13 +91,13 @@ export async function createClient(
   // Check authentication
   await checkAuthentication({
     keyFilename: options.keyFilename,
-    getProjectId: bigQuery.getProjectId,
+    getProjectId: bigQuery.getProjectId.bind(bigQuery),
   });
 
   const client: Client = {
     async createRunJob(query) {
       const createQueryJobResult = await createQueryJob({
-        createQueryJob: bigQuery.createQueryJob,
+        createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
         options: {
           ...query,
           dryRun: false,
@@ -339,7 +339,7 @@ export async function createClient(
 
     async createDryRunJob(query) {
       const createQueryJobResult = await createQueryJob({
-        createQueryJob: bigQuery.createQueryJob,
+        createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
         options: {
           ...query,
           dryRun: true,
