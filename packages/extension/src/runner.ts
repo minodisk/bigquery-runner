@@ -243,7 +243,7 @@ export function createRunnerManager({
         if (!clientResult.success) {
           logger.error(clientResult);
           const { reason } = unwrap(clientResult);
-          await window.showErrorMessage(reason);
+          showErrorMessage(reason);
           await renderer.failProcessing(clientResult.value);
           status.errorBilled();
           return;
@@ -258,8 +258,8 @@ export function createRunnerManager({
         });
         errorMarker?.clear();
         if (!runJobResult.success) {
+          logger.error(runJobResult);
           const err = unwrap(runJobResult);
-          logger.log(err.reason);
           await renderer.failProcessing(runJobResult.value);
           status.errorBilled();
           if (errorMarker) {
@@ -277,7 +277,7 @@ export function createRunnerManager({
               return;
             }
           }
-          await window.showErrorMessage(err.reason);
+          showErrorMessage(err.reason);
           return;
         }
         errorMarker?.clear();
@@ -406,10 +406,9 @@ export function createRunnerManager({
 
         const getStructsResult = await job.getPrevStructs();
         if (!getStructsResult.success) {
-          logger.error(getStructsResult);
           const { type, reason } = unwrap(getStructsResult);
           if (type === "NoPageToken") {
-            await window.showErrorMessage(reason);
+            showErrorMessage(reason);
           }
           await renderer.failProcessing(getStructsResult.value);
           return;
@@ -453,7 +452,7 @@ export function createRunnerManager({
           logger.error(getStructsResult);
           const { type, reason } = unwrap(getStructsResult);
           if (type === "NoPageToken") {
-            await window.showErrorMessage(reason);
+            showErrorMessage(reason);
           }
           await renderer.failProcessing(getStructsResult.value);
           return;
@@ -532,9 +531,6 @@ const getParamValues = async ({
 }: Parameters): Promise<
   Result<Err<"InvalidJSON">, ParamValues | undefined>
 > => {
-  console.log("--------------");
-  console.log(named);
-  console.log(positional);
   if (named.length > 0) {
     const namedParams: NamedParamValues = {};
     for (const param of named) {
@@ -584,4 +580,9 @@ const parseJSON = (value: string): Result<Err<"InvalidJSON">, unknown> => {
       reason: errorToString(err),
     })
   );
+};
+
+const showErrorMessage = (message: string): void => {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  window.showErrorMessage(message);
 };

@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.9.1
+
+### Changed
+
+- Fixed the problem that the spinner in the viewer does not stop when NoPageToken occurs when paging.
+
 ## v1.9.0
 
 ### Changed
@@ -9,6 +15,7 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 - Fixed bugs around query parameters.
   - Stop asking to commented out query parameters #22
   - Ask the same named parameter only once #23
+  - Formally support query parameter functions.
 
 ## v1.8.0
 
