@@ -195,7 +195,7 @@
             "number",
             "null"
           ],
-          "default": null,
+          "default": 10000,
           "description": "Maximum number of rows to retrieve per page for downloading. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched."
         },
         "bigqueryRunner.viewer.column": {

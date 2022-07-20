@@ -105,3 +105,21 @@ export function isDownloadEvent(e: ViewerEvent): e is DownloadEvent {
 export function isPreviewEvent(e: ViewerEvent): e is PreviewEvent {
   return e.event === "preview";
 }
+
+export const comma = (num: bigint | string): string => {
+  const text = num.toString();
+  const len = text.length;
+  let result = "";
+  for (let i = 0; i < len; i++) {
+    const char = text[len - 1 - i];
+    if (!char) {
+      break;
+    }
+    if (i === 0 || i % 3 !== 0) {
+      result = `${char}${result}`;
+    } else {
+      result = `${char},${result}`;
+    }
+  }
+  return result;
+};

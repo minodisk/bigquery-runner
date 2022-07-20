@@ -1,4 +1,10 @@
-import { getJobName, getRoutineName, getTableName, isData } from "./funcs";
+import {
+  comma,
+  getJobName,
+  getRoutineName,
+  getTableName,
+  isData,
+} from "./funcs";
 
 describe("funcs", () => {
   describe(getJobName.name, () => {
@@ -48,6 +54,18 @@ describe("funcs", () => {
       expect(isData({})).toBeFalsy();
       expect(isData({ source: "foo" })).toBeFalsy();
       expect(isData({ source: "bigquery-runner" })).toBeTruthy();
+    });
+  });
+
+  describe(comma.name, () => {
+    it("should add comma every three digits", () => {
+      expect(comma("0")).toBe("0");
+      expect(comma("10")).toBe("10");
+      expect(comma("100")).toBe("100");
+      expect(comma("1000")).toBe("1,000");
+      expect(comma("10000")).toBe("10,000");
+      expect(comma("100000")).toBe("100,000");
+      expect(comma("1000000")).toBe("1,000,000");
     });
   });
 });

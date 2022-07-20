@@ -228,7 +228,7 @@ The flag whether to add column names to CSV.
 
 |Type|Default|
 |---|---|
-|number &#x7C; null|null|
+|number &#x7C; null|10000|
 
 Maximum number of rows to retrieve per page for downloading. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched.
 

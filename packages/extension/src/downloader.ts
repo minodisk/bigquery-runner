@@ -1,4 +1,5 @@
 import { createWriteStream } from "fs";
+import { basename } from "path";
 import { format } from "bytes";
 import type { Formatter } from "core";
 import {
@@ -11,14 +12,22 @@ import {
   createTableFormatter,
 } from "core";
 import type { Field, Format, Result, RunnerID, UnknownError } from "types";
-import { formats, succeed, errorToString, tryCatchSync, unwrap } from "types";
+import {
+  comma,
+  formats,
+  succeed,
+  errorToString,
+  tryCatchSync,
+  unwrap,
+} from "types";
 import type { TextEditor, Uri } from "vscode";
-import { workspace, window } from "vscode";
+import { ProgressLocation, workspace, window } from "vscode";
 import { checksum } from "./checksum";
 import type { Config, ConfigManager } from "./configManager";
 import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
 import type { StatusManager } from "./statusManager";
+import { openProgress, showError } from "./window";
 
 export type Downloader = ReturnType<typeof createDownloader>;
 
@@ -190,7 +199,12 @@ const createWriter =
     query: string;
     uri: Uri;
   }) => {
-    logger.log(`start downloading to ${uri.path}`);
+    logger.log(`start downloading to ${uri.fsPath}`);
+
+    const { report, close } = openProgress({
+      title: `Download to ${basename(uri.fsPath)}`,
+      location: ProgressLocation.Notification,
+    });
 
     const status = statusManager.get(runnerId);
     status.loadBilled();
@@ -201,6 +215,8 @@ const createWriter =
     if (!createClientResult.success) {
       logger.error(createClientResult);
       status.errorBilled();
+      close();
+      showError(createClientResult);
       return;
     }
     const client = unwrap(createClientResult);
@@ -213,21 +229,30 @@ const createWriter =
     if (!createRunJobResult.success) {
       logger.error(createRunJobResult);
       status.errorBilled();
+      close();
+      showError(createRunJobResult);
       return;
     }
     const job = unwrap(createRunJobResult);
 
+    const { totalBytesBilled, cacheHit } = job.metadata.statistics.query;
+    const bytes = format(parseInt(totalBytesBilled, 10));
+    status.succeedBilled({ bytes, cacheHit });
+    logger.log(`${bytes} to be billed (cache: ${cacheHit})`);
+
     const getTableResult = await job.getTable();
     if (!getTableResult.success) {
       logger.error(getTableResult);
-      status.errorBilled();
+      close();
+      showError(getTableResult);
       return;
     }
     const table = unwrap(getTableResult);
     logger.log(`table fetched ${table.id}`);
     if (!table.schema.fields) {
       logger.error("no schema");
-      status.errorBilled();
+      close();
+      showError("no schema");
       return;
     }
 
@@ -243,7 +268,8 @@ const createWriter =
     );
     if (!streamResult.success) {
       logger.error(streamResult);
-      status.errorBilled();
+      close();
+      showError(streamResult);
       return;
     }
     const stream = unwrap(streamResult);
@@ -257,7 +283,8 @@ const createWriter =
     });
     if (!createFormatterResult.success) {
       logger.error(createFormatterResult);
-      status.errorBilled();
+      close();
+      showError(createFormatterResult);
       return;
     }
     const formatter = createFormatterResult.value;
@@ -269,7 +296,8 @@ const createWriter =
     const getStructuralRowsResult = await job.getStructuralRows();
     if (!getStructuralRowsResult.success) {
       logger.error(getStructuralRowsResult);
-      status.errorBilled();
+      close();
+      showError(getStructuralRowsResult);
       return;
     }
     const { structs, page } = unwrap(getStructuralRowsResult);
@@ -280,13 +308,20 @@ const createWriter =
       structs,
       rowNumberStart: page.startRowNumber,
     });
+    report({
+      message: `${comma(page.endRowNumber)} / ${comma(page.totalRows)} rows (${
+        (page.endRowNumber * 100n) / page.totalRows
+      }%)`,
+      increment: Number((BigInt(structs.length) * 100n) / page.totalRows),
+    });
     logger.log(`written ${structs.length} rows`);
 
     while (job.hasNext()) {
       const getStructsResult = await job.getNextStructs();
       if (!getStructsResult.success) {
         logger.error(getStructsResult);
-        status.errorBilled();
+        close();
+        showError(getStructsResult);
         return;
       }
       const { structs, page } = unwrap(getStructsResult);
@@ -297,6 +332,12 @@ const createWriter =
         structs,
         rowNumberStart: page.startRowNumber,
       });
+      report({
+        message: `${comma(page.endRowNumber)} / ${comma(
+          page.totalRows
+        )} rows (${(page.endRowNumber * 100n) / page.totalRows}%)`,
+        increment: Number((BigInt(structs.length) * 100n) / page.totalRows),
+      });
       logger.log(`written ${structs.length} rows`);
     }
 
@@ -304,10 +345,6 @@ const createWriter =
 
     await formatter.foot();
 
-    const { totalBytesBilled, cacheHit } = job.metadata.statistics.query;
-    const bytes = format(parseInt(totalBytesBilled, 10));
-    status.succeedBilled({ bytes, cacheHit });
-
-    logger.log(`${bytes} to be billed (cache: ${cacheHit})`);
     logger.log(`complete`);
+    close();
   };

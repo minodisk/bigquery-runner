@@ -22,6 +22,7 @@ import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
 import type { Renderer, RendererManager } from "./renderer";
 import type { Status, StatusManager } from "./statusManager";
+import { showError } from "./window";
 
 export type RunnerManager = ReturnType<typeof createRunnerManager>;
 export type RunJobResponse = SelectResponse | RoutineResponse;
@@ -243,7 +244,7 @@ export function createRunnerManager({
         if (!clientResult.success) {
           logger.error(clientResult);
           const { reason } = unwrap(clientResult);
-          showErrorMessage(reason);
+          showError(reason);
           await renderer.failProcessing(clientResult.value);
           status.errorBilled();
           return;
@@ -277,7 +278,7 @@ export function createRunnerManager({
               return;
             }
           }
-          showErrorMessage(err.reason);
+          showError(err.reason);
           return;
         }
         errorMarker?.clear();
@@ -408,7 +409,7 @@ export function createRunnerManager({
         if (!getStructsResult.success) {
           const { type, reason } = unwrap(getStructsResult);
           if (type === "NoPageToken") {
-            showErrorMessage(reason);
+            showError(reason);
           }
           await renderer.failProcessing(getStructsResult.value);
           return;
@@ -452,7 +453,7 @@ export function createRunnerManager({
           logger.error(getStructsResult);
           const { type, reason } = unwrap(getStructsResult);
           if (type === "NoPageToken") {
-            showErrorMessage(reason);
+            showError(reason);
           }
           await renderer.failProcessing(getStructsResult.value);
           return;
@@ -580,9 +581,4 @@ const parseJSON = (value: string): Result<Err<"InvalidJSON">, unknown> => {
       reason: errorToString(err),
     })
   );
-};
-
-const showErrorMessage = (message: string): void => {
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  window.showErrorMessage(message);
 };

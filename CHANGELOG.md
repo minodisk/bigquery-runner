@@ -2,7 +2,11 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
-## v1.9.1
+## v1.10.0
+
+### Added
+
+- Added implementation to display progress bar during downloading.
 
 ### Changed
 
