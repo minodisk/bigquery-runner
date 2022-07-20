@@ -1,15 +1,19 @@
 # Contributing Guide
 
-First, this VS Code extension is responsible for the following as it relates to BigQuery:
+First, this VSCode extension is responsible for the following as it relates to BigQuery:
 
 - Dry-run the query
 - Run the query
+- Feedback errors to the editor
 - Display the results of the query
+- Limited static analysis of queries
+  - For finding query parameters
 
 And it does not do the following:
 
 - Syntax highlighting
 - Static analysis of queries
+  - For other than finding query parameters
 
 ## Issues
 
@@ -35,16 +39,29 @@ npm install
 
 ### Test
 
-Unit test around the core package:
+Unit test:
 
 ```
 npm test
 ```
 
+Compiler/Formatter check:
+
+```
+npm run check
+```
+
+Lint:
+
+```
+npm run check
+```
+
 ### Debug
 
-Debug it to check its behavior around the VS Code extension:
+Debug it to check its behavior around the VSCode extension:
 
-1. Run `npm run debug` to build BigQuery Runner and install it into VS Code.
-1. Run the command `Developer: Reload Window` in VS Code to activate the newly installed BigQuery Runner.
-1. Open a query file and run the command `BigQuery Runner: Run` in VS Code.
+1. [Create a service account and its key](https://cloud.google.com/docs/authentication/getting-started) and save it in the project root with the name `service-account.json`.
+1. Run `npm run debug` to build BigQuery Runner and install it into VSCode.
+1. Run the command `Developer: Reload Window` in VSCode to activate the newly installed BigQuery Runner.
+1. Open a query file and run the command `BigQuery Runner: Run` in VSCode.
