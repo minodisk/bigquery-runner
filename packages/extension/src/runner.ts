@@ -11,6 +11,7 @@ import type {
   RunnerID,
   Result,
   Err,
+  Tab,
 } from "types";
 import { unwrap, succeed, tryCatchSync, errorToString } from "types";
 import type { TextEditor, ViewColumn } from "vscode";
@@ -29,8 +30,9 @@ export type RunJobResponse = SelectResponse | RoutineResponse;
 export type Runner = Readonly<{
   query: string;
   run(): Promise<void>;
-  prev(): Promise<void>;
-  next(): Promise<void>;
+  movePage(diff: number): Promise<void>;
+  moveFocusTab(diff: number): Promise<void>;
+  focusOnTab(tab: Tab): Promise<void>;
   preview(): Promise<void>;
   dispose(): void;
 }>;
@@ -390,7 +392,7 @@ export function createRunnerManager({
         await renderer.successProcessing();
       },
 
-      async prev() {
+      async movePage(diff) {
         if (!pageable) {
           return;
         }
@@ -405,7 +407,7 @@ export function createRunnerManager({
           return;
         }
 
-        const getStructsResult = await job.getPrevStructs();
+        const getStructsResult = await job.getPagingStructuralRows(diff);
         if (!getStructsResult.success) {
           const { type, reason } = unwrap(getStructsResult);
           if (type === "NoPageToken") {
@@ -433,48 +435,12 @@ export function createRunnerManager({
         await renderer.successProcessing();
       },
 
-      async next() {
-        if (!pageable) {
-          return;
-        }
+      async moveFocusTab(diff) {
+        await renderer.moveTabFocus(diff);
+      },
 
-        const { job, table } = pageable;
-
-        renderer.reveal();
-
-        const rendererOpenResult = await renderer.startProcessing();
-        if (!rendererOpenResult.success) {
-          logger.error(rendererOpenResult);
-          return;
-        }
-
-        const getStructsResult = await job.getNextStructs();
-        if (!getStructsResult.success) {
-          logger.error(getStructsResult);
-          const { type, reason } = unwrap(getStructsResult);
-          if (type === "NoPageToken") {
-            showError(reason);
-          }
-          await renderer.failProcessing(getStructsResult.value);
-          return;
-        }
-        const { structs, page } = unwrap(getStructsResult);
-        logger.log(
-          `fetched: ${page.startRowNumber} - ${page.endRowNumber} (${page.totalRows} rows)`
-        );
-
-        const renderRowsResult = await renderer.renderRows({
-          structs,
-          table,
-          page,
-        });
-        if (!renderRowsResult.success) {
-          logger.error(renderRowsResult);
-          await renderer.failProcessing(renderRowsResult.value);
-          return;
-        }
-
-        await renderer.successProcessing();
+      async focusOnTab(tab) {
+        await renderer.focusOnTab(tab);
       },
 
       async preview() {

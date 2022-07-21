@@ -16,6 +16,7 @@ import type {
   DownloadEvent,
   PreviewEvent,
   Accessor,
+  Tab,
 } from "types";
 import {
   isDownloadEvent,
@@ -70,6 +71,9 @@ export type Renderer = {
   readonly failProcessing: (
     error: Err<string>
   ) => Promise<Result<UnknownError, void>>;
+
+  moveTabFocus(diff: number): Promise<Result<UnknownError, void>>;
+  focusOnTab(tab: Tab): Promise<Result<UnknownError, void>>;
 
   readonly dispose: () => void;
 };
@@ -310,6 +314,30 @@ export function createRendererManager({
                 event: {
                   event: "failProcessing",
                   payload: error,
+                },
+              });
+            },
+
+            moveTabFocus(diff) {
+              return postMessage({
+                logger: parentLogger.createChild("moveTabFocus"),
+                event: {
+                  event: "moveTabFocus",
+                  payload: {
+                    diff,
+                  },
+                },
+              });
+            },
+
+            focusOnTab(tab) {
+              return postMessage({
+                logger: parentLogger.createChild("focusOnTab"),
+                event: {
+                  event: "focusOnTab",
+                  payload: {
+                    tab,
+                  },
                 },
               });
             },

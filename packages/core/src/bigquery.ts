@@ -53,17 +53,13 @@ export type RunJob = Readonly<{
   hasNext(): boolean;
   getStructuralRows(): Promise<
     Result<
-      UnknownError | NoRowsError,
-      { structs: Array<StructuralRow>; page: Page }
-    >
-  >;
-  getPrevStructs(): Promise<
-    Result<
       UnknownError | NoRowsError | NoPageTokenError,
       { structs: Array<StructuralRow>; page: Page }
     >
   >;
-  getNextStructs(): Promise<
+  getPagingStructuralRows(
+    diff: number
+  ): Promise<
     Result<
       UnknownError | NoRowsError | NoPageTokenError,
       { structs: Array<StructuralRow>; page: Page }
@@ -129,8 +125,56 @@ export async function createClient(
       const metadata = unwrap(metadataResult);
 
       const pages: Map<number, Page> = new Map();
-      const tokens: Map<number, string | null> = new Map([[0, null]]);
+      const tokens: Map<number, string> = new Map();
       let current = 0;
+
+      const getStructuralRowsAt = async (index: number) => {
+        const pageToken = tokens.get(index);
+        if (index !== 0 && pageToken === undefined) {
+          return fail({
+            type: "NoPageToken" as const,
+            reason: `no page token for page at ${index}`,
+          });
+        }
+
+        const result = await tryCatch(
+          async () => {
+            return job.getQueryResults({
+              maxResults: query.maxResults,
+              pageToken,
+            });
+          },
+          (err) => ({
+            type: "Unknown" as const,
+            reason: errorToString(err),
+          })
+        );
+        if (!result.success) {
+          return result;
+        }
+        const [structs, next, res] = result.value;
+        current = index;
+
+        if (!res?.totalRows) {
+          return fail({
+            type: "NoRows" as const,
+            reason: `no rows in the query result`,
+          });
+        }
+
+        const page = getPage({
+          totalRows: res.totalRows,
+          rows: structs.length,
+          prevPage: pages.get(current - 1),
+          nextPageToken: next?.pageToken,
+        });
+        pages.set(current, page);
+        if (next?.pageToken) {
+          tokens.set(current + 1, next.pageToken);
+        }
+
+        return succeed({ structs, page });
+      };
 
       const runJob: RunJob = {
         metadata,
@@ -140,137 +184,11 @@ export async function createClient(
         },
 
         async getStructuralRows() {
-          const result = await tryCatch(
-            async () => {
-              return await job.getQueryResults({
-                maxResults: query.maxResults,
-              });
-            },
-            (reason) => ({
-              type: "Unknown" as const,
-              reason: String(reason),
-            })
-          );
-          if (!result.success) {
-            return result;
-          }
-          const [structs, next, res] = result.value;
-
-          if (!res?.totalRows) {
-            return fail({
-              type: "NoRows",
-              reason: `no rows in the query result`,
-            });
-          }
-
-          const page = getPage({
-            totalRows: res.totalRows,
-            rows: structs.length,
-            prevPage: pages.get(current - 1),
-            nextPageToken: next?.pageToken,
-          });
-          pages.set(current, page);
-          if (next?.pageToken) {
-            tokens.set(current + 1, next.pageToken);
-          }
-
-          return succeed({ structs, page });
+          return getStructuralRowsAt(0);
         },
 
-        async getPrevStructs() {
-          const pageToken = tokens.get(current - 1);
-          if (pageToken === undefined) {
-            return fail({
-              type: "NoPageToken" as const,
-              reason: `no page token for page at ${current - 1}`,
-            });
-          }
-          current -= 1;
-
-          const result = await tryCatch(
-            async () => {
-              return job.getQueryResults({
-                maxResults: query.maxResults,
-                pageToken: pageToken ?? undefined,
-              });
-            },
-            (reason) => ({
-              type: "Unknown" as const,
-              reason: String(reason),
-            })
-          );
-          if (!result.success) {
-            return result;
-          }
-          const [structs, next, res] = result.value;
-
-          if (!res?.totalRows) {
-            return fail({
-              type: "NoRows",
-              reason: `no rows in the query result`,
-            });
-          }
-
-          const page = getPage({
-            totalRows: res.totalRows,
-            rows: structs.length,
-            prevPage: pages.get(current - 1),
-            nextPageToken: next?.pageToken,
-          });
-          pages.set(current, page);
-          if (next?.pageToken) {
-            tokens.set(current + 1, next.pageToken);
-          }
-
-          return succeed({ structs, page });
-        },
-
-        async getNextStructs() {
-          const pageToken = tokens.get(current + 1);
-          if (pageToken === undefined) {
-            return fail({
-              type: "NoPageToken" as const,
-              reason: `no page token for page at ${current + 1}`,
-            });
-          }
-          current += 1;
-
-          const result = await tryCatch(
-            async () => {
-              return job.getQueryResults({
-                maxResults: query.maxResults,
-                pageToken: pageToken ?? undefined,
-              });
-            },
-            (reason) => ({
-              type: "Unknown" as const,
-              reason: String(reason),
-            })
-          );
-          if (!result.success) {
-            return result;
-          }
-          const [structs, next, res] = result.value;
-
-          if (!res?.totalRows) {
-            return fail({
-              type: "NoRows",
-              reason: `no rows in the query result`,
-            });
-          }
-
-          const page = getPage({
-            totalRows: res.totalRows,
-            rows: structs.length,
-            prevPage: pages.get(current - 1),
-            nextPageToken: next?.pageToken,
-          });
-          pages.set(current, page);
-          if (next?.pageToken) {
-            tokens.set(current + 1, next.pageToken);
-          }
-
-          return succeed({ structs, page });
+        async getPagingStructuralRows(diff) {
+          return getStructuralRowsAt(current + diff);
         },
 
         async getTable() {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { unwrap } from "types";
+import { tabs, unwrap } from "types";
 import type { ExtensionContext } from "vscode";
 import { commands, window, workspace } from "vscode";
 import { createConfigManager } from "./configManager";
@@ -49,10 +49,10 @@ export async function activate(ctx: ExtensionContext) {
       logger: logger.createChild("renderer"),
       configManager,
       async onPrevPageRequested({ renderer: { runnerId } }) {
-        await runnerManager.get(runnerId)?.prev();
+        await runnerManager.get(runnerId)?.movePage(-1);
       },
       async onNextPageRequested({ renderer: { runnerId } }) {
-        await runnerManager.get(runnerId)?.next();
+        await runnerManager.get(runnerId)?.movePage(1);
       },
       async onDownloadRequested({ renderer: { runnerId }, event: { format } }) {
         const runner = runnerManager.get(runnerId);
@@ -105,12 +105,6 @@ export async function activate(ctx: ExtensionContext) {
     // and the function they invoke.
     ctx.subscriptions.push(
       ...Object.entries({
-        [`${section}.dryRun`]: async () => {
-          if (!window.activeTextEditor) {
-            return;
-          }
-          await dryRunner.run(window.activeTextEditor);
-        },
         [`${section}.run`]: async () => {
           if (!window.activeTextEditor) {
             throw new Error(`no active text editor`);
@@ -123,76 +117,117 @@ export async function activate(ctx: ExtensionContext) {
           }
           await unwrap(runnerResult).run();
         },
-        [`${section}.prevPage`]: async () => {
+        [`${section}.dryRun`]: async () => {
           if (!window.activeTextEditor) {
-            throw new Error(`no active text editor`);
-          }
-          const runner = runnerManager.findWithFileName(
-            window.activeTextEditor.document.fileName
-          );
-          if (!runner) {
             return;
           }
-          await runner.prev();
-        },
-        [`${section}.nextPage`]: async () => {
-          if (!window.activeTextEditor) {
-            throw new Error(`no active text editor`);
-          }
-          const runner = runnerManager.findWithFileName(
-            window.activeTextEditor.document.fileName
-          );
-          if (!runner) {
-            return;
-          }
-          await runner.next();
-        },
-        [`${section}.downloadAsJSONL`]: async () => {
-          if (!window.activeTextEditor) {
-            throw new Error(`no active text editor`);
-          }
-          await downloader.downloadWithEditor({
-            format: "jsonl",
-            editor: window.activeTextEditor,
-          });
-        },
-        [`${section}.downloadAsJSON`]: async () => {
-          if (!window.activeTextEditor) {
-            throw new Error(`no active text editor`);
-          }
-          await downloader.downloadWithEditor({
-            format: "json",
-            editor: window.activeTextEditor,
-          });
-        },
-        [`${section}.downloadAsCSV`]: async () => {
-          if (!window.activeTextEditor) {
-            throw new Error(`no active text editor`);
-          }
-          await downloader.downloadWithEditor({
-            format: "csv",
-            editor: window.activeTextEditor,
-          });
-        },
-        [`${section}.downloadAsMarkdown`]: async () => {
-          if (!window.activeTextEditor) {
-            throw new Error(`no active text editor`);
-          }
-          await downloader.downloadWithEditor({
-            format: "md",
-            editor: window.activeTextEditor,
-          });
-        },
-        [`${section}.downloadAsText`]: async () => {
-          if (!window.activeTextEditor) {
-            throw new Error(`no active text editor`);
-          }
-          await downloader.downloadWithEditor({
-            format: "txt",
-            editor: window.activeTextEditor,
-          });
+          await dryRunner.run(window.activeTextEditor);
         },
       }).map(([name, action]) => commands.registerCommand(name, action))
+    );
+
+    ctx.subscriptions.push(
+      ...[
+        {
+          name: "prev",
+          diff: -1,
+        },
+        {
+          name: "next",
+          diff: 1,
+        },
+      ].map(({ name, diff }) =>
+        commands.registerCommand(`${section}.${name}Page`, async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          const runner = runnerManager.findWithFileName(
+            window.activeTextEditor.document.fileName
+          );
+          if (!runner) {
+            return;
+          }
+          await runner.movePage(diff);
+        })
+      )
+    );
+
+    ctx.subscriptions.push(
+      ...[
+        {
+          name: "Left",
+          diff: -1,
+        },
+        {
+          name: "Right",
+          diff: 1,
+        },
+      ].map(({ name, diff }) =>
+        commands.registerCommand(`${section}.focusOn${name}Tab`, async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          const runner = runnerManager.findWithFileName(
+            window.activeTextEditor.document.fileName
+          );
+          if (!runner) {
+            return;
+          }
+          await runner.moveFocusTab(diff);
+        })
+      )
+    );
+
+    ctx.subscriptions.push(
+      ...tabs.map((name) =>
+        commands.registerCommand(`${section}.focusOn${name}Tab`, async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          const runner = runnerManager.findWithFileName(
+            window.activeTextEditor.document.fileName
+          );
+          if (!runner) {
+            return;
+          }
+          await runner.focusOnTab(name);
+        })
+      )
+    );
+
+    ctx.subscriptions.push(
+      ...[
+        {
+          name: "JSONL",
+          format: "jsonl" as const,
+        },
+        {
+          name: "JSON",
+          format: "json" as const,
+        },
+        {
+          name: "CSV",
+          format: "csv" as const,
+        },
+        {
+          name: "Markdown",
+          format: "md" as const,
+        },
+        {
+          name: "Text",
+          format: "txt" as const,
+        },
+      ].map(({ name, format }) =>
+        commands.registerCommand(`${section}.downloadAs${name}`, async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          await downloader.downloadWithEditor({
+            format,
+            editor: window.activeTextEditor,
+          });
+        })
+      )
     );
 
     window.visibleTextEditors.forEach((editor) => dryRunner.validate(editor));

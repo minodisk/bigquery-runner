@@ -60,6 +60,14 @@ This extension requires authentication to the Google Cloud API. You can start us
 
 Run the query in BigQuery and display the results. If text is selected, it will run the selected text as a query. If no text is selected, the entire file will be executed as a query.
 
+### BigQuery Runner: Dry Run
+
+|ID|
+|---|
+|bigqueryRunner.dryRun|
+
+Dry-run the query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked.
+
 ### BigQuery Runner: Previous Page
 
 |ID|
@@ -76,13 +84,61 @@ Fetch and display the results of the previous page.
 
 Fetch and display the results of the next page.
 
-### BigQuery Runner: Dry Run
+### BigQuery Runner: Focus on Left Tab
 
 |ID|
 |---|
-|bigqueryRunner.dryRun|
+|bigqueryRunner.focusOnLeftTab|
 
-Dry-run the query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked.
+Focus on the left tab in the viewer.
+
+### BigQuery Runner: Focus on Right Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnRightTab|
+
+Focus on the right tab in the viewer.
+
+### BigQuery Runner: Focus on Rows Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnRowsTab|
+
+Focus on the rows tab in the viewer.
+
+### BigQuery Runner: Focus on Table Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnTableTab|
+
+Focus on the table tab in the viewer.
+
+### BigQuery Runner: Focus on Schema Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnSchemaTab|
+
+Focus on the schema tab in the viewer.
+
+### BigQuery Runner: Focus on Routine Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnRoutineTab|
+
+Focus on the routine tab in the viewer.
+
+### BigQuery Runner: Focus on Job Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnJobTab|
+
+Focus on the job tab in the viewer.
 
 ### BigQuery Runner: Download as JSON Lines
 

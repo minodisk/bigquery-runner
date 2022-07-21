@@ -103,7 +103,9 @@ export type RendererEvent =
   | RoutineEvent
   | RowsEvent
   | SuccessProcessingEvent
-  | FailProcessingEvent;
+  | FailProcessingEvent
+  | MoveTabFocusEvent
+  | FocusOnTabEvent;
 
 export type FocusedEvent = Readonly<{
   event: "focused";
@@ -159,6 +161,23 @@ export type FailProcessingEvent = Readonly<{
   event: "failProcessing";
   payload: Err<string>;
 }>;
+
+export type MoveTabFocusEvent = Readonly<{
+  event: "moveTabFocus";
+  payload: {
+    diff: number;
+  };
+}>;
+
+export type FocusOnTabEvent = Readonly<{
+  event: "focusOnTab";
+  payload: {
+    tab: Tab;
+  };
+}>;
+
+export const tabs = ["Rows", "Table", "Schema", "Routine", "Job"] as const;
+export type Tab = typeof tabs[number];
 
 export type RunInfo = Readonly<{
   metadata: Metadata;

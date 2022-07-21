@@ -4,8 +4,10 @@ import type {
   EndEvent,
   FailProcessingEvent,
   FocusedEvent,
+  FocusOnTabEvent,
   JobReference,
   MetadataEvent,
+  MoveTabFocusEvent,
   NextEvent,
   PrevEvent,
   PreviewEvent,
@@ -76,6 +78,14 @@ export function isFailProcessingEvent(
   e: RendererEvent
 ): e is FailProcessingEvent {
   return e.event === "failProcessing";
+}
+
+export function isMoveTabFocusEvent(e: RendererEvent): e is MoveTabFocusEvent {
+  return e.event === "moveTabFocus";
+}
+
+export function isFocusOnTabEvent(e: RendererEvent): e is FocusOnTabEvent {
+  return e.event === "focusOnTab";
 }
 
 export function isLoadedEvent(e: ViewerEvent): e is StartEvent {

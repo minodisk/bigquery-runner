@@ -322,7 +322,7 @@ const createWriter =
       increment: Number((BigInt(structs.length) * 100n) / page.totalRows),
     });
     while (job.hasNext()) {
-      const getStructsResult = await job.getNextStructs();
+      const getStructsResult = await job.getPagingStructuralRows(1);
       if (!getStructsResult.success) {
         logger.error(getStructsResult);
         await close();
