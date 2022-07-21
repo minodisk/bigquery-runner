@@ -6,4 +6,4 @@ from
 where
     array_length(labels) < 6
 limit
-    100000
+    50000

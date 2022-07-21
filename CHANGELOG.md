@@ -6,11 +6,14 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ### Added
 
-- Added implementation to display progress bar during downloading.
+- Added features to improve download UX.
+  ![bigquery-runner-1658367386809](https://user-images.githubusercontent.com/514164/180110913-e1ba6e85-677c-4d47-8d23-e27ac4e5c430.gif)
+  - Display progress bar during downloading. #19
+  - Display a message to open the file, when the download is complete. #25
 
 ### Changed
 
-- Fixed the problem that the spinner in the viewer does not stop when NoPageToken occurs when paging.
+- Fixed the problem that the spinner in the viewer does not stop when NoPageTokenError occurs when paging.
 
 ## v1.9.0
 
