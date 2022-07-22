@@ -6,7 +6,6 @@ import {
   Tabs,
   useToast,
 } from "@chakra-ui/react";
-import deepmerge from "deepmerge";
 import type { FC } from "react";
 import React, { useCallback, useEffect, useState } from "react";
 import type {
@@ -73,7 +72,8 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
 
   const setState = useCallback(
     (state: State) => {
-      vscode.setState(deepmerge(vscode.getState() ?? {}, state));
+      const old = vscode.getState() ?? {};
+      vscode.setState({ ...old, ...state });
     },
     [vscode]
   );
