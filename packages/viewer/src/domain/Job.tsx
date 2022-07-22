@@ -3,8 +3,8 @@ import bytes from "bytes";
 import formatDuration from "date-fns/formatDuration";
 import formatISO from "date-fns/formatISO";
 import React from "react";
-import type { Metadata } from "types";
-import { getJobName } from "types";
+import type { Metadata } from "shared";
+import { getJobName } from "shared";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 

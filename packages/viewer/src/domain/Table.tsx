@@ -12,8 +12,8 @@ import bytes from "bytes";
 import formatISO from "date-fns/formatISO";
 import type { FC } from "react";
 import React from "react";
-import type { Table as TableData } from "types";
-import { getTableName } from "types";
+import type { Table as TableData } from "shared";
+import { commas, getTableName } from "shared";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 
@@ -51,7 +51,7 @@ export const Table: FC<{
         </Tr>
         <Tr>
           <Th>Number of rows</Th>
-          <Td>{table.numRows}</Td>
+          <Td>{commas(table.numRows)}</Td>
         </Tr>
         <Tr>
           <Th>Created</Th>

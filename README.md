@@ -7,7 +7,7 @@ This file is generated from gen-src/README.md.ejs. -->
 An extension to query BigQuery directly and view the results in VSCode.
 All operations can be executed by command, and all operations can be configured to be performed from the keyboard.
 
-![Usage](https://user-images.githubusercontent.com/514164/178996200-7f3a1400-9126-412b-b8cf-42d926ddbd58.gif)
+![Features](https://user-images.githubusercontent.com/514164/180352233-ed635538-f064-4389-814a-c3ec306aa832.gif)
 
 - While writing a query:
     - Mark errors in the query.

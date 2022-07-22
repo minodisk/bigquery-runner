@@ -1,7 +1,7 @@
 import { format as formatBytes } from "bytes";
 import { createClient } from "core";
-import type { RunnerID } from "types";
-import { unwrap } from "types";
+import type { RunnerID } from "shared";
+import { unwrap } from "shared";
 import type { TextDocument, TextEditor } from "vscode";
 import { window } from "vscode";
 import type { ConfigManager } from "./configManager";

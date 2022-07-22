@@ -6,7 +6,7 @@ import type {
   BigQueryTimestamp,
   Geography,
 } from "@google-cloud/bigquery";
-import type { Err } from "./error";
+import type { Err } from ".";
 
 export type RunnerID = `${"file" | "query"}://${string}`;
 
@@ -337,3 +337,7 @@ export const formats = {
   txt: "Plain Text",
 };
 export type Format = keyof typeof formats;
+
+export type ParamValues = NamedParamValues | PositionalParamValues;
+export type NamedParamValues = { [name: string]: unknown };
+export type PositionalParamValues = Array<unknown>;

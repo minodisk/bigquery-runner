@@ -1,5 +1,5 @@
-import type { Err, Result } from "types";
-import { errorToString, tryCatch } from "types";
+import type { Err, Result } from "shared";
+import { errorToString, tryCatch } from "shared";
 import type { Progress, ProgressOptions } from "vscode";
 import { window } from "vscode";
 

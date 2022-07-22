@@ -8,7 +8,7 @@ import type {
   StartProcessingEvent,
   SuccessProcessingEvent,
   TableEvent,
-} from "types";
+} from "shared";
 import type { WebviewApi } from "vscode-webview";
 import type { State } from "./App";
 import App from "./App";
@@ -134,7 +134,7 @@ describe("App", () => {
         expect(screen.getByText("foo")).toBeInTheDocument();
         expect(screen.getByText("123")).toBeInTheDocument();
         expect(screen.getByText("456")).toBeInTheDocument();
-        expect(screen.getByText("123000")).toBeInTheDocument();
+        expect(screen.getByText("123,000")).toBeInTheDocument();
 
         const jsonl = screen.getByText("JSON Lines");
         expect(jsonl).toBeInTheDocument();

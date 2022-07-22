@@ -116,7 +116,7 @@ export function isPreviewEvent(e: ViewerEvent): e is PreviewEvent {
   return e.event === "preview";
 }
 
-export const comma = (num: bigint | string): string => {
+export const commas = (num: bigint | string): string => {
   const text = num.toString();
   const len = text.length;
   let result = "";

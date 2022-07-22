@@ -8,9 +8,9 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 - Added features to improve download UX.
   ![bigquery-runner-1658367386809](https://user-images.githubusercontent.com/514164/180110913-e1ba6e85-677c-4d47-8d23-e27ac4e5c430.gif)
-  - Display progress bar during downloading. #19
-  - Display a message to open the file, when the download is complete. #25
-- Provide commands to move between tabs #18
+  - Display progress bar during downloading. [#19](https://github.com/minodisk/bigquery-runner/issues/19)
+  - Display a message to open the file, when the download is complete. [#25](https://github.com/minodisk/bigquery-runner/issues/25)
+- Provide commands to move between tabs [#18](https://github.com/minodisk/bigquery-runner/issues/18)
   ![bigquery-runner-1658404913091](https://user-images.githubusercontent.com/514164/180209107-73d78dc9-a498-4e7e-9f99-248e9cdba77e.gif)
 
 ### Changed
@@ -23,8 +23,8 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 ### Changed
 
 - Fixed bugs around query parameters.
-  - Stop asking to commented out query parameters #22
-  - Ask the same named parameter only once #23
+  - Stop asking to commented out query parameters [#22](https://github.com/minodisk/bigquery-runner/issues/22)
+  - Ask the same named parameter only once [#23](https://github.com/minodisk/bigquery-runner/issues/23)
   - Formally support query parameter functions.
 
 ## v1.8.0

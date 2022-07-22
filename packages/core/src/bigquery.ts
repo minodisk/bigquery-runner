@@ -15,7 +15,7 @@ import type {
   StructuralRow,
   UnknownError,
   Err,
-} from "types";
+} from "shared";
 import {
   getTableName,
   errorToString,
@@ -23,7 +23,7 @@ import {
   succeed,
   unwrap,
   fail,
-} from "types";
+} from "shared";
 
 export type AuthenticationError = Err<"Authentication">;
 export type NoJobError = Err<"NoJob">;

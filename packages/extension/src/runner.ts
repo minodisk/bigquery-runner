@@ -12,8 +12,11 @@ import type {
   Result,
   Err,
   Tab,
-} from "types";
-import { unwrap, succeed, tryCatchSync, errorToString } from "types";
+  ParamValues,
+  NamedParamValues,
+  PositionalParamValues,
+} from "shared";
+import { unwrap, succeed, tryCatchSync, errorToString } from "shared";
 import type { TextEditor, ViewColumn } from "vscode";
 import { window } from "vscode";
 import { checksum } from "./checksum";
@@ -487,10 +490,6 @@ export function createRunnerManager({
 
   return runnerManager;
 }
-
-type ParamValues = NamedParamValues | PositionalParamValues;
-type NamedParamValues = { [name: string]: unknown };
-type PositionalParamValues = Array<unknown>;
 
 const getParamValues = async ({
   named,

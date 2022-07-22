@@ -1,5 +1,5 @@
 import {
-  comma,
+  commas,
   getJobName,
   getRoutineName,
   getTableName,
@@ -57,15 +57,16 @@ describe("funcs", () => {
     });
   });
 
-  describe(comma.name, () => {
+  describe(commas.name, () => {
     it("should add comma every three digits", () => {
-      expect(comma("0")).toBe("0");
-      expect(comma("10")).toBe("10");
-      expect(comma("100")).toBe("100");
-      expect(comma("1000")).toBe("1,000");
-      expect(comma("10000")).toBe("10,000");
-      expect(comma("100000")).toBe("100,000");
-      expect(comma("1000000")).toBe("1,000,000");
+      expect(commas("1")).toBe("1");
+      expect(commas("12")).toBe("12");
+      expect(commas("123")).toBe("123");
+      expect(commas("1234")).toBe("1,234");
+      expect(commas("12345")).toBe("12,345");
+      expect(commas("123456")).toBe("123,456");
+      expect(commas("1234567")).toBe("1,234,567");
+      expect(commas("123000")).toBe("123,000");
     });
   });
 });

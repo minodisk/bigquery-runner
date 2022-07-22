@@ -16,7 +16,7 @@ import type {
   TablePayload,
   Format,
   Tab as TabName,
-} from "types";
+} from "shared";
 import {
   isMoveTabFocusEvent,
   isFocusOnTabEvent,
@@ -29,7 +29,7 @@ import {
   isSuccessLoadingEvent,
   isFailProcessingEvent,
   type Err,
-} from "types";
+} from "shared";
 import type { WebviewApi } from "vscode-webview";
 import { Header } from "./domain/Header";
 import { Job } from "./domain/Job";

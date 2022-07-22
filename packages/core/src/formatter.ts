@@ -1,7 +1,7 @@
 import type { Options } from "csv-stringify";
 import { stringify } from "csv-stringify";
 import EasyTable from "easy-table";
-import type { StructuralRow } from "types";
+import type { StructuralRow } from "shared";
 import type { Flat } from "./flat";
 
 export type Formatter = Readonly<{

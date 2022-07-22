@@ -11,15 +11,15 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
 } from "core";
-import type { Field, Format, Result, RunnerID, UnknownError } from "types";
+import type { Field, Format, Result, RunnerID, UnknownError } from "shared";
 import {
-  comma,
+  commas,
   formats,
   succeed,
   errorToString,
   tryCatchSync,
   unwrap,
-} from "types";
+} from "shared";
 import type { TextEditor, Uri } from "vscode";
 import { ProgressLocation, workspace, window } from "vscode";
 import { checksum } from "./checksum";
@@ -316,9 +316,9 @@ const createWriter =
     });
     logger.log(`written ${structs.length} rows`);
     report({
-      message: `${comma(page.endRowNumber)} / ${comma(page.totalRows)} rows (${
-        (page.endRowNumber * 100n) / page.totalRows
-      }%)`,
+      message: `${commas(page.endRowNumber)} / ${commas(
+        page.totalRows
+      )} rows (${(page.endRowNumber * 100n) / page.totalRows}%)`,
       increment: Number((BigInt(structs.length) * 100n) / page.totalRows),
     });
     while (job.hasNext()) {
@@ -339,7 +339,7 @@ const createWriter =
       });
       logger.log(`written ${structs.length} rows`);
       report({
-        message: `${comma(page.endRowNumber)} / ${comma(
+        message: `${commas(page.endRowNumber)} / ${commas(
           page.totalRows
         )} rows (${(page.endRowNumber * 100n) / page.totalRows}%)`,
         increment: Number((BigInt(structs.length) * 100n) / page.totalRows),

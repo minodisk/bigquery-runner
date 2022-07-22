@@ -1,4 +1,4 @@
-import type { RunnerID } from "types";
+import type { RunnerID } from "shared";
 import type { window } from "vscode";
 import { StatusBarAlignment } from "vscode";
 import type { Config, ConfigManager } from "./configManager";

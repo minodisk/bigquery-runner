@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "types",
+  "name": "shared",
   "main": "src/index.ts",
   "scripts": {
     "lint": "eslint \"./src/**/*.ts\"",

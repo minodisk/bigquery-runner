@@ -17,7 +17,7 @@ import type {
   PreviewEvent,
   Accessor,
   Tab,
-} from "types";
+} from "shared";
 import {
   isDownloadEvent,
   isLoadedEvent,
@@ -27,7 +27,7 @@ import {
   tryCatch,
   errorToString,
   unwrap,
-} from "types";
+} from "shared";
 import type { ExtensionContext, WebviewPanel } from "vscode";
 import { Uri, ViewColumn, window } from "vscode";
 import type { ConfigManager } from "./configManager";

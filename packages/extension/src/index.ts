@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { tabs, unwrap } from "types";
+import { tabs, unwrap } from "shared";
 import type { ExtensionContext } from "vscode";
 import { commands, window, workspace } from "vscode";
 import { createConfigManager } from "./configManager";

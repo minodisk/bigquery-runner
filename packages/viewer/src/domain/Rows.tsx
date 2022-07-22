@@ -21,7 +21,8 @@ import {
 } from "@chakra-ui/react";
 import type { FC } from "react";
 import React from "react";
-import type { Format, RowsPayload } from "types";
+import type { Format, RowsPayload } from "shared";
+import { commas } from "shared";
 import { Footer } from "./Footer";
 
 export const Rows: FC<
@@ -73,25 +74,29 @@ export const Rows: FC<
       </Table>
       <Footer>
         <HStack px={2} gap={1}>
-          <IconButton
-            aria-label="prev page"
-            icon={<ChevronLeftIcon />}
-            size="xs"
-            disabled={!page.hasPrev}
-            onClick={onPrevRequest}
-          />
-          <IconButton
-            aria-label="next page"
-            icon={<ChevronRightIcon />}
-            size="xs"
-            disabled={!page.hasNext}
-            onClick={onNextRequest}
-          />
-          <Text>{`${page.startRowNumber}`}</Text>
-          <Text>-</Text>
-          <Text>{`${page.endRowNumber}`}</Text>
-          <Text>of</Text>
-          <Text>{page.totalRows}</Text>
+          <HStack>
+            <IconButton
+              aria-label="prev page"
+              icon={<ChevronLeftIcon />}
+              size="xs"
+              disabled={!page.hasPrev}
+              onClick={onPrevRequest}
+            />
+            <IconButton
+              aria-label="next page"
+              icon={<ChevronRightIcon />}
+              size="xs"
+              disabled={!page.hasNext}
+              onClick={onNextRequest}
+            />
+          </HStack>
+          <HStack>
+            <Text>{`${commas(page.startRowNumber)}`}</Text>
+            <Text>-</Text>
+            <Text>{`${commas(page.endRowNumber)}`}</Text>
+            <Text>of</Text>
+            <Text>{commas(page.totalRows)}</Text>
+          </HStack>
         </HStack>
         <HStack>
           <Menu>
