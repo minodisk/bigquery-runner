@@ -94,13 +94,9 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
     vscode.postMessage({ event: "preview" });
   }, [vscode]);
 
-  const onTabChange = useCallback(
-    (tabIndex: number) => {
-      setTabIndex(tabIndex);
-      setState({ tabIndex });
-    },
-    [setState]
-  );
+  const onTabChange = useCallback((tabIndex: number) => {
+    setTabIndex(tabIndex);
+  }, []);
 
   const onMessage = useCallback(
     (e: MessageEvent) => {
@@ -177,6 +173,10 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
     },
     [setState, tabs]
   );
+
+  useEffect(() => {
+    setState({ tabIndex });
+  }, [setState, tabIndex]);
 
   useEffect(() => {
     const tabs = [

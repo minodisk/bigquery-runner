@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.10.1
+
+### Changed
+
+- Fixed problem of multiple columns with the same name [#26](https://github.com/minodisk/bigquery-runner/issues/26)
+- Fixed problem that tab position would not be retained when moving tab with commands.
+
 ## v1.10.0
 
 ### Added
