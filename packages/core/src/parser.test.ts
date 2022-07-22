@@ -1,28 +1,28 @@
-import { parse } from "./parser";
+import { parameters } from "./parser";
 
 describe("parser", () => {
   describe("parse", () => {
     it("should find no param with empty query", async () => {
-      expect(parse(``)).toStrictEqual({ named: [], positional: [] });
+      expect(parameters(``)).toStrictEqual({ named: [], positional: [] });
     });
 
     it("should ignore sharp commented ?", async () => {
-      expect(parse(`#?`)).toStrictEqual({ named: [], positional: [] });
+      expect(parameters(`#?`)).toStrictEqual({ named: [], positional: [] });
     });
 
     it("should ignore dash commented ?", async () => {
-      expect(parse(`--?`)).toStrictEqual({ named: [], positional: [] });
+      expect(parameters(`--?`)).toStrictEqual({ named: [], positional: [] });
     });
 
     it("should ignore multiline commented ?", async () => {
-      expect(parse(`/*?*/`)).toStrictEqual({
+      expect(parameters(`/*?*/`)).toStrictEqual({
         named: [],
         positional: [],
       });
     });
 
     it("should find positional param with question", async () => {
-      expect(parse(`?`)).toStrictEqual({
+      expect(parameters(`?`)).toStrictEqual({
         named: [],
         positional: [
           {
@@ -46,7 +46,7 @@ describe("parser", () => {
 
     it("should find positional param with line break and question", async () => {
       expect(
-        parse(`
+        parameters(`
 ?`)
       ).toStrictEqual({
         named: [],
@@ -71,7 +71,7 @@ describe("parser", () => {
     });
 
     it("should find positional param with line break (\r\n) and question", async () => {
-      expect(parse(`\r\n?`)).toStrictEqual({
+      expect(parameters(`\r\n?`)).toStrictEqual({
         named: [],
         positional: [
           {
@@ -95,7 +95,7 @@ describe("parser", () => {
 
     it("should find positional params from complex query", () => {
       expect(
-        parse(`SELECT
+        parameters(`SELECT
     word,
     word_count
 FROM 
@@ -145,7 +145,7 @@ ORDER BY
 
     it("should find positional params from complex query with comment", () => {
       expect(
-        parse(`SELECT
+        parameters(`SELECT
     corpus,
     word,
     # @foo,
@@ -200,22 +200,25 @@ ORDER BY
     });
 
     it("should ignore sharp commented @", async () => {
-      expect(parse(`#@foo`)).toStrictEqual({ named: [], positional: [] });
+      expect(parameters(`#@foo`)).toStrictEqual({ named: [], positional: [] });
     });
 
     it("should ignore dash commented @", async () => {
-      expect(parse(`--@foo`)).toStrictEqual({ named: [], positional: [] });
+      expect(parameters(`--@foo`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
     });
 
     it("should ignore multiline commented @", async () => {
-      expect(parse(`/*\n@foo\n*/`)).toStrictEqual({
+      expect(parameters(`/*\n@foo\n*/`)).toStrictEqual({
         named: [],
         positional: [],
       });
     });
 
     it("should find named param with @", async () => {
-      expect(parse(`@`)).toStrictEqual({
+      expect(parameters(`@`)).toStrictEqual({
         named: [
           {
             type: "named",
@@ -241,7 +244,7 @@ ORDER BY
 
     it("should find named param with line break and @", async () => {
       expect(
-        parse(`
+        parameters(`
 @`)
       ).toStrictEqual({
         named: [
@@ -269,7 +272,7 @@ ORDER BY
 
     it("should find named params from complex query", () => {
       expect(
-        parse(`SELECT
+        parameters(`SELECT
     word,
     word_count
 FROM
@@ -323,7 +326,7 @@ ORDER BY
 
     it("should find same named params once", () => {
       expect(
-        parse(`SELECT
+        parameters(`SELECT
     word,
     word_count
 FROM
@@ -388,7 +391,7 @@ ORDER BY
 
     it("should find named params from complex query with comment", () => {
       expect(
-        parse(`SELECT
+        parameters(`SELECT
     corpus,
     word,
     # @foo,

@@ -184,22 +184,6 @@ Run the query in BigQuery and save the results to a file in plain text
 
 The extension can be customized by modifying your `settings.json` file. The available configuration options, and their defaults, are below.
 
-### `bigqueryRunner.extensions`
-
-|Type|Default|
-|---|---|
-|array|[".bqsql",".bqddl",".bqdml"]|
-
-List of file extensions for which the query is to be validated when the file is modified.
-
-### `bigqueryRunner.icon`
-
-|Type|Default|
-|---|---|
-|boolean|true|
-
-Display GUI button to run on the editor title menu bar.
-
 ### `bigqueryRunner.keyFilename`
 
 |Type|Default|
@@ -207,30 +191,6 @@ Display GUI button to run on the editor title menu bar.
 |string &#x7C; null|null|
 
 The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VSCode. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used.
-
-### `bigqueryRunner.languageIds`
-
-|Type|Default|
-|---|---|
-|array|["bigquery","sql-bigquery"]|
-
-List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified.
-
-### `bigqueryRunner.location`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
-
-### `bigqueryRunner.maximumBytesBilled`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used.
 
 ### `bigqueryRunner.projectId`
 
@@ -240,6 +200,14 @@ Limits the bytes billed for this query. Queries with bytes billed above this lim
 
 Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used.
 
+### `bigqueryRunner.location`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
+
 ### `bigqueryRunner.useLegacySql`
 
 |Type|Default|
@@ -247,6 +215,14 @@ Project ID for Google Cloud Platform. If not specified, the value of `project_id
 |boolean|false|
 
 Flag whether to use legacy SQL. If `false`, use standard SQL.
+
+### `bigqueryRunner.maximumBytesBilled`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). Can be set in units, for example `200GB`. If unspecified, the project default is used.
 
 ### `bigqueryRunner.defaultDataset.datasetId`
 
@@ -263,6 +239,30 @@ Specifies the default datasetId to assume for any unqualified table names in the
 |string &#x7C; null|null|
 
 Specifies the default projectId to assume for any unqualified table names in the query. If `defaultDataset.datasetId` is not set, setting this value has no effect.
+
+### `bigqueryRunner.extensions`
+
+|Type|Default|
+|---|---|
+|array|[".bqsql",".bqddl",".bqdml"]|
+
+List of file extensions for which the query is to be validated when the file is modified.
+
+### `bigqueryRunner.languageIds`
+
+|Type|Default|
+|---|---|
+|array|["bigquery","sql-bigquery"]|
+
+List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified.
+
+### `bigqueryRunner.icon`
+
+|Type|Default|
+|---|---|
+|boolean|true|
+
+Display GUI button to run on the editor title menu bar.
 
 ### `bigqueryRunner.downloader.csv.delimiter`
 

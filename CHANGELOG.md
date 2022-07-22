@@ -2,6 +2,18 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.11.0
+
+### Added
+
+- Added implementation to allow specifying a byte string for `maximumBytesBilled`.
+
+### Changed
+
+- Fixed an problem where the following two settings were not reflected.
+  - `useLegacySQL`
+  - `maximumBytesBilled`
+
 ## v1.10.1
 
 ### Changed

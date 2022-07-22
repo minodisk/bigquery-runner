@@ -1,6 +1,6 @@
 import { createWriteStream } from "fs";
 import { basename } from "path";
-import { format } from "bytes";
+import { format, parse } from "bytes";
 import type { Formatter } from "core";
 import {
   createClient,
@@ -211,7 +211,11 @@ const createWriter =
 
     const config = configManager.get();
 
-    const createClientResult = await createClient(config);
+    const createClientResult = await createClient({
+      keyFilename: config.keyFilename,
+      projectId: config.projectId,
+      location: config.location,
+    });
     if (!createClientResult.success) {
       logger.error(createClientResult);
       status.errorBilled();
@@ -223,8 +227,13 @@ const createWriter =
 
     const createRunJobResult = await client.createRunJob({
       query,
-      maxResults: config.downloader.rowsPerPage,
+      useLegacySql: config.useLegacySql,
+      maximumBytesBilled: config.maximumBytesBilled
+        ? parse(config.maximumBytesBilled).toString()
+        : undefined,
       defaultDataset: config.defaultDataset,
+      maxResults: config.downloader.rowsPerPage,
+      // TODO implement params
     });
     if (!createRunJobResult.success) {
       logger.error(createRunJobResult);

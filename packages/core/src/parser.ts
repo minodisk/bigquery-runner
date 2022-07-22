@@ -19,7 +19,7 @@ export type Parameters = {
   positional: ReadonlyArray<PositionalParameter>;
 };
 
-export const parse = (query: string): Parameters => {
+export const parameters = (query: string): Parameters => {
   const named = new Map<string, NamedParameter>();
   const positional: Array<PositionalParameter> = [];
 

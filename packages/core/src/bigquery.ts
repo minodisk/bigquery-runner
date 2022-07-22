@@ -91,11 +91,11 @@ export async function createClient(
   });
 
   const client: Client = {
-    async createRunJob(query) {
+    async createRunJob(options) {
       const createQueryJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
         options: {
-          ...query,
+          ...options,
           dryRun: false,
         },
       });
@@ -140,7 +140,7 @@ export async function createClient(
         const result = await tryCatch(
           async () => {
             return job.getQueryResults({
-              maxResults: query.maxResults,
+              maxResults: options.maxResults,
               pageToken,
             });
           },
@@ -255,11 +255,11 @@ export async function createClient(
       return succeed(runJob);
     },
 
-    async createDryRunJob(query) {
+    async createDryRunJob(options) {
       const createQueryJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
         options: {
-          ...query,
+          ...options,
           dryRun: true,
         },
       });

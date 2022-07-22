@@ -1,7 +1,7 @@
 import { basename } from "path";
-import { format } from "bytes";
+import { format, parse } from "bytes";
 import type { Parameters, RunJob } from "core";
-import { createFlat, createClient, parse } from "core";
+import { createFlat, createClient, parameters } from "core";
 import type {
   Metadata,
   Page,
@@ -236,7 +236,7 @@ export function createRunnerManager({
 
         const config = configManager.get();
 
-        const getParamValuesResult = await getParamValues(parse(query));
+        const getParamValuesResult = await getParamValues(parameters(query));
         if (!getParamValuesResult.success) {
           logger.error(getParamValuesResult);
           await renderer.failProcessing(getParamValuesResult.value);
@@ -245,7 +245,11 @@ export function createRunnerManager({
         }
         const params = getParamValuesResult.value;
 
-        const clientResult = await createClient(config);
+        const clientResult = await createClient({
+          keyFilename: config.keyFilename,
+          projectId: config.projectId,
+          location: config.location,
+        });
         if (!clientResult.success) {
           logger.error(clientResult);
           const { reason } = unwrap(clientResult);
@@ -258,8 +262,12 @@ export function createRunnerManager({
 
         const runJobResult = await client.createRunJob({
           query,
-          maxResults: config.viewer.rowsPerPage,
+          useLegacySql: config.useLegacySql,
+          maximumBytesBilled: config.maximumBytesBilled
+            ? parse(config.maximumBytesBilled).toString()
+            : undefined,
           defaultDataset: config.defaultDataset,
+          maxResults: config.viewer.rowsPerPage,
           params,
         });
         errorMarker?.clear();
