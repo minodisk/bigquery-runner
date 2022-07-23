@@ -3,31 +3,38 @@ This file is generated from gen-src/README.md.ejs. -->
 <% const base = 'https://storage.googleapis.com/bigquery-runner/' -%>
 # BigQuery Runner [![GitHub Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fminodisk%2Fbigquery-runner%2Fbadge%3Fref%3Dmain&style=flat-square)](https://actions-badge.atrox.dev/minodisk/bigquery-runner/goto?ref=main) [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/minodisk.bigquery-runner?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner) [![Codecov](https://img.shields.io/codecov/c/github/minodisk/bigquery-runner?style=flat-square)](https://app.codecov.io/gh/minodisk/bigquery-runner/)
 
+An extension to query BigQuery directly and view the results in VSCode.
+
+![Preview](https://user-images.githubusercontent.com/514164/180352233-ed635538-f064-4389-814a-c3ec306aa832.gif)
+
 ## Features
 
-An extension to query BigQuery directly and view the results in VSCode.
-All operations can be executed by command, and all operations can be configured to be performed from the keyboard.
-
-![Features](https://user-images.githubusercontent.com/514164/180352233-ed635538-f064-4389-814a-c3ec306aa832.gif)
-
-- While writing a query:
-    - Mark errors in the query.
+- Mark errors in queries.
     - If the query error can be corrected automatically, suggest a candidate for a quick fix.
-- When running the query:
-    - Run queries from files.
-    - Run queries from selected text.
-    - Run queries with query parameters.
-    - Display the results.
+- Run queries:
+    - from files.
+    - from selected text.
+    - with query parameters.
+- Display the results in viewers:
+    - Rows
         - Fast rendering of large result tables.
-    - Download the results in a variety of formats.
-        - JSON Lines
-        - JSON
-        - CSV
-        - Markdown
-        - Plain text
-- After running the query:
-    - Paging the results.
-    - Preview the temporary table created by the query.
+        - Pagination.
+        - Can be downloaded as a file.
+    - Table
+        - Temporary tables can be opened in yet another viewer.
+    - Schema
+    - Routine
+    - Job
+- Download the rows in a variety of formats, both from the viewer and from the query file:
+    - JSON Lines
+    - JSON
+    - CSV
+    - Markdown
+    - Plain text
+        - Pretty formatted text like a table.
+- All operations can be executed from [commands](#commands).
+    - Therefore, it can be set to be performed with [keyboard shortcuts](#keyboard-shortcuts).
+    - Of course, it can also be operated from the GUI.
 
 ## Installation
 
@@ -86,7 +93,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 
 ## Additional Settings
 
-### If you want to use keyboard shortcuts for running and paging
+### Keyboard shortcuts
 
 `keybindings.json`:
 
@@ -110,7 +117,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 }
 ```
 
-### If you want to syntax highlight a file with `.bqsql` extension as SQL
+### Syntax highlighting `.bqsql` files as SQL
 
 `settings.json`:
 
@@ -122,6 +129,17 @@ The extension can be customized by modifying your `settings.json` file. The avai
 }
 ```
 
-## License
+## More documents
+
+### Changelog
+
+If you want to know the difference between each release, see [CHANGELOG.md](CHANGELOG.md)
+
+### Contributing
+
+When you create an issue, pull request, or fork see [CONTRIBUTING.md](CONTRIBUTING.md)
+
+### License
 
 Apache 2.0 licensed. See the [LICENSE](LICENSE) file for details.
+This extension is forked from [google/vscode-bigquery](https://github.com/google/vscode-bigquery).
