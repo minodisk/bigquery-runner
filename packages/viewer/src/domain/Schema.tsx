@@ -19,9 +19,9 @@ export const Schema: FC<{
         <Thead>
           <Tr>
             <Tr>
-              <Th key="1">Column</Th>
-              <Th key="1">Type</Th>
-              <Th key="1">Mode</Th>
+              <Th>Column</Th>
+              <Th>Type</Th>
+              <Th>Mode</Th>
             </Tr>
             {heads.map(({ id, type, mode }) => (
               <Tr><Th key={id}>{id}</Th>
