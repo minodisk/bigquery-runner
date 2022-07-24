@@ -1,5 +1,6 @@
 import { createWriteStream } from "fs";
-import { format } from "bytes";
+import { basename } from "path";
+import { format, parse } from "bytes";
 import type { Formatter } from "core";
 import {
   createClient,
@@ -10,15 +11,23 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
 } from "core";
-import type { Field, Format, Result, RunnerID, UnknownError } from "types";
-import { formats, succeed, errorToString, tryCatchSync, unwrap } from "types";
+import type { Field, Format, Result, RunnerID, UnknownError } from "shared";
+import {
+  commas,
+  formats,
+  succeed,
+  errorToString,
+  tryCatchSync,
+  unwrap,
+} from "shared";
 import type { TextEditor, Uri } from "vscode";
-import { workspace, window } from "vscode";
+import { ProgressLocation, workspace, window } from "vscode";
 import { checksum } from "./checksum";
 import type { Config, ConfigManager } from "./configManager";
 import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
 import type { StatusManager } from "./statusManager";
+import { openProgress, showError, showInformation } from "./window";
 
 export type Downloader = ReturnType<typeof createDownloader>;
 
@@ -190,48 +199,76 @@ const createWriter =
     query: string;
     uri: Uri;
   }) => {
-    logger.log(`start downloading to ${uri.path}`);
+    logger.log(`start downloading to ${uri.fsPath}`);
+
+    const { report, close } = openProgress({
+      title: `Downloading to ${basename(uri.fsPath)}`,
+      location: ProgressLocation.Notification,
+    });
 
     const status = statusManager.get(runnerId);
     status.loadBilled();
 
     const config = configManager.get();
 
-    const createClientResult = await createClient(config);
+    const createClientResult = await createClient({
+      keyFilename: config.keyFilename,
+      projectId: config.projectId,
+      location: config.location,
+    });
     if (!createClientResult.success) {
       logger.error(createClientResult);
       status.errorBilled();
+      await close();
+      showError(createClientResult);
       return;
     }
     const client = unwrap(createClientResult);
 
     const createRunJobResult = await client.createRunJob({
       query,
-      maxResults: config.downloader.rowsPerPage,
+      useLegacySql: config.useLegacySql,
+      maximumBytesBilled: config.maximumBytesBilled
+        ? parse(config.maximumBytesBilled).toString()
+        : undefined,
       defaultDataset: config.defaultDataset,
+      maxResults: config.downloader.rowsPerPage,
+      // TODO implement params
     });
     if (!createRunJobResult.success) {
       logger.error(createRunJobResult);
       status.errorBilled();
+      await close();
+      showError(createRunJobResult);
       return;
     }
     const job = unwrap(createRunJobResult);
 
+    const { totalBytesBilled, cacheHit } = job.metadata.statistics.query;
+    const bytes = format(parseInt(totalBytesBilled, 10));
+    status.succeedBilled({ bytes, cacheHit });
+    logger.log(`${bytes} to be billed (cache: ${cacheHit})`);
+    report({ message: `${bytes} to be billed (cache: ${cacheHit})` });
+
     const getTableResult = await job.getTable();
     if (!getTableResult.success) {
       logger.error(getTableResult);
-      status.errorBilled();
+      await close();
+      showError(getTableResult);
       return;
     }
     const table = unwrap(getTableResult);
     logger.log(`table fetched ${table.id}`);
+    report({ message: `table fetched ${table.id}` });
     if (!table.schema.fields) {
       logger.error("no schema");
-      status.errorBilled();
+      await close();
+      showError("no schema");
       return;
     }
 
     logger.log(`create stream for ${uri.fsPath}`);
+    report({ message: `create stream for ${uri.fsPath}` });
     const streamResult = tryCatchSync(
       () => {
         return createWriteStream(uri.fsPath);
@@ -243,12 +280,14 @@ const createWriter =
     );
     if (!streamResult.success) {
       logger.error(streamResult);
-      status.errorBilled();
+      await close();
+      showError(streamResult);
       return;
     }
     const stream = unwrap(streamResult);
     await new Promise((resolve) => stream.on("open", resolve));
     logger.log(`stream is opened`);
+    report({ message: `stream is opened` });
 
     const createFormatterResult = createFormatter({
       fields: table.schema.fields,
@@ -257,19 +296,23 @@ const createWriter =
     });
     if (!createFormatterResult.success) {
       logger.error(createFormatterResult);
-      status.errorBilled();
+      await close();
+      showError(createFormatterResult);
       return;
     }
     const formatter = createFormatterResult.value;
 
+    logger.log(`writing head`);
+    report({ message: `writing head` });
     formatter.head();
 
     logger.log(`writing body`);
-
+    report({ message: `writing body` });
     const getStructuralRowsResult = await job.getStructuralRows();
     if (!getStructuralRowsResult.success) {
       logger.error(getStructuralRowsResult);
-      status.errorBilled();
+      await close();
+      showError(getStructuralRowsResult);
       return;
     }
     const { structs, page } = unwrap(getStructuralRowsResult);
@@ -281,12 +324,18 @@ const createWriter =
       rowNumberStart: page.startRowNumber,
     });
     logger.log(`written ${structs.length} rows`);
-
+    report({
+      message: `${commas(page.endRowNumber)} / ${commas(
+        page.totalRows
+      )} rows (${(page.endRowNumber * 100n) / page.totalRows}%)`,
+      increment: Number((BigInt(structs.length) * 100n) / page.totalRows),
+    });
     while (job.hasNext()) {
-      const getStructsResult = await job.getNextStructs();
+      const getStructsResult = await job.getPagingStructuralRows(1);
       if (!getStructsResult.success) {
         logger.error(getStructsResult);
-        status.errorBilled();
+        await close();
+        showError(getStructsResult);
         return;
       }
       const { structs, page } = unwrap(getStructsResult);
@@ -298,16 +347,26 @@ const createWriter =
         rowNumberStart: page.startRowNumber,
       });
       logger.log(`written ${structs.length} rows`);
+      report({
+        message: `${commas(page.endRowNumber)} / ${commas(
+          page.totalRows
+        )} rows (${(page.endRowNumber * 100n) / page.totalRows}%)`,
+        increment: Number((BigInt(structs.length) * 100n) / page.totalRows),
+      });
     }
 
     logger.log(`writing foot`);
-
+    report({ message: `writing foot` });
     await formatter.foot();
 
-    const { totalBytesBilled, cacheHit } = job.metadata.statistics.query;
-    const bytes = format(parseInt(totalBytesBilled, 10));
-    status.succeedBilled({ bytes, cacheHit });
-
-    logger.log(`${bytes} to be billed (cache: ${cacheHit})`);
     logger.log(`complete`);
+    report({ message: `complete` });
+    await close();
+
+    showInformation(`Download completed to ${basename(uri.fsPath)}`, {
+      Open: async () => {
+        const doc = await workspace.openTextDocument(uri);
+        await window.showTextDocument(doc);
+      },
+    });
   };

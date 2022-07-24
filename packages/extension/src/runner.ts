@@ -1,7 +1,7 @@
 import { basename } from "path";
-import { format } from "bytes";
+import { format, parse } from "bytes";
 import type { Parameters, RunJob } from "core";
-import { createFlat, createClient, parse } from "core";
+import { createFlat, createClient, parameters } from "core";
 import type {
   Metadata,
   Page,
@@ -11,8 +11,12 @@ import type {
   RunnerID,
   Result,
   Err,
-} from "types";
-import { unwrap, succeed, tryCatchSync, errorToString } from "types";
+  Tab,
+  ParamValues,
+  NamedParamValues,
+  PositionalParamValues,
+} from "shared";
+import { unwrap, succeed, tryCatchSync, errorToString } from "shared";
 import type { TextEditor, ViewColumn } from "vscode";
 import { window } from "vscode";
 import { checksum } from "./checksum";
@@ -22,14 +26,16 @@ import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
 import type { Renderer, RendererManager } from "./renderer";
 import type { Status, StatusManager } from "./statusManager";
+import { showError } from "./window";
 
 export type RunnerManager = ReturnType<typeof createRunnerManager>;
 export type RunJobResponse = SelectResponse | RoutineResponse;
 export type Runner = Readonly<{
   query: string;
   run(): Promise<void>;
-  prev(): Promise<void>;
-  next(): Promise<void>;
+  movePage(diff: number): Promise<void>;
+  moveFocusTab(diff: number): Promise<void>;
+  focusOnTab(tab: Tab): Promise<void>;
   preview(): Promise<void>;
   dispose(): void;
 }>;
@@ -230,7 +236,7 @@ export function createRunnerManager({
 
         const config = configManager.get();
 
-        const getParamValuesResult = await getParamValues(parse(query));
+        const getParamValuesResult = await getParamValues(parameters(query));
         if (!getParamValuesResult.success) {
           logger.error(getParamValuesResult);
           await renderer.failProcessing(getParamValuesResult.value);
@@ -239,11 +245,15 @@ export function createRunnerManager({
         }
         const params = getParamValuesResult.value;
 
-        const clientResult = await createClient(config);
+        const clientResult = await createClient({
+          keyFilename: config.keyFilename,
+          projectId: config.projectId,
+          location: config.location,
+        });
         if (!clientResult.success) {
           logger.error(clientResult);
           const { reason } = unwrap(clientResult);
-          showErrorMessage(reason);
+          showError(reason);
           await renderer.failProcessing(clientResult.value);
           status.errorBilled();
           return;
@@ -252,8 +262,12 @@ export function createRunnerManager({
 
         const runJobResult = await client.createRunJob({
           query,
-          maxResults: config.viewer.rowsPerPage,
+          useLegacySql: config.useLegacySql,
+          maximumBytesBilled: config.maximumBytesBilled
+            ? parse(config.maximumBytesBilled).toString()
+            : undefined,
           defaultDataset: config.defaultDataset,
+          maxResults: config.viewer.rowsPerPage,
           params,
         });
         errorMarker?.clear();
@@ -277,7 +291,7 @@ export function createRunnerManager({
               return;
             }
           }
-          showErrorMessage(err.reason);
+          showError(err.reason);
           return;
         }
         errorMarker?.clear();
@@ -389,7 +403,7 @@ export function createRunnerManager({
         await renderer.successProcessing();
       },
 
-      async prev() {
+      async movePage(diff) {
         if (!pageable) {
           return;
         }
@@ -404,11 +418,11 @@ export function createRunnerManager({
           return;
         }
 
-        const getStructsResult = await job.getPrevStructs();
+        const getStructsResult = await job.getPagingStructuralRows(diff);
         if (!getStructsResult.success) {
           const { type, reason } = unwrap(getStructsResult);
           if (type === "NoPageToken") {
-            showErrorMessage(reason);
+            showError(reason);
           }
           await renderer.failProcessing(getStructsResult.value);
           return;
@@ -432,48 +446,12 @@ export function createRunnerManager({
         await renderer.successProcessing();
       },
 
-      async next() {
-        if (!pageable) {
-          return;
-        }
+      async moveFocusTab(diff) {
+        await renderer.moveTabFocus(diff);
+      },
 
-        const { job, table } = pageable;
-
-        renderer.reveal();
-
-        const rendererOpenResult = await renderer.startProcessing();
-        if (!rendererOpenResult.success) {
-          logger.error(rendererOpenResult);
-          return;
-        }
-
-        const getStructsResult = await job.getNextStructs();
-        if (!getStructsResult.success) {
-          logger.error(getStructsResult);
-          const { type, reason } = unwrap(getStructsResult);
-          if (type === "NoPageToken") {
-            showErrorMessage(reason);
-          }
-          await renderer.failProcessing(getStructsResult.value);
-          return;
-        }
-        const { structs, page } = unwrap(getStructsResult);
-        logger.log(
-          `fetched: ${page.startRowNumber} - ${page.endRowNumber} (${page.totalRows} rows)`
-        );
-
-        const renderRowsResult = await renderer.renderRows({
-          structs,
-          table,
-          page,
-        });
-        if (!renderRowsResult.success) {
-          logger.error(renderRowsResult);
-          await renderer.failProcessing(renderRowsResult.value);
-          return;
-        }
-
-        await renderer.successProcessing();
+      async focusOnTab(tab) {
+        await renderer.focusOnTab(tab);
       },
 
       async preview() {
@@ -520,10 +498,6 @@ export function createRunnerManager({
 
   return runnerManager;
 }
-
-type ParamValues = NamedParamValues | PositionalParamValues;
-type NamedParamValues = { [name: string]: unknown };
-type PositionalParamValues = Array<unknown>;
 
 const getParamValues = async ({
   named,
@@ -580,9 +554,4 @@ const parseJSON = (value: string): Result<Err<"InvalidJSON">, unknown> => {
       reason: errorToString(err),
     })
   );
-};
-
-const showErrorMessage = (message: string): void => {
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  window.showErrorMessage(message);
 };

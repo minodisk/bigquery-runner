@@ -1,4 +1,4 @@
-import { unwrap } from "types";
+import { unwrap } from "shared";
 import { createFlat } from "./flat";
 
 describe("flat", () => {

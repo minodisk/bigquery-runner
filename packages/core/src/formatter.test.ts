@@ -1,6 +1,6 @@
 import { PassThrough } from "stream";
-import type { Field, StructuralRow } from "types";
-import { unwrap } from "types";
+import type { Field, StructuralRow } from "shared";
+import { unwrap } from "shared";
 import {
   createCSVFormatter,
   createFlat,

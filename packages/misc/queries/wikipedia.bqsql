@@ -6,4 +6,4 @@ from
 where
     array_length(labels) < 5
 limit
-    5000
+    10000

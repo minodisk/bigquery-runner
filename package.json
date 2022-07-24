@@ -3,7 +3,7 @@
   "name": "bigquery-runner",
   "displayName": "BigQuery Runner",
   "description": "An extension to query BigQuery directly and view the results in VSCode.",
-  "version": "1.9.0",
+  "version": "1.11.0",
   "license": "Apache-2",
   "publisher": "minodisk",
   "repository": {
@@ -19,8 +19,8 @@
     "packages/core",
     "packages/extension",
     "packages/misc",
-    "packages/viewer",
-    "packages/types"
+    "packages/shared",
+    "packages/viewer"
   ],
   "categories": [
     "Other"
@@ -52,6 +52,11 @@
         "description": "Run the query in BigQuery and display the results. If text is selected, it will run the selected text as a query. If no text is selected, the entire file will be executed as a query."
       },
       {
+        "command": "bigqueryRunner.dryRun",
+        "title": "BigQuery Runner: Dry Run",
+        "description": "Dry-run the query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked."
+      },
+      {
         "command": "bigqueryRunner.prevPage",
         "title": "BigQuery Runner: Previous Page",
         "description": "Fetch and display the results of the previous page."
@@ -62,9 +67,39 @@
         "description": "Fetch and display the results of the next page."
       },
       {
-        "command": "bigqueryRunner.dryRun",
-        "title": "BigQuery Runner: Dry Run",
-        "description": "Dry-run the query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked."
+        "command": "bigqueryRunner.focusOnLeftTab",
+        "title": "BigQuery Runner: Focus on Left Tab",
+        "description": "Focus on the left tab in the viewer."
+      },
+      {
+        "command": "bigqueryRunner.focusOnRightTab",
+        "title": "BigQuery Runner: Focus on Right Tab",
+        "description": "Focus on the right tab in the viewer."
+      },
+      {
+        "command": "bigqueryRunner.focusOnRowsTab",
+        "title": "BigQuery Runner: Focus on Rows Tab",
+        "description": "Focus on the rows tab in the viewer."
+      },
+      {
+        "command": "bigqueryRunner.focusOnTableTab",
+        "title": "BigQuery Runner: Focus on Table Tab",
+        "description": "Focus on the table tab in the viewer."
+      },
+      {
+        "command": "bigqueryRunner.focusOnSchemaTab",
+        "title": "BigQuery Runner: Focus on Schema Tab",
+        "description": "Focus on the schema tab in the viewer."
+      },
+      {
+        "command": "bigqueryRunner.focusOnRoutineTab",
+        "title": "BigQuery Runner: Focus on Routine Tab",
+        "description": "Focus on the routine tab in the viewer."
+      },
+      {
+        "command": "bigqueryRunner.focusOnJobTab",
+        "title": "BigQuery Runner: Focus on Job Tab",
+        "description": "Focus on the job tab in the viewer."
       },
       {
         "command": "bigqueryRunner.downloadAsJSONL",
@@ -105,20 +140,6 @@
       "type": "object",
       "title": "BigQuery Runner",
       "properties": {
-        "bigqueryRunner.extensions": {
-          "type": "array",
-          "default": [
-            ".bqsql",
-            ".bqddl",
-            ".bqdml"
-          ],
-          "description": "List of file extensions for which the query is to be validated when the file is modified."
-        },
-        "bigqueryRunner.icon": {
-          "type": "boolean",
-          "default": true,
-          "description": "Display GUI button to run on the editor title menu bar."
-        },
         "bigqueryRunner.keyFilename": {
           "type": [
             "string",
@@ -126,30 +147,6 @@
           ],
           "default": null,
           "description": "The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VSCode. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used."
-        },
-        "bigqueryRunner.languageIds": {
-          "type": "array",
-          "default": [
-            "bigquery",
-            "sql-bigquery"
-          ],
-          "description": "List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
-        },
-        "bigqueryRunner.location": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location."
-        },
-        "bigqueryRunner.maximumBytesBilled": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": null,
-          "description": "Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used."
         },
         "bigqueryRunner.projectId": {
           "type": [
@@ -159,10 +156,26 @@
           "default": null,
           "description": "Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used."
         },
+        "bigqueryRunner.location": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location."
+        },
         "bigqueryRunner.useLegacySql": {
           "type": "boolean",
           "default": false,
           "description": "Flag whether to use legacy SQL. If `false`, use standard SQL."
+        },
+        "bigqueryRunner.maximumBytesBilled": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). Can be set in units, for example `200GB`. If unspecified, the project default is used."
         },
         "bigqueryRunner.defaultDataset.datasetId": {
           "type": [
@@ -180,6 +193,28 @@
           "default": null,
           "description": "Specifies the default projectId to assume for any unqualified table names in the query. If `defaultDataset.datasetId` is not set, setting this value has no effect."
         },
+        "bigqueryRunner.extensions": {
+          "type": "array",
+          "default": [
+            ".bqsql",
+            ".bqddl",
+            ".bqdml"
+          ],
+          "description": "List of file extensions for which the query is to be validated when the file is modified."
+        },
+        "bigqueryRunner.languageIds": {
+          "type": "array",
+          "default": [
+            "bigquery",
+            "sql-bigquery"
+          ],
+          "description": "List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified."
+        },
+        "bigqueryRunner.icon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display GUI button to run on the editor title menu bar."
+        },
         "bigqueryRunner.downloader.csv.delimiter": {
           "type": "string",
           "default": ",",
@@ -195,7 +230,7 @@
             "number",
             "null"
           ],
-          "default": null,
+          "default": 10000,
           "description": "Maximum number of rows to retrieve per page for downloading. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched."
         },
         "bigqueryRunner.viewer.column": {
@@ -256,37 +291,43 @@
     "lint": "run-p lint:*",
     "lint:core": "npm run -w core lint",
     "lint:extension": "npm run -w extension lint",
-    "lint:types": "npm run -w types lint",
+    "lint:shared": "npm run -w shared lint",
     "lint:viewer": "npm run -w viewer lint",
     "fix": "run-p fix:*",
     "fix:core": "npm run -w core fix",
     "fix:extension": "npm run -w extension fix",
-    "fix:types": "npm run -w types fix",
+    "fix:shared": "npm run -w shared fix",
     "fix:viewer": "npm run -w viewer fix",
     "check": "run-p check:*",
     "check:core": "npm run -w core check",
     "check:extension": "npm run -w extension check",
-    "check:types": "npm run -w types check",
+    "check:shared": "npm run -w shared check",
     "check:viewer": "npm run -w viewer check",
     "test": "npm run test-coverage",
     "test-coverage": "run-p test-coverage:*",
     "test-coverage:core": "npm run -w core test-coverage",
-    "test-coverage:types": "npm run -w viewer test-coverage",
+    "test-coverage:shared": "npm run -w viewer test-coverage",
     "test-coverage:viewer": "npm run -w viewer test-coverage",
     "test-watch": "run-p test-watch:*",
     "test-watch:core": "npm run -w core test-watch",
-    "test-watch:types": "npm run -w viewer test-watchAll",
+    "test-watch:shared": "npm run -w viewer test-watchAll",
     "test-watch:viewer": "npm run -w viewer test-watchAll",
-    "vscode:prepublish": "rimraf ./out && npm run build",
     "build": "run-p build:*",
     "build:codegen": "npm run -w codegen build",
-    "build:extension": "npm run -w extension build:production",
-    "build:viewer": "npm run -w viewer build:production",
+    "build:extension": "npm run -w extension build-production",
+    "build:viewer": "npm run -w viewer build-production",
     "build:misc": "npm run -w misc build",
-    "debug": "run-s package:debug install:debug",
-    "package": "mkdirp dist && vsce package -o ./dist/",
-    "package:debug": "mkdirp dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
-    "install:debug": "code --install-extension ./dist/bigquery-runner-debug.vsix"
+    "build-debug": "run-p build-debug:*",
+    "build-debug:codegen": "npm run -w codegen build",
+    "build-debug:extension": "npm run -w extension build-debug",
+    "build-debug:viewer": "npm run -w viewer build-debug",
+    "build-debug:misc": "npm run -w misc build",
+    "debug": "run-s debug:build debug:package debug:install",
+    "debug:build": "run-s clean:out build-debug",
+    "debug:package": "npm run clean:dist && vsce package -o ./dist/bigquery-runner-debug.vsix",
+    "debug:install": "code --install-extension ./dist/bigquery-runner-debug.vsix",
+    "clean:out": "rimraf out && mkdirp out",
+    "clean:dist": "rimraf dist && mkdirp dist"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.0.4",
@@ -327,7 +368,7 @@
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-react": "^7.30.1",
-    "eslint-plugin-sonarjs": "^0.13.0",
+    "eslint-plugin-sonarjs": "^0.14.0",
     "eslint-plugin-strict-dependencies": "^1.0.1",
     "eslint-plugin-unused-imports": "^2.0.0",
     "glob": "^8.0.3",

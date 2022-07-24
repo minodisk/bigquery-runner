@@ -6,7 +6,6 @@ import {
   Tabs,
   useToast,
 } from "@chakra-ui/react";
-import deepmerge from "deepmerge";
 import type { FC } from "react";
 import React, { useCallback, useEffect, useState } from "react";
 import type {
@@ -15,8 +14,11 @@ import type {
   MetadataPayload,
   TablePayload,
   Format,
-} from "types";
+  Tab as TabName,
+} from "shared";
 import {
+  isMoveTabFocusEvent,
+  isFocusOnTabEvent,
   isData,
   isRowsEvent,
   isRoutineEvent,
@@ -26,7 +28,7 @@ import {
   isSuccessLoadingEvent,
   isFailProcessingEvent,
   type Err,
-} from "types";
+} from "shared";
 import type { WebviewApi } from "vscode-webview";
 import { Header } from "./domain/Header";
 import { Job } from "./domain/Job";
@@ -38,6 +40,7 @@ import { Table } from "./domain/Table";
 export type State = Partial<
   Readonly<{
     tabIndex: number;
+    tabs: ReadonlyArray<TabName>;
     metadataPayload: MetadataPayload;
     tablePayload: TablePayload;
     rowsPayload: RowsPayload;
@@ -63,10 +66,14 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
     vscode.getState()?.rowsPayload
   );
   const [tabIndex, setTabIndex] = useState(vscode.getState()?.tabIndex ?? 0);
+  const [tabs, setTabs] = useState<ReadonlyArray<TabName>>(
+    vscode.getState()?.tabs ?? []
+  );
 
   const setState = useCallback(
     (state: State) => {
-      vscode.setState(deepmerge(vscode.getState() ?? {}, state));
+      const old = vscode.getState() ?? {};
+      vscode.setState({ ...old, ...state });
     },
     [vscode]
   );
@@ -87,20 +94,12 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
     vscode.postMessage({ event: "preview" });
   }, [vscode]);
 
-  const onTabChange = useCallback(
-    (tabIndex: number) => {
-      setTabIndex(tabIndex);
-      setState({ tabIndex });
-    },
-    [setState]
-  );
+  const onTabChange = useCallback((tabIndex: number) => {
+    setTabIndex(tabIndex);
+  }, []);
 
-  useEffect(() => {
-    vscode.postMessage({ event: "loaded" });
-  }, [vscode]);
-
-  useEffect(() => {
-    window.addEventListener("message", (e: MessageEvent) => {
+  const onMessage = useCallback(
+    (e: MessageEvent) => {
       // When postMessage from a test, this value becomes a JSON string, so parse it.
       const data =
         typeof e.data === "string" && e.data ? JSON.parse(e.data) : e.data;
@@ -147,9 +146,59 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
         setError(payload.payload);
         return;
       }
+      if (isMoveTabFocusEvent(payload)) {
+        setTabIndex((index) => {
+          const i = index + payload.payload.diff;
+          const min = 0;
+          if (i < min) {
+            return min;
+          }
+          const max = tabs.length - 1;
+          if (i > max) {
+            return max;
+          }
+          return i;
+        });
+        return;
+      }
+      if (isFocusOnTabEvent(payload)) {
+        const index = tabs.indexOf(payload.payload.tab);
+        if (index < 0 || tabs.length - 1 < index) {
+          return;
+        }
+        setTabIndex(index);
+        return;
+      }
       throw new Error(`undefined data payload:\n'${JSON.stringify(payload)}'`);
-    });
-  }, [setState]);
+    },
+    [setState, tabs]
+  );
+
+  useEffect(() => {
+    setState({ tabIndex });
+  }, [setState, tabIndex]);
+
+  useEffect(() => {
+    const tabs = [
+      ...(rowsPayload ? ["Rows" as const] : []),
+      ...(tablePayload ? ["Table" as const, "Schema" as const] : []),
+      ...(routinePayload ? ["Routine" as const] : []),
+      ...(metadataPayload ? ["Job" as const] : []),
+    ];
+    setTabs(tabs);
+    setState({ tabs });
+  }, [metadataPayload, routinePayload, rowsPayload, setState, tablePayload]);
+
+  useEffect(() => {
+    vscode.postMessage({ event: "loaded" });
+  }, [vscode]);
+
+  useEffect(() => {
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+    };
+  }, [onMessage]);
 
   useEffect(() => {
     if (error) {
@@ -169,7 +218,7 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
     <Tabs index={tabIndex} onChange={onTabChange}>
       <Header processing={processing}>
         <TabList>
-          {rowsPayload ? <Tab>Results</Tab> : null}
+          {rowsPayload ? <Tab>Rows</Tab> : null}
           {tablePayload ? <Tab>Table</Tab> : null}
           {tablePayload ? <Tab>Schema</Tab> : null}
           {routinePayload ? <Tab>Routine</Tab> : null}

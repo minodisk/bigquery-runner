@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 import type { FC } from "react";
 import React from "react";
-import type { Accessor } from "types";
+import type { Accessor } from "shared";
 
 export const Schema: FC<{
   heads: ReadonlyArray<Accessor>;

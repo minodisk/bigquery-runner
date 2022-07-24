@@ -1,4 +1,4 @@
-import type { RunnerID } from "types";
+import type { RunnerID } from "shared";
 import type { TextEditor } from "vscode";
 import { Diagnostic, languages, Position, Range, workspace } from "vscode";
 

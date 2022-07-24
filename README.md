@@ -2,31 +2,38 @@
 This file is generated from gen-src/README.md.ejs. -->
 # BigQuery Runner [![GitHub Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fminodisk%2Fbigquery-runner%2Fbadge%3Fref%3Dmain&style=flat-square)](https://actions-badge.atrox.dev/minodisk/bigquery-runner/goto?ref=main) [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/minodisk.bigquery-runner?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner) [![Codecov](https://img.shields.io/codecov/c/github/minodisk/bigquery-runner?style=flat-square)](https://app.codecov.io/gh/minodisk/bigquery-runner/)
 
+An extension to query BigQuery directly and view the results in VSCode.
+
+![Preview](https://user-images.githubusercontent.com/514164/180352233-ed635538-f064-4389-814a-c3ec306aa832.gif)
+
 ## Features
 
-An extension to query BigQuery directly and view the results in VSCode.
-All operations can be executed by command, and all operations can be configured to be performed from the keyboard.
-
-![Usage](https://user-images.githubusercontent.com/514164/178996200-7f3a1400-9126-412b-b8cf-42d926ddbd58.gif)
-
-- While writing a query:
-    - Mark errors in the query.
+- Mark errors in queries.
     - If the query error can be corrected automatically, suggest a candidate for a quick fix.
-- When running the query:
-    - Run queries from files.
-    - Run queries from selected text.
-    - Run queries with query parameters.
-    - Display the results.
+- Run queries:
+    - from files.
+    - from selected text.
+    - with query parameters.
+- Display the results in viewers:
+    - Rows
         - Fast rendering of large result tables.
-    - Download the results in a variety of formats.
-        - JSON Lines
-        - JSON
-        - CSV
-        - Markdown
-        - Plain text
-- After running the query:
-    - Paging the results.
-    - Preview the temporary table created by the query.
+        - Pagination.
+        - Can be downloaded as a file.
+    - Table
+        - Temporary tables can be opened in yet another viewer.
+    - Schema
+    - Routine
+    - Job
+- Download the rows in a variety of formats, both from the viewer and from the query file:
+    - JSON Lines
+    - JSON
+    - CSV
+    - Markdown
+    - Plain text
+        - Pretty formatted text like a table.
+- All operations can be executed from [commands](#commands).
+    - Therefore, it can be set to be performed with [keyboard shortcuts](#keyboard-shortcuts).
+    - Of course, it can also be operated from the GUI.
 
 ## Installation
 
@@ -60,6 +67,14 @@ This extension requires authentication to the Google Cloud API. You can start us
 
 Run the query in BigQuery and display the results. If text is selected, it will run the selected text as a query. If no text is selected, the entire file will be executed as a query.
 
+### BigQuery Runner: Dry Run
+
+|ID|
+|---|
+|bigqueryRunner.dryRun|
+
+Dry-run the query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked.
+
 ### BigQuery Runner: Previous Page
 
 |ID|
@@ -76,13 +91,61 @@ Fetch and display the results of the previous page.
 
 Fetch and display the results of the next page.
 
-### BigQuery Runner: Dry Run
+### BigQuery Runner: Focus on Left Tab
 
 |ID|
 |---|
-|bigqueryRunner.dryRun|
+|bigqueryRunner.focusOnLeftTab|
 
-Dry-run the query in BigQuery and display the result. If there is an error in the query, the wrong token of the query will be marked.
+Focus on the left tab in the viewer.
+
+### BigQuery Runner: Focus on Right Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnRightTab|
+
+Focus on the right tab in the viewer.
+
+### BigQuery Runner: Focus on Rows Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnRowsTab|
+
+Focus on the rows tab in the viewer.
+
+### BigQuery Runner: Focus on Table Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnTableTab|
+
+Focus on the table tab in the viewer.
+
+### BigQuery Runner: Focus on Schema Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnSchemaTab|
+
+Focus on the schema tab in the viewer.
+
+### BigQuery Runner: Focus on Routine Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnRoutineTab|
+
+Focus on the routine tab in the viewer.
+
+### BigQuery Runner: Focus on Job Tab
+
+|ID|
+|---|
+|bigqueryRunner.focusOnJobTab|
+
+Focus on the job tab in the viewer.
 
 ### BigQuery Runner: Download as JSON Lines
 
@@ -128,22 +191,6 @@ Run the query in BigQuery and save the results to a file in plain text
 
 The extension can be customized by modifying your `settings.json` file. The available configuration options, and their defaults, are below.
 
-### `bigqueryRunner.extensions`
-
-|Type|Default|
-|---|---|
-|array|[".bqsql",".bqddl",".bqdml"]|
-
-List of file extensions for which the query is to be validated when the file is modified.
-
-### `bigqueryRunner.icon`
-
-|Type|Default|
-|---|---|
-|boolean|true|
-
-Display GUI button to run on the editor title menu bar.
-
 ### `bigqueryRunner.keyFilename`
 
 |Type|Default|
@@ -151,30 +198,6 @@ Display GUI button to run on the editor title menu bar.
 |string &#x7C; null|null|
 
 The path to the JSON file for the service account. If a relative path is specified, it is taken as a path relative to the root folder opened in VSCode. If not specified, the path specified by `GOOGLE_APPLICATION_CREDENTIALS` will be used.
-
-### `bigqueryRunner.languageIds`
-
-|Type|Default|
-|---|---|
-|array|["bigquery","sql-bigquery"]|
-
-List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified.
-
-### `bigqueryRunner.location`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
-
-### `bigqueryRunner.maximumBytesBilled`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). If unspecified, the project default is used.
 
 ### `bigqueryRunner.projectId`
 
@@ -184,6 +207,14 @@ Limits the bytes billed for this query. Queries with bytes billed above this lim
 
 Project ID for Google Cloud Platform. If not specified, the value of `project_id` in the JSON file of the service account will be used.
 
+### `bigqueryRunner.location`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+The geographic location of all datasets and jobs referenced and created through this extension. See details at https://cloud.google.com/bigquery/docs/locations#specifying_your_location.
+
 ### `bigqueryRunner.useLegacySql`
 
 |Type|Default|
@@ -191,6 +222,14 @@ Project ID for Google Cloud Platform. If not specified, the value of `project_id
 |boolean|false|
 
 Flag whether to use legacy SQL. If `false`, use standard SQL.
+
+### `bigqueryRunner.maximumBytesBilled`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). Can be set in units, for example `200GB`. If unspecified, the project default is used.
 
 ### `bigqueryRunner.defaultDataset.datasetId`
 
@@ -207,6 +246,30 @@ Specifies the default datasetId to assume for any unqualified table names in the
 |string &#x7C; null|null|
 
 Specifies the default projectId to assume for any unqualified table names in the query. If `defaultDataset.datasetId` is not set, setting this value has no effect.
+
+### `bigqueryRunner.extensions`
+
+|Type|Default|
+|---|---|
+|array|[".bqsql",".bqddl",".bqdml"]|
+
+List of file extensions for which the query is to be validated when the file is modified.
+
+### `bigqueryRunner.languageIds`
+
+|Type|Default|
+|---|---|
+|array|["bigquery","sql-bigquery"]|
+
+List of [language identifiers](https://code.visualstudio.com/docs/languages/identifiers) of the files whose queries are to be validated when the files are modified.
+
+### `bigqueryRunner.icon`
+
+|Type|Default|
+|---|---|
+|boolean|true|
+
+Display GUI button to run on the editor title menu bar.
 
 ### `bigqueryRunner.downloader.csv.delimiter`
 
@@ -228,7 +291,7 @@ The flag whether to add column names to CSV.
 
 |Type|Default|
 |---|---|
-|number &#x7C; null|null|
+|number &#x7C; null|10000|
 
 Maximum number of rows to retrieve per page for downloading. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched.
 
@@ -283,7 +346,7 @@ Debounce interval in milliseconds to validate the query when the file is modifie
 
 ## Additional Settings
 
-### If you want to use keyboard shortcuts for running and paging
+### Keyboard shortcuts
 
 `keybindings.json`:
 
@@ -307,7 +370,7 @@ Debounce interval in milliseconds to validate the query when the file is modifie
 }
 ```
 
-### If you want to syntax highlight a file with `.bqsql` extension as SQL
+### Syntax highlighting `.bqsql` files as SQL
 
 `settings.json`:
 
@@ -319,6 +382,17 @@ Debounce interval in milliseconds to validate the query when the file is modifie
 }
 ```
 
-## License
+## More documents
+
+### Changelog
+
+If you want to know the difference between each release, see [CHANGELOG.md](CHANGELOG.md)
+
+### Contributing
+
+When you create an issue, pull request, or fork see [CONTRIBUTING.md](CONTRIBUTING.md)
+
+### License
 
 Apache 2.0 licensed. See the [LICENSE](LICENSE) file for details.
+This extension is forked from [google/vscode-bigquery](https://github.com/google/vscode-bigquery).

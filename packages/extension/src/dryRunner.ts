@@ -1,7 +1,7 @@
-import { format as formatBytes } from "bytes";
+import { format as formatBytes, parse } from "bytes";
 import { createClient } from "core";
-import type { RunnerID } from "types";
-import { unwrap } from "types";
+import type { RunnerID } from "shared";
+import { unwrap } from "shared";
 import type { TextDocument, TextEditor } from "vscode";
 import { window } from "vscode";
 import type { ConfigManager } from "./configManager";
@@ -82,7 +82,11 @@ export function createDryRunner({
 
       const config = configManager.get();
 
-      const clientResult = await createClient(config);
+      const clientResult = await createClient({
+        keyFilename: config.keyFilename,
+        projectId: config.projectId,
+        location: config.location,
+      });
       if (!clientResult.success) {
         logger.error(clientResult);
 
@@ -95,7 +99,12 @@ export function createDryRunner({
 
       const dryRunJobResult = await client.createDryRunJob({
         query,
+        useLegacySql: config.useLegacySql,
+        maximumBytesBilled: config.maximumBytesBilled
+          ? parse(config.maximumBytesBilled).toString()
+          : undefined,
         defaultDataset: config.defaultDataset,
+        maxResults: config.viewer.rowsPerPage,
       });
 
       errorMarker.clear();

@@ -1,4 +1,4 @@
-import { errorToString } from "types";
+import { errorToString } from "shared";
 import type { OutputChannel } from "vscode";
 
 export type Logger = ReturnType<typeof createLogger>;

@@ -20,8 +20,7 @@
   "eslint.validate": ["javascript", "typescript"],
 
   "bigqueryRunner.keyFilename": "./service-account.json",
-  "bigqueryRunner.viewer.rowsPerPage": 3000,
-  "bigqueryRunner.downloader.rowsPerPage": 3000,
+  "bigqueryRunner.downloader.rowsPerPage": 1000,
   "bigqueryRunner.defaultDataset.projectId": "bigquery-public-data",
   "bigqueryRunner.defaultDataset.datasetId": "wikipedia"
 }

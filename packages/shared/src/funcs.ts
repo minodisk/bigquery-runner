@@ -4,8 +4,10 @@ import type {
   EndEvent,
   FailProcessingEvent,
   FocusedEvent,
+  FocusOnTabEvent,
   JobReference,
   MetadataEvent,
+  MoveTabFocusEvent,
   NextEvent,
   PrevEvent,
   PreviewEvent,
@@ -78,6 +80,14 @@ export function isFailProcessingEvent(
   return e.event === "failProcessing";
 }
 
+export function isMoveTabFocusEvent(e: RendererEvent): e is MoveTabFocusEvent {
+  return e.event === "moveTabFocus";
+}
+
+export function isFocusOnTabEvent(e: RendererEvent): e is FocusOnTabEvent {
+  return e.event === "focusOnTab";
+}
+
 export function isLoadedEvent(e: ViewerEvent): e is StartEvent {
   return e.event === "loaded";
 }
@@ -105,3 +115,21 @@ export function isDownloadEvent(e: ViewerEvent): e is DownloadEvent {
 export function isPreviewEvent(e: ViewerEvent): e is PreviewEvent {
   return e.event === "preview";
 }
+
+export const commas = (num: bigint | string): string => {
+  const text = num.toString();
+  const len = text.length;
+  let result = "";
+  for (let i = 0; i < len; i++) {
+    const char = text[len - 1 - i];
+    if (!char) {
+      break;
+    }
+    if (i === 0 || i % 3 !== 0) {
+      result = `${char}${result}`;
+    } else {
+      result = `${char},${result}`;
+    }
+  }
+  return result;
+};

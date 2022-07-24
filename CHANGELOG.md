@@ -2,19 +2,48 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
-## v1.9.1
+## v1.11.0
+
+### Added
+
+- Added implementation to allow specifying a byte string for `maximumBytesBilled`.
 
 ### Changed
 
-- Fixed the problem that the spinner in the viewer does not stop when NoPageToken occurs when paging.
+- Fixed an problem where the following two settings were not reflected.
+  - `useLegacySQL`
+  - `maximumBytesBilled`
+
+## v1.10.1
+
+### Changed
+
+- Fixed problem of multiple columns with the same name [#26](https://github.com/minodisk/bigquery-runner/issues/26)
+- Fixed problem that tab position would not be retained when moving tab with commands.
+
+## v1.10.0
+
+### Added
+
+- Added features to improve download UX.
+  ![bigquery-runner-1658367386809](https://user-images.githubusercontent.com/514164/180110913-e1ba6e85-677c-4d47-8d23-e27ac4e5c430.gif)
+  - Display progress bar during downloading. [#19](https://github.com/minodisk/bigquery-runner/issues/19)
+  - Display a message to open the file, when the download is complete. [#25](https://github.com/minodisk/bigquery-runner/issues/25)
+- Provide commands to move between tabs [#18](https://github.com/minodisk/bigquery-runner/issues/18)
+  ![bigquery-runner-1658404913091](https://user-images.githubusercontent.com/514164/180209107-73d78dc9-a498-4e7e-9f99-248e9cdba77e.gif)
+
+### Changed
+
+- Fixed the problem that the spinner in the viewer does not stop when NoPageTokenError occurs when paging.
+- Fixed the problem that the current page exceeding range when performing quick paging.
 
 ## v1.9.0
 
 ### Changed
 
 - Fixed bugs around query parameters.
-  - Stop asking to commented out query parameters #22
-  - Ask the same named parameter only once #23
+  - Stop asking to commented out query parameters [#22](https://github.com/minodisk/bigquery-runner/issues/22)
+  - Ask the same named parameter only once [#23](https://github.com/minodisk/bigquery-runner/issues/23)
   - Formally support query parameter functions.
 
 ## v1.8.0

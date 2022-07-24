@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { errorToString, tryCatchSync } from "shared";
 import type {
   Accessor,
   Column,
@@ -10,8 +11,7 @@ import type {
   StructuralRow,
   Result,
   UnknownError,
-} from "types";
-import { errorToString, tryCatchSync } from "types";
+} from "shared";
 import { valueToPrimitive } from "./transform";
 
 export type Flat = Readonly<{
