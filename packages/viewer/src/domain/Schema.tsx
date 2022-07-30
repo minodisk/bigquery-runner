@@ -15,21 +15,23 @@ export const Schema: FC<{
 }> = ({ heads }) => {
   return (
     <TableComponent>
-      <Tbody>
-        <Thead>
+      <Thead>
+        <Tr>
           <Tr>
-            <Tr>
-              <Th>Column</Th>
-              <Th>Type</Th>
-              <Th>Mode</Th>
-            </Tr>
-            {heads.map(({ id, type, mode }) => (
-              <Tr><Th key={id}>{id}</Th>
-              <Th key={id}>{type}</Th>
-              <Th key={id}>{mode}</Th></Tr>
-            ))}
+            <Th>Column</Th>
+            <Th>Type</Th>
+            <Th>Mode</Th>
           </Tr>
-        </Thead>
+        </Tr>
+      </Thead>
+      <Tbody>
+        {heads.map(({ id, type, mode }) => (
+          <Tr key={id}>
+            <Th>{id}</Th>
+            <Th>{type}</Th>
+            <Th>{mode}</Th>
+          </Tr>
+        ))}
       </Tbody>
     </TableComponent>
   );
