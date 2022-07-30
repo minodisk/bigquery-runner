@@ -17,11 +17,9 @@ export const Schema: FC<{
     <TableComponent>
       <Thead>
         <Tr>
-          <Tr>
-            <Th>Column</Th>
-            <Th>Type</Th>
-            <Th>Mode</Th>
-          </Tr>
+          <Th>Column</Th>
+          <Th>Type</Th>
+          <Th>Mode</Th>
         </Tr>
       </Thead>
       <Tbody>
