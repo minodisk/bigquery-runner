@@ -1,3 +1,19 @@
+create or replace table
+    `testing.merge_target`
+as
+    select 1 as id, 'foo' as val
+    union all
+    select 2 as id, 'bar' as val
+;
+
+create or replace table
+    `testing.merge_source`
+as
+    select 2 as id, 'barbar' as val
+    union all
+    select 3 as id, 'baz' as val
+;
+
 merge
     testing.merge_target as target 
     using testing.merge_source as source on target.id = source.id

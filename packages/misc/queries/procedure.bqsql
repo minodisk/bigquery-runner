@@ -1,4 +1,4 @@
 create or replace procedure testing.procedure()
 begin
-  select * from testing.create;
+  select * from `testing.create_or_replace`;
 end;

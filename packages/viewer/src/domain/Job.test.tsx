@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { Job } from "./Job";
 
-describe("JobInformation", () => {
+describe("Job", () => {
   describe("metadata", () => {
     it("should be rendered with cache", async () => {
       render(
@@ -15,14 +15,18 @@ describe("JobInformation", () => {
             user_email: "user@example.iam.gserviceaccount.com",
             configuration: {
               query: {
-                query: "",
+                defaultDataset: {
+                  projectId: "",
+                  datasetId: "",
+                },
                 destinationTable: {
                   projectId: "",
                   datasetId: "",
                   tableId: "",
                 },
-                writeDisposition: "WRITE_TRUNCATE",
                 priority: "INTERACTIVE",
+                query: "",
+                writeDisposition: "WRITE_TRUNCATE",
                 useLegacySql: false,
               },
               jobType: "QUERY",
@@ -34,14 +38,19 @@ describe("JobInformation", () => {
             },
             statistics: {
               creationTime: "1649770220681",
-              startTime: "1649770221849",
               endTime: "1649770222887",
+              startTime: "1649770221849",
               totalBytesProcessed: "4096",
+              totalSlotMs: "",
               query: {
-                totalBytesProcessed: "2048",
-                totalBytesBilled: "1024",
+                billingTier: 1,
                 cacheHit: true,
+                estimatedBytesProcessed: "",
                 statementType: "SELECT",
+                totalBytesBilled: "1024",
+                totalBytesProcessed: "2048",
+                totalPartitionsProcessed: "",
+                totalSlotMs: "",
               },
             },
             status: { state: "DONE" },
@@ -76,14 +85,18 @@ describe("JobInformation", () => {
             user_email: "user@example.iam.gserviceaccount.com",
             configuration: {
               query: {
-                query: "",
+                defaultDataset: {
+                  projectId: "",
+                  datasetId: "",
+                },
                 destinationTable: {
                   projectId: "",
                   datasetId: "",
                   tableId: "",
                 },
-                writeDisposition: "WRITE_TRUNCATE",
                 priority: "INTERACTIVE",
+                query: "",
+                writeDisposition: "WRITE_TRUNCATE",
                 useLegacySql: false,
               },
               jobType: "QUERY",
@@ -98,11 +111,14 @@ describe("JobInformation", () => {
               startTime: "1649770221849",
               endTime: "1649770222887",
               totalBytesProcessed: "4096",
+              totalSlotMs: "",
+              numChildJobs: "1",
               query: {
                 totalBytesProcessed: "2048",
                 totalBytesBilled: "1024",
                 cacheHit: false,
                 statementType: "SELECT",
+                totalSlotMs: "",
               },
             },
             status: { state: "DONE" },

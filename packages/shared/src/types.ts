@@ -99,8 +99,8 @@ export type RendererEvent =
   | FocusedEvent
   | StartProcessingEvent
   | MetadataEvent
-  | TableEvent
-  | RoutineEvent
+  | TablesEvent
+  | RoutinesEvent
   | RowsEvent
   | SuccessProcessingEvent
   | FailProcessingEvent
@@ -126,20 +126,22 @@ export type MetadataPayload = {
   metadata: Metadata;
 };
 
-export type TableEvent = Readonly<{
-  event: "table";
-  payload: TablePayload;
+export type TablesEvent = Readonly<{
+  event: "tables";
+  payload: ReadonlyArray<TablePayload>;
 }>;
 export type TablePayload = {
+  id: string;
   heads: ReadonlyArray<Accessor>;
   table: Table;
 };
 
-export type RoutineEvent = Readonly<{
-  event: "routine";
-  payload: RoutinePayload;
+export type RoutinesEvent = Readonly<{
+  event: "routines";
+  payload: ReadonlyArray<RoutinePayload>;
 }>;
 export type RoutinePayload = {
+  id: string;
   routine: Routine;
 };
 
@@ -176,7 +178,7 @@ export type FocusOnTabEvent = Readonly<{
   };
 }>;
 
-export const tabs = ["Rows", "Table", "Schema", "Routine", "Job"] as const;
+export const tabs = ["Rows", "Table", "Routine", "Job"] as const;
 export type Tab = typeof tabs[number];
 
 export type RunInfo = Readonly<{
@@ -191,37 +193,108 @@ export type Metadata = Readonly<{
   id: string;
   selfLink: string;
   configuration: Readonly<{
+    jobType: "QUERY";
     query: Readonly<{
-      query: string;
+      defaultDataset: DatasetReference;
       destinationTable?: TableReference;
-      writeDisposition: string;
-      priority: string;
+      priority: "INTERACTIVE";
+      query: string;
+      writeDisposition?: string;
       useLegacySql: boolean;
     }>;
-    jobType: string;
   }>;
   jobReference: JobReference;
-  statistics: Readonly<{
-    creationTime: string;
-    startTime: string;
-    endTime: string;
-    numChildJobs?: string;
-    totalBytesProcessed: string;
-    query: {
-      totalBytesProcessed: string;
-      totalBytesBilled: string;
-      cacheHit: boolean;
-      statementType: StatementType;
-    };
-  }>;
+  statistics: JobStatistics;
   status: Readonly<{
     state: string;
   }>;
   user_email: string;
 }>;
+export type JobStatisticsBase = Readonly<{
+  creationTime: string;
+  endTime: string;
+  startTime: string;
+  totalBytesProcessed: string;
+  totalSlotMs: string;
+}>;
+export type JobStandaloneStatistics = JobStatisticsBase &
+  Readonly<{
+    query: Readonly<{
+      billingTier: number;
+      cacheHit: boolean;
+      estimatedBytesProcessed: string;
+      statementType: StatementType;
+      totalBytesBilled: string;
+      totalBytesProcessed: string;
+      totalPartitionsProcessed: string;
+      totalSlotMs: string;
+    }>;
+  }>;
+export type JobHasChildrenStatistics = JobStatisticsBase &
+  Readonly<{
+    numChildJobs: string;
+    query: Readonly<{
+      statementType: StatementType;
+      totalBytesBilled: string;
+      totalBytesProcessed: string;
+      totalSlotMs: string;
+    }>;
+  }>;
+export type JobStatistics = JobStandaloneStatistics | JobHasChildrenStatistics;
+
+export type ChildJob = Readonly<{
+  baseUrl: string;
+  id: string;
+  metadata: {
+    id: string;
+    jobReference: JobReference;
+    kind: "bigquery#job";
+    state: "DONE";
+    statistics: Readonly<{
+      creationTime: string;
+      endTime: string;
+      query: ChildQuery;
+      startTime: string;
+      totalBytesProcessed: string;
+    }>;
+    status: {
+      state: "DONE";
+    };
+  };
+}>;
+export type ChildQueryBase = Readonly<{
+  billingTier: number;
+  cacheHit: boolean;
+  totalBytesBilled: string;
+  totalBytesProcessed: string;
+  totalPartitionsProcessed: string;
+}>;
+export type ChildDmlQuery = ChildQueryBase &
+  Readonly<{
+    dmlStats: Readonly<{
+      deletedRowCount: string;
+      insertedRowCount: string;
+      updatedRowCount: string;
+    }>;
+    numDmlAffectedRows: string;
+    referencedTables: ReadonlyArray<TableReference>;
+  }>;
+export type ChildDdlTableQuery = ChildQueryBase &
+  Readonly<{
+    ddlTargetTable: TableReference;
+    schema: ReadonlyArray<Field>;
+  }>;
+export type ChildDdlRoutineQuery = ChildQueryBase &
+  Readonly<{
+    ddlTargetRoutine: RoutineReference;
+  }>;
+export type ChildQuery =
+  | ChildDmlQuery
+  | ChildDdlTableQuery
+  | ChildDdlRoutineQuery;
 
 export type JobReference = Readonly<{
-  projectId: string;
+  projectId: ProjectID;
   location: string;
   jobId: string;
 }>;
@@ -266,20 +339,34 @@ export type Routine = Readonly<{
   }>;
 }>;
 
-export type RoutineReference = Readonly<{
-  projectId: string;
-  datasetId: string;
-  routineId: string;
-}>;
-
 export type Schema = Readonly<{
   fields: ReadonlyArray<Field>;
 }>;
 
+export type ProjectID = string;
+export type DatasetID = string;
+export type TableID = string;
+export type RoutineID = string;
+
+export type ProjectReference = Readonly<{
+  projectId: ProjectID;
+}>;
+
+export type DatasetReference = Readonly<{
+  projectId: ProjectID;
+  datasetId: DatasetID;
+}>;
+
 export type TableReference = Readonly<{
-  projectId: string;
-  datasetId: string;
-  tableId: string;
+  projectId: ProjectID;
+  datasetId: DatasetID;
+  tableId: TableID;
+}>;
+
+export type RoutineReference = Readonly<{
+  projectId: ProjectID;
+  datasetId: DatasetID;
+  routineId: RoutineID;
 }>;
 
 export type Page = Readonly<{
@@ -327,6 +414,9 @@ export type DownloadEvent = Readonly<{
 }>;
 export type PreviewEvent = Readonly<{
   event: "preview";
+  payload: {
+    tableReference: TableReference;
+  };
 }>;
 
 export const formats = {

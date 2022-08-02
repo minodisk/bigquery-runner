@@ -3,19 +3,17 @@ import React from "react";
 import type {
   Data,
   MetadataEvent,
-  RoutineEvent,
+  RoutinesEvent,
   RowsEvent,
   StartProcessingEvent,
   SuccessProcessingEvent,
-  TableEvent,
 } from "shared";
 import type { WebviewApi } from "vscode-webview";
 import type { State } from "./App";
 import App from "./App";
 import { ClipboardProvider } from "./context/Clipboard";
 import jobEvent from "./jobEvent.json";
-import routineEvent from "./routineEvent.json";
-import tableEvent from "./tableEvent.json";
+import routinesEvent from "./routineEvent.json";
 
 const mockWebview = ({
   postMessage,
@@ -184,87 +182,6 @@ describe("App", () => {
     });
   });
 
-  describe("with Schema", () => {
-    it("should render schema table", async () => {
-      const writeText = jest.fn();
-
-      const postMessage = jest.fn();
-      const webview = mockWebview({ postMessage });
-
-      render(
-        <ClipboardProvider writeText={writeText}>
-          <App webview={webview} />
-        </ClipboardProvider>
-      );
-      window.postMessage(
-        {
-          source: "bigquery-runner",
-          payload: {
-            event: "startProcessing",
-          },
-        } as Data<StartProcessingEvent>,
-        "*"
-      );
-      window.postMessage(
-        {
-          source: "bigquery-runner",
-          payload: tableEvent,
-        } as Data<TableEvent>,
-        "*"
-      );
-      window.postMessage(
-        {
-          source: "bigquery-runner",
-          payload: {
-            event: "successProcessing",
-          },
-        } as Data<SuccessProcessingEvent>,
-        "*"
-      );
-      await waitFor(() => {
-        expect(postMessage).toHaveBeenCalledTimes(1);
-        expect(postMessage).toHaveBeenCalledWith({ event: "loaded" });
-
-        expect(screen.getByText("Table ID")).toBeInTheDocument();
-        expect(screen.getByText("Table size")).toBeInTheDocument();
-        expect(screen.getByText("Long-term storage size")).toBeInTheDocument();
-        expect(screen.getByText("Number of rows")).toBeInTheDocument();
-        expect(screen.getByText("Created")).toBeInTheDocument();
-        expect(screen.getByText("Last modified")).toBeInTheDocument();
-        expect(screen.getByText("Table expiration")).toBeInTheDocument();
-        expect(screen.getByText("Data location")).toBeInTheDocument();
-
-        expect(writeText).toBeCalledTimes(0);
-        const copy = screen.getByLabelText("Copy");
-        expect(copy).toBeInTheDocument();
-        fireEvent.click(copy);
-        expect(writeText).toBeCalledTimes(1);
-        expect(writeText).toBeCalledWith(
-          "minodisk-api._974002322e1183b3df64c0f31d9b6832d25246ef.anon283b16a2558286aa168497689737d8c844796c95"
-        );
-
-        const preview = screen.getByLabelText("Preview");
-        expect(preview).toBeInTheDocument();
-        fireEvent.click(preview);
-        expect(postMessage).toHaveBeenCalledTimes(2);
-        expect(postMessage).toHaveBeenCalledWith({ event: "preview" });
-
-        const schema = screen.getByLabelText("Schema");
-        expect(schema).toBeInTheDocument();
-        fireEvent.click(schema);
-
-        expect(screen.getByText("en_label")).toBeInTheDocument();
-        expect(screen.getByText("labels.language")).toBeInTheDocument();
-        expect(screen.getByText("labels.value")).toBeInTheDocument();
-
-        expect(screen.getByText("Type")).toBeInTheDocument();
-        expect(screen.getAllByText("STRING")).toHaveLength(3);
-        expect(screen.getByText("Mode")).toBeInTheDocument();
-        expect(screen.getAllByText("NULLABLE")).toHaveLength(3);
-      });
-    });
-  });
-
   describe("JobEvent", () => {
     it("should render Job tab", async () => {
       const writeText = jest.fn();
@@ -353,8 +270,8 @@ describe("App", () => {
       window.postMessage(
         {
           source: "bigquery-runner",
-          payload: routineEvent,
-        } as Data<RoutineEvent>,
+          payload: routinesEvent,
+        } as Data<RoutinesEvent>,
         "*"
       );
       window.postMessage(

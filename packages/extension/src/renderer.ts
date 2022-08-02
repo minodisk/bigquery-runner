@@ -15,10 +15,11 @@ import type {
   NextEvent,
   DownloadEvent,
   PreviewEvent,
-  Accessor,
   Tab,
 } from "shared";
 import {
+  getTableName,
+  getRoutineName,
   isDownloadEvent,
   isLoadedEvent,
   isNextEvent,
@@ -26,7 +27,6 @@ import {
   isPreviewEvent,
   tryCatch,
   errorToString,
-  unwrap,
 } from "shared";
 import type { ExtensionContext, WebviewPanel } from "vscode";
 import { Uri, ViewColumn, window } from "vscode";
@@ -56,13 +56,12 @@ export type Renderer = {
   readonly renderMetadata: (
     metadata: Metadata
   ) => Promise<Result<UnknownError, void>>;
-  readonly renderRoutine: (
-    routine: Routine
+  readonly renderTables: (
+    tables: ReadonlyArray<Table>
   ) => Promise<Result<UnknownError, void>>;
-  readonly renderTable: (data: {
-    heads: ReadonlyArray<Accessor>;
-    table: Table;
-  }) => Promise<Result<UnknownError, void>>;
+  readonly renderRoutines: (
+    routines: ReadonlyArray<Routine>
+  ) => Promise<Result<UnknownError, void>>;
   readonly renderRows: (
     data: SelectResponse
   ) => Promise<Result<UnknownError | Err<"NoSchema">, void>>;
@@ -195,7 +194,7 @@ export function createRendererManager({
               renderer.dispose();
             });
             panel.iconPath = Uri.file(
-              join(ctx.extensionPath, "out/assets/icon-small.png")
+              join(ctx.extensionPath, "out/assets/icon-panel.png")
             );
 
             panel.webview.onDidReceiveMessage(async (event: ViewerEvent) => {
@@ -247,27 +246,29 @@ export function createRendererManager({
               });
             },
 
-            renderRoutine(routine) {
+            async renderTables(tables) {
               return postMessage({
-                logger: parentLogger.createChild("renderRoutine"),
+                logger: parentLogger.createChild("renderTables"),
                 event: {
-                  event: "routine",
-                  payload: {
-                    routine,
-                  },
+                  event: "tables",
+                  payload: tables.map((table) => ({
+                    id: getTableName(table.tableReference),
+                    heads: createFlat(table.schema.fields).heads,
+                    table,
+                  })),
                 },
               });
             },
 
-            renderTable({ heads, table }) {
+            async renderRoutines(routines) {
               return postMessage({
-                logger: parentLogger.createChild("renderTable"),
+                logger: parentLogger.createChild("renderRoutines"),
                 event: {
-                  event: "table",
-                  payload: {
-                    heads,
-                    table,
-                  },
+                  event: "routines",
+                  payload: routines.map((routine) => ({
+                    id: getRoutineName(routine.metadata.routineReference),
+                    routine,
+                  })),
                 },
               });
             },
@@ -275,11 +276,7 @@ export function createRendererManager({
             async renderRows({ structs, table, page }) {
               const logger = parentLogger.createChild("renderRows");
 
-              const flatResult = createFlat(table.schema.fields);
-              if (!flatResult.success) {
-                return flatResult;
-              }
-              const flat = unwrap(flatResult);
+              const flat = createFlat(table.schema.fields);
 
               logger.log(`${structs.length} rows`);
 

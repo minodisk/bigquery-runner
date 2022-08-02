@@ -7,13 +7,13 @@ export type OrigConfig = Readonly<{
   location: string | undefined;
   useLegacySql: boolean;
   maximumBytesBilled: string | undefined;
+  extensions: Array<string>;
+  languageIds: Array<string>;
+  icon: boolean;
   defaultDataset: Readonly<{
     datasetId: string | undefined;
     projectId: string | undefined;
   }>;
-  extensions: Array<string>;
-  languageIds: Array<string>;
-  icon: boolean;
   downloader: Readonly<{
     csv: Readonly<{
       delimiter: string;
@@ -21,8 +21,14 @@ export type OrigConfig = Readonly<{
     }>;
     rowsPerPage: number | undefined;
   }>;
+  tree: Readonly<{
+    projectIds: Array<string>;
+  }>;
   viewer: Readonly<{
     column: string | number;
+    rowsPerPage: number | undefined;
+  }>;
+  previewer: Readonly<{
     rowsPerPage: number | undefined;
   }>;
   statusBarItem: Readonly<{

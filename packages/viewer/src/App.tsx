@@ -15,15 +15,16 @@ import type {
   TablePayload,
   Format,
   Tab as TabName,
+  TableReference,
 } from "shared";
 import {
   isMoveTabFocusEvent,
   isFocusOnTabEvent,
   isData,
   isRowsEvent,
-  isRoutineEvent,
+  isRoutinesEvent,
   isMetadataEvent,
-  isTableEvent,
+  isTablesEvent,
   isStartProcessingEvent,
   isSuccessLoadingEvent,
   isFailProcessingEvent,
@@ -34,7 +35,6 @@ import { Header } from "./domain/Header";
 import { Job } from "./domain/Job";
 import { Routine } from "./domain/Routine";
 import { Rows } from "./domain/Rows";
-import { Schema } from "./domain/Schema";
 import { Table } from "./domain/Table";
 
 export type State = Partial<
@@ -42,9 +42,9 @@ export type State = Partial<
     tabIndex: number;
     tabs: ReadonlyArray<TabName>;
     metadataPayload: MetadataPayload;
-    tablePayload: TablePayload;
+    tablePayloads: ReadonlyArray<TablePayload>;
+    routinePayloads: ReadonlyArray<RoutinePayload>;
     rowsPayload: RowsPayload;
-    routinePayload: RoutinePayload;
   }>
 >;
 
@@ -56,12 +56,12 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
   const [metadataPayload, setMetadataPayload] = useState<
     MetadataPayload | undefined
   >(vscode.getState()?.metadataPayload);
-  const [tablePayload, setTablePayload] = useState<TablePayload | undefined>(
-    vscode.getState()?.tablePayload
-  );
-  const [routinePayload, setRoutinePayload] = useState<
-    RoutinePayload | undefined
-  >(vscode.getState()?.routinePayload);
+  const [tablePayloads, setTablesPayloads] = useState<
+    ReadonlyArray<TablePayload>
+  >(vscode.getState()?.tablePayloads ?? []);
+  const [routinePayloads, setRoutinePayloads] = useState<
+    ReadonlyArray<RoutinePayload>
+  >(vscode.getState()?.routinePayloads ?? []);
   const [rowsPayload, setRowsPayload] = useState<RowsPayload | undefined>(
     vscode.getState()?.rowsPayload
   );
@@ -90,9 +90,17 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
     },
     [vscode]
   );
-  const onPreviewRequest = useCallback(() => {
-    vscode.postMessage({ event: "preview" });
-  }, [vscode]);
+  const onPreviewRequest = useCallback(
+    (tableReference: TableReference) => {
+      vscode.postMessage({
+        event: "preview",
+        payload: {
+          tableReference,
+        },
+      });
+    },
+    [vscode]
+  );
 
   const onTabChange = useCallback((tabIndex: number) => {
     setTabIndex(tabIndex);
@@ -121,19 +129,21 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
         setState({ metadataPayload: payload.payload });
         return;
       }
-      if (isTableEvent(payload)) {
-        setTablePayload(payload.payload);
-        setState({ tablePayload: payload.payload });
+      if (isTablesEvent(payload)) {
+        const tablePayloads = payload.payload;
+        setTablesPayloads(tablePayloads);
+        setState({ tablePayloads });
+        return;
+      }
+      if (isRoutinesEvent(payload)) {
+        const routinePayloads = payload.payload;
+        setRoutinePayloads(routinePayloads);
+        setState({ routinePayloads });
         return;
       }
       if (isRowsEvent(payload)) {
         setRowsPayload(payload.payload);
         setState({ rowsPayload: payload.payload });
-        return;
-      }
-      if (isRoutineEvent(payload)) {
-        setRoutinePayload(payload.payload);
-        setState({ routinePayload: payload.payload });
         return;
       }
       if (isSuccessLoadingEvent(payload)) {
@@ -181,13 +191,13 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
   useEffect(() => {
     const tabs = [
       ...(rowsPayload ? ["Rows" as const] : []),
-      ...(tablePayload ? ["Table" as const, "Schema" as const] : []),
-      ...(routinePayload ? ["Routine" as const] : []),
+      ...tablePayloads.map(() => "Table" as const),
+      ...routinePayloads.map(() => "Routine" as const),
       ...(metadataPayload ? ["Job" as const] : []),
     ];
     setTabs(tabs);
     setState({ tabs });
-  }, [metadataPayload, routinePayload, rowsPayload, setState, tablePayload]);
+  }, [metadataPayload, routinePayloads, rowsPayload, setState, tablePayloads]);
 
   useEffect(() => {
     vscode.postMessage({ event: "loaded" });
@@ -218,11 +228,18 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
     <Tabs index={tabIndex} onChange={onTabChange}>
       <Header processing={processing}>
         <TabList>
-          {rowsPayload ? <Tab>Rows</Tab> : null}
-          {tablePayload ? <Tab>Table</Tab> : null}
-          {tablePayload ? <Tab>Schema</Tab> : null}
-          {routinePayload ? <Tab>Routine</Tab> : null}
-          {metadataPayload ? <Tab>Job</Tab> : null}
+          {rowsPayload ? <Tab px={6}>Rows</Tab> : null}
+          {tablePayloads.map(({ id }) => (
+            <Tab key={id} px={6}>
+              Table
+            </Tab>
+          ))}
+          {routinePayloads.map(({ id }) => (
+            <Tab key={id} px={6}>
+              Routine
+            </Tab>
+          ))}
+          {metadataPayload ? <Tab px={6}>Job</Tab> : null}
         </TabList>
       </Header>
       <TabPanels>
@@ -236,24 +253,20 @@ const App: FC<{ webview: WebviewApi<State> }> = ({ webview: vscode }) => {
             />
           </TabPanel>
         ) : null}
-        {tablePayload ? (
-          <TabPanel>
+        {tablePayloads.map((tablePayload) => (
+          <TabPanel key={tablePayload.id}>
             <Table
+              heads={tablePayload.heads}
               table={tablePayload.table}
               onPreviewRequest={onPreviewRequest}
             />
           </TabPanel>
-        ) : null}
-        {tablePayload ? (
-          <TabPanel>
-            <Schema heads={tablePayload.heads} />
-          </TabPanel>
-        ) : null}
-        {routinePayload ? (
-          <TabPanel>
+        ))}
+        {routinePayloads.map((routinePayload) => (
+          <TabPanel key={routinePayload.id}>
             <Routine routine={routinePayload.routine} />
           </TabPanel>
-        ) : null}
+        ))}
         {metadataPayload ? (
           <TabPanel>
             <Job metadata={metadataPayload.metadata} />

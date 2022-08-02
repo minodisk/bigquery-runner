@@ -187,6 +187,22 @@ Run the query in BigQuery and save the results to a file in Markdown format
 
 Run the query in BigQuery and save the results to a file in plain text
 
+### BigQuery Runner: Refresh Resources
+
+|ID|
+|---|
+|bigqueryRunner.refreshResources|
+
+Refresh the BigQuery Runner's Resources
+
+### BigQuery Runner: Preview Table
+
+|ID|
+|---|
+|bigqueryRunner.previewTable|
+
+Open previewer for a selected table in the BigQuery Runner's Resources view
+
 ## Configuration
 
 The extension can be customized by modifying your `settings.json` file. The available configuration options, and their defaults, are below.
@@ -231,22 +247,6 @@ Flag whether to use legacy SQL. If `false`, use standard SQL.
 
 Limits the bytes billed for this query. Queries with bytes billed above this limit will fail (without incurring a charge). Can be set in units, for example `200GB`. If unspecified, the project default is used.
 
-### `bigqueryRunner.defaultDataset.datasetId`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-Specifies the default datasetId to assume for any unqualified table names in the query. If not set, all table names in the query string must be qualified in the format 'datasetId.tableId'.
-
-### `bigqueryRunner.defaultDataset.projectId`
-
-|Type|Default|
-|---|---|
-|string &#x7C; null|null|
-
-Specifies the default projectId to assume for any unqualified table names in the query. If `defaultDataset.datasetId` is not set, setting this value has no effect.
-
 ### `bigqueryRunner.extensions`
 
 |Type|Default|
@@ -270,6 +270,22 @@ List of [language identifiers](https://code.visualstudio.com/docs/languages/iden
 |boolean|true|
 
 Display GUI button to run on the editor title menu bar.
+
+### `bigqueryRunner.defaultDataset.datasetId`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+Specifies the default datasetId to assume for any unqualified table names in the query. If not set, all table names in the query string must be qualified in the format 'datasetId.tableId'.
+
+### `bigqueryRunner.defaultDataset.projectId`
+
+|Type|Default|
+|---|---|
+|string &#x7C; null|null|
+
+Specifies the default projectId to assume for any unqualified table names in the query. If `defaultDataset.datasetId` is not set, setting this value has no effect.
 
 ### `bigqueryRunner.downloader.csv.delimiter`
 
@@ -295,6 +311,14 @@ The flag whether to add column names to CSV.
 
 Maximum number of rows to retrieve per page for downloading. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched.
 
+### `bigqueryRunner.tree.projectIds`
+
+|Type|Default|
+|---|---|
+|array|[]|
+
+Array of projects for the datasets to be displayed in the tree view. If empty, only datasets in a project that have been authenticated will be displayed in the tree view.
+
 ### `bigqueryRunner.viewer.column`
 
 |Type|Default|
@@ -303,13 +327,13 @@ Maximum number of rows to retrieve per page for downloading. If a number is spec
 
 A string such as '+N', '-N' can be set to specify a position relative to the column where the query file is opened. Then, if you set a number greater than 1, the viewer will appear in the specified number of columns from the left. A number of -1 means the viewer will appear in the same column as the query file, and a number of -2 means the viewer will appear in the column farthest to the right.
 
-### `bigqueryRunner.viewer.rowsPerPage`
+### `bigqueryRunner.previewer.rowsPerPage`
 
 |Type|Default|
 |---|---|
 |number &#x7C; null|100|
 
-Maximum number of rows to retrieve per page for display in the viewer. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched. You can use the `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage` command to perform paging.
+Maximum number of rows to retrieve per page for preview. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched.
 
 ### `bigqueryRunner.statusBarItem.align`
 
@@ -342,6 +366,14 @@ Validate the query whenever the file set in `languageIds` or `extensions` is mod
 |number|600|
 
 Debounce interval in milliseconds to validate the query when the file is modified.
+
+### `bigqueryRunner.viewer.rowsPerPage`
+
+|Type|Default|
+|---|---|
+|number &#x7C; null|100|
+
+Maximum number of rows to retrieve per page for display in the viewer. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched. You can use the `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage` command to perform paging.
 
 
 ## Additional Settings

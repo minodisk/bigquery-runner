@@ -1,24 +1,31 @@
 import type {
+  ChildDdlRoutineQuery,
+  ChildDdlTableQuery,
+  ChildDmlQuery,
+  ChildQuery,
   Data,
   DownloadEvent,
   EndEvent,
   FailProcessingEvent,
   FocusedEvent,
   FocusOnTabEvent,
+  JobHasChildrenStatistics,
   JobReference,
+  JobStandaloneStatistics,
+  JobStatistics,
   MetadataEvent,
   MoveTabFocusEvent,
   NextEvent,
   PrevEvent,
   PreviewEvent,
   RendererEvent,
-  RoutineEvent,
+  RoutinesEvent,
   RoutineReference,
   RowsEvent,
   StartEvent,
   StartProcessingEvent,
   SuccessProcessingEvent,
-  TableEvent,
+  TablesEvent,
   TableReference,
   ViewerEvent,
 } from "./types";
@@ -38,6 +45,31 @@ export const getRoutineName = ({
   routineId,
 }: RoutineReference): string => `${projectId}.${datasetId}.${routineId}`;
 
+export const isStandaloneStatistics = (
+  statistics: JobStatistics
+): statistics is JobStandaloneStatistics => {
+  return !("numChildJobs" in statistics);
+};
+export const isJobHasChildrenStatistics = (
+  statistics: JobStatistics
+): statistics is JobHasChildrenStatistics => {
+  return "numChildJobs" in statistics;
+};
+
+export const isChildDmlQuery = (query: ChildQuery): query is ChildDmlQuery => {
+  return "dmlStats" in query;
+};
+export const isChildDdlTableQuery = (
+  query: ChildQuery
+): query is ChildDdlTableQuery => {
+  return "ddlTargetTable" in query;
+};
+export const isChildDdlRoutineQuery = (
+  query: ChildQuery
+): query is ChildDdlRoutineQuery => {
+  return "ddlTargetRoutine" in query;
+};
+
 export function isData(data: { source?: string }): data is Data<RendererEvent> {
   return data.source === "bigquery-runner";
 }
@@ -56,12 +88,12 @@ export function isMetadataEvent(e: RendererEvent): e is MetadataEvent {
   return e.event === "metadata";
 }
 
-export function isTableEvent(e: RendererEvent): e is TableEvent {
-  return e.event === "table";
+export function isTablesEvent(e: RendererEvent): e is TablesEvent {
+  return e.event === "tables";
 }
 
-export function isRoutineEvent(e: RendererEvent): e is RoutineEvent {
-  return e.event === "routine";
+export function isRoutinesEvent(e: RendererEvent): e is RoutinesEvent {
+  return e.event === "routines";
 }
 
 export function isRowsEvent(e: RendererEvent): e is RowsEvent {

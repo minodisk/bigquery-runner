@@ -1,10 +1,10 @@
+import { BigQuery } from "@google-cloud/bigquery";
 import type {
   BigQueryOptions,
   Job,
   JobResponse,
   Query,
 } from "@google-cloud/bigquery";
-import { BigQuery } from "@google-cloud/bigquery";
 import type {
   Page,
   Metadata,
@@ -15,8 +15,18 @@ import type {
   StructuralRow,
   UnknownError,
   Err,
+  TableReference,
+  DatasetReference,
+  ProjectID,
+  DatasetID,
+  TableID,
+  ChildJob,
+  RoutineReference,
 } from "shared";
 import {
+  isChildDdlTableQuery,
+  isChildDmlQuery,
+  isChildDdlRoutineQuery,
   getTableName,
   errorToString,
   tryCatch,
@@ -47,6 +57,11 @@ export type Client = Readonly<{
   ): Promise<
     Result<NoJobError | QueryError | QueryWithPositionError, DryRunJob>
   >;
+  getProjectId(): Promise<ProjectID>;
+  getDatasets(): Promise<Array<DatasetReference>>;
+  getTables(datasetId: DatasetID): Promise<Array<TableReference>>;
+  deleteDataset(datasetId: DatasetID): Promise<void>;
+  deleteTable(ref: { datasetId: DatasetID; tableId: TableID }): Promise<void>;
 }>;
 export type RunJob = Readonly<{
   metadata: Metadata;
@@ -66,7 +81,15 @@ export type RunJob = Readonly<{
     >
   >;
   getTable(): Promise<Result<UnknownError | NoDestinationTableError, Table>>;
-  getRoutine(): Promise<Result<UnknownError, Routine>>;
+  getChildren(): Promise<
+    Result<
+      UnknownError | Err<"NoChildJob" | "NoRoutine">,
+      {
+        tables: Array<Table>;
+        routines: Array<Routine>;
+      }
+    >
+  >;
 }>;
 export type DryRunJob = Readonly<{
   id?: string;
@@ -89,6 +112,49 @@ export async function createClient(
     keyFilename: options.keyFilename,
     getProjectId: bigQuery.getProjectId.bind(bigQuery),
   });
+
+  const getTable = async (
+    ref: TableReference
+  ): Promise<Result<UnknownError, Table>> => {
+    return tryCatch(
+      async () => {
+        const res = await bigQuery
+          .dataset(ref.datasetId)
+          .table(ref.tableId)
+          .get();
+        const table: Table = res.find(({ kind }) => kind === "bigquery#table");
+        if (!table) {
+          throw new Error(`table not found: ${getTableName(ref)}`);
+        }
+        return table;
+      },
+      (err) => ({
+        type: "Unknown" as const,
+        reason: errorToString(err),
+      })
+    );
+  };
+
+  const getRoutine = async (
+    routine: RoutineReference
+  ): Promise<Result<UnknownError, Routine>> => {
+    return tryCatch(
+      async () => {
+        const { id, baseUrl, metadata } = (
+          await bigQuery
+            .dataset(routine.datasetId)
+            .routine(routine.routineId)
+            .get()
+        )[0] as Routine;
+        // Remove unnecessary data, including credentials
+        return { id, baseUrl, metadata };
+      },
+      (err) => ({
+        type: "Unknown" as const,
+        reason: errorToString(err),
+      })
+    );
+  };
 
   const client: Client = {
     async createRunJob(options) {
@@ -201,54 +267,75 @@ export async function createClient(
             });
           }
 
-          return tryCatch(
-            async () => {
-              const ref = bigQuery
-                .dataset(destinationTable.datasetId)
-                .table(destinationTable.tableId);
-              const res = await ref.get();
-              const table: Table = res.find(
-                ({ kind }) => kind === "bigquery#table"
-              );
-              if (!table) {
-                throw new Error(
-                  `table not found: ${getTableName(destinationTable)}`
-                );
-              }
-              return table;
-            },
-            (reason) => ({
-              type: "Unknown" as const,
-              reason: String(reason),
-            })
-          );
+          return getTable(destinationTable);
         },
 
-        async getRoutine() {
-          return tryCatch(
+        async getChildren() {
+          const getJobsResult = await tryCatch(
             async () => {
-              const [[j]] = await bigQuery.getJobs({ parentJobId: job.id });
-              if (!j) {
-                throw new Error(`no routine`);
-              }
-              const routine = j?.metadata.statistics.query.ddlTargetRoutine;
-              if (!routine) {
-                throw new Error(`no routine`);
-              }
-              const { id, baseUrl, metadata } = (
-                await bigQuery
-                  .dataset(routine.datasetId)
-                  .routine(routine.routineId)
-                  .get()
-              )[0] as Routine;
-              // Remove unnecessary data, including credentials
-              return { id, baseUrl, metadata };
+              const [jobs] = (await bigQuery.getJobs({
+                parentJobId: job.id,
+              })) as [ReadonlyArray<ChildJob>];
+              return jobs;
             },
-            (reason) => ({
+            (err) => ({
               type: "Unknown" as const,
-              reason: String(reason),
+              reason: errorToString(err),
             })
           );
+          if (!getJobsResult.success) {
+            return getJobsResult;
+          }
+          const jobs = getJobsResult.value;
+
+          const queries = jobs.map(
+            ({
+              metadata: {
+                statistics: { query },
+              },
+            }) => query
+          );
+
+          let tableRefs: Array<TableReference> = [];
+          let routineRefs: Array<RoutineReference> = [];
+          for (const query of queries) {
+            if (isChildDmlQuery(query)) {
+              tableRefs = [...tableRefs, ...query.referencedTables];
+              break;
+            }
+            if (isChildDdlTableQuery(query)) {
+              tableRefs = [...tableRefs, query.ddlTargetTable];
+              break;
+            }
+            if (isChildDdlRoutineQuery(query)) {
+              routineRefs = [...routineRefs, query.ddlTargetRoutine];
+              break;
+            }
+          }
+
+          const [tableResults, routineResults] = await Promise.all([
+            Promise.all(tableRefs.map(getTable)),
+            Promise.all(routineRefs.map(getRoutine)),
+          ]);
+          let tables: Array<Table> = [];
+          let routines: Array<Routine> = [];
+          for (const res of tableResults) {
+            if (!res.success) {
+              continue;
+            }
+            tables = [...tables, res.value];
+          }
+          for (const res of routineResults) {
+            if (!res.success) {
+              continue;
+            }
+            routines = [...routines, res.value];
+          }
+
+          return succeed({
+            tables,
+            routines,
+          });
         },
       };
 
@@ -273,6 +360,28 @@ export async function createClient(
         id: job.id,
         totalBytesProcessed: parseInt(totalBytesProcessed, 10),
       });
+    },
+
+    async getProjectId() {
+      return bigQuery.getProjectId();
+    },
+
+    async getDatasets() {
+      const [datasets] = await bigQuery.getDatasets();
+      return datasets.map((dataset) => dataset.metadata.datasetReference);
+    },
+
+    async getTables(datasetId) {
+      const [tables] = await bigQuery.dataset(datasetId).getTables();
+      return tables.map((table) => table.metadata.tableReference);
+    },
+
+    async deleteDataset(datasetId) {
+      await bigQuery.dataset(datasetId).delete();
+    },
+
+    async deleteTable({ datasetId, tableId }) {
+      await bigQuery.dataset(datasetId).table(tableId).delete();
     },
   };
 

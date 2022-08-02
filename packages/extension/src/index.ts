@@ -20,6 +20,7 @@ import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
 import { createErrorMarkerManager } from "./errorMarker";
 import { createLogger } from "./logger";
+import { createPreviewer } from "./previewer";
 import { createQuickFixManager } from "./quickfix";
 import { createRendererManager } from "./renderer";
 import { createRunnerManager } from "./runner";
@@ -27,6 +28,7 @@ import {
   createStatusBarItemCreator,
   createStatusManager,
 } from "./statusManager";
+import { createTree } from "./tree";
 
 export async function activate(ctx: ExtensionContext) {
   try {
@@ -64,8 +66,12 @@ export async function activate(ctx: ExtensionContext) {
           query: runner.query,
         });
       },
-      async onPreviewRequested({ renderer: { runnerId } }) {
-        await runnerManager.get(runnerId)?.preview();
+      async onPreviewRequested({
+        event: {
+          payload: { tableReference },
+        },
+      }) {
+        await previewer.preview(tableReference);
       },
       async onDidDisposePanel({ runnerId }) {
         runnerManager.get(runnerId)?.dispose();
@@ -88,6 +94,18 @@ export async function activate(ctx: ExtensionContext) {
       errorMarkerManager,
       quickFixManager,
     });
+
+    const previewer = createPreviewer({
+      logger: logger.createChild("previewer"),
+      configManager,
+      runnerManager,
+    });
+    const tree = createTree({
+      logger: logger.createChild("tree"),
+      configManager,
+      previewer,
+    });
+
     ctx.subscriptions.push(
       logger,
       configManager,
@@ -97,7 +115,9 @@ export async function activate(ctx: ExtensionContext) {
       errorMarkerManager,
       quickFixManager,
       runnerManager,
-      dryRunner
+      dryRunner,
+      previewer,
+      tree
     );
 
     // Register all available commands and their actions.
@@ -122,6 +142,15 @@ export async function activate(ctx: ExtensionContext) {
             return;
           }
           await dryRunner.run(window.activeTextEditor);
+        },
+        [`${section}.refreshResources`]: async () => {
+          await tree.refreshResources();
+        },
+        [`${section}.deleteSelectedResources`]: async () => {
+          await tree.deleteSelectedResources();
+        },
+        [`${section}.previewTable`]: async () => {
+          await tree.previewTable();
         },
       }).map(([name, action]) => commands.registerCommand(name, action))
     );

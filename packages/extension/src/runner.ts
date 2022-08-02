@@ -1,7 +1,7 @@
 import { basename } from "path";
 import { format, parse } from "bytes";
 import type { Parameters, RunJob } from "core";
-import { createFlat, createClient, parameters } from "core";
+import { createClient, parameters } from "core";
 import type {
   Metadata,
   Page,
@@ -16,7 +16,13 @@ import type {
   NamedParamValues,
   PositionalParamValues,
 } from "shared";
-import { unwrap, succeed, tryCatchSync, errorToString } from "shared";
+import {
+  isStandaloneStatistics,
+  unwrap,
+  succeed,
+  tryCatchSync,
+  errorToString,
+} from "shared";
 import type { TextEditor, ViewColumn } from "vscode";
 import { window } from "vscode";
 import { checksum } from "./checksum";
@@ -36,7 +42,6 @@ export type Runner = Readonly<{
   movePage(diff: number): Promise<void>;
   moveFocusTab(diff: number): Promise<void>;
   focusOnTab(tab: Tab): Promise<void>;
-  preview(): Promise<void>;
   dispose(): void;
 }>;
 
@@ -129,7 +134,7 @@ export function createRunnerManager({
     }: Readonly<{
       title: string;
       query: string;
-      viewColumn: ViewColumn;
+      viewColumn?: ViewColumn;
     }>): Promise<
       Result<
         Err<
@@ -208,11 +213,6 @@ export function createRunnerManager({
     let pageable:
       | {
           job: RunJob;
-          table: Table;
-        }
-      | undefined;
-    let previewable:
-      | {
           table: Table;
         }
       | undefined;
@@ -299,18 +299,19 @@ export function createRunnerManager({
         const job = unwrap(runJobResult);
 
         const { metadata } = job;
-        const {
-          statistics: {
-            query: { totalBytesBilled, cacheHit },
-          },
-        } = metadata;
+        const { statistics } = metadata;
 
-        const bytes = format(parseInt(totalBytesBilled, 10));
-        logger.log(`result: ${bytes} to be billed (cache: ${cacheHit})`);
-        status.succeedBilled({
-          bytes,
-          cacheHit,
-        });
+        const bytes = format(parseInt(statistics.query.totalBytesBilled, 10));
+        const cacheHit = isStandaloneStatistics(statistics)
+          ? statistics.query.cacheHit
+          : false;
+        if (isStandaloneStatistics(statistics)) {
+          logger.log(`result: ${bytes} to be billed (cache: ${cacheHit})`);
+          status.succeedBilled({
+            bytes,
+            cacheHit,
+          });
+        }
 
         const renderMetadataResult = await renderer.renderMetadata(metadata);
         if (!renderMetadataResult.success) {
@@ -323,21 +324,36 @@ export function createRunnerManager({
         if (!getTableResult.success) {
           const error = getTableResult.value;
           if (error.type === "NoDestinationTable") {
-            //----- CREATE PROCEDURE
-            const routineResult = await job.getRoutine();
-            if (!routineResult.success) {
-              logger.error(routineResult);
-              await renderer.failProcessing(routineResult.value);
+            //----- child jobs
+            const getChildrenResult = await job.getChildren();
+            if (!getChildrenResult.success) {
+              logger.error(getChildrenResult);
+              await renderer.failProcessing(getChildrenResult.value);
               return;
             }
-            const routine = unwrap(routineResult);
+            const { tables, routines } = unwrap(getChildrenResult);
 
-            const renderRoutineResult = await renderer.renderRoutine(routine);
-            if (!renderRoutineResult.success) {
-              logger.error(renderRoutineResult);
-              await renderer.failProcessing(renderRoutineResult.value);
-              return;
+            // for (const table of tables) {
+            {
+              const result = await renderer.renderTables(tables);
+              if (!result.success) {
+                logger.error(result);
+                await renderer.failProcessing(result.value);
+                return;
+              }
             }
+            // }
+
+            // for (const routine of routines) {
+            {
+              const result = await renderer.renderRoutines(routines);
+              if (!result.success) {
+                logger.error(result);
+                await renderer.failProcessing(result.value);
+                return;
+              }
+            }
+            // }
 
             await renderer.successProcessing();
             return;
@@ -348,20 +364,8 @@ export function createRunnerManager({
           return;
         }
         const table = unwrap(getTableResult);
-        previewable = { table };
 
-        const createFlatResult = createFlat(table.schema.fields);
-        if (!createFlatResult.success) {
-          logger.error(createFlatResult);
-          await renderer.failProcessing(createFlatResult.value);
-          return;
-        }
-        const flat = createFlatResult.value;
-
-        const renderTableResult = await renderer.renderTable({
-          table,
-          heads: flat.heads,
-        });
+        const renderTableResult = await renderer.renderTables([table]);
         if (!renderTableResult.success) {
           logger.error(renderTableResult);
           await renderer.failProcessing(renderTableResult.value);
@@ -452,37 +456,6 @@ export function createRunnerManager({
 
       async focusOnTab(tab) {
         await renderer.focusOnTab(tab);
-      },
-
-      async preview() {
-        if (!previewable) {
-          logger.error(`not previewable`);
-          return;
-        }
-
-        logger.log(`preview`);
-
-        const {
-          table: {
-            tableReference: { projectId, datasetId, tableId },
-          },
-        } = previewable;
-
-        const id = `${projectId}.${datasetId}.${tableId}`;
-        const query = `SELECT * FROM \`${id}\``;
-        logger.log("query:", query);
-
-        const runnerResult = await runnerManager.getWithQuery({
-          title: tableId,
-          query,
-          viewColumn: renderer.viewColumn,
-        });
-        if (!runnerResult.success) {
-          return;
-        }
-        const runner = unwrap(runnerResult);
-
-        await runner.run();
       },
 
       dispose() {

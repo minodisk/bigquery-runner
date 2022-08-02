@@ -1,6 +1,5 @@
 import { PassThrough } from "stream";
 import type { Field, StructuralRow } from "shared";
-import { unwrap } from "shared";
 import {
   createCSVFormatter,
   createFlat,
@@ -138,10 +137,6 @@ const createMockStream = () => {
 describe("formatter", () => {
   describe("createJSONLinesFormatter", () => {
     it("should be format empty", async () => {
-      const flatResult = createFlat([]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
       const stream = createMockStream();
       const formatter = createJSONLinesFormatter({
         writer: stream.writer,
@@ -155,10 +150,6 @@ describe("formatter", () => {
     });
 
     it("should be format all types", async () => {
-      const flatResult = createFlat([]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
       const stream = createMockStream();
       const formatter = createJSONLinesFormatter({
         writer: stream.writer,
@@ -182,10 +173,6 @@ describe("formatter", () => {
 
   describe("createJSONFormatter", () => {
     it("should be format empty", async () => {
-      const flatResult = createFlat([]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
       const stream = createMockStream();
       const formatter = createJSONFormatter({
         writer: stream.writer,
@@ -200,10 +187,6 @@ describe("formatter", () => {
     });
 
     it("should be format all types", async () => {
-      const flatResult = createFlat([]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
       const stream = createMockStream();
       const formatter = createJSONFormatter({ writer: stream.writer });
 
@@ -223,11 +206,7 @@ describe("formatter", () => {
 
   describe("createCSVFormatter", () => {
     it("should be format empty", async () => {
-      const flatResult = createFlat([]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
+      const flat = createFlat([]);
       const stream = createMockStream();
       const formatter = createCSVFormatter({
         flat,
@@ -243,11 +222,7 @@ describe("formatter", () => {
     });
 
     it("should be format all types", async () => {
-      const flatResult = createFlat(fields);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
+      const flat = createFlat(fields);
       const stream = createMockStream();
       const formatter = createCSVFormatter({
         flat,
@@ -270,14 +245,10 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
     });
 
     it("should be output header with option", async () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         { name: "a", type: "INTEGER", mode: "NULLABLE" },
         { name: "b", type: "STRING", mode: "NULLABLE" },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
       const stream = createMockStream();
       const formatter = createCSVFormatter({
         flat,
@@ -310,14 +281,10 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
     });
 
     it("should be output TSV with option", async () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         { name: "a", type: "INTEGER", mode: "NULLABLE" },
         { name: "b", type: "STRING", mode: "NULLABLE" },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
       const stream = createMockStream();
       const formatter = createCSVFormatter({
         flat,
@@ -353,13 +320,9 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
 
   describe("createMarkdownFormatter", () => {
     it("should be format empty", async () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
       const stream = createMockStream();
       const formatter = createMarkdownFormatter({
         flat,
@@ -376,13 +339,9 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
     });
 
     it("should be format simple", async () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
       const stream = createMockStream();
       const formatter = createMarkdownFormatter({
         flat,
@@ -407,7 +366,7 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
     });
 
     it("should be format complex", async () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         { name: "a", type: "INTEGER", mode: "NULLABLE" },
         {
           name: "b",
@@ -420,10 +379,6 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
         },
         { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
       const stream = createMockStream();
       const formatter = createMarkdownFormatter({
         flat,
@@ -445,11 +400,7 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
     });
 
     it("should be format all types", async () => {
-      const flatResult = createFlat(fields);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
+      const flat = createFlat(fields);
       const stream = createMockStream();
       const formatter = createMarkdownFormatter({
         flat,
@@ -475,13 +426,9 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
 
   describe("createTableFormatter", () => {
     it("should be format empty", async () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
       const stream = createMockStream();
       const formatter = createTableFormatter({
         flat,
@@ -496,13 +443,9 @@ false,0,0,0,0,,,2016-01-02,2016-01-02T15:04:05Z,15:04:05Z,2016-01-02T15:04:05Z,0
     });
 
     it("should be format simple", async () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         { name: "foo", type: "INTEGER", mode: "NULLABLE" },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
       const stream = createMockStream();
       const formatter = createTableFormatter({
         flat,
@@ -530,7 +473,7 @@ foo
     });
 
     it("should be format complex", async () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         { name: "a", type: "INTEGER", mode: "NULLABLE" },
         {
           name: "b",
@@ -543,10 +486,6 @@ foo
         },
         { name: "e", type: "BOOLEAN", mode: "NULLABLE" },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
       const stream = createMockStream();
       const formatter = createTableFormatter({
         flat,
@@ -572,11 +511,7 @@ a    b.c    b.d  e
     });
 
     it("should be format all types", async () => {
-      const flatResult = createFlat(fields);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
+      const flat = createFlat(fields);
       const stream = createMockStream();
       const formatter = createTableFormatter({
         flat,

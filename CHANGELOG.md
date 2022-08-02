@@ -2,6 +2,21 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.12.0
+
+### Added
+
+- Display child jobs' result.
+  ![Multiple table pane](https://user-images.githubusercontent.com/514164/182406285-43b20d92-7dde-47a5-8517-82c839f8b7f2.gif)
+- Added tree view of resources.
+  ![Tree view](https://user-images.githubusercontent.com/514164/182406887-c8a62194-637c-4747-98d7-616e8cfa04e9.png)
+
+### Changed
+
+- Changed schema table direction from horizontal to vertical.
+  ![Schema table](https://user-images.githubusercontent.com/514164/182407441-847bf26f-38fa-452d-b5a6-d72608c9e69f.png)
+- Schema tabs eliminated and merged into table tabs.
+
 ## v1.11.0
 
 ### Added

@@ -1,22 +1,25 @@
 {
-  "event": "routine",
-  "payload": {
-    "routine": {
-      "id": "procedure",
-      "baseUrl": "/routines",
-      "metadata": {
-        "etag": "eJ5GgfJUCQyq1x9zqeFsKQ==",
-        "routineReference": {
-          "projectId": "minodisk-api",
-          "datasetId": "testing",
-          "routineId": "procedure"
-        },
-        "routineType": "PROCEDURE",
-        "creationTime": "1657985972727",
-        "lastModifiedTime": "1657985972727",
-        "language": "SQL",
-        "definitionBody": "begin\n  select * from testing.create;\nend"
+  "event": "routines",
+  "payload": [
+    {
+      "id": "minodisk-api.testing.procedure",
+      "routine": {
+        "id": "procedure",
+        "baseUrl": "/routines",
+        "metadata": {
+          "etag": "eJ5GgfJUCQyq1x9zqeFsKQ==",
+          "routineReference": {
+            "projectId": "minodisk-api",
+            "datasetId": "testing",
+            "routineId": "procedure"
+          },
+          "routineType": "PROCEDURE",
+          "creationTime": "1657985972727",
+          "lastModifiedTime": "1657985972727",
+          "language": "SQL",
+          "definitionBody": "begin\n  select * from testing.create;\nend"
+        }
       }
     }
-  }
+  ]
 }

@@ -37,7 +37,10 @@ function buildType(value) {
   }
   if (value.type === 'array') {
     if (!value.default) {
-      return `Array<any>`
+      return `Array<any>`;
+    }
+    if (value.items) {
+      return `Array<${value.items.type}>`;
     }
     const typeSet = value.default.reduce((s, v) => {
       s.add(typeof v)

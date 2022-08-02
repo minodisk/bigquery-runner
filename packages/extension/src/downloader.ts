@@ -11,11 +11,11 @@ import {
   createMarkdownFormatter,
   createTableFormatter,
 } from "core";
-import type { Field, Format, Result, RunnerID, UnknownError } from "shared";
+import type { Field, Format, RunnerID } from "shared";
 import {
+  isStandaloneStatistics,
   commas,
   formats,
-  succeed,
   errorToString,
   tryCatchSync,
   unwrap,
@@ -45,7 +45,7 @@ export function createDownloader({
     statusManager,
     logger: parentLogger.createChild("jsonl"),
     createFormatter: ({ writer }) => {
-      return succeed(createJSONLinesFormatter({ writer }));
+      return createJSONLinesFormatter({ writer });
     },
   });
   const json = createWriter({
@@ -53,7 +53,7 @@ export function createDownloader({
     statusManager,
     logger: parentLogger.createChild("json"),
     createFormatter({ writer }) {
-      return succeed(createJSONFormatter({ writer }));
+      return createJSONFormatter({ writer });
     },
   });
   const csv = createWriter({
@@ -61,19 +61,12 @@ export function createDownloader({
     statusManager,
     logger: parentLogger.createChild("csv"),
     createFormatter({ fields, writer, config }) {
-      const flatResult = createFlat(fields);
-      if (!flatResult.success) {
-        return flatResult;
-      }
-      const flat = unwrap(flatResult);
-
-      return succeed(
-        createCSVFormatter({
-          flat,
-          writer,
-          options: config.downloader.csv,
-        })
-      );
+      const flat = createFlat(fields);
+      return createCSVFormatter({
+        flat,
+        writer,
+        options: config.downloader.csv,
+      });
     },
   });
   const markdown = createWriter({
@@ -81,13 +74,8 @@ export function createDownloader({
     statusManager,
     logger: parentLogger.createChild("markdown"),
     createFormatter({ fields, writer }) {
-      const flatResult = createFlat(fields);
-      if (!flatResult.success) {
-        return flatResult;
-      }
-      const flat = unwrap(flatResult);
-
-      return succeed(createMarkdownFormatter({ flat, writer }));
+      const flat = createFlat(fields);
+      return createMarkdownFormatter({ flat, writer });
     },
   });
   const text = createWriter({
@@ -95,13 +83,8 @@ export function createDownloader({
     statusManager,
     logger: parentLogger.createChild("text"),
     createFormatter({ fields, writer }) {
-      const flatResult = createFlat(fields);
-      if (!flatResult.success) {
-        return flatResult;
-      }
-      const flat = unwrap(flatResult);
-
-      return succeed(createTableFormatter({ flat, writer }));
+      const flat = createFlat(fields);
+      return createTableFormatter({ flat, writer });
     },
   });
 
@@ -188,7 +171,7 @@ const createWriter =
         writer: NodeJS.WritableStream;
         config: Config;
       }>
-    ) => Result<UnknownError, Formatter>;
+    ) => Formatter;
   }) =>
   async ({
     runnerId,
@@ -244,8 +227,11 @@ const createWriter =
     }
     const job = unwrap(createRunJobResult);
 
-    const { totalBytesBilled, cacheHit } = job.metadata.statistics.query;
-    const bytes = format(parseInt(totalBytesBilled, 10));
+    const { statistics } = job.metadata;
+    const cacheHit = isStandaloneStatistics(statistics)
+      ? statistics.query.cacheHit
+      : false;
+    const bytes = format(parseInt(statistics.query.totalBytesBilled, 10));
     status.succeedBilled({ bytes, cacheHit });
     logger.log(`${bytes} to be billed (cache: ${cacheHit})`);
     report({ message: `${bytes} to be billed (cache: ${cacheHit})` });
@@ -289,18 +275,11 @@ const createWriter =
     logger.log(`stream is opened`);
     report({ message: `stream is opened` });
 
-    const createFormatterResult = createFormatter({
+    const formatter = createFormatter({
       fields: table.schema.fields,
       writer: stream,
       config,
     });
-    if (!createFormatterResult.success) {
-      logger.error(createFormatterResult);
-      await close();
-      showError(createFormatterResult);
-      return;
-    }
-    const formatter = createFormatterResult.value;
 
     logger.log(`writing head`);
     report({ message: `writing head` });

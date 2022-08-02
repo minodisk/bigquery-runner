@@ -4,7 +4,7 @@ import formatDuration from "date-fns/formatDuration";
 import formatISO from "date-fns/formatISO";
 import React from "react";
 import type { Metadata } from "shared";
-import { getJobName } from "shared";
+import { isStandaloneStatistics, getJobName } from "shared";
 import { Breakable } from "../ui/Breakable";
 import { CopyButton } from "../ui/CopyButton";
 
@@ -63,7 +63,8 @@ export const Job = ({ metadata }: { metadata: Metadata }) => {
               <Text>
                 {bytes(Number(metadata.statistics.query.totalBytesProcessed))}
               </Text>
-              {metadata.statistics.query.cacheHit ? (
+              {isStandaloneStatistics(metadata.statistics) &&
+              metadata.statistics.query.cacheHit ? (
                 <Text>(results cached)</Text>
               ) : null}
             </HStack>

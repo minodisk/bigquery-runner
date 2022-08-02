@@ -1,14 +1,9 @@
-import { unwrap } from "shared";
 import { createFlat } from "./flat";
 
 describe("flat", () => {
   describe("structToRows", () => {
     it("Empty", () => {
-      const flatResult = createFlat([]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
+      const flat = createFlat([]);
 
       expect(flat.getNumberedRows({ structs: [], rowNumberStart: 0n })).toEqual(
         []
@@ -16,7 +11,7 @@ describe("flat", () => {
     });
 
     it("Flat", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -28,10 +23,6 @@ describe("flat", () => {
           mode: "REQUIRED",
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({
@@ -57,7 +48,7 @@ describe("flat", () => {
     });
 
     it("Struct", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -81,10 +72,6 @@ describe("flat", () => {
           mode: "REQUIRED",
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({
@@ -114,7 +101,7 @@ describe("flat", () => {
     });
 
     it("Nullable Struct", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRUCT",
@@ -140,10 +127,6 @@ describe("flat", () => {
           ],
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({
@@ -200,7 +183,7 @@ describe("flat", () => {
     });
 
     it("Array<Nullable Struct>", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRUCT",
@@ -233,10 +216,6 @@ describe("flat", () => {
           ],
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({
@@ -288,7 +267,7 @@ describe("flat", () => {
     });
 
     it("Empty Array<Value>", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -305,10 +284,6 @@ describe("flat", () => {
           mode: "REQUIRED",
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({
@@ -336,7 +311,7 @@ describe("flat", () => {
     });
 
     it("Array<Value>", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -358,10 +333,6 @@ describe("flat", () => {
           mode: "REPEATED",
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({
@@ -403,7 +374,7 @@ describe("flat", () => {
     });
 
     it("Empty Array<Struct>", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -437,10 +408,6 @@ describe("flat", () => {
           mode: "REQUIRED",
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({
@@ -470,7 +437,7 @@ describe("flat", () => {
     });
 
     it("Array<Struct>", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRING",
@@ -494,10 +461,6 @@ describe("flat", () => {
           ],
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({
@@ -547,7 +510,7 @@ describe("flat", () => {
     });
 
     it("Array<Struct<Array<Struct>>>", () => {
-      const flatResult = createFlat([
+      const flat = createFlat([
         {
           name: "a",
           type: "STRUCT",
@@ -568,10 +531,6 @@ describe("flat", () => {
           ],
         },
       ]);
-      if (!flatResult.success) {
-        throw new Error("failed");
-      }
-      const flat = unwrap(flatResult);
 
       expect(
         flat.getNumberedRows({

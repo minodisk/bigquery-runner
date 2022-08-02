@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { errorToString, tryCatchSync } from "shared";
 import type {
   Accessor,
   Column,
@@ -9,8 +8,6 @@ import type {
   Value,
   Row,
   StructuralRow,
-  Result,
-  UnknownError,
 } from "shared";
 import { valueToPrimitive } from "./transform";
 
@@ -24,31 +21,21 @@ export type Flat = Readonly<{
   ): ReadonlyArray<NumberedRows>;
 }>;
 
-export function createFlat(
-  fields: ReadonlyArray<Field>
-): Result<UnknownError, Flat> {
-  return tryCatchSync(
-    () => {
-      const heads = fieldsToHeads(fields);
-      const columns = fieldsToColumns(fields);
-      return {
-        heads,
-        getNumberedRows({ structs, rowNumberStart }) {
-          return structs.map((struct, i) => {
-            const rows = structToRows({ heads, columns, struct });
-            return {
-              rowNumber: `${rowNumberStart + BigInt(i)}`,
-              rows,
-            };
-          });
-        },
-      };
+export function createFlat(fields: ReadonlyArray<Field>): Flat {
+  const heads = fieldsToHeads(fields);
+  const columns = fieldsToColumns(fields);
+  return {
+    heads,
+    getNumberedRows({ structs, rowNumberStart }) {
+      return structs.map((struct, i) => {
+        const rows = structToRows({ heads, columns, struct });
+        return {
+          rowNumber: `${rowNumberStart + BigInt(i)}`,
+          rows,
+        };
+      });
     },
-    (err) => ({
-      type: "Unknown" as const,
-      reason: errorToString(err),
-    })
-  );
+  };
 }
 
 function fieldsToHeads(fields: ReadonlyArray<Field>): ReadonlyArray<Accessor> {
