@@ -305,13 +305,11 @@ export function createRunnerManager({
         const cacheHit = isStandaloneStatistics(statistics)
           ? statistics.query.cacheHit
           : false;
-        if (isStandaloneStatistics(statistics)) {
-          logger.log(`result: ${bytes} to be billed (cache: ${cacheHit})`);
-          status.succeedBilled({
-            bytes,
-            cacheHit,
-          });
-        }
+        logger.log(`result: ${bytes} to be billed (cache: ${cacheHit})`);
+        status.succeedBilled({
+          bytes,
+          cacheHit,
+        });
 
         const renderMetadataResult = await renderer.renderMetadata(metadata);
         if (!renderMetadataResult.success) {
@@ -333,7 +331,6 @@ export function createRunnerManager({
             }
             const { tables, routines } = unwrap(getChildrenResult);
 
-            // for (const table of tables) {
             {
               const result = await renderer.renderTables(tables);
               if (!result.success) {
@@ -342,9 +339,7 @@ export function createRunnerManager({
                 return;
               }
             }
-            // }
 
-            // for (const routine of routines) {
             {
               const result = await renderer.renderRoutines(routines);
               if (!result.success) {
@@ -353,7 +348,6 @@ export function createRunnerManager({
                 return;
               }
             }
-            // }
 
             await renderer.successProcessing();
             return;

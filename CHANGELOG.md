@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.12.1
+
+### Changed
+
+- Fixed problem with billing status spinner not stopping in some cases.
+
 ## v1.12.0
 
 ### Added
