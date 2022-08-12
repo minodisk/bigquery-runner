@@ -44,19 +44,29 @@ An extension to query BigQuery directly and view the results in VSCode.
 
 ## Authentication
 
-This extension requires authentication to the Google Cloud API. You can start using it in the following two steps.
+This extension requires authentication to the Google Cloud API. You can get started by authenticating in one of the following two ways.
+
+### Gcloud Credential ([Recommended](https://cloud.google.com/iam/docs/best-practices-service-accounts#development))
+
+1. Run [`gcloud auth application-default login`](https://cloud.google.com/sdk/gcloud/reference/auth/application-default) in your terminal.
+1. Set `bigqueryRunner.projectId` in `setting.json`.
+
+- Don't set `bigqueryRunner.keyFilename` in `setting.json`.
+- Don't set `GOOGLE_APPLICATION_CREDENTIALS` as an environment variable.
+
+### Service Account Key
 
 1. [Create a service account and its key](https://cloud.google.com/docs/authentication/getting-started).
-    - Give the service account the role of [`roles/bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#bigquery.user).
-2. Tell the key path to this extension in one of the following two ways:
+    - Give the service account the necessary roles. Such as [`roles/bigquery.user`](https://cloud.google.com/bigquery/docs/access-control#bigquery.user) for example.
+1. Tell the key path to this extension in one of the following two ways:
     - Set the path to the key `bigqueryRunner.keyFilename` in `settings.json`.
-    - [Set the path to environment variable `GOOGLE_APPLICATION_CREDENTIALS`](https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable).
+    - [Set the path to the key as the environment variable `GOOGLE_APPLICATION_CREDENTIALS`](https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable).
 
 ## Usage
 
 1. Open a query file with `.bqsql` extension.
-2. Open the command palette.
-3. Run `BigQuery Runner: Run`.
+1. Open the command palette.
+1. Run `BigQuery Runner: Run`.
 
 ## Commands
 

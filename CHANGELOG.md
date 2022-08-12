@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.12.2
+
+### Added
+
+- Added an explanation of how to authenticate using Gcloud Credential to the chapter on authentication methods in the README.
+
 ## v1.12.1
 
 ### Changed

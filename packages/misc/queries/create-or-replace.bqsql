@@ -1,5 +1,5 @@
 create or replace table
-    `testing.create_or_replace`
+    `minodisk-api.testing.create_or_replace`
 as
     select 1 as a, 'foo' as b
     union all
