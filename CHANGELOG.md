@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.12.3
+
+### Changed
+
+- Fixed problem of incorrectly parsing `@` and `?` in strings to query parameters. [#29](https://github.com/minodisk/bigquery-runner/issues/29)
+
 ## v1.12.2
 
 ### Added

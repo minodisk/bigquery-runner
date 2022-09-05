@@ -1,0 +1,21 @@
+SELECT
+    word,
+    word_count
+FROM
+    `bigquery-public-data.samples.shakespeare`
+WHERE
+    word != "@a"
+    AND word != '@b'
+    AND word != '@c it\'s @c'
+    AND word != "@d it\"s @d"
+    AND word != """@e"""
+    AND word != """
+@f
+"""
+    AND word != """
+\""" @f
+"""
+    AND corpus = @corpus -- "romeoandjuliet" 
+    AND word_count >= @min_word_count -- 250
+ORDER BY
+    word_count DESC

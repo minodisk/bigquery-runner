@@ -6,6 +6,67 @@ describe("parser", () => {
       expect(parameters(``)).toStrictEqual({ named: [], positional: [] });
     });
 
+    it("should ignore ? in quoted string", async () => {
+      expect(parameters(`"abc?"`)).toStrictEqual({ named: [], positional: [] });
+      expect(parameters(`"it's?"`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(parameters(`'it\\'s?'`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(parameters(`'Title: "Boy?"'`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+    });
+
+    it("should ignore ? in triple-quoted string", async () => {
+      expect(parameters(`"""abc?"""`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(parameters(`'''it's?'''`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(parameters(`'''Title: "Boy?"'''`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(
+        parameters(`'''two
+lines?'''`)
+      ).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(parameters(`'''why\\?'''`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+    });
+
+    it("should ignore ? in raw string", async () => {
+      expect(parameters(`R"ab?c+"`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(parameters(`r'''ab?c+'''`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(parameters(`R"""ab?c+"""`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+      expect(parameters(`r'f\\(abc,(.*?),def\\)'`)).toStrictEqual({
+        named: [],
+        positional: [],
+      });
+    });
+
     it("should ignore sharp commented ?", async () => {
       expect(parameters(`#?`)).toStrictEqual({ named: [], positional: [] });
     });
@@ -135,6 +196,67 @@ ORDER BY
               },
               end: {
                 line: 7,
+                character: 23,
+              },
+            },
+          },
+        ],
+      });
+    });
+
+    it("should find positional params from complex query with strings", () => {
+      expect(
+        parameters(`SELECT
+    word,
+    word_count
+FROM
+    \`bigquery-public-data.samples.shakespeare\`
+WHERE
+    word != "?"
+    AND word != '?'
+    AND word != '? it\\'s ?'
+    AND word != "? it\\"s ?"
+    AND word != """?"""
+    AND word != """
+?
+"""
+    AND word != """
+\\""" ?
+"""
+    AND corpus = ? -- "romeoandjuliet" 
+    AND word_count >= ? -- 250
+ORDER BY
+    word_count DESC
+`)
+      ).toStrictEqual({
+        named: [],
+        positional: [
+          {
+            type: "positional",
+            token: "?",
+            index: 0,
+            range: {
+              start: {
+                line: 17,
+                character: 17,
+              },
+              end: {
+                line: 17,
+                character: 18,
+              },
+            },
+          },
+          {
+            type: "positional",
+            token: "?",
+            index: 1,
+            range: {
+              start: {
+                line: 18,
+                character: 22,
+              },
+              end: {
+                line: 18,
                 character: 23,
               },
             },
@@ -389,7 +511,72 @@ ORDER BY
       });
     });
 
-    it("should find named params from complex query with comment", () => {
+    it("should find named params from complex query with strings", () => {
+      expect(
+        parameters(`SELECT
+    word,
+    word_count
+FROM
+    \`bigquery-public-data.samples.shakespeare\`
+WHERE
+    word != "@a"
+    AND word != '@b'
+    AND word != '@c it\\'s @c'
+    AND word != "@d it\\"s @d"
+    AND word != """@e"""
+    AND word != """
+@f
+"""
+    AND word != """
+\\""" @f
+"""
+    AND corpus = @corpus -- "romeoandjuliet" 
+    AND word_count >= @min_word_count -- 250
+ORDER BY
+    word_count DESC
+`)
+      ).toStrictEqual({
+        named: [
+          {
+            type: "named",
+            token: "@corpus",
+            name: "corpus",
+            ranges: [
+              {
+                start: {
+                  line: 17,
+                  character: 17,
+                },
+                end: {
+                  line: 17,
+                  character: 24,
+                },
+              },
+            ],
+          },
+          {
+            type: "named",
+            token: "@min_word_count",
+            name: "min_word_count",
+            ranges: [
+              {
+                start: {
+                  line: 18,
+                  character: 22,
+                },
+                end: {
+                  line: 18,
+                  character: 37,
+                },
+              },
+            ],
+          },
+        ],
+        positional: [],
+      });
+    });
+
+    it("should find named params from complex query with comments", () => {
       expect(
         parameters(`SELECT
     corpus,

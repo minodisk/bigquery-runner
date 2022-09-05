@@ -28,15 +28,21 @@ export const parameters = (query: string): Parameters => {
   let character = 0;
   let index = 0;
   let comment: "single" | "multi" | null = null;
+  let string: {
+    quote: "single" | "double";
+    lines: "single" | "multi";
+  } | null = null;
   while (pointer < query.length) {
-    const curr = query[pointer];
-    if (!curr) {
+    const char0 = query[pointer];
+    if (!char0) {
       break;
     }
-    const next = query[pointer + 1];
+    const char1 = query[pointer + 1];
+    const char2 = query[pointer + 2];
+    const char3 = query[pointer + 3];
 
     // Line break
-    if (curr === "\n") {
+    if (char0 === "\n") {
       pointer += 1;
       line += 1;
       character = 0;
@@ -46,7 +52,7 @@ export const parameters = (query: string): Parameters => {
       }
       continue;
     }
-    if (curr === "\r" && next === "\n") {
+    if (char0 === "\r" && char1 === "\n") {
       pointer += 2;
       line += 1;
       character = 0;
@@ -57,8 +63,72 @@ export const parameters = (query: string): Parameters => {
       continue;
     }
 
+    // Ignore escaped quote in single-line string
+    if (
+      string !== null &&
+      string.lines === "single" &&
+      char0 === "\\" &&
+      ((string.quote === "single" && char1 === "'") ||
+        (string.quote === "double" && char1 === '"'))
+    ) {
+      pointer += 2;
+      character += 2;
+      continue;
+    }
+
+    // Ignore escaped quote in multi-line string
+    if (
+      string !== null &&
+      string.lines === "multi" &&
+      char0 === "\\" &&
+      ((string.quote === "single" &&
+        char1 === "'" &&
+        char2 === "'" &&
+        char3 === "'") ||
+        (string.quote === "double" &&
+          char1 === '"' &&
+          char2 === '"' &&
+          char3 === '"'))
+    ) {
+      pointer += 4;
+      character += 4;
+      continue;
+    }
+
+    // End multi-line string
+    if (
+      string !== null &&
+      string.lines === "multi" &&
+      ((string.quote === "single" &&
+        char0 === "'" &&
+        char1 === "'" &&
+        char2 === "'") ||
+        (string.quote === "double" &&
+          char0 === '"' &&
+          char1 === '"' &&
+          char2 === '"'))
+    ) {
+      pointer += 3;
+      character += 3;
+      string = null;
+      continue;
+    }
+
+    // End single-line string
+    if (
+      string !== null &&
+      string.lines === "single" &&
+      ((string.quote === "single" && char0 === "'") ||
+        (string.quote === "double" && char0 === '"'))
+    ) {
+      pointer += 1;
+      character += 1;
+      string = null;
+      continue;
+    }
+
     // End asterisk multi-line comment
-    if (curr === "*" && next === "/" && comment === "multi") {
+    if (comment === "multi" && char0 === "*" && char1 === "/") {
       pointer += 2;
       character += 2;
       comment = null;
@@ -66,28 +136,68 @@ export const parameters = (query: string): Parameters => {
     }
 
     // During commenting, stop parsing and just move the pointer forward.
-    if (comment) {
+    if (comment || string) {
       pointer += 1;
       character += 1;
       continue;
     }
 
+    // Start triple-quoted string
+    if (char0 === "'" && char1 === "'" && char2 === "'") {
+      pointer += 3;
+      character += 3;
+      string = {
+        quote: "single",
+        lines: "multi",
+      };
+      continue;
+    }
+    if (char0 === '"' && char1 === '"' && char2 === '"') {
+      pointer += 3;
+      character += 3;
+      string = {
+        quote: "double",
+        lines: "multi",
+      };
+      continue;
+    }
+
+    // Start quoted string
+    if (char0 === "'") {
+      pointer += 1;
+      character += 1;
+      string = {
+        quote: "single",
+        lines: "single",
+      };
+      continue;
+    }
+    if (char0 === '"') {
+      pointer += 1;
+      character += 1;
+      string = {
+        quote: "double",
+        lines: "single",
+      };
+      continue;
+    }
+
     // Start sharp single-line comment
-    if (curr === "#") {
+    if (char0 === "#") {
       pointer += 1;
       character += 1;
       comment = "single";
       continue;
     }
     // Start dash single-line comment
-    if (curr === "-" && next === "-") {
+    if (char0 === "-" && char1 === "-") {
       pointer += 2;
       character += 2;
       comment = "single";
       continue;
     }
     // Start asterisk multi-line comment
-    if (curr === "/" && next === "*") {
+    if (char0 === "/" && char1 === "*") {
       pointer += 2;
       character += 2;
       comment = "multi";
@@ -95,7 +205,7 @@ export const parameters = (query: string): Parameters => {
     }
 
     // Positional parameter
-    if (curr === "?" && !isTokenChar(next)) {
+    if (char0 === "?" && !isTokenChar(char1)) {
       positional.push({
         type: "positional",
         token: "?",
@@ -113,7 +223,7 @@ export const parameters = (query: string): Parameters => {
     }
 
     // Named parameter
-    if (curr === "@") {
+    if (char0 === "@") {
       const start = { line, character };
 
       pointer += 1;

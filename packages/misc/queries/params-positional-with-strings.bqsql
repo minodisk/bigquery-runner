@@ -1,0 +1,21 @@
+SELECT
+    word,
+    word_count
+FROM
+    `bigquery-public-data.samples.shakespeare`
+WHERE
+    word != "?"
+    AND word != '?'
+    AND word != '? it\'s ?'
+    AND word != "? it\"s ?"
+    AND word != """?"""
+    AND word != """
+?
+"""
+    AND word != """
+\""" ?
+"""
+    AND corpus = ? -- "romeoandjuliet" 
+    AND word_count >= ? -- 250
+ORDER BY
+    word_count DESC
