@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.12.4
+
+### Changed
+
+- There are errors that can only be retrieved by dry-run, so try dry-run first, even when running.
+
 ## v1.12.3
 
 ### Changed

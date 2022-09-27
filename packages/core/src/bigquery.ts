@@ -158,17 +158,28 @@ export async function createClient(
 
   const client: Client = {
     async createRunJob(options) {
-      const createQueryJobResult = await runQuery({
+      const dryRunJobResult = await runQuery({
+        createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
+        options: {
+          ...options,
+          dryRun: true,
+        },
+      });
+      if (!dryRunJobResult.success) {
+        return dryRunJobResult;
+      }
+
+      const runJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
         options: {
           ...options,
           dryRun: false,
         },
       });
-      if (!createQueryJobResult.success) {
-        return createQueryJobResult;
+      if (!runJobResult.success) {
+        return runJobResult;
       }
-      const job = unwrap(createQueryJobResult);
+      const job = unwrap(runJobResult);
 
       const metadataResult = await tryCatch(
         async () => {
@@ -183,7 +194,9 @@ export async function createClient(
             });
           });
         },
-        (err) => ({ type: "NoJob" as const, reason: String(err) } as NoJobError)
+        (err) => {
+          return { type: "NoJob" as const, reason: String(err) } as NoJobError;
+        }
       );
       if (!metadataResult.success) {
         return metadataResult;
@@ -343,17 +356,17 @@ export async function createClient(
     },
 
     async createDryRunJob(options) {
-      const createQueryJobResult = await runQuery({
+      const dryRunJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
         options: {
           ...options,
           dryRun: true,
         },
       });
-      if (!createQueryJobResult.success) {
-        return createQueryJobResult;
+      if (!dryRunJobResult.success) {
+        return dryRunJobResult;
       }
-      const job = unwrap(createQueryJobResult);
+      const job = unwrap(dryRunJobResult);
       const { totalBytesProcessed } = job.metadata.statistics;
 
       return succeed({
