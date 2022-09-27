@@ -507,6 +507,16 @@ export function getPage(props: {
   nextPageToken?: string;
 }): Page {
   const totalRows = BigInt(props.totalRows);
+  if (totalRows === 0n) {
+    // no page
+    return {
+      hasPrev: false,
+      hasNext: false,
+      startRowNumber: 0n,
+      endRowNumber: 0n,
+      totalRows,
+    };
+  }
   const rows = BigInt(props.rows);
   const hasNext = !!props.nextPageToken;
   if (!props.prevPage) {

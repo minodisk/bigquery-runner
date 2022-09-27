@@ -6,7 +6,10 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 
 ### Changed
 
-- There are errors that can only be retrieved by dry-run, so try dry-run first, even when running.
+- Changed to dry-run first when running.
+  - This is because there are errors that can only be obtained by dry-run, especially for long queries.
+- Changed to correctly display the page in the viewer footer if the result does not exist.
+  - Display `0 - 0 of 0` instead of `1 - 0 of 0`.
 
 ## v1.12.3
 

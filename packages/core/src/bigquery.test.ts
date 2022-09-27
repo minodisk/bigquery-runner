@@ -141,6 +141,23 @@ describe("bigquery", () => {
   // it must be asserted in a serializable state.
   // Therefore, not only getPage but also toSerializablePage is tested.
   describe("getPage and toSerializablePage", () => {
+    it("should return no page", () => {
+      expect(
+        toSerializablePage(
+          getPage({
+            totalRows: "0",
+            rows: 0,
+          })
+        )
+      ).toStrictEqual({
+        hasPrev: false,
+        hasNext: false,
+        startRowNumber: "0",
+        endRowNumber: "0",
+        totalRows: "0",
+      });
+    });
+
     it("should return 1st page without prevPage", () => {
       expect(
         toSerializablePage(
