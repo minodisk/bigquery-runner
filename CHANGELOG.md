@@ -2,6 +2,16 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.13.0
+
+### Added
+
+- When a table in the tree view of resources is opened, the fields are now displayed.
+  - The name and type are displayed in the field.
+- Right-clicking on a table in the tree view of resources now displays a context menu of preview commands.
+
+![Fields in resources view](https://user-images.githubusercontent.com/514164/192826579-fe9127fe-4563-47a5-80a8-3b49219bd947.png)
+
 ## v1.12.4
 
 ### Changed

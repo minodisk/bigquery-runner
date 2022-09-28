@@ -4,6 +4,7 @@ import type {
   Job,
   JobResponse,
   Query,
+  TableField,
 } from "@google-cloud/bigquery";
 import type {
   Page,
@@ -22,6 +23,7 @@ import type {
   TableID,
   ChildJob,
   RoutineReference,
+  FieldReference,
 } from "shared";
 import {
   isChildDdlTableQuery,
@@ -59,7 +61,8 @@ export type Client = Readonly<{
   >;
   getProjectId(): Promise<ProjectID>;
   getDatasets(): Promise<Array<DatasetReference>>;
-  getTables(datasetId: DatasetID): Promise<Array<TableReference>>;
+  getTables(ref: DatasetReference): Promise<Array<TableReference>>;
+  getFields(ref: TableReference): Promise<Array<FieldReference>>;
   deleteDataset(datasetId: DatasetID): Promise<void>;
   deleteTable(ref: { datasetId: DatasetID; tableId: TableID }): Promise<void>;
 }>;
@@ -384,9 +387,22 @@ export async function createClient(
       return datasets.map((dataset) => dataset.metadata.datasetReference);
     },
 
-    async getTables(datasetId) {
+    async getTables({ datasetId }) {
       const [tables] = await bigQuery.dataset(datasetId).getTables();
       return tables.map((table) => table.metadata.tableReference);
+    },
+
+    async getFields(ref) {
+      const { datasetId, tableId } = ref;
+      const [metadata] = await bigQuery
+        .dataset(datasetId)
+        .table(tableId)
+        .getMetadata();
+      return metadata.schema.fields.map((field: TableField) => ({
+        ...ref,
+        fieldId: field.name,
+        type: field.type,
+      }));
     },
 
     async deleteDataset(datasetId) {

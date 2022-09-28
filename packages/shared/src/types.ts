@@ -346,6 +346,7 @@ export type Schema = Readonly<{
 export type ProjectID = string;
 export type DatasetID = string;
 export type TableID = string;
+export type FieldID = string;
 export type RoutineID = string;
 
 export type ProjectReference = Readonly<{
@@ -361,6 +362,14 @@ export type TableReference = Readonly<{
   projectId: ProjectID;
   datasetId: DatasetID;
   tableId: TableID;
+}>;
+
+export type FieldReference = Readonly<{
+  projectId: ProjectID;
+  datasetId: DatasetID;
+  tableId: TableID;
+  fieldId: FieldID;
+  type: string;
 }>;
 
 export type RoutineReference = Readonly<{

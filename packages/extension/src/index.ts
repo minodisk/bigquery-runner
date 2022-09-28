@@ -28,6 +28,7 @@ import {
   createStatusBarItemCreator,
   createStatusManager,
 } from "./statusManager";
+import type { TableElement } from "./tree";
 import { createTree } from "./tree";
 
 export async function activate(ctx: ExtensionContext) {
@@ -149,8 +150,8 @@ export async function activate(ctx: ExtensionContext) {
         [`${section}.deleteSelectedResources`]: async () => {
           await tree.deleteSelectedResources();
         },
-        [`${section}.previewTable`]: async () => {
-          await tree.previewTable();
+        [`${section}.previewTable`]: async (element: TableElement) => {
+          await tree.previewTable(element);
         },
       }).map(([name, action]) => commands.registerCommand(name, action))
     );

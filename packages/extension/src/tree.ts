@@ -2,6 +2,7 @@ import type { Client } from "core";
 import { createClient } from "core";
 import type {
   DatasetReference,
+  FieldReference,
   ProjectID,
   ProjectReference,
   TableReference,
@@ -12,7 +13,11 @@ import type { ConfigManager } from "./configManager";
 import type { Logger } from "./logger";
 import type { Previewer } from "./previewer";
 
-export type Element = ProjectElement | DatasetElement | TableElement;
+export type Element =
+  | ProjectElement
+  | DatasetElement
+  | TableElement
+  | FieldElement;
 export type ProjectElement = TreeItem & {
   contextValue: "project";
   id: string;
@@ -35,6 +40,14 @@ export type TableElement = TreeItem & {
   collapsibleState: TreeItemCollapsibleState;
 };
 
+export type FieldElement = TreeItem & {
+  contextValue: "field";
+  id: string;
+  label: string;
+  ref: FieldReference;
+  collapsibleState: TreeItemCollapsibleState;
+};
+
 export const createTree = ({
   logger,
   configManager,
@@ -46,7 +59,7 @@ export const createTree = ({
 }): Disposable & {
   refreshResources(): Promise<void>;
   deleteSelectedResources(): Promise<void>;
-  previewTable(): Promise<void>;
+  previewTable(element: TableElement): Promise<void>;
 } => {
   const clients = new Map<ProjectID, Client>();
   const emitter = new EventEmitter<null>();
@@ -148,7 +161,7 @@ export const createTree = ({
           if (!client) {
             return [];
           }
-          const tables = await client.getTables(element.label);
+          const tables = await client.getTables(element.ref);
           return tables.map((ref) => {
             const id = `${ref.projectId}:${ref.datasetId}.${ref.tableId}`;
             const elem: TableElement = {
@@ -156,11 +169,27 @@ export const createTree = ({
               id,
               tooltip: id,
               label: ref.tableId,
-              command: {
-                title: "Preview Table",
-                command: "bigqueryRunner.previewTable",
-                arguments: [ref],
-              },
+              ref,
+              collapsibleState: TreeItemCollapsibleState.Collapsed,
+            };
+            return elem;
+          });
+        }
+
+        if (element.contextValue === "table") {
+          const client = clients.get(element.ref.projectId);
+          if (!client) {
+            return [];
+          }
+          const fields = await client.getFields(element.ref);
+          return fields.map((ref) => {
+            const id = `${ref.projectId}:${ref.datasetId}.${ref.tableId}::${ref.fieldId}`;
+            const elem: FieldElement = {
+              contextValue: "field",
+              id,
+              tooltip: id,
+              label: `${ref.fieldId}`,
+              description: `${ref.type}`,
               ref,
               collapsibleState: TreeItemCollapsibleState.None,
             };
@@ -211,13 +240,9 @@ export const createTree = ({
       await this.refreshResources();
     },
 
-    async previewTable() {
-      console.log("previewTable:", tree.selection);
-      await Promise.all(
-        tree.selection
-          .filter((e): e is TableElement => e.contextValue === "table")
-          .map((e) => previewer.preview(e.ref))
-      );
+    async previewTable(element: TableElement) {
+      console.log("previewTable:", element);
+      await previewer.preview(element.ref);
     },
 
     dispose() {
