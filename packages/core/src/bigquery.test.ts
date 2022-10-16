@@ -8,29 +8,35 @@ import {
 describe("bigquery", () => {
   describe("checkAuthentication", () => {
     it("should pass with valid setting", async () => {
-      const getProjectId = jest.fn(() => Promise.resolve("PROJECT ID"));
+      const getCredentials = jest.fn(() =>
+        Promise.resolve({
+          client_email: "",
+          private_key: "",
+        })
+      );
       const result = await checkAuthentication({
         keyFilename: "XXXXX",
-        getProjectId,
+        getCredentials,
       });
       expect(result.success).toBeTruthy();
-      expect(result.value).toEqual("PROJECT ID");
+      expect(result.value).toEqual(undefined);
     });
 
     it("should fail invalid keyFilename", async () => {
-      const getProjectId = jest.fn(() =>
+      const getCredentials = jest.fn(() =>
         Promise.reject(
           new Error("Unable to detect a Project ID in the current environment.")
         )
       );
       const result = await checkAuthentication({
         keyFilename: "XXXXX",
-        getProjectId,
+        getCredentials,
       });
       expect(result.success).toBeFalsy();
       expect(result.value).toEqual({
         type: "Authentication",
-        reason: `Bad authentication: Make sure that "XXXXX", which is set in bigqueryRunner.keyFilename of setting.json, is the valid path to service account key file`,
+        reason: `Unable to detect a Project ID in the current environment.`,
+        hasKeyFilename: true,
       });
     });
 
@@ -41,24 +47,26 @@ describe("bigquery", () => {
         )
       );
       const result = await checkAuthentication({
-        getProjectId,
+        getCredentials: getProjectId,
       });
       expect(result.success).toBeFalsy();
       expect(result.value).toEqual({
         type: "Authentication",
-        reason: `Bad authentication: Set bigqueryRunner.keyFilename of your setting.json to the valid path to service account key file`,
+        reason: `Unable to detect a Project ID in the current environment.`,
+        hasKeyFilename: false,
       });
     });
 
     it("should fail with unknown error", async () => {
       const getProjectId = jest.fn(() => Promise.reject(new Error("foo")));
       const result = await checkAuthentication({
-        getProjectId,
+        getCredentials: getProjectId,
       });
       expect(result.success).toBeFalsy();
       expect(result.value).toEqual({
-        type: "Unknown",
+        type: "Authentication",
         reason: `foo`,
+        hasKeyFilename: false,
       });
     });
   });

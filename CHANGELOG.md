@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.14.0
+
+### Added
+
+- Added some setup guidance.
+  - [#32](https://github.com/minodisk/bigquery-runner/issues/32)
+
 ## v1.13.0
 
 ### Added

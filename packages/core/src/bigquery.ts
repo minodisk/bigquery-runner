@@ -6,6 +6,7 @@ import type {
   Query,
   TableField,
 } from "@google-cloud/bigquery";
+import type { CredentialBody } from "google-auth-library";
 import type {
   Page,
   Metadata,
@@ -37,14 +38,15 @@ import {
   fail,
 } from "shared";
 
-export type AuthenticationError = Err<"Authentication">;
+export type AuthenticationError = Err<"Authentication"> & {
+  hasKeyFilename: boolean;
+};
+export type NoProjectIDError = Err<"NoProjectID">;
 export type NoJobError = Err<"NoJob">;
 export type NoDestinationTableError = Err<"NoDestinationTable">;
 export type NoPageTokenError = Err<"NoPageToken">;
 export type QueryError = Err<"Query">;
-export type QueryWithPositionError = {
-  type: "QueryWithPosition";
-  reason: string;
+export type QueryWithPositionError = Err<"QueryWithPosition"> & {
   position: { line: number; character: number };
   suggestion?: { before: string; after: string };
 };
@@ -53,11 +55,27 @@ export type NoRowsError = Err<"NoRows">;
 export type Client = Readonly<{
   createRunJob(
     query: Omit<Query, "dryRun" | "query"> & { query: string }
-  ): Promise<Result<NoJobError | QueryError | QueryWithPositionError, RunJob>>;
+  ): Promise<
+    Result<
+      | AuthenticationError
+      | NoProjectIDError
+      | NoJobError
+      | QueryError
+      | QueryWithPositionError,
+      RunJob
+    >
+  >;
   createDryRunJob(
     query: Omit<Query, "dryRun">
   ): Promise<
-    Result<NoJobError | QueryError | QueryWithPositionError, DryRunJob>
+    Result<
+      | AuthenticationError
+      | NoProjectIDError
+      | NoJobError
+      | QueryError
+      | QueryWithPositionError,
+      DryRunJob
+    >
   >;
   getProjectId(): Promise<ProjectID>;
   getDatasets(): Promise<Array<DatasetReference>>;
@@ -101,7 +119,7 @@ export type DryRunJob = Readonly<{
 
 export async function createClient(
   options: BigQueryOptions
-): Promise<Result<Err<"Authentication" | "Unknown">, Client>> {
+): Promise<Result<AuthenticationError | UnknownError, Client>> {
   const bigQuery = new BigQuery({
     scopes: [
       // Query Drive data: https://cloud.google.com/bigquery/external-data-drive
@@ -111,10 +129,15 @@ export async function createClient(
   });
 
   // Check authentication
-  await checkAuthentication({
+  const res = await checkAuthentication({
     keyFilename: options.keyFilename,
-    getProjectId: bigQuery.getProjectId.bind(bigQuery),
+    getCredentials: bigQuery.authClient.getCredentials.bind(
+      bigQuery.authClient
+    ),
   });
+  if (!res.success) {
+    return res;
+  }
 
   const getTable = async (
     ref: TableReference
@@ -160,11 +183,12 @@ export async function createClient(
   };
 
   const client: Client = {
-    async createRunJob(options) {
+    async createRunJob(jobOptions) {
       const dryRunJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
+        keyFilename: options.keyFilename,
         options: {
-          ...options,
+          ...jobOptions,
           dryRun: true,
         },
       });
@@ -174,8 +198,9 @@ export async function createClient(
 
       const runJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
+        keyFilename: options.keyFilename,
         options: {
-          ...options,
+          ...jobOptions,
           dryRun: false,
         },
       });
@@ -222,7 +247,7 @@ export async function createClient(
         const result = await tryCatch(
           async () => {
             return job.getQueryResults({
-              maxResults: options.maxResults,
+              maxResults: jobOptions.maxResults,
               pageToken,
             });
           },
@@ -358,11 +383,12 @@ export async function createClient(
       return succeed(runJob);
     },
 
-    async createDryRunJob(options) {
+    async createDryRunJob(jobOptions) {
       const dryRunJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
+        keyFilename: options.keyFilename,
         options: {
-          ...options,
+          ...jobOptions,
           dryRun: true,
         },
       });
@@ -419,34 +445,43 @@ export async function createClient(
 
 export const checkAuthentication = async ({
   keyFilename,
-  getProjectId,
+  getCredentials,
 }: {
   keyFilename?: string;
-  getProjectId(): Promise<string>;
-}): Promise<Result<UnknownError | AuthenticationError, string>> => {
+  getCredentials: () => Promise<CredentialBody>;
+}): Promise<Result<AuthenticationError, void>> => {
   return tryCatch(
-    async () => getProjectId(),
+    async () => {
+      await getCredentials();
+    },
     (err) => {
       const reason = errorToString(err);
-      if (
-        reason.startsWith(
-          "Unable to detect a Project ID in the current environment."
-        )
-      ) {
-        if (keyFilename) {
-          return {
-            type: "Authentication" as const,
-            reason: `Bad authentication: Make sure that "${keyFilename}", which is set in bigqueryRunner.keyFilename of setting.json, is the valid path to service account key file`,
-          };
-        }
+
+      if (reason.startsWith(`ENOENT: no such file or directory, open `)) {
         return {
           type: "Authentication" as const,
-          reason: `Bad authentication: Set bigqueryRunner.keyFilename of your setting.json to the valid path to service account key file`,
+          reason: keyFilename
+            ? `Set an existed key file to "bigqueryRunner.keyFilename" in settings.json: ${reason}`
+            : `Login with an account: ${reason}`,
+          hasKeyFilename: !!keyFilename,
         };
       }
+
+      if (reason.startsWith("Could not load the default credentials.")) {
+        const r = reason.replace(/\s*Browse to https?:\/\/.*$/, "");
+        return {
+          type: "Authentication" as const,
+          reason: keyFilename
+            ? `Set an existed key file to "bigqueryRunner.keyFilename" in settings.json: ${r}`
+            : `Login with an account: ${r}`,
+          hasKeyFilename: !!keyFilename,
+        };
+      }
+
       return {
-        type: "Unknown" as const,
+        type: "Authentication" as const,
         reason,
+        hasKeyFilename: !!keyFilename,
       };
     }
   );
@@ -454,11 +489,21 @@ export const checkAuthentication = async ({
 
 export const runQuery = async ({
   createQueryJob,
+  keyFilename,
   options,
 }: {
   createQueryJob(options: Query | string): Promise<JobResponse>;
+  keyFilename?: string;
   options: Query;
-}): Promise<Result<QueryError | QueryWithPositionError, Job>> => {
+}): Promise<
+  Result<
+    | AuthenticationError
+    | NoProjectIDError
+    | QueryError
+    | QueryWithPositionError,
+    Job
+  >
+> => {
   return tryCatch(
     async () => {
       const [job] = await createQueryJob(options);
@@ -466,6 +511,40 @@ export const runQuery = async ({
     },
     (err: unknown) => {
       const reason = errorToString(err);
+
+      if (
+        reason.startsWith(
+          "Unable to detect a Project Id in the current environment."
+        )
+      ) {
+        return {
+          type: "NoProjectID" as const,
+          reason: `Set a project ID to "bigqueryRunner.projectId" in settings.json: ${reason}`,
+        };
+      }
+
+      if (reason.startsWith("Access Denied: Project ")) {
+        return {
+          type: "Authentication" as const,
+          reason: keyFilename
+            ? `Set an authorized key file to "bigqueryRunner.keyFilename" in settings.json: ${reason}`
+            : `Login with an authorized account: ${reason}`,
+          hasKeyFilename: !!keyFilename,
+        };
+      }
+
+      if (
+        reason.startsWith("invalid_grant: Invalid grant: account not found")
+      ) {
+        return {
+          type: "Authentication" as const,
+          reason: keyFilename
+            ? `Set a valid key file to "bigqueryRunner.keyFilename" in settings.json: ${reason}`
+            : `Login with a valid account: ${reason}`,
+          hasKeyFilename: !!keyFilename,
+        };
+      }
+
       const rPosition = /^(.+?) at \[(\d+?):(\d+?)\]$/;
       const rPositionResult = rPosition.exec(reason);
       if (!rPositionResult) {

@@ -5,6 +5,7 @@ import { unwrap } from "shared";
 import type { TextDocument, TextEditor } from "vscode";
 import { window } from "vscode";
 import type { ConfigManager } from "./configManager";
+import type { ErrorManager } from "./errorManager";
 import type { ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import { isBigQuery } from "./isBigQuery";
@@ -18,12 +19,14 @@ export function createDryRunner({
   logger,
   configManager,
   statusManager,
+  errorManager,
   errorMarkerManager,
   quickFixManager,
 }: Readonly<{
   logger: Logger;
   configManager: ConfigManager;
   statusManager: StatusManager;
+  errorManager: ErrorManager;
   errorMarkerManager: ErrorMarkerManager;
   quickFixManager: QuickFixManager;
 }>) {
@@ -89,10 +92,9 @@ export function createDryRunner({
       });
       if (!clientResult.success) {
         logger.error(clientResult);
-
-        const { reason } = unwrap(clientResult);
         status.errorProcessed();
-        await window.showErrorMessage(reason);
+        const err = unwrap(clientResult);
+        errorManager.show(err);
         return;
       }
       const client = unwrap(clientResult);
@@ -114,6 +116,8 @@ export function createDryRunner({
 
         const err = unwrap(dryRunJobResult);
         status.errorProcessed();
+        errorManager.show(err);
+
         if (err.type === "QueryWithPosition") {
           if (err.suggestion) {
             quickFix.register({
@@ -131,7 +135,7 @@ export function createDryRunner({
           errorMarker.markAll({ reason: err.reason });
           return;
         }
-        await window.showErrorMessage(err.reason);
+
         return;
       }
       errorMarker.clear();

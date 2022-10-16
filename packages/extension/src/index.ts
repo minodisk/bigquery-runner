@@ -18,6 +18,7 @@ import { commands, window, workspace } from "vscode";
 import { createConfigManager } from "./configManager";
 import { createDownloader } from "./downloader";
 import { createDryRunner } from "./dryRunner";
+import { createErrorManager } from "./errorManager";
 import { createErrorMarkerManager } from "./errorMarker";
 import { createLogger } from "./logger";
 import { createPreviewer } from "./previewer";
@@ -78,6 +79,10 @@ export async function activate(ctx: ExtensionContext) {
         runnerManager.get(runnerId)?.dispose();
       },
     });
+
+    const errorManager = createErrorManager({
+      logger: logger.createChild("errorManager"),
+    });
     const errorMarkerManager = createErrorMarkerManager(section);
     const quickFixManager = createQuickFixManager({ configManager });
 
@@ -86,12 +91,14 @@ export async function activate(ctx: ExtensionContext) {
       configManager,
       statusManager,
       rendererManager,
+      errorManager,
       errorMarkerManager,
     });
     const dryRunner = createDryRunner({
       logger: logger.createChild("dryRunner"),
       configManager,
       statusManager,
+      errorManager,
       errorMarkerManager,
       quickFixManager,
     });
@@ -113,6 +120,7 @@ export async function activate(ctx: ExtensionContext) {
       downloader,
       rendererManager,
       statusManager,
+      errorManager,
       errorMarkerManager,
       quickFixManager,
       runnerManager,

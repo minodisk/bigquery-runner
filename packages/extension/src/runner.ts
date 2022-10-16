@@ -27,6 +27,7 @@ import type { TextEditor, ViewColumn } from "vscode";
 import { window } from "vscode";
 import { checksum } from "./checksum";
 import type { ConfigManager } from "./configManager";
+import type { ErrorManager } from "./errorManager";
 import type { ErrorMarker, ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
@@ -63,12 +64,14 @@ export function createRunnerManager({
   configManager,
   statusManager,
   rendererManager,
+  errorManager,
   errorMarkerManager,
 }: Readonly<{
   logger: Logger;
   configManager: ConfigManager;
   statusManager: StatusManager;
   rendererManager: RendererManager;
+  errorManager: ErrorManager;
   errorMarkerManager: ErrorMarkerManager;
 }>) {
   const runners = new Map<RunnerID, Runner>();
@@ -77,12 +80,7 @@ export function createRunnerManager({
     async getWithEditor(
       editor: TextEditor
     ): Promise<
-      Result<
-        Err<
-          "Unknown" | "Authentication" | "Query" | "QueryWithPosition" | "NoJob"
-        >,
-        Runner
-      >
+      Result<Err<"Unknown" | "Query" | "QueryWithPosition" | "NoJob">, Runner>
     > {
       const {
         document: { fileName },
@@ -203,12 +201,7 @@ export function createRunnerManager({
     status: Status;
     errorMarker?: ErrorMarker;
   }>): Promise<
-    Result<
-      Err<
-        "Unknown" | "Authentication" | "NoJob" | "Query" | "QueryWithPosition"
-      >,
-      Runner
-    >
+    Result<Err<"Unknown" | "NoJob" | "Query" | "QueryWithPosition">, Runner>
   > => {
     let pageable:
       | {
@@ -252,10 +245,10 @@ export function createRunnerManager({
         });
         if (!clientResult.success) {
           logger.error(clientResult);
-          const { reason } = unwrap(clientResult);
-          showError(reason);
-          await renderer.failProcessing(clientResult.value);
           status.errorBilled();
+          const err = unwrap(clientResult);
+          errorManager.show(err);
+          await renderer.failProcessing(err);
           return;
         }
         const client = unwrap(clientResult);
@@ -273,9 +266,13 @@ export function createRunnerManager({
         errorMarker?.clear();
         if (!runJobResult.success) {
           logger.error(runJobResult);
+
           const err = unwrap(runJobResult);
           await renderer.failProcessing(runJobResult.value);
           status.errorBilled();
+
+          errorManager.show(err);
+
           if (errorMarker) {
             if (err.type === "QueryWithPosition") {
               errorMarker.markAt({
@@ -291,7 +288,6 @@ export function createRunnerManager({
               return;
             }
           }
-          showError(err.reason);
           return;
         }
         errorMarker?.clear();
