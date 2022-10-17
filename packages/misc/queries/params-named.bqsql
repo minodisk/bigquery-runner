@@ -5,7 +5,7 @@ SELECT
 FROM
     `bigquery-public-data.samples.shakespeare`
 WHERE
-    corpus = @corpus                    -- "romeoandjuliet"
-    AND word_count >= @min_word_count   -- 250
+    corpus = @corpus -- "romeoandjuliet"
+    AND word_count >= @min_word_count -- 250
 ORDER BY
     word_count DESC

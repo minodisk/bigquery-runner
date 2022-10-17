@@ -1,32 +1,24 @@
-export type Position = { line: number; character: number };
-export type Range = { start: Position; end: Position };
+import type {
+  Err,
+  NamedParamKey,
+  ParamKeys,
+  PositionalParamKey,
+  Result,
+} from "shared";
+import { fail, succeed } from "shared";
 
-export type NamedParameter = {
-  type: "named";
-  token: `@${string}`;
-  name: string;
-  ranges: ReadonlyArray<Range>;
-};
-export type PositionalParameter = {
-  type: "positional";
-  token: "?";
-  index: number;
-  range: Range;
-};
+export type MixedError = Err<"Mixed">;
 
-export type Parameters = {
-  named: ReadonlyArray<NamedParameter>;
-  positional: ReadonlyArray<PositionalParameter>;
-};
-
-export const parameters = (query: string): Parameters => {
-  const named = new Map<string, NamedParameter>();
-  const positional: Array<PositionalParameter> = [];
+export const parseParameters = (
+  query: string
+): Result<MixedError, ParamKeys | undefined> => {
+  const named = new Map<string, NamedParamKey>();
+  const positional: Array<PositionalParamKey> = [];
 
   let pointer = 0;
   let line = 0;
   let character = 0;
-  let index = 0;
+  // let index = 0;
   let comment: "single" | "multi" | null = null;
   let string: {
     quote: "single" | "double";
@@ -207,9 +199,9 @@ export const parameters = (query: string): Parameters => {
     // Positional parameter
     if (char0 === "?" && !isTokenChar(char1)) {
       positional.push({
-        type: "positional",
-        token: "?",
-        index,
+        // type: "positional",
+        // token: "?",
+        // index,
         range: {
           start: { line, character },
           end: { line, character: character + 1 },
@@ -218,7 +210,7 @@ export const parameters = (query: string): Parameters => {
 
       pointer += 1;
       character += 1;
-      index += 1;
+      // index += 1;
       continue;
     }
 
@@ -249,9 +241,9 @@ export const parameters = (query: string): Parameters => {
       };
       if (!n) {
         named.set(name, {
-          type: "named",
-          token: `@${name}`,
+          // type: "named",
           name,
+          token: `@${name}`,
           ranges: [
             {
               start,
@@ -273,10 +265,26 @@ export const parameters = (query: string): Parameters => {
     character += 1;
   }
 
-  return {
-    named: Array.from(named.entries()).map(([, n]) => n),
-    positional,
-  };
+  const ns = Array.from(named.entries()).map(([, n]) => n);
+  if (ns.length > 0 && positional.length > 0) {
+    return fail({
+      type: "Mixed",
+      reason: "Mixed named and positional parameters",
+    });
+  }
+  if (ns.length > 0) {
+    return succeed({
+      type: "named",
+      keys: ns,
+    });
+  }
+  if (positional.length > 0) {
+    return succeed({
+      type: "positional",
+      keys: positional,
+    });
+  }
+  return succeed(undefined);
 };
 
 const tokenChar =

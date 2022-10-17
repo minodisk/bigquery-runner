@@ -136,6 +136,16 @@
         "command": "bigqueryRunner.previewTable",
         "title": "BigQuery Runner: Preview Table",
         "description": "Open previewer for a selected table in the BigQuery Runner's Resources view"
+      },
+      {
+        "command": "bigqueryRunner.clearParams",
+        "title": "BigQuery Runner: Clear Parameters",
+        "description": "Clear the stored parameters for active text editor."
+      },
+      {
+        "command": "bigqueryRunner.clearAllParams",
+        "title": "BigQuery Runner: Clear All Parameters",
+        "description": "Clear all stored parameters."
       }
     ],
     "viewsContainers": {
@@ -402,6 +412,7 @@
     "date-fns": "^2.29.3",
     "deepmerge": "^4.2.2",
     "easy-table": "^1.2.0",
+    "ordinal": "^1.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

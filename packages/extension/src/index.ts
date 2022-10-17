@@ -21,6 +21,7 @@ import { createDryRunner } from "./dryRunner";
 import { createErrorManager } from "./errorManager";
 import { createErrorMarkerManager } from "./errorMarker";
 import { createLogger } from "./logger";
+import { createParamManager } from "./paramManager";
 import { createPreviewer } from "./previewer";
 import { createQuickFixManager } from "./quickfix";
 import { createRendererManager } from "./renderer";
@@ -86,10 +87,13 @@ export async function activate(ctx: ExtensionContext) {
     const errorMarkerManager = createErrorMarkerManager(section);
     const quickFixManager = createQuickFixManager({ configManager });
 
+    const paramManager = createParamManager({ state: ctx.globalState, logger });
+
     const runnerManager = createRunnerManager({
       logger: logger.createChild("runner"),
       configManager,
       statusManager,
+      paramManager,
       rendererManager,
       errorManager,
       errorMarkerManager,
@@ -123,6 +127,7 @@ export async function activate(ctx: ExtensionContext) {
       errorManager,
       errorMarkerManager,
       quickFixManager,
+      paramManager,
       runnerManager,
       dryRunner,
       previewer,
@@ -160,6 +165,21 @@ export async function activate(ctx: ExtensionContext) {
         },
         [`${section}.previewTable`]: async (element: TableElement) => {
           await tree.previewTable(element);
+        },
+        [`${section}.clearParams`]: async () => {
+          if (!window.activeTextEditor) {
+            throw new Error(`no active text editor`);
+          }
+          const runnerResult = await runnerManager.getWithEditor(
+            window.activeTextEditor
+          );
+          if (!runnerResult.success) {
+            return;
+          }
+          await runnerResult.value.clearParams();
+        },
+        [`${section}.clearAllParams`]: async () => {
+          await paramManager.clearAllParams();
         },
       }).map(([name, action]) => commands.registerCommand(name, action))
     );

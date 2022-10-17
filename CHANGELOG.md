@@ -7,6 +7,10 @@ All notable changes to the "BigQuery Runner" extension will be documented in thi
 ### Added
 
 - Delay the display of the result view until the results are returned successfully.
+- Persist query parameters.
+- Add commands:
+  - `bigqueryRunner.clearParams`: Clear the stored parameters for active text editor.
+  - `bigqueryRunner.clearAllParams`: Clear all stored parameters.
 
 ## v1.14.0
 

@@ -1,7 +1,7 @@
 import { basename } from "path";
 import { format, parse } from "bytes";
-import type { Parameters, RunJob } from "core";
-import { createClient, parameters } from "core";
+import type { RunJob } from "core";
+import { parseParameters, createClient } from "core";
 import type {
   Metadata,
   Page,
@@ -12,25 +12,22 @@ import type {
   Result,
   Err,
   Tab,
-  ParamValues,
-  NamedParamValues,
-  PositionalParamValues,
 } from "shared";
 import {
+  isPositionalParamValues,
+  isNamedParamValues,
   isStandaloneStatistics,
   unwrap,
   succeed,
-  tryCatchSync,
-  errorToString,
 } from "shared";
 import type { TextEditor, ViewColumn } from "vscode";
-import { window } from "vscode";
 import { checksum } from "./checksum";
 import type { ConfigManager } from "./configManager";
 import type { ErrorManager } from "./errorManager";
 import type { ErrorMarker, ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
+import type { ParamManager } from "./paramManager";
 import type { RendererManager } from "./renderer";
 import type { Status, StatusManager } from "./statusManager";
 import { showError } from "./window";
@@ -43,6 +40,7 @@ export type Runner = Readonly<{
   movePage(diff: number): Promise<void>;
   moveFocusTab(diff: number): Promise<void>;
   focusOnTab(tab: Tab): Promise<void>;
+  clearParams(): Promise<void>;
   dispose(): void;
 }>;
 
@@ -63,6 +61,7 @@ export function createRunnerManager({
   logger: parentLogger,
   configManager,
   statusManager,
+  paramManager,
   rendererManager,
   errorManager,
   errorMarkerManager,
@@ -70,6 +69,7 @@ export function createRunnerManager({
   logger: Logger;
   configManager: ConfigManager;
   statusManager: StatusManager;
+  paramManager: ParamManager;
   rendererManager: RendererManager;
   errorManager: ErrorManager;
   errorMarkerManager: ErrorMarkerManager;
@@ -101,6 +101,7 @@ export function createRunnerManager({
           table: Table;
         }
       | undefined;
+    const paramValuesManager = paramManager.create({ runnerId });
 
     return succeed({
       query,
@@ -112,14 +113,39 @@ export function createRunnerManager({
 
         const config = configManager.get();
 
-        const getParamValuesResult = await getParamValues(parameters(query));
-        if (!getParamValuesResult.success) {
-          logger.error(getParamValuesResult);
+        const parseParametersResult = parseParameters(query);
+        if (!parseParametersResult.success) {
+          logger.error(parseParametersResult);
           status.errorBilled();
-          errorManager.show(getParamValuesResult.value);
+          errorManager.show(parseParametersResult.value);
           return;
         }
-        const params = getParamValuesResult.value;
+        const paramKeys = parseParametersResult.value;
+        let params: { [key: string]: unknown } | Array<unknown> | undefined =
+          undefined;
+        if (paramKeys) {
+          const getParamValuesResult = await paramValuesManager.get(paramKeys);
+          if (!getParamValuesResult.success) {
+            logger.error(getParamValuesResult);
+            status.errorBilled();
+            errorManager.show(getParamValuesResult.value);
+            return;
+          }
+          const paramValues = getParamValuesResult.value;
+          if (!paramValues) {
+            return;
+          }
+          if (isNamedParamValues(paramValues)) {
+            params = paramValues.values.reduce((obj, { name, value }) => {
+              obj[name] = value;
+              return obj;
+            }, {} as { [key: string]: unknown });
+          }
+          if (isPositionalParamValues(paramValues)) {
+            params = paramValues.values.map(({ value }) => value);
+          }
+        }
+        logger.log("params:", JSON.stringify(params));
 
         const clientResult = await createClient({
           keyFilename: config.keyFilename,
@@ -389,6 +415,14 @@ export function createRunnerManager({
         await renderer.focusOnTab(tab);
       },
 
+      async clearParams() {
+        const manager = paramManager.get({ runnerId });
+        if (!manager) {
+          return;
+        }
+        await manager.clearParams();
+      },
+
       async dispose() {
         const renderer = rendererManager.get({ runnerId });
         if (!renderer || renderer.disposed) {
@@ -491,60 +525,3 @@ export function createRunnerManager({
     },
   };
 }
-
-const getParamValues = async ({
-  named,
-  positional,
-}: Parameters): Promise<
-  Result<Err<"InvalidJSON">, ParamValues | undefined>
-> => {
-  if (named.length > 0) {
-    const namedParams: NamedParamValues = {};
-    for (const param of named) {
-      const value = await window.showInputBox({
-        title: `Set a parameter to ${param.token}`,
-        prompt: `Specify in JSON format`,
-      });
-      if (value === undefined) {
-        continue;
-      }
-      const parseJSONResult = parseJSON(value);
-      if (!parseJSONResult.success) {
-        return parseJSONResult;
-      }
-      namedParams[param.name] = parseJSONResult.value;
-    }
-    return succeed(namedParams);
-  }
-
-  if (positional.length > 0) {
-    const positionalParams: PositionalParamValues = [];
-    for (const param of positional) {
-      const value = await window.showInputBox({
-        title: `Set a parameter for the ${param.index}-th ${param.token}`,
-        prompt: `Specify in JSON format`,
-      });
-      if (value === undefined) {
-        continue;
-      }
-      const parseJSONResult = parseJSON(value);
-      if (!parseJSONResult.success) {
-        return parseJSONResult;
-      }
-      positionalParams[param.index] = parseJSONResult.value;
-    }
-    return succeed(positionalParams);
-  }
-
-  return succeed(undefined);
-};
-
-const parseJSON = (value: string): Result<Err<"InvalidJSON">, unknown> => {
-  return tryCatchSync(
-    () => JSON.parse(value),
-    (err) => ({
-      type: "InvalidJSON",
-      reason: errorToString(err),
-    })
-  );
-};

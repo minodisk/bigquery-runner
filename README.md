@@ -213,6 +213,22 @@ Refresh the BigQuery Runner's Resources
 
 Open previewer for a selected table in the BigQuery Runner's Resources view
 
+### BigQuery Runner: Clear Parameters
+
+|ID|
+|---|
+|bigqueryRunner.clearParams|
+
+Clear the stored parameters for active text editor.
+
+### BigQuery Runner: Clear All Parameters
+
+|ID|
+|---|
+|bigqueryRunner.clearAllParams|
+
+Clear all stored parameters.
+
 ## Configuration
 
 The extension can be customized by modifying your `settings.json` file. The available configuration options, and their defaults, are below.

@@ -1,162 +1,127 @@
-import { parameters } from "./parser";
+import { succeed } from "shared";
+import { parseParameters } from "./parser";
 
 describe("parser", () => {
   describe("parse", () => {
     it("should find no param with empty query", async () => {
-      expect(parameters(``)).toStrictEqual({ named: [], positional: [] });
+      expect(parseParameters(``)).toStrictEqual(succeed(undefined));
     });
 
     it("should ignore ? in quoted string", async () => {
-      expect(parameters(`"abc?"`)).toStrictEqual({ named: [], positional: [] });
-      expect(parameters(`"it's?"`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
-      expect(parameters(`'it\\'s?'`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
-      expect(parameters(`'Title: "Boy?"'`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
+      expect(parseParameters(`"abc?"`)).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`"it's?"`)).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`'it\\'s?'`)).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`'Title: "Boy?"'`)).toStrictEqual(
+        succeed(undefined)
+      );
     });
 
     it("should ignore ? in triple-quoted string", async () => {
-      expect(parameters(`"""abc?"""`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
-      expect(parameters(`'''it's?'''`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
-      expect(parameters(`'''Title: "Boy?"'''`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
+      expect(parseParameters(`"""abc?"""`)).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`'''it's?'''`)).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`'''Title: "Boy?"'''`)).toStrictEqual(
+        succeed(undefined)
+      );
       expect(
-        parameters(`'''two
+        parseParameters(`'''two
 lines?'''`)
-      ).toStrictEqual({
-        named: [],
-        positional: [],
-      });
-      expect(parameters(`'''why\\?'''`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
+      ).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`'''why\\?'''`)).toStrictEqual(succeed(undefined));
     });
 
     it("should ignore ? in raw string", async () => {
-      expect(parameters(`R"ab?c+"`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
-      expect(parameters(`r'''ab?c+'''`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
-      expect(parameters(`R"""ab?c+"""`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
-      expect(parameters(`r'f\\(abc,(.*?),def\\)'`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
+      expect(parseParameters(`R"ab?c+"`)).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`r'''ab?c+'''`)).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`R"""ab?c+"""`)).toStrictEqual(succeed(undefined));
+      expect(parseParameters(`r'f\\(abc,(.*?),def\\)'`)).toStrictEqual(
+        succeed(undefined)
+      );
     });
 
     it("should ignore sharp commented ?", async () => {
-      expect(parameters(`#?`)).toStrictEqual({ named: [], positional: [] });
+      expect(parseParameters(`#?`)).toStrictEqual(succeed(undefined));
     });
 
     it("should ignore dash commented ?", async () => {
-      expect(parameters(`--?`)).toStrictEqual({ named: [], positional: [] });
+      expect(parseParameters(`--?`)).toStrictEqual(succeed(undefined));
     });
 
     it("should ignore multiline commented ?", async () => {
-      expect(parameters(`/*?*/`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
+      expect(parseParameters(`/*?*/`)).toStrictEqual(succeed(undefined));
     });
 
     it("should find positional param with question", async () => {
-      expect(parameters(`?`)).toStrictEqual({
-        named: [],
-        positional: [
-          {
-            type: "positional",
-            token: "?",
-            index: 0,
-            range: {
-              start: {
-                line: 0,
-                character: 0,
-              },
-              end: {
-                line: 0,
-                character: 1,
+      expect(parseParameters(`?`)).toStrictEqual(
+        succeed({
+          type: "positional",
+          keys: [
+            {
+              range: {
+                start: {
+                  line: 0,
+                  character: 0,
+                },
+                end: {
+                  line: 0,
+                  character: 1,
+                },
               },
             },
-          },
-        ],
-      });
+          ],
+        })
+      );
     });
 
     it("should find positional param with line break and question", async () => {
       expect(
-        parameters(`
+        parseParameters(`
 ?`)
-      ).toStrictEqual({
-        named: [],
-        positional: [
-          {
-            type: "positional",
-            token: "?",
-            index: 0,
-            range: {
-              start: {
-                line: 1,
-                character: 0,
-              },
-              end: {
-                line: 1,
-                character: 1,
+      ).toStrictEqual(
+        succeed({
+          type: "positional",
+          keys: [
+            {
+              range: {
+                start: {
+                  line: 1,
+                  character: 0,
+                },
+                end: {
+                  line: 1,
+                  character: 1,
+                },
               },
             },
-          },
-        ],
-      });
+          ],
+        })
+      );
     });
 
     it("should find positional param with line break (\r\n) and question", async () => {
-      expect(parameters(`\r\n?`)).toStrictEqual({
-        named: [],
-        positional: [
-          {
-            type: "positional",
-            token: "?",
-            index: 0,
-            range: {
-              start: {
-                line: 1,
-                character: 0,
-              },
-              end: {
-                line: 1,
-                character: 1,
+      expect(parseParameters(`\r\n?`)).toStrictEqual(
+        succeed({
+          type: "positional",
+          keys: [
+            {
+              range: {
+                start: {
+                  line: 1,
+                  character: 0,
+                },
+                end: {
+                  line: 1,
+                  character: 1,
+                },
               },
             },
-          },
-        ],
-      });
+          ],
+        })
+      );
     });
 
     it("should find positional params from complex query", () => {
       expect(
-        parameters(`SELECT
+        parseParameters(`SELECT
     word,
     word_count
 FROM 
@@ -167,46 +132,42 @@ WHERE
 ORDER BY
     word_count DESC
 `)
-      ).toStrictEqual({
-        named: [],
-        positional: [
-          {
-            type: "positional",
-            token: "?",
-            index: 0,
-            range: {
-              start: {
-                line: 6,
-                character: 13,
-              },
-              end: {
-                line: 6,
-                character: 14,
-              },
-            },
-          },
-          {
-            type: "positional",
-            token: "?",
-            index: 1,
-            range: {
-              start: {
-                line: 7,
-                character: 22,
-              },
-              end: {
-                line: 7,
-                character: 23,
+      ).toStrictEqual(
+        succeed({
+          type: "positional",
+          keys: [
+            {
+              range: {
+                start: {
+                  line: 6,
+                  character: 13,
+                },
+                end: {
+                  line: 6,
+                  character: 14,
+                },
               },
             },
-          },
-        ],
-      });
+            {
+              range: {
+                start: {
+                  line: 7,
+                  character: 22,
+                },
+                end: {
+                  line: 7,
+                  character: 23,
+                },
+              },
+            },
+          ],
+        })
+      );
     });
 
     it("should find positional params from complex query with strings", () => {
       expect(
-        parameters(`SELECT
+        parseParameters(`SELECT
     word,
     word_count
 FROM
@@ -228,46 +189,42 @@ WHERE
 ORDER BY
     word_count DESC
 `)
-      ).toStrictEqual({
-        named: [],
-        positional: [
-          {
-            type: "positional",
-            token: "?",
-            index: 0,
-            range: {
-              start: {
-                line: 17,
-                character: 17,
-              },
-              end: {
-                line: 17,
-                character: 18,
-              },
-            },
-          },
-          {
-            type: "positional",
-            token: "?",
-            index: 1,
-            range: {
-              start: {
-                line: 18,
-                character: 22,
-              },
-              end: {
-                line: 18,
-                character: 23,
+      ).toStrictEqual(
+        succeed({
+          type: "positional",
+          keys: [
+            {
+              range: {
+                start: {
+                  line: 17,
+                  character: 17,
+                },
+                end: {
+                  line: 17,
+                  character: 18,
+                },
               },
             },
-          },
-        ],
-      });
+            {
+              range: {
+                start: {
+                  line: 18,
+                  character: 22,
+                },
+                end: {
+                  line: 18,
+                  character: 23,
+                },
+              },
+            },
+          ],
+        })
+      );
     });
 
     it("should find positional params from complex query with comment", () => {
       expect(
-        parameters(`SELECT
+        parseParameters(`SELECT
     corpus,
     word,
     # @foo,
@@ -284,117 +241,109 @@ WHERE
 ORDER BY
     word_count DESC
 `)
-      ).toStrictEqual({
-        named: [],
-        positional: [
-          {
-            type: "positional",
-            token: "?",
-            index: 0,
-            range: {
-              start: {
-                line: 10,
-                character: 13,
-              },
-              end: {
-                line: 10,
-                character: 14,
-              },
-            },
-          },
-          {
-            type: "positional",
-            token: "?",
-            index: 1,
-            range: {
-              start: {
-                line: 13,
-                character: 40,
-              },
-              end: {
-                line: 13,
-                character: 41,
+      ).toStrictEqual(
+        succeed({
+          type: "positional",
+          keys: [
+            {
+              range: {
+                start: {
+                  line: 10,
+                  character: 13,
+                },
+                end: {
+                  line: 10,
+                  character: 14,
+                },
               },
             },
-          },
-        ],
-      });
+            {
+              range: {
+                start: {
+                  line: 13,
+                  character: 40,
+                },
+                end: {
+                  line: 13,
+                  character: 41,
+                },
+              },
+            },
+          ],
+        })
+      );
     });
 
     it("should ignore sharp commented @", async () => {
-      expect(parameters(`#@foo`)).toStrictEqual({ named: [], positional: [] });
+      expect(parseParameters(`#@foo`)).toStrictEqual(succeed(undefined));
     });
 
     it("should ignore dash commented @", async () => {
-      expect(parameters(`--@foo`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
+      expect(parseParameters(`--@foo`)).toStrictEqual(succeed(undefined));
     });
 
     it("should ignore multiline commented @", async () => {
-      expect(parameters(`/*\n@foo\n*/`)).toStrictEqual({
-        named: [],
-        positional: [],
-      });
+      expect(parseParameters(`/*\n@foo\n*/`)).toStrictEqual(succeed(undefined));
     });
 
     it("should find named param with @", async () => {
-      expect(parameters(`@`)).toStrictEqual({
-        named: [
-          {
-            type: "named",
-            token: "@",
-            name: "",
-            ranges: [
-              {
-                start: {
-                  line: 0,
-                  character: 0,
+      expect(parseParameters(`@`)).toStrictEqual(
+        succeed({
+          type: "named",
+          keys: [
+            {
+              token: "@",
+              name: "",
+              ranges: [
+                {
+                  start: {
+                    line: 0,
+                    character: 0,
+                  },
+                  end: {
+                    line: 0,
+                    character: 1,
+                  },
                 },
-                end: {
-                  line: 0,
-                  character: 1,
-                },
-              },
-            ],
-          },
-        ],
-        positional: [],
-      });
+              ],
+            },
+          ],
+        })
+      );
     });
 
     it("should find named param with line break and @", async () => {
       expect(
-        parameters(`
+        parseParameters(`
 @`)
-      ).toStrictEqual({
-        named: [
-          {
-            type: "named",
-            token: "@",
-            name: "",
-            ranges: [
-              {
-                start: {
-                  line: 1,
-                  character: 0,
+      ).toStrictEqual(
+        succeed({
+          type: "named",
+          keys: [
+            {
+              token: "@",
+              name: "",
+              ranges: [
+                {
+                  start: {
+                    line: 1,
+                    character: 0,
+                  },
+                  end: {
+                    line: 1,
+                    character: 1,
+                  },
                 },
-                end: {
-                  line: 1,
-                  character: 1,
-                },
-              },
-            ],
-          },
-        ],
-        positional: [],
-      });
+              ],
+            },
+          ],
+        })
+      );
     });
 
     it("should find named params from complex query", () => {
       expect(
-        parameters(`SELECT
+        parseParameters(`SELECT
     word,
     word_count
 FROM
@@ -405,50 +354,50 @@ WHERE
 ORDER BY
     word_count DESC
 `)
-      ).toStrictEqual({
-        named: [
-          {
-            type: "named",
-            token: "@corpus",
-            name: "corpus",
-            ranges: [
-              {
-                start: {
-                  line: 6,
-                  character: 13,
+      ).toStrictEqual(
+        succeed({
+          type: "named",
+          keys: [
+            {
+              token: "@corpus",
+              name: "corpus",
+              ranges: [
+                {
+                  start: {
+                    line: 6,
+                    character: 13,
+                  },
+                  end: {
+                    line: 6,
+                    character: 20,
+                  },
                 },
-                end: {
-                  line: 6,
-                  character: 20,
+              ],
+            },
+            {
+              token: "@min_word_count",
+              name: "min_word_count",
+              ranges: [
+                {
+                  start: {
+                    line: 7,
+                    character: 22,
+                  },
+                  end: {
+                    line: 7,
+                    character: 37,
+                  },
                 },
-              },
-            ],
-          },
-          {
-            type: "named",
-            token: "@min_word_count",
-            name: "min_word_count",
-            ranges: [
-              {
-                start: {
-                  line: 7,
-                  character: 22,
-                },
-                end: {
-                  line: 7,
-                  character: 37,
-                },
-              },
-            ],
-          },
-        ],
-        positional: [],
-      });
+              ],
+            },
+          ],
+        })
+      );
     });
 
     it("should find same named params once", () => {
       expect(
-        parameters(`SELECT
+        parseParameters(`SELECT
     word,
     word_count
 FROM
@@ -460,60 +409,60 @@ WHERE
 ORDER BY
     word_count DESC
 `)
-      ).toStrictEqual({
-        named: [
-          {
-            type: "named",
-            token: "@corpus",
-            name: "corpus",
-            ranges: [
-              {
-                start: {
-                  line: 6,
-                  character: 13,
+      ).toStrictEqual(
+        succeed({
+          type: "named",
+          keys: [
+            {
+              token: "@corpus",
+              name: "corpus",
+              ranges: [
+                {
+                  start: {
+                    line: 6,
+                    character: 13,
+                  },
+                  end: {
+                    line: 6,
+                    character: 20,
+                  },
                 },
-                end: {
-                  line: 6,
-                  character: 20,
+              ],
+            },
+            {
+              token: "@min_word_count",
+              name: "min_word_count",
+              ranges: [
+                {
+                  start: {
+                    line: 7,
+                    character: 22,
+                  },
+                  end: {
+                    line: 7,
+                    character: 37,
+                  },
                 },
-              },
-            ],
-          },
-          {
-            type: "named",
-            token: "@min_word_count",
-            name: "min_word_count",
-            ranges: [
-              {
-                start: {
-                  line: 7,
-                  character: 22,
+                {
+                  start: {
+                    line: 8,
+                    character: 21,
+                  },
+                  end: {
+                    line: 8,
+                    character: 36,
+                  },
                 },
-                end: {
-                  line: 7,
-                  character: 37,
-                },
-              },
-              {
-                start: {
-                  line: 8,
-                  character: 21,
-                },
-                end: {
-                  line: 8,
-                  character: 36,
-                },
-              },
-            ],
-          },
-        ],
-        positional: [],
-      });
+              ],
+            },
+          ],
+        })
+      );
     });
 
     it("should find named params from complex query with strings", () => {
       expect(
-        parameters(`SELECT
+        parseParameters(`SELECT
     word,
     word_count
 FROM
@@ -535,50 +484,50 @@ WHERE
 ORDER BY
     word_count DESC
 `)
-      ).toStrictEqual({
-        named: [
-          {
-            type: "named",
-            token: "@corpus",
-            name: "corpus",
-            ranges: [
-              {
-                start: {
-                  line: 17,
-                  character: 17,
+      ).toStrictEqual(
+        succeed({
+          type: "named",
+          keys: [
+            {
+              token: "@corpus",
+              name: "corpus",
+              ranges: [
+                {
+                  start: {
+                    line: 17,
+                    character: 17,
+                  },
+                  end: {
+                    line: 17,
+                    character: 24,
+                  },
                 },
-                end: {
-                  line: 17,
-                  character: 24,
+              ],
+            },
+            {
+              token: "@min_word_count",
+              name: "min_word_count",
+              ranges: [
+                {
+                  start: {
+                    line: 18,
+                    character: 22,
+                  },
+                  end: {
+                    line: 18,
+                    character: 37,
+                  },
                 },
-              },
-            ],
-          },
-          {
-            type: "named",
-            token: "@min_word_count",
-            name: "min_word_count",
-            ranges: [
-              {
-                start: {
-                  line: 18,
-                  character: 22,
-                },
-                end: {
-                  line: 18,
-                  character: 37,
-                },
-              },
-            ],
-          },
-        ],
-        positional: [],
-      });
+              ],
+            },
+          ],
+        })
+      );
     });
 
     it("should find named params from complex query with comments", () => {
       expect(
-        parameters(`SELECT
+        parseParameters(`SELECT
     corpus,
     word,
     # @foo,
@@ -595,45 +544,45 @@ WHERE
 ORDER BY
     word_count DESC
 `)
-      ).toStrictEqual({
-        named: [
-          {
-            type: "named",
-            token: "@corpus",
-            name: "corpus",
-            ranges: [
-              {
-                start: {
-                  line: 10,
-                  character: 13,
+      ).toStrictEqual(
+        succeed({
+          type: "named",
+          keys: [
+            {
+              token: "@corpus",
+              name: "corpus",
+              ranges: [
+                {
+                  start: {
+                    line: 10,
+                    character: 13,
+                  },
+                  end: {
+                    line: 10,
+                    character: 20,
+                  },
                 },
-                end: {
-                  line: 10,
-                  character: 20,
+              ],
+            },
+            {
+              token: "@min_word_count",
+              name: "min_word_count",
+              ranges: [
+                {
+                  start: {
+                    line: 13,
+                    character: 40,
+                  },
+                  end: {
+                    line: 13,
+                    character: 55,
+                  },
                 },
-              },
-            ],
-          },
-          {
-            type: "named",
-            token: "@min_word_count",
-            name: "min_word_count",
-            ranges: [
-              {
-                start: {
-                  line: 13,
-                  character: 40,
-                },
-                end: {
-                  line: 13,
-                  character: 55,
-                },
-              },
-            ],
-          },
-        ],
-        positional: [],
-      });
+              ],
+            },
+          ],
+        })
+      );
     });
   });
 });
