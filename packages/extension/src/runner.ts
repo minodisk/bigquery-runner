@@ -31,7 +31,7 @@ import type { ErrorManager } from "./errorManager";
 import type { ErrorMarker, ErrorMarkerManager } from "./errorMarker";
 import { getQueryText } from "./getQueryText";
 import type { Logger } from "./logger";
-import type { Renderer, RendererManager } from "./renderer";
+import type { RendererManager } from "./renderer";
 import type { Status, StatusManager } from "./statusManager";
 import { showError } from "./window";
 
@@ -76,128 +76,20 @@ export function createRunnerManager({
 }>) {
   const runners = new Map<RunnerID, Runner>();
 
-  const runnerManager = {
-    async getWithEditor(
-      editor: TextEditor
-    ): Promise<
-      Result<Err<"Unknown" | "Query" | "QueryWithPosition" | "NoJob">, Runner>
-    > {
-      const {
-        document: { fileName },
-        viewColumn,
-      } = editor;
-
-      const runnerId: RunnerID = `file://${fileName}`;
-      const logger = parentLogger.createChild(runnerId);
-      const title = basename(fileName);
-      const query = await getQueryText(editor);
-
-      const getRendererResult = await rendererManager.get({
-        runnerId,
-        title,
-        viewColumn,
-      });
-      if (!getRendererResult.success) {
-        return getRendererResult;
-      }
-      const renderer = unwrap(getRendererResult);
-
-      const status = statusManager.get(runnerId);
-      const errorMarker = errorMarkerManager.get({
-        runnerId,
-        editor,
-      });
-
-      const createResult = await createRunner({
-        runnerId,
-        logger,
-        query,
-        renderer,
-        status,
-        errorMarker,
-      });
-      if (!createResult.success) {
-        return createResult;
-      }
-      const runner = unwrap(createResult);
-
-      runners.set(runnerId, runner);
-      return createResult;
-    },
-
-    async getWithQuery({
-      title,
-      query,
-      viewColumn,
-    }: Readonly<{
-      title: string;
-      query: string;
-      viewColumn?: ViewColumn;
-    }>): Promise<
-      Result<
-        Err<
-          "Unknown" | "Authentication" | "Query" | "QueryWithPosition" | "NoJob"
-        >,
-        Runner
-      >
-    > {
-      const runnerId: RunnerID = `query://${checksum(query)}`;
-      const logger = parentLogger.createChild(runnerId);
-
-      const getRendererResult = await rendererManager.get({
-        runnerId,
-        title,
-        viewColumn,
-      });
-      if (!getRendererResult.success) {
-        return getRendererResult;
-      }
-      const renderer = unwrap(getRendererResult);
-
-      const status = statusManager.get(runnerId);
-
-      const createResult = await createRunner({
-        runnerId,
-        logger,
-        query,
-        renderer,
-        status,
-      });
-      if (!createResult.success) {
-        return createResult;
-      }
-      const runner = unwrap(createResult);
-
-      runners.set(runnerId, runner);
-      return createResult;
-    },
-
-    get(runnerId: RunnerID) {
-      return runners.get(runnerId);
-    },
-
-    findWithFileName(fileName: string) {
-      const runnerId: RunnerID = `file://${fileName}`;
-      return runners.get(runnerId);
-    },
-
-    dispose() {
-      runners.clear();
-    },
-  };
-
   const createRunner = async ({
     runnerId,
     logger,
     query,
-    renderer,
+    title,
+    baseViewColumn,
     status,
     errorMarker,
   }: Readonly<{
     runnerId: RunnerID;
     logger: Logger;
     query: string;
-    renderer: Renderer;
+    title: string;
+    baseViewColumn?: ViewColumn;
     status: Status;
     errorMarker?: ErrorMarker;
   }>): Promise<
@@ -210,30 +102,21 @@ export function createRunnerManager({
         }
       | undefined;
 
-    const runner: Runner = {
+    return succeed({
       query,
 
       async run() {
         logger.log(`run`);
 
-        renderer.reveal();
         status.loadBilled();
-
-        const rendererOpenResult = await renderer.startProcessing();
-        if (!rendererOpenResult.success) {
-          logger.error(rendererOpenResult);
-          await renderer.failProcessing(rendererOpenResult.value);
-          status.errorBilled();
-          return;
-        }
 
         const config = configManager.get();
 
         const getParamValuesResult = await getParamValues(parameters(query));
         if (!getParamValuesResult.success) {
           logger.error(getParamValuesResult);
-          await renderer.failProcessing(getParamValuesResult.value);
           status.errorBilled();
+          errorManager.show(getParamValuesResult.value);
           return;
         }
         const params = getParamValuesResult.value;
@@ -248,7 +131,6 @@ export function createRunnerManager({
           status.errorBilled();
           const err = unwrap(clientResult);
           errorManager.show(err);
-          await renderer.failProcessing(err);
           return;
         }
         const client = unwrap(clientResult);
@@ -268,7 +150,6 @@ export function createRunnerManager({
           logger.error(runJobResult);
 
           const err = unwrap(runJobResult);
-          await renderer.failProcessing(runJobResult.value);
           status.errorBilled();
 
           errorManager.show(err);
@@ -291,6 +172,29 @@ export function createRunnerManager({
           return;
         }
         errorMarker?.clear();
+
+        const getRendererResult = await rendererManager.create({
+          runnerId,
+          title,
+          baseViewColumn,
+        });
+        if (!getRendererResult.success) {
+          logger.error(getRendererResult);
+          errorManager.show(getRendererResult.value);
+          status.errorBilled();
+          return;
+        }
+        const renderer = unwrap(getRendererResult);
+
+        const rendererOpenResult = await renderer.startProcessing();
+        if (!rendererOpenResult.success) {
+          logger.error(rendererOpenResult);
+          await renderer.failProcessing(rendererOpenResult.value);
+          status.errorBilled();
+          return;
+        }
+
+        renderer.reveal();
 
         const job = unwrap(runJobResult);
 
@@ -404,6 +308,19 @@ export function createRunnerManager({
 
         const { job, table } = pageable;
 
+        const getRendererResult = await rendererManager.create({
+          runnerId,
+          title,
+          baseViewColumn,
+        });
+        if (!getRendererResult.success) {
+          logger.error(getRendererResult);
+          errorManager.show(getRendererResult.value);
+          status.errorBilled();
+          return;
+        }
+        const renderer = unwrap(getRendererResult);
+
         renderer.reveal();
 
         const rendererOpenResult = await renderer.startProcessing();
@@ -441,25 +358,138 @@ export function createRunnerManager({
       },
 
       async moveFocusTab(diff) {
+        const getRendererResult = await rendererManager.create({
+          runnerId,
+          title,
+          baseViewColumn,
+        });
+        if (!getRendererResult.success) {
+          logger.error(getRendererResult);
+          errorManager.show(getRendererResult.value);
+          status.errorBilled();
+          return;
+        }
+        const renderer = unwrap(getRendererResult);
         await renderer.moveTabFocus(diff);
       },
 
       async focusOnTab(tab) {
+        const getRendererResult = await rendererManager.create({
+          runnerId,
+          title,
+          baseViewColumn,
+        });
+        if (!getRendererResult.success) {
+          logger.error(getRendererResult);
+          errorManager.show(getRendererResult.value);
+          status.errorBilled();
+          return;
+        }
+        const renderer = unwrap(getRendererResult);
         await renderer.focusOnTab(tab);
       },
 
-      dispose() {
-        if (!renderer.disposed) {
+      async dispose() {
+        const renderer = rendererManager.get({ runnerId });
+        if (!renderer || renderer.disposed) {
           return;
         }
         runners.delete(runnerId);
       },
-    };
-
-    return succeed(runner);
+    });
   };
 
-  return runnerManager;
+  return {
+    async getWithEditor(
+      editor: TextEditor
+    ): Promise<
+      Result<Err<"Unknown" | "Query" | "QueryWithPosition" | "NoJob">, Runner>
+    > {
+      const {
+        document: { fileName },
+        viewColumn,
+      } = editor;
+
+      const runnerId: RunnerID = `file://${fileName}`;
+      const logger = parentLogger.createChild(runnerId);
+      const title = basename(fileName);
+      const query = await getQueryText(editor);
+
+      const status = statusManager.get(runnerId);
+      const errorMarker = errorMarkerManager.get({
+        runnerId,
+        editor,
+      });
+
+      const createResult = await createRunner({
+        runnerId,
+        logger,
+        query,
+        title,
+        baseViewColumn: viewColumn,
+        status,
+        errorMarker,
+      });
+      if (!createResult.success) {
+        return createResult;
+      }
+      const runner = unwrap(createResult);
+
+      runners.set(runnerId, runner);
+      return createResult;
+    },
+
+    async getWithQuery({
+      title,
+      query,
+      viewColumn,
+    }: Readonly<{
+      title: string;
+      query: string;
+      viewColumn?: ViewColumn;
+    }>): Promise<
+      Result<
+        Err<
+          "Unknown" | "Authentication" | "Query" | "QueryWithPosition" | "NoJob"
+        >,
+        Runner
+      >
+    > {
+      const runnerId: RunnerID = `query://${checksum(query)}`;
+      const logger = parentLogger.createChild(runnerId);
+
+      const status = statusManager.get(runnerId);
+
+      const createResult = await createRunner({
+        runnerId,
+        logger,
+        query,
+        title,
+        baseViewColumn: viewColumn,
+        status,
+      });
+      if (!createResult.success) {
+        return createResult;
+      }
+      const runner = unwrap(createResult);
+
+      runners.set(runnerId, runner);
+      return createResult;
+    },
+
+    get(runnerId: RunnerID) {
+      return runners.get(runnerId);
+    },
+
+    findWithFileName(fileName: string) {
+      const runnerId: RunnerID = `file://${fileName}`;
+      return runners.get(runnerId);
+    },
+
+    dispose() {
+      runners.clear();
+    },
+  };
 }
 
 const getParamValues = async ({

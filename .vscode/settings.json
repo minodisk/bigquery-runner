@@ -19,6 +19,14 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "eslint.validate": ["javascript", "typescript"],
 
+  "Prettier-SQL.SQLFlavourOverride": "bigquery",
+  "Prettier-SQL.tabSizeOverride": 2,
+  "Prettier-SQL.linesBetweenQueries": 1,
+  "[sql]": {
+    "editor.defaultFormatter": "inferrinizzard.prettier-sql-vscode",
+    "editor.tabSize": 2
+  },
+
   // "bigqueryRunner.keyFilename": "./service-account.json",
   "bigqueryRunner.projectId": "minodisk-api"
 }

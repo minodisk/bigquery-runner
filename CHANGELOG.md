@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.15.0
+
+### Added
+
+- Delay the display of the result view until the results are returned successfully.
+
 ## v1.14.0
 
 ### Added

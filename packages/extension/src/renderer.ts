@@ -35,11 +35,12 @@ import type { Logger } from "./logger";
 import type { SelectResponse } from "./runner";
 
 export type RendererManager = Readonly<{
-  get(
+  get(props: { runnerId: RunnerID }): Renderer | undefined;
+  create(
     props: Readonly<{
       runnerId: RunnerID;
       title: string;
-      viewColumn?: ViewColumn;
+      baseViewColumn?: ViewColumn;
     }>
   ): Promise<Result<UnknownError, Renderer>>;
   dispose(): void;
@@ -79,7 +80,7 @@ export type Renderer = {
 
 export function createRendererManager({
   ctx,
-  logger: parentLogger,
+  logger,
   configManager,
   onPrevPageRequested,
   onNextPageRequested,
@@ -111,13 +112,31 @@ export function createRendererManager({
   const renderers = new Map<RunnerID, Renderer>();
 
   return {
-    get({ runnerId, title, viewColumn: baseViewColumn }) {
+    get({ runnerId }) {
+      const l = logger.createChild("get");
+      l.log(runnerId);
+      const r = renderers.get(runnerId);
+      if (r) {
+        l.log("found a renderer made in the past");
+        return r;
+      }
+
+      l.log("not found");
+      return;
+    },
+
+    create({ runnerId, title, baseViewColumn }) {
+      const l = logger.createChild("create");
+      l.log(runnerId, title, baseViewColumn?.toString() ?? "");
       return tryCatch(
         async () => {
           const r = renderers.get(runnerId);
           if (r) {
+            l.log("found a renderer made in the past");
             return r;
           }
+
+          l.log("create a new renderer");
 
           const {
             viewer: { column },
@@ -148,6 +167,7 @@ export function createRendererManager({
             logger: Logger;
             event: RendererEvent;
           }): Promise<Result<UnknownError, void>> => {
+            logger.log("postMessage");
             return tryCatch(
               async () => {
                 await panel.webview.postMessage({
@@ -191,6 +211,7 @@ export function createRendererManager({
             //   })
             // );
             panel.onDidDispose(() => {
+              logger.log("onDidDispose");
               renderer.dispose();
             });
             panel.iconPath = Uri.file(
@@ -222,12 +243,13 @@ export function createRendererManager({
             viewColumn,
 
             reveal() {
+              logger.log("reveal");
               panel.reveal(undefined, true);
             },
 
             startProcessing() {
               return postMessage({
-                logger: parentLogger.createChild("startProcessing"),
+                logger: logger.createChild("startProcessing"),
                 event: {
                   event: "startProcessing",
                 },
@@ -236,7 +258,7 @@ export function createRendererManager({
 
             renderMetadata(metadata) {
               return postMessage({
-                logger: parentLogger.createChild("renderMetadata"),
+                logger: logger.createChild("renderMetadata"),
                 event: {
                   event: "metadata",
                   payload: {
@@ -248,7 +270,7 @@ export function createRendererManager({
 
             async renderTables(tables) {
               return postMessage({
-                logger: parentLogger.createChild("renderTables"),
+                logger: logger.createChild("renderTables"),
                 event: {
                   event: "tables",
                   payload: tables.map((table) => ({
@@ -262,7 +284,7 @@ export function createRendererManager({
 
             async renderRoutines(routines) {
               return postMessage({
-                logger: parentLogger.createChild("renderRoutines"),
+                logger: logger.createChild("renderRoutines"),
                 event: {
                   event: "routines",
                   payload: routines.map((routine) => ({
@@ -274,14 +296,11 @@ export function createRendererManager({
             },
 
             async renderRows({ structs, table, page }) {
-              const logger = parentLogger.createChild("renderRows");
-
+              const l = logger.createChild("renderRows");
               const flat = createFlat(table.schema.fields);
-
-              logger.log(`${structs.length} rows`);
-
+              l.log(`${structs.length} rows`);
               return postMessage({
-                logger,
+                logger: l,
                 event: {
                   event: "rows",
                   payload: {
@@ -298,7 +317,7 @@ export function createRendererManager({
 
             successProcessing() {
               return postMessage({
-                logger: parentLogger.createChild("successProcessing"),
+                logger: logger.createChild("successProcessing"),
                 event: {
                   event: "successProcessing",
                 },
@@ -307,7 +326,7 @@ export function createRendererManager({
 
             failProcessing(error) {
               return postMessage({
-                logger: parentLogger.createChild("failProcessing"),
+                logger: logger.createChild("failProcessing"),
                 event: {
                   event: "failProcessing",
                   payload: error,
@@ -317,7 +336,7 @@ export function createRendererManager({
 
             moveTabFocus(diff) {
               return postMessage({
-                logger: parentLogger.createChild("moveTabFocus"),
+                logger: logger.createChild("moveTabFocus"),
                 event: {
                   event: "moveTabFocus",
                   payload: {
@@ -329,7 +348,7 @@ export function createRendererManager({
 
             focusOnTab(tab) {
               return postMessage({
-                logger: parentLogger.createChild("focusOnTab"),
+                logger: logger.createChild("focusOnTab"),
                 event: {
                   event: "focusOnTab",
                   payload: {
@@ -340,6 +359,7 @@ export function createRendererManager({
             },
 
             dispose() {
+              logger.log("dispose");
               this.disposed = true;
               renderers.delete(runnerId);
               onDidDisposePanel(this);

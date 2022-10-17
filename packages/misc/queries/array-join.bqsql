@@ -1,56 +1,43 @@
 with
-orders as (
-    select 
-        1 as order_id, 
-        [
-            struct(
-                1001 as product_id,
-                4 as quantity
-            ),
-            struct(
-                1003 as product_id, 
-                1 as quantity
-            )
-        ] as items
-    union all 
-    select 
-        2 as order_id, 
-        [
-            struct(
-                1003 as product_id,
-                2 as quantity
-            ),
-            struct(
-                1003 as product_id,
-                4 as quantity
-            )
-        ] as items
-)
-, products as (
-    select 
-        1001 as product_id, 
-        'wallet' as name,
-        30000 as price
+  orders as (
+    select
+      1 as order_id,
+      [
+        struct (1001 as product_id, 4 as quantity),
+        struct (1003 as product_id, 1 as quantity)
+      ] as items
     union all
-    select 
-        1002 as product_id, 
-        'watch' as name,
-        10000 as price
+    select
+      2 as order_id,
+      [
+        struct (1003 as product_id, 2 as quantity),
+        struct (1003 as product_id, 4 as quantity)
+      ] as items
+  ),
+  products as (
+    select
+      1001 as product_id,
+      'wallet' as name,
+      30000 as price
     union all
-    select 
-        1003 as product_id, 
-        'bag' as name,
-        50000 as price
-)
-
-select 
-    order_id,
-    array(
-        select as struct
-            *
-        from 
-            unnest(items)
-            left join products using(product_id)
-    ) as items
-from 
-    orders
+    select
+      1002 as product_id,
+      'watch' as name,
+      10000 as price
+    union all
+    select
+      1003 as product_id,
+      'bag' as name,
+      50000 as price
+  )
+select
+  order_id,
+  array (
+    select as struct
+      *
+    from
+      unnest (items)
+      left join products using (product_id)
+  ) as items
+from
+  orders

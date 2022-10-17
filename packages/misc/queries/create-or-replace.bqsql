@@ -1,8 +1,13 @@
 create or replace table
-    `minodisk-api.testing.create_or_replace`
-as
-    select 1 as a, 'foo' as b
-    union all
-    select 2 as a, 'bar' as b
-    union all
-    select 3 as a, 'baz' as b
+    `minodisk-api.testing.create_or_replace` as
+select
+    1 as a,
+    'foo' as b
+union all
+select
+    2 as a,
+    'bar' as b
+union all
+select
+    3 as a,
+    'baz' as b

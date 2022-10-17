@@ -4,20 +4,18 @@ import type { OutputChannel } from "vscode";
 export type Logger = ReturnType<typeof createLogger>;
 
 export const createLogger = (chan: OutputChannel) => {
-  const createChild = (names: string[]) => {
+  const createChild = (prefixes: string[]) => {
     return {
       log(...messages: string[]) {
-        chan.appendLine([...names.map((n) => `[${n}]`), ...messages].join(" "));
+        chan.appendLine([prefix(prefixes), ...messages].join(" "));
       },
       error(err: unknown) {
         chan.appendLine(
-          [...names.map((n) => `[${n}]`), "Error:", errorToString(err)].join(
-            " "
-          )
+          [prefix(prefixes), "Error:", errorToString(err)].join(" ")
         );
       },
-      createChild(name: string) {
-        return createChild([...names, name]);
+      createChild(prefix: string) {
+        return createChild([...prefixes, prefix]);
       },
       dispose() {
         // do nothing
@@ -27,3 +25,6 @@ export const createLogger = (chan: OutputChannel) => {
 
   return createChild([]);
 };
+
+const prefix = (prefixes: Array<string>): string =>
+  prefixes.map((p) => `[${p}]`).join("");

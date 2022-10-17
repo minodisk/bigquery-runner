@@ -1,9 +1,9 @@
-select 
+select
     geo_id,
     name,
     internal_point_latitude,
     internal_point_longitude,
-from 
+from
     `bigquery-public-data.geo_us_boundaries.metropolitan_divisions`
--- limit
---     10
+    -- limit
+    --     10
