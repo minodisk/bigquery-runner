@@ -424,11 +424,7 @@ export async function createClient(
         .dataset(datasetId)
         .table(tableId)
         .getMetadata();
-      return metadata.schema.fields.map((field: TableField) => ({
-        ...ref,
-        fieldId: field.name,
-        type: field.type,
-      }));
+      return walk(metadata.schema.fields, ref, []);
     },
 
     async deleteDataset(datasetId) {
@@ -442,6 +438,50 @@ export async function createClient(
 
   return succeed(client);
 }
+
+const walk = (
+  fields: Array<TableField>,
+  ref: TableReference,
+  parents: Array<string>
+): Array<FieldReference> => {
+  return fields.map((field: TableField) => {
+    const name = field.name ?? "";
+    const ids = [...parents, name];
+    const fieldId = ids.join(".");
+    if (field.mode === "REPEATED") {
+      if (!field.fields) {
+        return {
+          ...ref,
+          fieldId,
+          name,
+          type: `ARRAY<${field.type}>`,
+        };
+      }
+      return {
+        ...ref,
+        fieldId,
+        name,
+        type: `ARRAY<STRUCT>`,
+        fields: walk(field.fields, ref, ids),
+      };
+    }
+    if (field.fields) {
+      return {
+        ...ref,
+        fieldId,
+        name,
+        type: `STRUCT`,
+        fields: walk(field.fields, ref, ids),
+      };
+    }
+    return {
+      ...ref,
+      fieldId,
+      name,
+      type: field.type ?? "",
+    };
+  });
+};
 
 export const checkAuthentication = async ({
   keyFilename,

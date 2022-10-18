@@ -2,6 +2,14 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.16.0
+
+### Added
+
+- Support deep schema with `ARRAY` and `STRUCT` in the tree view.
+
+![Deep schema in the tree view](https://user-images.githubusercontent.com/514164/196380223-42ebbd5b-5c15-49b6-836b-1c094e0fb49f.png)
+
 ## v1.15.0
 
 ### Added

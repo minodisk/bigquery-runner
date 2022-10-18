@@ -1,0 +1,44 @@
+create or replace table
+    testing.struct_array as
+select
+    struct (
+        1 as a,
+        'foo' as b,
+        timestamp('2022-10-08T00:00:00Z') as c
+    ) as simple_struct,
+    ['foo', 'bar'] as simple_array,
+    [
+        struct (
+            2 as a,
+            'bar' as b,
+            timestamp('2022-10-09T00:00:00Z') as c
+        ),
+        struct (
+            3 as a,
+            'baz' as b,
+            timestamp('2022-10-10T00:00:00Z') as c
+        )
+    ] as sharrow_array,
+    [
+        struct (
+            2 as a,
+            'bar' as b,
+            [
+                struct (
+                    true as d,
+                    100 as e,
+                    struct ('foo' as g, 'baz' as h) as f
+                ),
+                struct (
+                    false as d,
+                    200 as e,
+                    struct ('bar' as g, 'bar' as h) as f
+                ),
+                struct (
+                    true as d,
+                    300 as e,
+                    struct ('baz' as g, 'foo' as h) as f
+                )
+            ] as c
+        )
+    ] as deep_array,

@@ -188,10 +188,30 @@ export const createTree = ({
               contextValue: "field",
               id,
               tooltip: id,
-              label: `${ref.fieldId}`,
+              label: ref.name,
               description: `${ref.type}`,
               ref,
-              collapsibleState: TreeItemCollapsibleState.None,
+              collapsibleState: ref.fields
+                ? TreeItemCollapsibleState.Expanded
+                : TreeItemCollapsibleState.None,
+            };
+            return elem;
+          });
+        }
+
+        if (element.contextValue === "field" && element.ref.fields) {
+          return element.ref.fields.map((ref) => {
+            const id = `${ref.projectId}:${ref.datasetId}.${ref.tableId}::${ref.fieldId}`;
+            const elem: FieldElement = {
+              contextValue: "field",
+              id,
+              tooltip: id,
+              label: ref.name,
+              description: `${ref.type}`,
+              ref,
+              collapsibleState: ref.fields
+                ? TreeItemCollapsibleState.Expanded
+                : TreeItemCollapsibleState.None,
             };
             return elem;
           });
@@ -208,12 +228,10 @@ export const createTree = ({
 
   return {
     async refreshResources() {
-      console.log("refreshResources:", tree.selection);
       emitter.fire(null);
     },
 
     async deleteSelectedResources() {
-      console.log("deleteSelectedResources:", tree.selection);
       await Promise.all([
         ...tree.selection
           .filter(
@@ -236,12 +254,10 @@ export const createTree = ({
             await client.deleteTable(ref);
           }),
       ]);
-      console.log("deleteSelectedResources:", "complete");
       await this.refreshResources();
     },
 
     async previewTable(element: TableElement) {
-      console.log("previewTable:", element);
       await previewer.preview(element.ref);
     },
 

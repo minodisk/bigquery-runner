@@ -369,7 +369,9 @@ export type FieldReference = Readonly<{
   datasetId: DatasetID;
   tableId: TableID;
   fieldId: FieldID;
+  name: string;
   type: string;
+  fields?: Array<FieldReference>;
 }>;
 
 export type RoutineReference = Readonly<{
