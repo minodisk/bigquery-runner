@@ -1,14 +1,23 @@
+import path from "path";
 import type { Client } from "core";
 import { createClient } from "core";
 import type {
   DatasetReference,
+  FieldMode,
   FieldReference,
+  FieldType,
   ProjectID,
   ProjectReference,
   TableReference,
 } from "shared";
 import type { Disposable, TreeItem } from "vscode";
-import { EventEmitter, TreeItemCollapsibleState, window } from "vscode";
+import {
+  ThemeColor,
+  ThemeIcon,
+  EventEmitter,
+  TreeItemCollapsibleState,
+  window,
+} from "vscode";
 import type { ConfigManager } from "./configManager";
 import type { Logger } from "./logger";
 import type { Previewer } from "./previewer";
@@ -148,6 +157,7 @@ export const createTree = ({
               contextValue: "dataset",
               id,
               tooltip: id,
+              iconPath: path.join(__dirname, "../assets/dataset.svg"),
               label: ref.datasetId,
               ref,
               collapsibleState: TreeItemCollapsibleState.Collapsed,
@@ -157,6 +167,7 @@ export const createTree = ({
         }
 
         if (element.contextValue === "dataset") {
+          console.log("table:", element.ref);
           const client = clients.get(element.ref.projectId);
           if (!client) {
             return [];
@@ -168,6 +179,7 @@ export const createTree = ({
               contextValue: "table",
               id,
               tooltip: id,
+              iconPath: path.join(__dirname, "../assets/table.svg"),
               label: ref.tableId,
               ref,
               collapsibleState: TreeItemCollapsibleState.Collapsed,
@@ -177,11 +189,13 @@ export const createTree = ({
         }
 
         if (element.contextValue === "table") {
+          console.log("field:", element.ref);
           const client = clients.get(element.ref.projectId);
           if (!client) {
             return [];
           }
           const fields = await client.getFields(element.ref);
+          console.log("fields:", fields);
           return fields.map((ref) => {
             const id = `${ref.projectId}:${ref.datasetId}.${ref.tableId}::${ref.fieldId}`;
             const elem: FieldElement = {
@@ -189,7 +203,8 @@ export const createTree = ({
               id,
               tooltip: id,
               label: ref.name,
-              description: `${ref.type}`,
+              description: ref.type,
+              iconPath: iconPath(ref),
               ref,
               collapsibleState: ref.fields
                 ? TreeItemCollapsibleState.Expanded
@@ -207,7 +222,8 @@ export const createTree = ({
               id,
               tooltip: id,
               label: ref.name,
-              description: `${ref.type}`,
+              description: ref.type,
+              iconPath: iconPath(ref),
               ref,
               collapsibleState: ref.fields
                 ? TreeItemCollapsibleState.Expanded
@@ -268,4 +284,45 @@ export const createTree = ({
       removeListener.dispose();
     },
   };
+};
+
+const iconPath = ({
+  type,
+  mode,
+}: {
+  type?: FieldType;
+  mode?: FieldMode;
+}): ThemeIcon => {
+  const color = new ThemeColor("foreground");
+  if (mode === "REPEATED") {
+    return new ThemeIcon("symbol-array", color);
+  }
+  switch (type) {
+    case "RECORD":
+    case "STRUCT":
+      return new ThemeIcon("symbol-object", color);
+    case "STRING":
+    case "BYTES":
+      return new ThemeIcon("symbol-string", color);
+    case "INTEGER":
+    case "INT64":
+    case "FLOAT":
+    case "FLOAT64":
+    case "NUMERIC":
+    case "BIGNUMERIC":
+      return new ThemeIcon("symbol-number", color);
+    case "BOOLEAN":
+    case "BOOL":
+      return new ThemeIcon("symbol-boolean", color);
+    case "TIMESTAMP":
+    case "DATETIME":
+    case "DATE":
+      return new ThemeIcon("calendar", color);
+    case "TIME":
+      return new ThemeIcon("clock", color);
+    case "INTERVAL":
+      return new ThemeIcon("watch", color);
+    default:
+      return new ThemeIcon("symbol-value", color);
+  }
 };

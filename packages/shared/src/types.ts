@@ -370,7 +370,8 @@ export type FieldReference = Readonly<{
   tableId: TableID;
   fieldId: FieldID;
   name: string;
-  type: string;
+  type?: FieldType;
+  mode?: FieldMode;
   fields?: Array<FieldReference>;
 }>;
 

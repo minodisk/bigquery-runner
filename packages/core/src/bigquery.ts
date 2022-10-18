@@ -4,7 +4,6 @@ import type {
   Job,
   JobResponse,
   Query,
-  TableField,
 } from "@google-cloud/bigquery";
 import type { CredentialBody } from "google-auth-library";
 import type {
@@ -25,6 +24,7 @@ import type {
   ChildJob,
   RoutineReference,
   FieldReference,
+  Field,
 } from "shared";
 import {
   isChildDdlTableQuery,
@@ -440,37 +440,21 @@ export async function createClient(
 }
 
 const walk = (
-  fields: Array<TableField>,
+  fields: ReadonlyArray<Field>,
   ref: TableReference,
   parents: Array<string>
 ): Array<FieldReference> => {
-  return fields.map((field: TableField) => {
+  return fields.map((field) => {
     const name = field.name ?? "";
     const ids = [...parents, name];
     const fieldId = ids.join(".");
-    if (field.mode === "REPEATED") {
-      if (!field.fields) {
-        return {
-          ...ref,
-          fieldId,
-          name,
-          type: `ARRAY<${field.type}>`,
-        };
-      }
+    if (field.type === "RECORD" || field.type === "STRUCT") {
       return {
         ...ref,
         fieldId,
         name,
-        type: `ARRAY<STRUCT>`,
-        fields: walk(field.fields, ref, ids),
-      };
-    }
-    if (field.fields) {
-      return {
-        ...ref,
-        fieldId,
-        name,
-        type: `STRUCT`,
+        type: field.type,
+        mode: field.mode,
         fields: walk(field.fields, ref, ids),
       };
     }
@@ -478,7 +462,8 @@ const walk = (
       ...ref,
       fieldId,
       name,
-      type: field.type ?? "",
+      type: field.type,
+      mode: field.mode,
     };
   });
 };

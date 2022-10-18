@@ -2,6 +2,14 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.17.0
+
+### Added
+
+- Added icons to the tree view.
+
+![Icons in the tree view](https://user-images.githubusercontent.com/514164/196463784-f4126833-dc56-4d27-9596-caae3a502adf.png)
+
 ## v1.16.0
 
 ### Added
