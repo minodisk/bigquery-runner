@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { spawn } from "child_process";
 import { tabs, unwrap } from "shared";
 import type { ExtensionContext } from "vscode";
 import { commands, window, workspace } from "vscode";
@@ -139,6 +140,27 @@ export async function activate(ctx: ExtensionContext) {
     // and the function they invoke.
     ctx.subscriptions.push(
       ...Object.entries({
+        [`${section}.login`]: async () => {
+          const login = spawn("gcloud", [
+            "auth",
+            "application-default",
+            "login",
+          ]);
+          login.stdout.on("data", (data) => logger.log(`stdout: ${data}`));
+          login.stderr.on("data", (data) => logger.log(`stderr: ${data}`));
+          login.on("close", (code) => logger.log(`close: ${code}`));
+        },
+        [`${section}.logout`]: async () => {
+          const logout = spawn("gcloud", [
+            "auth",
+            "application-default",
+            "revoke",
+            "--quiet",
+          ]);
+          logout.stdout.on("data", (data) => logger.log(`stdout: ${data}`));
+          logout.stderr.on("data", (data) => logger.log(`stderr: ${data}`));
+          logout.on("close", (code) => logger.log(`close: ${code}`));
+        },
         [`${section}.run`]: async () => {
           if (!window.activeTextEditor) {
             throw new Error(`no active text editor`);

@@ -2,7 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
-## N/A
+## v1.19.0
+
+### Added
+
+- Add Login/Logout commands.
+  - [#33](https://github.com/minodisk/bigquery-runner/issues/33)
 
 ### Changed
 

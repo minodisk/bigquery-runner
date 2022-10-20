@@ -47,6 +47,13 @@ This extension requires authentication to the Google Cloud API. You can get star
 
 ### Gcloud Credential ([Recommended](https://cloud.google.com/iam/docs/best-practices-service-accounts#development))
 
+1. [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
+1. Open the command palette.
+1. Run `BigQuery Runner: Login`
+
+or
+
+1. [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
 1. Run [`gcloud auth application-default login`](https://cloud.google.com/sdk/gcloud/reference/auth/application-default) in your terminal.
 1. Set `bigqueryRunner.projectId` in `setting.json`.
 
@@ -68,6 +75,22 @@ This extension requires authentication to the Google Cloud API. You can get star
 1. Run `BigQuery Runner: Run`.
 
 ## Commands
+
+### BigQuery Runner: Login
+
+|ID|
+|---|
+|bigqueryRunner.login|
+
+Login with `gcloud auth application-default login`.
+
+### BigQuery Runner: Logout
+
+|ID|
+|---|
+|bigqueryRunner.logout|
+
+Logout with `gcloud auth application-default revoke`.
 
 ### BigQuery Runner: Run
 

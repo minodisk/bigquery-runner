@@ -46,6 +46,16 @@
   "contributes": {
     "commands": [
       {
+        "command": "bigqueryRunner.login",
+        "title": "BigQuery Runner: Login",
+        "description": "Login with `gcloud auth application-default login`."
+      },
+      {
+        "command": "bigqueryRunner.logout",
+        "title": "BigQuery Runner: Logout",
+        "description": "Logout with `gcloud auth application-default revoke`."
+      },
+      {
         "command": "bigqueryRunner.run",
         "title": "BigQuery Runner: Run",
         "icon": "$(play)",
