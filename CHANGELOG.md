@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.18.0
+
+### Changed
+
+- Do not use cache of previous input values if query parameters are changed.
+- Changed the query tokenizer from the original implementation to [sql-formatter](https://github.com/sql-formatter-org/sql-formatter).
+
 ## v1.17.0
 
 ### Added

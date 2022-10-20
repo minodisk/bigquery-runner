@@ -1,7 +1,7 @@
 import { basename } from "path";
 import { format, parse } from "bytes";
 import type { RunJob } from "core";
-import { parseParameters, createClient } from "core";
+import { createParser, createClient } from "core";
 import type {
   Metadata,
   Page,
@@ -13,13 +13,7 @@ import type {
   Err,
   Tab,
 } from "shared";
-import {
-  isPositionalParamValues,
-  isNamedParamValues,
-  isStandaloneStatistics,
-  unwrap,
-  succeed,
-} from "shared";
+import { isStandaloneStatistics, unwrap, succeed } from "shared";
 import type { TextEditor, ViewColumn } from "vscode";
 import { checksum } from "./checksum";
 import type { ConfigManager } from "./configManager";
@@ -76,6 +70,8 @@ export function createRunnerManager({
 }>) {
   const runners = new Map<RunnerID, Runner>();
 
+  const parser = createParser();
+
   const createRunner = async ({
     runnerId,
     logger,
@@ -113,40 +109,6 @@ export function createRunnerManager({
 
         const config = configManager.get();
 
-        const parseParametersResult = parseParameters(query);
-        if (!parseParametersResult.success) {
-          logger.error(parseParametersResult);
-          status.errorBilled();
-          errorManager.show(parseParametersResult.value);
-          return;
-        }
-        const paramKeys = parseParametersResult.value;
-        let params: { [key: string]: unknown } | Array<unknown> | undefined =
-          undefined;
-        if (paramKeys) {
-          const getParamValuesResult = await paramValuesManager.get(paramKeys);
-          if (!getParamValuesResult.success) {
-            logger.error(getParamValuesResult);
-            status.errorBilled();
-            errorManager.show(getParamValuesResult.value);
-            return;
-          }
-          const paramValues = getParamValuesResult.value;
-          if (!paramValues) {
-            return;
-          }
-          if (isNamedParamValues(paramValues)) {
-            params = paramValues.values.reduce((obj, { name, value }) => {
-              obj[name] = value;
-              return obj;
-            }, {} as { [key: string]: unknown });
-          }
-          if (isPositionalParamValues(paramValues)) {
-            params = paramValues.values.map(({ value }) => value);
-          }
-        }
-        logger.log("params:", JSON.stringify(params));
-
         const clientResult = await createClient({
           keyFilename: config.keyFilename,
           projectId: config.projectId,
@@ -160,6 +122,17 @@ export function createRunnerManager({
           return;
         }
         const client = unwrap(clientResult);
+
+        const tokens = parser.parse(query);
+        const paramsResult = await paramValuesManager.get(tokens);
+        if (!paramsResult.success) {
+          logger.error(paramsResult);
+          status.errorBilled();
+          const err = unwrap(paramsResult);
+          errorManager.show(err);
+          return;
+        }
+        const params = paramsResult.value;
 
         const runJobResult = await client.createRunJob({
           query,

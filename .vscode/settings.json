@@ -28,6 +28,5 @@
   },
 
   // "bigqueryRunner.keyFilename": "./service-account.json",
-  "bigqueryRunner.projectId": "minodisk-api",
-  "svg.preview.background": "custom"
+  "bigqueryRunner.projectId": "minodisk-api"
 }

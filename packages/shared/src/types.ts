@@ -442,47 +442,48 @@ export type Format = keyof typeof formats;
 
 export type Position = { line: number; character: number };
 export type Range = { start: Position; end: Position };
-export type NamedParamKey = {
-  // type: "named";
-  name: string;
-  token: `@${string}`;
-  ranges: ReadonlyArray<Range>;
-};
-export type PositionalParamKey = {
-  // type: "positional";
-  // token: "?";
-  // index: number;
-  range: Range;
-};
-export type NamedParamKeys = {
-  type: "named";
-  keys: Array<NamedParamKey>;
-};
-export const isNamedParamKeys = (keys: ParamKeys): keys is NamedParamKeys =>
-  keys.type === "named";
-export type PositionalParamKeys = {
-  type: "positional";
-  keys: Array<PositionalParamKey>;
-};
-export const isPositionalParamKeys = (
-  keys: ParamKeys
-): keys is PositionalParamKeys => keys.type === "positional";
-export type ParamKeys = NamedParamKeys | PositionalParamKeys;
 
-export type NamedParamValue = { name: string; value: unknown };
-export type PositionalParamValue = { value: unknown };
-export type NamedParamValues = {
-  type: "named";
-  values: ReadonlyArray<NamedParamValue>;
-};
-export const isNamedParamValues = (
-  values: ParamValues
-): values is NamedParamValues => values.type === "named";
-export type PositionalParamValues = {
-  type: "positional";
-  values: ReadonlyArray<PositionalParamValue>;
-};
-export const isPositionalParamValues = (
-  values: ParamValues
-): values is PositionalParamValues => values.type === "positional";
-export type ParamValues = NamedParamValues | PositionalParamValues;
+// export type NamedParamKey = {
+//   // type: "named";
+//   name: string;
+//   token: `@${string}`;
+//   ranges: ReadonlyArray<Range>;
+// };
+// export type PositionalParamKey = {
+//   // type: "positional";
+//   // token: "?";
+//   // index: number;
+//   range: Range;
+// };
+// export type NamedParamKeys = {
+//   type: "named";
+//   keys: Array<NamedParamKey>;
+// };
+// export const isNamedParamKeys = (keys: ParamKeys): keys is NamedParamKeys =>
+//   keys.type === "named";
+// export type PositionalParamKeys = {
+//   type: "positional";
+//   keys: Array<PositionalParamKey>;
+// };
+// export const isPositionalParamKeys = (
+//   keys: ParamKeys
+// ): keys is PositionalParamKeys => keys.type === "positional";
+// export type ParamKeys = NamedParamKeys | PositionalParamKeys;
+
+// export type NamedParamValue = { name: string; value: unknown };
+// export type PositionalParamValue = { value: unknown };
+// export type NamedParamValues = {
+//   type: "named";
+//   values: ReadonlyArray<NamedParamValue>;
+// };
+// export const isNamedParamValues = (
+//   values: ParamValues
+// ): values is NamedParamValues => values.type === "named";
+// export type PositionalParamValues = {
+//   type: "positional";
+//   values: ReadonlyArray<PositionalParamValue>;
+// };
+// export const isPositionalParamValues = (
+//   values: ParamValues
+// ): values is PositionalParamValues => values.type === "positional";
+// export type ParamValues = NamedParamValues | PositionalParamValues;
