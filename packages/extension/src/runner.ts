@@ -231,6 +231,7 @@ export function createRunnerManager({
             const { tables, routines } = unwrap(getChildrenResult);
 
             {
+              console.log(tables);
               const result = await renderer.renderTables(tables);
               if (!result.success) {
                 logger.error(result);

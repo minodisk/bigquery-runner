@@ -22,7 +22,7 @@ export type Flat = Readonly<{
 }>;
 
 export function createFlat(fields: ReadonlyArray<Field>): Flat {
-  const heads = fieldsToHeads(fields);
+  const heads = fieldsToHeads(fields, []);
   const columns = fieldsToColumns(fields);
   return {
     heads,
@@ -38,17 +38,17 @@ export function createFlat(fields: ReadonlyArray<Field>): Flat {
   };
 }
 
-function fieldsToHeads(fields: ReadonlyArray<Field>): ReadonlyArray<Accessor> {
+function fieldsToHeads(
+  fields: ReadonlyArray<Field>,
+  names: Array<string>
+): ReadonlyArray<Accessor> {
   return fields.flatMap((field) => {
     if (field.type === "STRUCT" || field.type === "RECORD") {
-      return fieldsToHeads(field.fields).map((f) => ({
-        ...f,
-        id: `${field.name}.${f.name}`,
-      }));
+      return fieldsToHeads(field.fields, [...names, field.name]);
     }
     return {
       ...field,
-      id: field.name,
+      id: [...names, field.name].join("."),
     };
   });
 }

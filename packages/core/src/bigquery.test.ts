@@ -1,3 +1,4 @@
+import type { JobResponse } from "@google-cloud/bigquery";
 import {
   checkAuthentication,
   runQuery,
@@ -75,7 +76,9 @@ describe("bigquery", () => {
     it("should return job", async () => {
       const options = { dryRun: false };
       const job = {};
-      const createQueryJobMock = jest.fn(() => Promise.resolve([job] as any));
+      const createQueryJobMock = jest.fn(() =>
+        Promise.resolve([job] as unknown as JobResponse)
+      );
       const result = await runQuery({
         createQueryJob: createQueryJobMock,
         options,

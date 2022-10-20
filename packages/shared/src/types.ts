@@ -14,12 +14,12 @@ export type Field = PrimitiveField | StructField;
 export type PrimitiveField = Readonly<{
   name: string;
   type: PrimitiveFieldType;
-  mode: FieldMode;
+  mode?: FieldMode;
 }>;
 export type StructField = Readonly<{
   name: string;
   type: StructFieldType;
-  mode: FieldMode;
+  mode?: FieldMode;
   fields: ReadonlyArray<Field>;
 }>;
 
@@ -53,7 +53,7 @@ export type Accessor = Readonly<{
   id: string;
   name: string;
   type: FieldType;
-  mode: FieldMode;
+  mode?: FieldMode;
 }>;
 
 export type StructuralRow = Readonly<{

@@ -586,105 +586,77 @@ describe("flat", () => {
         },
       ]);
     });
-  });
 
-  // describe("primitiveToCell", () => {
-  //   it("should return primitive values as they are", () => {
-  //     const flatResult = createFlat([
-  //       {
-  //         name: "BIGNUMERIC",
-  //         type: "BIGNUMERIC",
-  //       },
-  //       {
-  //         name: "BOOL",
-  //         type: "BOOL",
-  //       },
-  //       {
-  //         name: "BOOLEAN",
-  //         type: "BOOLEAN",
-  //       },
-  //       {
-  //         name: "BYTES",
-  //         type: "BYTES",
-  //       },
-  //       {
-  //         name: "DATE",
-  //         type: "DATE",
-  //       },
-  //       {
-  //         name: "DATETIME",
-  //         type: "DATETIME",
-  //       },
-  //       {
-  //         name: "FLOAT",
-  //         type: "FLOAT",
-  //       },
-  //       {
-  //         name: "FLOAT64",
-  //         type: "FLOAT64",
-  //       },
-  //       {
-  //         name: "FLOAT",
-  //         type: "FLOAT",
-  //       },
-  //       {
-  //         name: "INT64",
-  //         type: "INT64",
-  //       },
-  //       {
-  //         name: "INTEGER",
-  //         type: "INTEGER",
-  //       },
-  //       {
-  //         name: "INTERVAL",
-  //         type: "INTERVAL",
-  //       },
-  //       {
-  //         name: "NUMERIC",
-  //         type: "NUMERIC",
-  //       },
-  //       {
-  //         name: "RECORD",
-  //         type: "RECORD",
-  //       },
-  //       {
-  //         name: "STRING",
-  //         type: "STRING",
-  //       },
-  //       {
-  //         name: "STRUCT",
-  //         type: "STRUCT",
-  //       },
-  //       {
-  //         name: "TIME",
-  //         type: "TIME",
-  //       },
-  //       {
-  //         name: "TIMESTAMP",
-  //         type: "TIMESTAMP",
-  //       },
-  //     ]);
-  //     expect(
-  //       flat.toRows({
-  //         structs: [
-  //           {
-  //             a: "foo",
-  //             b: 321,
-  //           },
-  //         ],
-  //         rowNumber: 0,
-  //       })
-  //     ).toEqual([
-  //       {
-  //         rowNumber: 0,
-  //         rows: [
-  //           [
-  //             { id: "a", value: "foo" },
-  //             { id: "b", value: 321 },
-  //           ],
-  //         ],
-  //       },
-  //     ]);
-  //   });
-  // });
+    it("should make valid heads", () => {
+      expect(
+        createFlat([
+          {
+            name: "simple_struct",
+            type: "RECORD",
+            fields: [
+              { name: "a", type: "INTEGER" },
+              { name: "b", type: "STRING" },
+              { name: "c", type: "TIMESTAMP" },
+            ],
+          },
+          { name: "simple_array", type: "STRING", mode: "REPEATED" },
+          {
+            name: "sharrow_array",
+            type: "RECORD",
+            mode: "REPEATED",
+            fields: [
+              { name: "a", type: "INTEGER" },
+              { name: "b", type: "STRING" },
+              { name: "c", type: "TIMESTAMP" },
+            ],
+          },
+          {
+            name: "deep_array",
+            type: "RECORD",
+            mode: "REPEATED",
+            fields: [
+              { name: "a", type: "INTEGER" },
+              { name: "b", type: "STRING" },
+              {
+                name: "c",
+                type: "RECORD",
+                mode: "REPEATED",
+                fields: [
+                  { name: "d", type: "BOOLEAN" },
+                  { name: "e", type: "INTEGER" },
+                  {
+                    name: "f",
+                    type: "RECORD",
+                    fields: [
+                      { name: "g", type: "STRING" },
+                      { name: "h", type: "STRING" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ]).heads
+      ).toStrictEqual([
+        { name: "a", type: "INTEGER", id: "simple_struct.a" },
+        { name: "b", type: "STRING", id: "simple_struct.b" },
+        { name: "c", type: "TIMESTAMP", id: "simple_struct.c" },
+        {
+          name: "simple_array",
+          type: "STRING",
+          mode: "REPEATED",
+          id: "simple_array",
+        },
+        { name: "a", type: "INTEGER", id: "sharrow_array.a" },
+        { name: "b", type: "STRING", id: "sharrow_array.b" },
+        { name: "c", type: "TIMESTAMP", id: "sharrow_array.c" },
+        { name: "a", type: "INTEGER", id: "deep_array.a" },
+        { name: "b", type: "STRING", id: "deep_array.b" },
+        { name: "d", type: "BOOLEAN", id: "deep_array.c.d" },
+        { name: "e", type: "INTEGER", id: "deep_array.c.e" },
+        { name: "g", type: "STRING", id: "deep_array.c.f.g" },
+        { name: "h", type: "STRING", id: "deep_array.c.f.h" },
+      ]);
+    });
+  });
 });

@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## N/A
+
+### Changed
+
+- Fixed wrong field name.
+  - [#34](https://github.com/minodisk/bigquery-runner/issues/34)
+
 ## v1.18.0
 
 ### Changed
