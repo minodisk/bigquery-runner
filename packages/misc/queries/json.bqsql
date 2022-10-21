@@ -1,0 +1,5 @@
+create or replace table
+  `minodisk-api.testing.create_or_replace` as
+select
+  1 as a,
+  JSON '{"name": "Alice", "age": 30}' as b;

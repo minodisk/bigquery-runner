@@ -167,7 +167,6 @@ export const createTree = ({
         }
 
         if (element.contextValue === "dataset") {
-          console.log("table:", element.ref);
           const client = clients.get(element.ref.projectId);
           if (!client) {
             return [];
@@ -189,13 +188,11 @@ export const createTree = ({
         }
 
         if (element.contextValue === "table") {
-          console.log("field:", element.ref);
           const client = clients.get(element.ref.projectId);
           if (!client) {
             return [];
           }
           const fields = await client.getFields(element.ref);
-          console.log("fields:", fields);
           return fields.map((ref) => {
             const id = `${ref.projectId}:${ref.datasetId}.${ref.tableId}::${ref.fieldId}`;
             const elem: FieldElement = {
