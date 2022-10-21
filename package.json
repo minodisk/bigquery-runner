@@ -11,6 +11,9 @@
     "url": "https://github.com/minodisk/bigquery-runner.git"
   },
   "homepage": "https://marketplace.visualstudio.com/items?itemName=minodisk.bigquery-runner",
+  "sponsor": {
+    "url": "https://github.com/sponsors/minodisk"
+  },
   "engines": {
     "vscode": "^1.72.0"
   },
