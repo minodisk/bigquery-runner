@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { spawn } from "child_process";
-import { tabs, unwrap } from "shared";
+import { createGcloud } from "core";
+import { errorToString, tabs, unwrap } from "shared";
 import type { ExtensionContext } from "vscode";
 import { commands, window, workspace } from "vscode";
 import { createConfigManager } from "./configManager";
@@ -33,6 +33,7 @@ import {
 } from "./statusManager";
 import type { TableElement } from "./tree";
 import { createTree } from "./tree";
+import { showError, showInformation } from "./window";
 
 export async function activate(ctx: ExtensionContext) {
   try {
@@ -82,8 +83,13 @@ export async function activate(ctx: ExtensionContext) {
       },
     });
 
+    const gcloud = createGcloud({
+      logger,
+    });
+
     const errorManager = createErrorManager({
       logger: logger.createChild("errorManager"),
+      gcloud,
     });
     const errorMarkerManager = createErrorMarkerManager(section);
     const quickFixManager = createQuickFixManager({ configManager });
@@ -125,6 +131,7 @@ export async function activate(ctx: ExtensionContext) {
       downloader,
       rendererManager,
       statusManager,
+      gcloud,
       errorManager,
       errorMarkerManager,
       quickFixManager,
@@ -141,25 +148,20 @@ export async function activate(ctx: ExtensionContext) {
     ctx.subscriptions.push(
       ...Object.entries({
         [`${section}.login`]: async () => {
-          const login = spawn("gcloud", [
-            "auth",
-            "application-default",
-            "login",
-          ]);
-          login.stdout.on("data", (data) => logger.log(`stdout: ${data}`));
-          login.stderr.on("data", (data) => logger.log(`stderr: ${data}`));
-          login.on("close", (code) => logger.log(`close: ${code}`));
+          const res = await gcloud.login();
+          if (!res.success) {
+            showError(`Login failure: ${errorToString(res.value)}`);
+            return;
+          }
+          showInformation(`Login success`);
         },
         [`${section}.logout`]: async () => {
-          const logout = spawn("gcloud", [
-            "auth",
-            "application-default",
-            "revoke",
-            "--quiet",
-          ]);
-          logout.stdout.on("data", (data) => logger.log(`stdout: ${data}`));
-          logout.stderr.on("data", (data) => logger.log(`stderr: ${data}`));
-          logout.on("close", (code) => logger.log(`close: ${code}`));
+          const res = await gcloud.logout();
+          if (!res.success) {
+            showError(`Logout failure: ${errorToString(res.value)}`);
+            return;
+          }
+          showInformation(`Logout success`);
         },
         [`${section}.run`]: async () => {
           if (!window.activeTextEditor) {

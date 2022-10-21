@@ -2,6 +2,15 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.20.0
+
+### Added
+
+- Feedback on success or failure of login or logout to the view
+  - [#35](https://github.com/minodisk/bigquery-runner/issues/35)
+
+![login feedback](https://user-images.githubusercontent.com/514164/197105230-6d321f37-29e9-4ae8-b14f-606cf7982e67.png)
+
 ## v1.19.0
 
 ### Added
