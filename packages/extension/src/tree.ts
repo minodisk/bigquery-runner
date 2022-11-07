@@ -1,4 +1,3 @@
-import path from "path";
 import type { Client } from "core";
 import { createClient } from "core";
 import type {
@@ -130,6 +129,12 @@ export const createTree = ({
           );
         }
 
+        const {
+          dataset: datasetIcon,
+          table: tableIcon,
+          field: fieldIcon,
+        } = icons();
+
         if (!element) {
           return Array.from(clients.keys()).map((projectId) => {
             const id = `${projectId}`;
@@ -157,7 +162,7 @@ export const createTree = ({
               contextValue: "dataset",
               id,
               tooltip: id,
-              iconPath: path.join(__dirname, "../assets/dataset.svg"),
+              iconPath: datasetIcon(),
               label: ref.datasetId,
               ref,
               collapsibleState: TreeItemCollapsibleState.Collapsed,
@@ -178,7 +183,7 @@ export const createTree = ({
               contextValue: "table",
               id,
               tooltip: id,
-              iconPath: path.join(__dirname, "../assets/table.svg"),
+              iconPath: tableIcon(),
               label: ref.tableId,
               ref,
               collapsibleState: TreeItemCollapsibleState.Collapsed,
@@ -201,7 +206,7 @@ export const createTree = ({
               tooltip: id,
               label: ref.name,
               description: ref.type,
-              iconPath: iconPath(ref),
+              iconPath: fieldIcon(ref),
               ref,
               collapsibleState: ref.fields
                 ? TreeItemCollapsibleState.Expanded
@@ -220,7 +225,7 @@ export const createTree = ({
               tooltip: id,
               label: ref.name,
               description: ref.type,
-              iconPath: iconPath(ref),
+              iconPath: fieldIcon(ref),
               ref,
               collapsibleState: ref.fields
                 ? TreeItemCollapsibleState.Expanded
@@ -283,43 +288,57 @@ export const createTree = ({
   };
 };
 
-const iconPath = ({
-  type,
-  mode,
-}: {
-  type?: FieldType;
-  mode?: FieldMode;
-}): ThemeIcon => {
+const icons = () => {
   const color = new ThemeColor("foreground");
-  if (mode === "REPEATED") {
-    return new ThemeIcon("symbol-array", color);
-  }
-  switch (type) {
-    case "RECORD":
-    case "STRUCT":
-      return new ThemeIcon("symbol-object", color);
-    case "STRING":
-    case "BYTES":
-      return new ThemeIcon("symbol-string", color);
-    case "INTEGER":
-    case "INT64":
-    case "FLOAT":
-    case "FLOAT64":
-    case "NUMERIC":
-    case "BIGNUMERIC":
-      return new ThemeIcon("symbol-number", color);
-    case "BOOLEAN":
-    case "BOOL":
-      return new ThemeIcon("symbol-boolean", color);
-    case "TIMESTAMP":
-    case "DATETIME":
-    case "DATE":
-      return new ThemeIcon("calendar", color);
-    case "TIME":
-      return new ThemeIcon("clock", color);
-    case "INTERVAL":
-      return new ThemeIcon("watch", color);
-    default:
-      return new ThemeIcon("symbol-value", color);
-  }
+  const database = new ThemeIcon("database", color);
+  const split = new ThemeIcon("split-horizontal", color);
+  const array = new ThemeIcon("symbol-array", color);
+  const struct = new ThemeIcon("symbol-struct", color);
+  const string = new ThemeIcon("symbol-string", color);
+  const number = new ThemeIcon("symbol-number", color);
+  const boolean = new ThemeIcon("symbol-boolean", color);
+  const calendar = new ThemeIcon("calendar", color);
+  const watch = new ThemeIcon("watch", color);
+  const clock = new ThemeIcon("clock", color);
+  const compass = new ThemeIcon("compass", color);
+  const json = new ThemeIcon("json", color);
+  const undef = new ThemeIcon("symbol-value", color);
+  const types: Map<FieldType, ThemeIcon> = new Map([
+    ["RECORD", struct],
+    ["STRUCT", struct],
+    ["STRING", string],
+    ["BYTES", string],
+    ["INTEGER", number],
+    ["INT64", number],
+    ["FLOAT", number],
+    ["FLOAT64", number],
+    ["NUMERIC", number],
+    ["BIGNUMERIC", number],
+    ["BOOLEAN", boolean],
+    ["BOOL", boolean],
+    ["TIMESTAMP", calendar],
+    ["DATETIME", calendar],
+    ["DATE", calendar],
+    ["TIME", watch],
+    ["INTERVAL", clock],
+    ["GEOGRAPHY", compass],
+    ["JSON", json],
+  ]);
+  return {
+    dataset() {
+      return database;
+    },
+    table() {
+      return split;
+    },
+    field({ type, mode }: { type?: FieldType; mode?: FieldMode }): ThemeIcon {
+      if (mode === "REPEATED") {
+        return array;
+      }
+      if (!type) {
+        return undef;
+      }
+      return types.get(type) ?? undef;
+    },
+  };
 };

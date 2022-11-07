@@ -40,6 +40,8 @@ const primitiveTableFieldTypes = [
   "TIME",
   "DATETIME",
   "INTERVAL",
+  "GEOGRAPHY",
+  "JSON",
 ] as const;
 export type PrimitiveFieldType = typeof primitiveTableFieldTypes[number];
 
