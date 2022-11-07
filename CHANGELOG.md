@@ -2,6 +2,19 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.21.0
+
+### Added
+
+- Use built-in icons in the tree view.
+
+![built-in icons in the tree view](https://user-images.githubusercontent.com/514164/200320258-34831094-ac6a-4765-8623-806d92cc46e5.png)
+
+### Changed
+
+- Fix bug that JS could not be loaded from viewer HTML.
+  - [#36](https://github.com/minodisk/bigquery-runner/issues/36)
+
 ## v1.20.0
 
 ### Added
