@@ -151,14 +151,8 @@ export function createRendererManager({
           }
 
           const root = join(ctx.extensionPath, "out/viewer");
-          const base = Uri.file(root)
-            .with({
-              scheme: "vscode-resource",
-            })
-            .toString();
-          const html = (
-            await readFile(join(root, "index.html"), "utf-8")
-          ).replace("<head>", `<head><base href="${base}/" />`);
+          const rootFile = Uri.file(root);
+          const html = await readFile(join(root, "index.html"), "utf-8");
 
           const postMessage = ({
             logger,
@@ -197,7 +191,7 @@ export function createRendererManager({
               },
               {
                 enableScripts: true,
-                localResourceRoots: [Uri.file(root)],
+                localResourceRoots: [rootFile],
               }
             );
             ctx.subscriptions.push(panel);
@@ -232,7 +226,13 @@ export function createRendererManager({
                 onPreviewRequested({ event, renderer });
               }
             });
-            panel.webview.html = html;
+
+            panel.webview.html = html.replace(
+              "<head>",
+              `<head><base href="${panel.webview
+                .asWebviewUri(rootFile)
+                .toString()}/" />`
+            );
           });
 
           const renderer: Renderer = {
