@@ -144,14 +144,13 @@ export function createRunnerManager({
           maxResults: config.viewer.rowsPerPage,
           params,
         });
+
         errorMarker?.clear();
         if (!runJobResult.success) {
           logger.error(runJobResult);
 
           const err = unwrap(runJobResult);
           status.errorBilled();
-
-          errorManager.show(err);
 
           if (errorMarker) {
             if (err.type === "QueryWithPosition") {
@@ -168,6 +167,8 @@ export function createRunnerManager({
               return;
             }
           }
+
+          errorManager.show(err);
           return;
         }
         errorMarker?.clear();
@@ -410,17 +411,25 @@ export function createRunnerManager({
     async getWithEditor(
       editor: TextEditor
     ): Promise<
-      Result<Err<"Unknown" | "Query" | "QueryWithPosition" | "NoJob">, Runner>
+      Result<
+        Err<"Unknown" | "NoText" | "Query" | "QueryWithPosition" | "NoJob">,
+        Runner
+      >
     > {
       const {
         document: { fileName },
         viewColumn,
       } = editor;
 
+      const queryTextResult = await getQueryText(editor);
+      if (!queryTextResult.success) {
+        return queryTextResult;
+      }
+      const query = queryTextResult.value;
+
       const runnerId: RunnerID = `file://${fileName}`;
       const logger = parentLogger.createChild(runnerId);
       const title = basename(fileName);
-      const query = await getQueryText(editor);
 
       const status = statusManager.get(runnerId);
       const errorMarker = errorMarkerManager.get({

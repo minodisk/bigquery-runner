@@ -62,6 +62,7 @@ npm run check
 Debug it to check its behavior around the VSCode extension:
 
 1. [Create a service account and its key](https://cloud.google.com/docs/authentication/getting-started) and save it in the project root with the name `service-account.json`.
+1. Run `Shell Command: Install 'code' command in PATH` in VSCode command palette.
 1. Run `npm run debug` to build BigQuery Runner and install it into VSCode.
 1. Run the command `Developer: Reload Window` in VSCode to activate the newly installed BigQuery Runner.
 1. Open a query file and run the command `BigQuery Runner: Run` in VSCode.

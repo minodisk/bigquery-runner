@@ -206,7 +206,9 @@ export function createRendererManager({
             // );
             panel.onDidDispose(() => {
               logger.log("onDidDispose");
-              renderer.dispose();
+              if (renderer) {
+                renderer.dispose();
+              }
             });
             panel.iconPath = Uri.file(
               join(ctx.extensionPath, "out/assets/icon-panel.png")

@@ -2,6 +2,14 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.21.1
+
+### Changed
+
+- Don't display `Query` and `QueryWithPosition` error.
+  - Feedback to the editor, so it shouldn't be necessary.
+- Don't mark error when text doesn't exist.
+
 ## v1.21.0
 
 ### Added

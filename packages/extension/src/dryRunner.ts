@@ -78,7 +78,13 @@ export function createDryRunner({
       });
       const quickFix = quickFixManager.get(editor.document);
 
-      const query = await getQueryText(editor);
+      const queryTextResult = await getQueryText(editor);
+      if (!queryTextResult.success) {
+        errorMarker.clear();
+        quickFix.clear();
+        return;
+      }
+      const query = queryTextResult.value;
 
       logger.log(`run`);
       status.loadProcessed();
@@ -116,7 +122,6 @@ export function createDryRunner({
 
         const err = unwrap(dryRunJobResult);
         status.errorProcessed();
-        errorManager.show(err);
 
         if (err.type === "QueryWithPosition") {
           if (err.suggestion) {
@@ -132,10 +137,13 @@ export function createDryRunner({
           return;
         }
         if (err.type === "Query") {
-          errorMarker.markAll({ reason: err.reason });
+          errorMarker.markAll({
+            reason: err.reason,
+          });
           return;
         }
 
+        errorManager.show(err);
         return;
       }
       errorMarker.clear();

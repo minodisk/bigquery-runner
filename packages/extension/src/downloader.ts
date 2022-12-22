@@ -32,7 +32,7 @@ import { openProgress, showError, showInformation } from "./window";
 export type Downloader = ReturnType<typeof createDownloader>;
 
 export function createDownloader({
-  logger: parentLogger,
+  logger,
   configManager,
   statusManager,
 }: Readonly<{
@@ -43,7 +43,7 @@ export function createDownloader({
   const jsonl = createWriter({
     configManager,
     statusManager,
-    logger: parentLogger.createChild("jsonl"),
+    logger: logger.createChild("jsonl"),
     createFormatter: ({ writer }) => {
       return createJSONLinesFormatter({ writer });
     },
@@ -51,7 +51,7 @@ export function createDownloader({
   const json = createWriter({
     configManager,
     statusManager,
-    logger: parentLogger.createChild("json"),
+    logger: logger.createChild("json"),
     createFormatter({ writer }) {
       return createJSONFormatter({ writer });
     },
@@ -59,7 +59,7 @@ export function createDownloader({
   const csv = createWriter({
     configManager,
     statusManager,
-    logger: parentLogger.createChild("csv"),
+    logger: logger.createChild("csv"),
     createFormatter({ fields, writer, config }) {
       const flat = createFlat(fields);
       return createCSVFormatter({
@@ -72,7 +72,7 @@ export function createDownloader({
   const markdown = createWriter({
     configManager,
     statusManager,
-    logger: parentLogger.createChild("markdown"),
+    logger: logger.createChild("markdown"),
     createFormatter({ fields, writer }) {
       const flat = createFlat(fields);
       return createMarkdownFormatter({ flat, writer });
@@ -81,7 +81,7 @@ export function createDownloader({
   const text = createWriter({
     configManager,
     statusManager,
-    logger: parentLogger.createChild("text"),
+    logger: logger.createChild("text"),
     createFormatter({ fields, writer }) {
       const flat = createFlat(fields);
       return createTableFormatter({ flat, writer });
@@ -134,7 +134,14 @@ export function createDownloader({
       editor: TextEditor;
     }): Promise<void> {
       const runnerId: RunnerID = `file://${editor.document.fileName}`;
-      const query = await getQueryText(editor);
+
+      const queryTextResult = await getQueryText(editor);
+      if (!queryTextResult.success) {
+        logger.log(queryTextResult.value.reason);
+        return;
+      }
+      const query = queryTextResult.value;
+
       await download({ runnerId, format, query });
     },
 

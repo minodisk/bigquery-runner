@@ -1,6 +1,10 @@
+import type { Result, Err } from "shared";
+import { succeed, fail } from "shared";
 import type { TextEditor } from "vscode";
 
-export async function getQueryText(editor: TextEditor): Promise<string> {
+export async function getQueryText(
+  editor: TextEditor
+): Promise<Result<Err<"NoText">, string>> {
   const text = (() => {
     const selections = editor.selections.filter(
       (selection) => !selection.isEmpty
@@ -14,8 +18,11 @@ export async function getQueryText(editor: TextEditor): Promise<string> {
   })();
 
   if (text.trim() === "") {
-    throw new Error("text is empty");
+    return fail({
+      type: "NoText" as const,
+      reason: `no text in the editor`,
+    });
   }
 
-  return text;
+  return succeed(text);
 }
