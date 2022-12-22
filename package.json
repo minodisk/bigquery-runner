@@ -3,7 +3,7 @@
   "name": "bigquery-runner",
   "displayName": "BigQuery Runner",
   "description": "An extension to query BigQuery directly and view the results in VSCode.",
-  "version": "1.21.0",
+  "version": "1.21.1",
   "license": "Apache-2",
   "publisher": "minodisk",
   "repository": {
