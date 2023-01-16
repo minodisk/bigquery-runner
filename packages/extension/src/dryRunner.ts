@@ -4,6 +4,7 @@ import type { RunnerID } from "shared";
 import { unwrap } from "shared";
 import type { TextDocument, TextEditor } from "vscode";
 import { window } from "vscode";
+import { getCompiledQuery } from "./compiler";
 import type { ConfigManager } from "./configManager";
 import type { ErrorManager } from "./errorManager";
 import type { ErrorMarkerManager } from "./errorMarker";
@@ -84,12 +85,15 @@ export function createDryRunner({
         quickFix.clear();
         return;
       }
+
+      const config = configManager.get();
+
       const query = queryTextResult.value;
+      const compiledQuery = await getCompiledQuery(query, config.libsRoot);
+      const didCompilerRun = query.localeCompare(compiledQuery) !== 0;
 
       logger.log(`run`);
       status.loadProcessed();
-
-      const config = configManager.get();
 
       const clientResult = await createClient({
         keyFilename: config.keyFilename,
@@ -106,7 +110,7 @@ export function createDryRunner({
       const client = unwrap(clientResult);
 
       const dryRunJobResult = await client.createDryRunJob({
-        query,
+        query: compiledQuery,
         useLegacySql: config.useLegacySql,
         maximumBytesBilled: config.maximumBytesBilled
           ? parse(config.maximumBytesBilled).toString()
@@ -123,7 +127,7 @@ export function createDryRunner({
         const err = unwrap(dryRunJobResult);
         status.errorProcessed();
 
-        if (err.type === "QueryWithPosition") {
+        if (err.type === "QueryWithPosition" && !didCompilerRun) {
           if (err.suggestion) {
             quickFix.register({
               start: err.position,
@@ -136,7 +140,7 @@ export function createDryRunner({
           });
           return;
         }
-        if (err.type === "Query") {
+        if (err.type === "Query" && !didCompilerRun) {
           errorMarker.markAll({
             reason: err.reason,
           });

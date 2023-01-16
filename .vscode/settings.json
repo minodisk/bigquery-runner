@@ -1,32 +1,32 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-  "files.exclude": {
-    "out": false // set this to true to hide the "out" folder with the compiled JS files
-  },
-  "search.exclude": {
-    "out": true // set this to false to include "out" folder in search results
-  },
-  // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-  "typescript.tsc.autoDetect": "off",
-
-  "[html]": {
-    "editor.formatOnSave": false
-  },
-
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "eslint.validate": ["javascript", "typescript"],
-
-  "Prettier-SQL.SQLFlavourOverride": "bigquery",
-  "Prettier-SQL.tabSizeOverride": 2,
-  "Prettier-SQL.linesBetweenQueries": 1,
-  "[sql]": {
-    "editor.defaultFormatter": "inferrinizzard.prettier-sql-vscode",
-    "editor.tabSize": 2
-  },
-
-  // "bigqueryRunner.keyFilename": "./service-account.json",
-  "bigqueryRunner.projectId": "minodisk-api"
+	"files.exclude": {
+		"out": false // set this to true to hide the "out" folder with the compiled JS files
+	},
+	"search.exclude": {
+		"out": true // set this to false to include "out" folder in search results
+	},
+	// Turn off tsc task auto detection since we have the necessary tasks as npm scripts
+	"typescript.tsc.autoDetect": "off",
+	"[html]": {
+		"editor.formatOnSave": false
+	},
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": true
+	},
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"eslint.validate": [
+		"javascript",
+		"typescript"
+	],
+	"Prettier-SQL.SQLFlavourOverride": "bigquery",
+	"Prettier-SQL.tabSizeOverride": 2,
+	"Prettier-SQL.linesBetweenQueries": 1,
+	"[sql]": {
+		"editor.defaultFormatter": "inferrinizzard.prettier-sql-vscode",
+		"editor.tabSize": 2
+	},
+	// "bigqueryRunner.keyFilename": "./service-account.json",
+	"bigqueryRunner.projectId": "minodisk-api",
+	"npm.packageManager": "npm"
 }

@@ -10,3 +10,4 @@ service-account.json
 *.csv
 *.txt
 名称未設定.*
+testing/**

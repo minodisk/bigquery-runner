@@ -424,6 +424,14 @@ Debounce interval in milliseconds to validate the query when the file is modifie
 
 Maximum number of rows to retrieve per page for display in the viewer. If a number is specified, attempts to fetch that number of rows; if null is specified, attempts to fetch all results. If the amount of data per row is large, the specified number of rows will not always be fetched. You can use the `bigqueryRunner.prevPage` or `bigqueryRunner.nextPage` command to perform paging.
 
+### `bigqueryRunner.compiler.libsRoot`
+
+|Type|Default|
+|---|---|
+|string|"/home/dienes/coding/bigquery-runner/"|
+
+The root for the BigQuery libraries. Includes are relative to this root.
+
 
 ## Additional Settings
 

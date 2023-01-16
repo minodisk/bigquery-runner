@@ -16,6 +16,7 @@ import type {
 import { isStandaloneStatistics, unwrap, succeed } from "shared";
 import type { TextEditor, ViewColumn } from "vscode";
 import { checksum } from "./checksum";
+import { getCompiledQuery } from "./compiler";
 import type { ConfigManager } from "./configManager";
 import type { ErrorManager } from "./errorManager";
 import type { ErrorMarker, ErrorMarkerManager } from "./errorMarker";
@@ -425,7 +426,11 @@ export function createRunnerManager({
       if (!queryTextResult.success) {
         return queryTextResult;
       }
+      const config = configManager.get();
+
       const query = queryTextResult.value;
+      const compiledQuery = await getCompiledQuery(query, config.libsRoot);
+      const didCompilerRun = query.localeCompare(compiledQuery) !== 0;
 
       const runnerId: RunnerID = `file://${fileName}`;
       const logger = parentLogger.createChild(runnerId);
@@ -440,11 +445,11 @@ export function createRunnerManager({
       const createResult = await createRunner({
         runnerId,
         logger,
-        query,
+        query: compiledQuery,
         title,
         baseViewColumn: viewColumn,
         status,
-        errorMarker,
+        errorMarker: didCompilerRun ? undefined : errorMarker,
       });
       if (!createResult.success) {
         return createResult;
@@ -476,10 +481,13 @@ export function createRunnerManager({
 
       const status = statusManager.get(runnerId);
 
+      const config = configManager.get();
+      const compiledQuery = await getCompiledQuery(query, config.libsRoot);
+
       const createResult = await createRunner({
         runnerId,
         logger,
-        query,
+        query: compiledQuery,
         title,
         baseViewColumn: viewColumn,
         status,

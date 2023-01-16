@@ -5,8 +5,9 @@ import type { OrigConfig } from "./OrigConfig";
 
 export type ConfigManager = ReturnType<typeof createConfigManager>;
 
-export type Config = Omit<OrigConfig, "defaultDataset"> & {
+export type Config = Omit<OrigConfig, "defaultDataset" | "compiler"> & {
   defaultDataset?: OrigConfig["defaultDataset"];
+  libsRoot: string;
 };
 
 type Callback = (config: Config) => unknown;
@@ -51,6 +52,17 @@ export function createConfigManager(section: string) {
   };
 }
 
+function getAbsolute(fileName?: string): string | undefined {
+  return fileName === undefined || fileName === null
+    ? undefined
+    : isAbsolute(fileName) ||
+      !workspace.workspaceFolders ||
+      !workspace.workspaceFolders[0] ||
+      workspace.workspaceFolders.length === 0
+    ? fileName
+    : join(workspace.workspaceFolders[0].uri.fsPath, fileName);
+}
+
 function getConfig(section: string): Config {
   const config = workspace.getConfiguration(section) as unknown as OrigConfig;
   return {
@@ -67,15 +79,7 @@ function getConfig(section: string): Config {
           ? undefined
           : config.downloader.rowsPerPage,
     },
-    keyFilename:
-      config.keyFilename === null || config.keyFilename === undefined
-        ? undefined
-        : isAbsolute(config.keyFilename) ||
-          !workspace.workspaceFolders ||
-          !workspace.workspaceFolders[0] ||
-          workspace.workspaceFolders.length === 0
-        ? config.keyFilename
-        : join(workspace.workspaceFolders[0].uri.fsPath, config.keyFilename),
+    keyFilename: getAbsolute(config.keyFilename),
     statusBarItem: {
       align:
         config.statusBarItem.align === null ||
@@ -96,6 +100,7 @@ function getConfig(section: string): Config {
           ? undefined
           : config.viewer.rowsPerPage,
     },
+    libsRoot: getAbsolute(config.compiler.libsRoot) ?? "",
   };
 }
 

@@ -39,4 +39,7 @@ export type OrigConfig = Readonly<{
     enabled: boolean;
     debounceInterval: number;
   }>;
+  compiler: Readonly<{
+    libsRoot: string;
+  }>;
 }>;

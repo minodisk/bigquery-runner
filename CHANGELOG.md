@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+
+## v2.0.0
+
+### Changed
+
+- Allow #include directives and to include libraries.
 ## v1.21.1
 
 ### Changed
