@@ -1,0 +1,5 @@
+select
+    *
+FROM
+    `minodisk-api.testing.a`
+    join `vertect.test.b` using (id)

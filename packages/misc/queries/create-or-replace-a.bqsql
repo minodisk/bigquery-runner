@@ -1,0 +1,13 @@
+create or replace table
+    `minodisk-api.testing.a` as
+select
+    1 as id,
+    'foo' as column_a
+union all
+select
+    2 as id,
+    'bar' as column_a
+union all
+select
+    3 as id,
+    'baz' as column_a

@@ -1,0 +1,13 @@
+create or replace table
+    `vertect.test.b` as
+select
+    1 as id,
+    'hoge' as column_b
+union all
+select
+    2 as id,
+    'fuga' as column_b
+union all
+select
+    3 as id,
+    'piyo' as column_b
