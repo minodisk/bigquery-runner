@@ -221,7 +221,6 @@ export function createRunnerManager({
           return;
         }
 
-        console.log("tableReference:", tableReference);
         const getTableResult = await (tableReference
           ? client.getTable(tableReference)
           : job.getTable());
