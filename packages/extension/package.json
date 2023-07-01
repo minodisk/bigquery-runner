@@ -15,7 +15,6 @@
     "check": "run-p check:*",
     "check:tsc": "tsc",
     "check:format": "npm run format -- --check",
-    "test": "tsc && node ../../out/test/runTest.js",
     "format": "prettier --write src"
   }
 }
