@@ -12,6 +12,7 @@ import type {
   Result,
   Err,
   Tab,
+  TableReference,
 } from "shared";
 import { isStandaloneStatistics, unwrap, succeed } from "shared";
 import type { TextEditor, ViewColumn } from "vscode";
@@ -78,6 +79,7 @@ export function createRunnerManager({
     query,
     title,
     baseViewColumn,
+    tableReference,
     status,
     errorMarker,
   }: Readonly<{
@@ -86,6 +88,7 @@ export function createRunnerManager({
     query: string;
     title: string;
     baseViewColumn?: ViewColumn;
+    tableReference?: TableReference;
     status: Status;
     errorMarker?: ErrorMarker;
   }>): Promise<
@@ -218,7 +221,10 @@ export function createRunnerManager({
           return;
         }
 
-        const getTableResult = await job.getTable();
+        console.log("tableReference:", tableReference);
+        const getTableResult = await (tableReference
+          ? client.getTable(tableReference)
+          : job.getTable());
         if (!getTableResult.success) {
           const error = getTableResult.value;
           if (error.type === "NoDestinationTable") {
@@ -455,14 +461,14 @@ export function createRunnerManager({
       return createResult;
     },
 
-    async getWithQuery({
+    async preview({
       title,
       query,
-      viewColumn,
+      tableReference,
     }: Readonly<{
       title: string;
       query: string;
-      viewColumn?: ViewColumn;
+      tableReference?: TableReference;
     }>): Promise<
       Result<
         Err<
@@ -481,8 +487,8 @@ export function createRunnerManager({
         logger,
         query,
         title,
-        baseViewColumn: viewColumn,
         status,
+        tableReference,
       });
       if (!createResult.success) {
         return createResult;
