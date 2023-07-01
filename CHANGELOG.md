@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.21.2
+
+### Changed
+
+- Displays information about the table being previewed.
+
 ## v1.21.1
 
 ### Changed
