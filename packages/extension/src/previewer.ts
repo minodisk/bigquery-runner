@@ -26,9 +26,10 @@ export const createPreviewer = ({
         (rowsPerPage ? ` LIMIT ${rowsPerPage}` : "");
       logger.log("query:", query);
 
-      const runnerResult = await runnerManager.getWithQuery({
+      const runnerResult = await runnerManager.preview({
         title: tableReference.tableId,
         query,
+        tableReference,
       });
       if (!runnerResult.success) {
         logger.error(runnerResult);

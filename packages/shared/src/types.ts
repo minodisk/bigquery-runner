@@ -43,10 +43,10 @@ const primitiveTableFieldTypes = [
   "GEOGRAPHY",
   "JSON",
 ] as const;
-export type PrimitiveFieldType = typeof primitiveTableFieldTypes[number];
+export type PrimitiveFieldType = (typeof primitiveTableFieldTypes)[number];
 
 const structTableFieldTypes = ["RECORD", "STRUCT"] as const;
-export type StructFieldType = typeof structTableFieldTypes[number];
+export type StructFieldType = (typeof structTableFieldTypes)[number];
 
 export type FieldMode = "NULLABLE" | "REQUIRED" | "REPEATED";
 
@@ -181,7 +181,7 @@ export type FocusOnTabEvent = Readonly<{
 }>;
 
 export const tabs = ["Rows", "Table", "Routine", "Job"] as const;
-export type Tab = typeof tabs[number];
+export type Tab = (typeof tabs)[number];
 
 export type RunInfo = Readonly<{
   metadata: Metadata;

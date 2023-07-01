@@ -53,6 +53,7 @@ export type QueryWithPositionError = Err<"QueryWithPosition"> & {
 export type NoRowsError = Err<"NoRows">;
 
 export type Client = Readonly<{
+  getTable(ref: TableReference): Promise<Result<UnknownError, Table>>;
   createRunJob(
     query: Omit<Query, "dryRun" | "query"> & { query: string }
   ): Promise<
@@ -183,6 +184,8 @@ export async function createClient(
   };
 
   const client: Client = {
+    getTable,
+
     async createRunJob(jobOptions) {
       const dryRunJobResult = await runQuery({
         createQueryJob: bigQuery.createQueryJob.bind(bigQuery),
