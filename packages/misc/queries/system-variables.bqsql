@@ -1,0 +1,1 @@
+SELECT @@project_id as project_id;

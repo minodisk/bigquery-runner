@@ -126,7 +126,7 @@ export function createRunnerManager({
         }
         const client = unwrap(clientResult);
 
-        const tokens = parser.parse(query);
+        const tokens = parser.parse(query.replaceAll("@@", "__"));
         const paramsResult = await paramValuesManager.get(tokens);
         if (!paramsResult.success) {
           logger.error(paramsResult);
