@@ -2,17 +2,26 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.21.4
+
+### Added
+
+- Support [system variables reference](https://cloud.google.com/bigquery/docs/reference/system-variables?hl=en).
+  - [#41](https://github.com/minodisk/bigquery-runner/issues/41)
+
 ## v1.21.3
 
 ### Added
 
 - Allow tables in the tree to be previewed in the Google Cloud Console.
+  - [#43](https://github.com/minodisk/bigquery-runner/issues/43)
 
 ## v1.21.2
 
 ### Changed
 
 - Displays information about the table being previewed.
+  - [#45](https://github.com/minodisk/bigquery-runner/issues/45)
 
 ## v1.21.1
 
