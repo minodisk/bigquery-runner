@@ -2,6 +2,12 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.21.3
+
+### Added
+
+- Allow tables in the tree to be previewed in the Google Cloud Console.
+
 ## v1.21.2
 
 ### Changed
