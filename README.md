@@ -228,13 +228,21 @@ Run the query in BigQuery and save the results to a file in plain text
 
 Refresh the BigQuery Runner's Resources
 
-### BigQuery Runner: Preview Table
+### BigQuery Runner: Preview Table in VS Code
 
 |ID|
 |---|
-|bigqueryRunner.previewTable|
+|bigqueryRunner.previewTableInVSCode|
 
-Open previewer for a selected table in the BigQuery Runner's Resources view
+Preview the selected table in VS Code
+
+### BigQuery Runner: Preview Table on Remote
+
+|ID|
+|---|
+|bigqueryRunner.previewTableOnRemote|
+
+Preview the selected table in Google Cloud Console
 
 ### BigQuery Runner: Clear Parameters
 

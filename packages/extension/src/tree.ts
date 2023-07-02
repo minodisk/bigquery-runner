@@ -11,11 +11,13 @@ import type {
 } from "shared";
 import type { Disposable, TreeItem } from "vscode";
 import {
+  env,
   ThemeColor,
   ThemeIcon,
   EventEmitter,
   TreeItemCollapsibleState,
   window,
+  Uri,
 } from "vscode";
 import type { ConfigManager } from "./configManager";
 import type { Logger } from "./logger";
@@ -67,7 +69,8 @@ export const createTree = ({
 }): Disposable & {
   refreshResources(): Promise<void>;
   deleteSelectedResources(): Promise<void>;
-  previewTable(element: TableElement): Promise<void>;
+  previewTableInVSCode(element: TableElement): Promise<void>;
+  previewTableOnRemote(element: TableElement): Promise<void>;
 } => {
   const clients = new Map<ProjectID, Client>();
   const emitter = new EventEmitter<null>();
@@ -77,21 +80,6 @@ export const createTree = ({
   });
 
   const tree = window.createTreeView<Element>("bigqueryRunner.resources", {
-    // canSelectMany: true,
-    // {
-    //   "command": "bigqueryRunner.deleteSelectedResources",
-    //   "title": "BigQuery Runner: Delete Selected Resources",
-    //   "icon": "$(trash)",
-    //   "description": "Delete a selected dataset in the BigQuery Runner's Resources view"
-    // },
-    // "view/item/context": [
-    //   {
-    //     "command": "bigqueryRunner.deleteSelectedResources",
-    //     "when": "view == bigqueryRunner.resources && viewItem == dataset || viewItem == table",
-    //     "group": "inline"
-    //   }
-    // ]
-
     treeDataProvider: {
       onDidChangeTreeData: emitter.event,
 
@@ -275,8 +263,17 @@ export const createTree = ({
       await this.refreshResources();
     },
 
-    async previewTable(element: TableElement) {
+    async previewTableInVSCode(element: TableElement) {
       await previewer.preview(element.ref);
+    },
+
+    async previewTableOnRemote(element: TableElement) {
+      const { projectId, datasetId, tableId } = element.ref;
+      await env.openExternal(
+        Uri.parse(
+          `https://console.cloud.google.com/bigquery?p=${projectId}&d=${datasetId}&t=${tableId}&page=table`
+        )
+      );
     },
 
     dispose() {

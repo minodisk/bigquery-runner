@@ -146,9 +146,14 @@
         "description": "Refresh the BigQuery Runner's Resources"
       },
       {
-        "command": "bigqueryRunner.previewTable",
-        "title": "BigQuery Runner: Preview Table",
-        "description": "Open previewer for a selected table in the BigQuery Runner's Resources view"
+        "command": "bigqueryRunner.previewTableInVSCode",
+        "title": "BigQuery Runner: Preview Table in VS Code",
+        "description": "Preview the selected table in VS Code"
+      },
+      {
+        "command": "bigqueryRunner.previewTableOnRemote",
+        "title": "BigQuery Runner: Preview Table on Remote",
+        "description": "Preview the selected table in Google Cloud Console"
       },
       {
         "command": "bigqueryRunner.clearParams",
@@ -196,7 +201,11 @@
       ],
       "view/item/context": [
         {
-          "command": "bigqueryRunner.previewTable",
+          "command": "bigqueryRunner.previewTableInVSCode",
+          "when": "view == bigqueryRunner.resources && viewItem == table"
+        },
+        {
+          "command": "bigqueryRunner.previewTableOnRemote",
           "when": "view == bigqueryRunner.resources && viewItem == table"
         }
       ]

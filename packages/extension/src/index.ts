@@ -187,8 +187,11 @@ export async function activate(ctx: ExtensionContext) {
         [`${section}.deleteSelectedResources`]: async () => {
           await tree.deleteSelectedResources();
         },
-        [`${section}.previewTable`]: async (element: TableElement) => {
-          await tree.previewTable(element);
+        [`${section}.previewTableInVSCode`]: async (element: TableElement) => {
+          await tree.previewTableInVSCode(element);
+        },
+        [`${section}.previewTableOnRemote`]: async (element: TableElement) => {
+          await tree.previewTableOnRemote(element);
         },
         [`${section}.clearParams`]: async () => {
           if (!window.activeTextEditor) {
