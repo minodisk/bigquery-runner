@@ -74,6 +74,12 @@ or
 1. Open the command palette.
 1. Run `BigQuery Runner: Run`.
 
+### Query parameters
+
+If query has named parameter(s), the extension will ask you for the value(s) of the parameter(s). You must specify the value in JSON format, e.g. quotation marks should be used for simple values like `"20231224"`. See more complex examples below. Once set, parameters are stored for future use, and should be reset with [bigqueryRunner.clearParams](#bigquery-runner-clear-parameters) command if neccessary.
+
+![Parameters usage](https://user-images.githubusercontent.com/514164/178248203-a24126dc-4ade-4e6f-93ae-200702edfa51.gif)
+
 ## Commands
 
 ### BigQuery Runner: Login
