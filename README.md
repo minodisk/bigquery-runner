@@ -76,7 +76,9 @@ or
 
 ### Query parameters
 
-If query has named parameter(s), the extension will ask you for the value(s) of the parameter(s). You must specify the value in JSON format, e.g. quotation marks should be used for simple values like `"20231224"`. See more complex examples below. Once set, parameters are stored for future use, and should be reset with [bigqueryRunner.clearParams](#bigquery-runner-clear-parameters) command if neccessary.
+If query has one or more named parameters, the extension will ask you for the values of that parameter. The values must be given in JSON format, e.g. quotation marks should be used for simple values such as `"20231224"`. See below for more complex examples.
+
+Once set, the parameters are saved for future use and should be reset if necessary using the [bigqueryRunner.clearParams](#bigquery-runner-clear-parameters) command.
 
 ![Parameters usage](https://user-images.githubusercontent.com/514164/178248203-a24126dc-4ade-4e6f-93ae-200702edfa51.gif)
 
