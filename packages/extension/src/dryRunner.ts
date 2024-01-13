@@ -90,6 +90,7 @@ export function createDryRunner({
       status.loadProcessed();
 
       const config = configManager.get();
+      logger.log("dry-run with:", JSON.stringify(config, null, " "));
 
       const clientResult = await createClient({
         keyFilename: config.keyFilename,
@@ -97,6 +98,7 @@ export function createDryRunner({
         location: config.location,
       });
       if (!clientResult.success) {
+        logger.log("failed to create client");
         logger.error(clientResult);
         status.errorProcessed();
         const err = unwrap(clientResult);
@@ -118,8 +120,8 @@ export function createDryRunner({
       errorMarker.clear();
       quickFix.clear();
       if (!dryRunJobResult.success) {
+        logger.log("failed to dry-run");
         logger.error(dryRunJobResult);
-
         const err = unwrap(dryRunJobResult);
         status.errorProcessed();
 

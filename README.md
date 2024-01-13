@@ -47,11 +47,11 @@ This extension requires authentication to the Google Cloud API. You can get star
 
 ### Gcloud Credential ([Recommended](https://cloud.google.com/iam/docs/best-practices-service-accounts#development))
 
-1. [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
+<!-- 1. [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
 1. Run `BigQuery Runner: Login` in the VSCode command palette.
 1. Set `bigqueryRunner.projectId` in `setting.json`.
 
-or
+or -->
 
 1. [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
 1. Run [`gcloud auth application-default login`](https://cloud.google.com/sdk/gcloud/reference/auth/application-default) in your terminal.
@@ -73,14 +73,6 @@ or
 1. Open a query file with `.bqsql` extension.
 1. Open the command palette.
 1. Run `BigQuery Runner: Run`.
-
-### Query parameters
-
-If query has one or more named parameters, the extension will ask you for the values of that parameter. The values must be given in JSON format, e.g. quotation marks should be used for simple values such as `"20231224"`. See below for more complex examples.
-
-Once set, the parameters are saved for future use and should be reset if necessary using the [bigqueryRunner.clearParams](#bigquery-runner-clear-parameters) command.
-
-![Parameters usage](https://user-images.githubusercontent.com/514164/178248203-a24126dc-4ade-4e6f-93ae-200702edfa51.gif)
 
 ## Commands
 
