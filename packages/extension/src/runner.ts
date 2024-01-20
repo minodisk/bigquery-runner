@@ -114,7 +114,9 @@ export function createRunnerManager({
 
         const clientResult = await createClient({
           keyFilename: config.keyFilename,
-          projectId: config.projectId,
+          projectId: tableReference
+            ? tableReference.projectId
+            : config.projectId,
           location: config.location,
         });
         if (!clientResult.success) {
@@ -147,6 +149,8 @@ export function createRunnerManager({
           maxResults: config.viewer.rowsPerPage,
           params,
         });
+
+        console.log("run result:", runJobResult);
 
         errorMarker?.clear();
         if (!runJobResult.success) {
