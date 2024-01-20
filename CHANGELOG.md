@@ -2,14 +2,14 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
-## v1.21.10
+## v1.21.11
 
 ### Changed
 
 - Fixed a bug that "Preview Table in VS Code" does not use projectId in bigqueryRunner.tree.projectIds.
   - [#48](https://github.com/minodisk/bigquery-runner/issues/48)
 
-## v1.21.9
+## v1.21.9,v1.21.10
 
 ### Added
 
