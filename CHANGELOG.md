@@ -2,6 +2,20 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.21.9
+
+### Added
+
+- Add usage of query params to README.
+  - [#52](https://github.com/minodisk/bigquery-runner/pull/52)
+
+## v1.21.6, v1.21.7, v1.21.8
+
+### Added
+
+- Publish to Open VSX Registry.
+  - https://open-vsx.org/extension/minodisk/bigquery-runner
+
 ## v1.21.4
 
 ### Added
