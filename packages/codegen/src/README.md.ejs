@@ -123,7 +123,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
 `keybindings.json`:
 
 ```json:keybindings.json
-{
+[
   {
     "key": "cmd+enter",
     "command": "bigqueryRunner.run",
@@ -139,7 +139,7 @@ The extension can be customized by modifying your `settings.json` file. The avai
     "command": "bigqueryRunner.nextPage",
     "when": "resourceLangId in bigqueryRunner.languageIds || resourceExtname in bigqueryRunner.extensions && vim.mode == 'Normal' || vim.mode == 'Visual' || vim.mode == 'VisualBlock' || vim.mode == 'VisualLine'"
   }
-}
+]
 ```
 
 ### Syntax highlighting `.bqsql` files as SQL
