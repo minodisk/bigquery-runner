@@ -448,7 +448,7 @@ Maximum number of rows to retrieve per page for display in the viewer. If a numb
 `keybindings.json`:
 
 ```json:keybindings.json
-{
+[
   {
     "key": "cmd+enter",
     "command": "bigqueryRunner.run",
@@ -464,7 +464,7 @@ Maximum number of rows to retrieve per page for display in the viewer. If a numb
     "command": "bigqueryRunner.nextPage",
     "when": "resourceLangId in bigqueryRunner.languageIds || resourceExtname in bigqueryRunner.extensions && vim.mode == 'Normal' || vim.mode == 'Visual' || vim.mode == 'VisualBlock' || vim.mode == 'VisualLine'"
   }
-}
+]
 ```
 
 ### Syntax highlighting `.bqsql` files as SQL
