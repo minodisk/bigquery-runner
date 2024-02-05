@@ -2,18 +2,24 @@ import { ZetaSQLClient, runServer } from "@fivetrandevelopers/zetasql";
 
 describe("zetasql", () => {
   it("should be useful", async () => {
-    const query = `
+    //     const sqlStatement = `
+    // SELECT
+    //     corpus,
+    //     word,
+    //     word_count
+    // FROM
+    //     \`bigquery-public-data.samples.shakespeare\`
+    // WHERE
+    //     corpus = @corpus -- "romeoandjuliet"
+    //     AND word_count >= @min_word_count -- 250
+    // ORDER BY
+    //     word_count DESC
+    // `;
+    const sqlStatement = `
 SELECT
     corpus,
-    word,
-    word_count
 FROM
-    \`bigquery-public-data.samples.shakespeare\`
-WHERE
-    corpus = @corpus -- "romeoandjuliet"
-    AND word_count >= @min_word_count -- 250
-ORDER BY
-    word_count DESC
+    hoge
 `;
 
     runServer(8080);
@@ -25,8 +31,23 @@ ORDER BY
     console.log("connected:", connected);
 
     const res = await cli.analyze({
-      sqlStatement: query,
+      simpleCatalog: {
+        table: [
+          {
+            name: "hoge",
+            column: [
+              {
+                name: "corpus",
+                type: {
+                  typeKind: "TYPE_NUMERIC",
+                },
+              },
+            ],
+          },
+        ],
+      },
+      sqlStatement,
     });
-    console.log(res);
+    console.log(JSON.stringify(res, null, "  "));
   });
 });
