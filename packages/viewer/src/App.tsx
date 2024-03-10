@@ -13,6 +13,7 @@ import type {
   RoutinePayload,
   MetadataPayload,
   TablePayload,
+  Err,
   Format,
   Tab as TabName,
   TableReference,
@@ -28,7 +29,6 @@ import {
   isStartProcessingEvent,
   isSuccessLoadingEvent,
   isFailProcessingEvent,
-  type Err,
 } from "shared";
 import type { WebviewApi } from "vscode-webview";
 import { Header } from "./domain/Header";

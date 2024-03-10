@@ -1,7 +1,7 @@
 declare a bignumeric(10) default cast('999999' as bignumeric(10));
 declare d bytes(10) default cast('foo' as bytes(10));
 declare e float64 default cast('3.14' as float64);
-declare f int64 default cast('3' as int64);
+declare f int64 default cast('9162371277713859723' as int64);
 DECLARE y NUMERIC(5, 2) DEFAULT 123.45;
 
 select
