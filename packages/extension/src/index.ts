@@ -31,7 +31,7 @@ import {
   createStatusBarItemCreator,
   createStatusManager,
 } from "./statusManager";
-import type { TableElement } from "./tree";
+import type { FieldElement, TableElement } from "./tree";
 import { createTree } from "./tree";
 import { showError, showInformation } from "./window";
 
@@ -195,6 +195,9 @@ export async function activate(ctx: ExtensionContext) {
         },
         [`${section}.previewTableOnRemote`]: async (element: TableElement) => {
           await tree.previewTableOnRemote(element);
+        },
+        [`${section}.copyFieldName`]: async (element: FieldElement) => {
+          await tree.copyFieldName(element);
         },
         [`${section}.clearParams`]: async () => {
           if (!window.activeTextEditor) {

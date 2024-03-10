@@ -161,6 +161,11 @@
         "description": "Preview the selected table in Google Cloud Console"
       },
       {
+        "command": "bigqueryRunner.copyFieldName",
+        "title": "BigQuery Runner: Copy Field Name",
+        "description": "Copy the selected field name to the clipboard"
+      },
+      {
         "command": "bigqueryRunner.clearParams",
         "title": "BigQuery Runner: Clear Parameters",
         "description": "Clear the stored parameters for active text editor."
@@ -216,6 +221,10 @@
         {
           "command": "bigqueryRunner.previewTableOnRemote",
           "when": "view == bigqueryRunner.resources && viewItem == table"
+        },
+        {
+          "command": "bigqueryRunner.copyFieldName",
+          "when": "view == bigqueryRunner.resources && viewItem == field"
         }
       ]
     },

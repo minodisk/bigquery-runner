@@ -73,6 +73,7 @@ export const createTree = ({
   copyTableId(element: TableElement): Promise<void>;
   previewTableInVSCode(element: TableElement): Promise<void>;
   previewTableOnRemote(element: TableElement): Promise<void>;
+  copyFieldName(element: FieldElement): Promise<void>;
 } => {
   const clients = new Map<ProjectID, Client>();
   const emitter = new EventEmitter<null>();
@@ -280,6 +281,10 @@ export const createTree = ({
           `https://console.cloud.google.com/bigquery?p=${projectId}&d=${datasetId}&t=${tableId}&page=table`
         )
       );
+    },
+
+    async copyFieldName(element: FieldElement) {
+      await env.clipboard.writeText(element.ref.fieldId);
     },
 
     dispose() {

@@ -260,6 +260,14 @@ Preview the selected table in VS Code
 
 Preview the selected table in Google Cloud Console
 
+### BigQuery Runner: Copy Field Name
+
+|ID|
+|---|
+|bigqueryRunner.copyFieldName|
+
+Copy the selected field name to the clipboard
+
 ### BigQuery Runner: Clear Parameters
 
 |ID|
