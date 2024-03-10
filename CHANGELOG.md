@@ -2,6 +2,13 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.22.0
+
+### Added
+
+- Add "Copy Table ID" and "Copy Field Name" to the context menu of the tree view.
+  - [#57](https://github.com/minodisk/bigquery-runner/issues/57)
+
 ## v1.21.13
 
 ### Changed

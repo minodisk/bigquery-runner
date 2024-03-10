@@ -9,6 +9,7 @@ import type {
   ProjectReference,
   TableReference,
 } from "shared";
+import { getTableName } from "shared";
 import type { Disposable, TreeItem } from "vscode";
 import {
   env,
@@ -69,8 +70,10 @@ export const createTree = ({
 }): Disposable & {
   refreshResources(): Promise<void>;
   deleteSelectedResources(): Promise<void>;
+  copyTableId(element: TableElement): Promise<void>;
   previewTableInVSCode(element: TableElement): Promise<void>;
   previewTableOnRemote(element: TableElement): Promise<void>;
+  copyFieldName(element: FieldElement): Promise<void>;
 } => {
   const clients = new Map<ProjectID, Client>();
   const emitter = new EventEmitter<null>();
@@ -263,6 +266,10 @@ export const createTree = ({
       await this.refreshResources();
     },
 
+    async copyTableId(element: TableElement) {
+      await env.clipboard.writeText(getTableName(element.ref));
+    },
+
     async previewTableInVSCode(element: TableElement) {
       await previewer.preview(element.ref);
     },
@@ -274,6 +281,10 @@ export const createTree = ({
           `https://console.cloud.google.com/bigquery?p=${projectId}&d=${datasetId}&t=${tableId}&page=table`
         )
       );
+    },
+
+    async copyFieldName(element: FieldElement) {
+      await env.clipboard.writeText(element.ref.fieldId);
     },
 
     dispose() {

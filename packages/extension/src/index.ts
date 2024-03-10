@@ -31,7 +31,7 @@ import {
   createStatusBarItemCreator,
   createStatusManager,
 } from "./statusManager";
-import type { TableElement } from "./tree";
+import type { FieldElement, TableElement } from "./tree";
 import { createTree } from "./tree";
 import { showError, showInformation } from "./window";
 
@@ -187,11 +187,17 @@ export async function activate(ctx: ExtensionContext) {
         [`${section}.deleteSelectedResources`]: async () => {
           await tree.deleteSelectedResources();
         },
+        [`${section}.copyTableId`]: async (element: TableElement) => {
+          await tree.copyTableId(element);
+        },
         [`${section}.previewTableInVSCode`]: async (element: TableElement) => {
           await tree.previewTableInVSCode(element);
         },
         [`${section}.previewTableOnRemote`]: async (element: TableElement) => {
           await tree.previewTableOnRemote(element);
+        },
+        [`${section}.copyFieldName`]: async (element: FieldElement) => {
+          await tree.copyFieldName(element);
         },
         [`${section}.clearParams`]: async () => {
           if (!window.activeTextEditor) {

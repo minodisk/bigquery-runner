@@ -146,6 +146,11 @@
         "description": "Refresh the BigQuery Runner's Resources"
       },
       {
+        "command": "bigqueryRunner.copyTableId",
+        "title": "BigQuery Runner: Copy Table ID",
+        "description": "Copy the selected table ID to the clipboard"
+      },
+      {
         "command": "bigqueryRunner.previewTableInVSCode",
         "title": "BigQuery Runner: Preview Table in VS Code",
         "description": "Preview the selected table in VS Code"
@@ -154,6 +159,11 @@
         "command": "bigqueryRunner.previewTableOnRemote",
         "title": "BigQuery Runner: Preview Table on Remote",
         "description": "Preview the selected table in Google Cloud Console"
+      },
+      {
+        "command": "bigqueryRunner.copyFieldName",
+        "title": "BigQuery Runner: Copy Field Name",
+        "description": "Copy the selected field name to the clipboard"
       },
       {
         "command": "bigqueryRunner.clearParams",
@@ -201,12 +211,20 @@
       ],
       "view/item/context": [
         {
+          "command": "bigqueryRunner.copyTableId",
+          "when": "view == bigqueryRunner.resources && viewItem == table"
+        },
+        {
           "command": "bigqueryRunner.previewTableInVSCode",
           "when": "view == bigqueryRunner.resources && viewItem == table"
         },
         {
           "command": "bigqueryRunner.previewTableOnRemote",
           "when": "view == bigqueryRunner.resources && viewItem == table"
+        },
+        {
+          "command": "bigqueryRunner.copyFieldName",
+          "when": "view == bigqueryRunner.resources && viewItem == field"
         }
       ]
     },
