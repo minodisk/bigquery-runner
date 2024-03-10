@@ -146,6 +146,11 @@
         "description": "Refresh the BigQuery Runner's Resources"
       },
       {
+        "command": "bigqueryRunner.copyTableId",
+        "title": "BigQuery Runner: Copy Table ID",
+        "description": "Copy the selected table ID to the clipboard"
+      },
+      {
         "command": "bigqueryRunner.previewTableInVSCode",
         "title": "BigQuery Runner: Preview Table in VS Code",
         "description": "Preview the selected table in VS Code"
@@ -200,6 +205,10 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "bigqueryRunner.copyTableId",
+          "when": "view == bigqueryRunner.resources && viewItem == table"
+        },
         {
           "command": "bigqueryRunner.previewTableInVSCode",
           "when": "view == bigqueryRunner.resources && viewItem == table"

@@ -9,6 +9,7 @@ import type {
   ProjectReference,
   TableReference,
 } from "shared";
+import { getTableName } from "shared";
 import type { Disposable, TreeItem } from "vscode";
 import {
   env,
@@ -69,6 +70,7 @@ export const createTree = ({
 }): Disposable & {
   refreshResources(): Promise<void>;
   deleteSelectedResources(): Promise<void>;
+  copyTableId(element: TableElement): Promise<void>;
   previewTableInVSCode(element: TableElement): Promise<void>;
   previewTableOnRemote(element: TableElement): Promise<void>;
 } => {
@@ -261,6 +263,10 @@ export const createTree = ({
           }),
       ]);
       await this.refreshResources();
+    },
+
+    async copyTableId(element: TableElement) {
+      await env.clipboard.writeText(getTableName(element.ref));
     },
 
     async previewTableInVSCode(element: TableElement) {

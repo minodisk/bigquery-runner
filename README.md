@@ -236,6 +236,14 @@ Run the query in BigQuery and save the results to a file in plain text
 
 Refresh the BigQuery Runner's Resources
 
+### BigQuery Runner: Copy Table ID
+
+|ID|
+|---|
+|bigqueryRunner.copyTableId|
+
+Copy the selected table ID to the clipboard
+
 ### BigQuery Runner: Preview Table in VS Code
 
 |ID|

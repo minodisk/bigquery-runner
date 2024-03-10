@@ -187,6 +187,9 @@ export async function activate(ctx: ExtensionContext) {
         [`${section}.deleteSelectedResources`]: async () => {
           await tree.deleteSelectedResources();
         },
+        [`${section}.copyTableId`]: async (element: TableElement) => {
+          await tree.copyTableId(element);
+        },
         [`${section}.previewTableInVSCode`]: async (element: TableElement) => {
           await tree.previewTableInVSCode(element);
         },
