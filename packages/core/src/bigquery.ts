@@ -252,6 +252,7 @@ export async function createClient(
             return job.getQueryResults({
               maxResults: jobOptions.maxResults,
               pageToken,
+              wrapIntegers: true,
             });
           },
           (err) => ({
