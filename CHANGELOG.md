@@ -2,6 +2,20 @@
 
 All notable changes to the "BigQuery Runner" extension will be documented in this file.
 
+## v1.21.13
+
+### Changed
+
+- Fixed large Int64 not overflowing.
+  - [#54](https://github.com/minodisk/bigquery-runner/issues/54)
+
+## v1.21.12
+
+### Changed
+
+- Fixed broken JSON in README.
+  - [#53](https://github.com/minodisk/bigquery-runner/issues/53)
+
 ## v1.21.11
 
 ### Changed
